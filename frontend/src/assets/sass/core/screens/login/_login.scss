@@ -1,0 +1,97 @@
+.auth-section {
+    padding: 40px;
+    // background-image: url("../../../../../../public/media/auth/auth-bg.png");
+    // background-size: cover;
+    // background-position: center;
+    // background-repeat: no-repeat;
+
+    .auth-form-area {
+        padding: 0 64px;
+
+        h2 {
+            font-size: 36px;
+        }
+
+        form {
+            margin-top: 30px;
+        }
+
+        .form-label {
+            font-size: 14px;
+            font-weight: 500;
+            color: var(--gray-600);
+        }
+
+        .form-control {
+            font-size: 14px;
+            font-weight: 400;
+            color: var(--gray-900);
+            border: 2px solid var(--muted);
+            background-color: transparent;
+            padding: 12px 16px;
+            transition: all 0.3s ease;
+
+            &:focus {
+                box-shadow: none;
+                border: 2px solid var(--primary-default);
+            }
+
+            &::placeholder {
+                color: var(--gray-400);
+            }
+        }
+
+        .nav-link {
+            font-size: 14px;
+            color: var(--blue-default);
+            text-decoration: underline;
+        }
+
+        .submit-btn {
+            font-size: 16px;
+            font-weight: 500;
+            color: var(--gray-0);
+            background-color: var(--primary-default);
+            border-radius: 5px;
+            padding: 10px 20px;
+        }
+    }
+
+    .auth-image-area {
+        background-color: var(--gray-50);
+        border-radius: 20px;
+        padding: 40px 40px 0;
+        min-height: calc(100vh - 80px);
+    }
+}
+
+
+// Media query
+
+@media (max-width:1399px) {
+    .auth-section .auth-form-area {
+        padding: 0 30px;
+    }
+}
+
+@media (max-width:1199px) {
+    .auth-section {
+        .auth-form-area {
+            padding: 0;
+
+            h2 {
+                font-size: 32px;
+            }
+        }
+
+        .auth-image-area {
+            padding: 25px 25px 0;
+        }
+    }
+}
+
+@media (max-width:575px) {
+    .auth-section {
+        padding: 15px;
+    }
+}

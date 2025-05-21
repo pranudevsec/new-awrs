@@ -1,0 +1,38 @@
+//
+// Layout
+//
+
+@use "../core/mixins/custom-scrollbar" as scrollbar;
+@use "./header/header";
+@use "./sidebar/sidebar";
+
+
+.logo-sidebar {
+    padding: 21px 26px;
+
+    img {
+        width: 150px;
+    }
+}
+
+.main-layout {
+    width: calc(100% - 290px);
+    margin-left: 290px;
+
+    .scroll-style-110 {
+        @include scrollbar.custom-scrollbar(calc(100% - 90px), 16px 32px);
+    }
+}
+
+@media (max-width:1199px) {
+    .main-layout {
+        width: 100%;
+        margin: 0;
+    }
+}
+
+@media (max-width:575px) {
+    .main-layout .scroll-style-110 {
+        @include scrollbar.custom-scrollbar(calc(100% - 77px), 15px 20px);
+    }
+}

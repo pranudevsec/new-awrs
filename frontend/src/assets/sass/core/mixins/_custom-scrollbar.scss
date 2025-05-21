@@ -1,0 +1,23 @@
+@mixin custom-scrollbar($height: auto, $padding: 0) {
+    height: $height;
+    overflow-y: auto;
+    padding: $padding;
+
+    &::-webkit-scrollbar {
+        width: 8px;
+    }
+
+    &::-webkit-scrollbar-thumb {
+        border-radius: 0.375rem;
+        background-color: transparent;
+        transition: background-color 0.3s;
+    }
+
+    &:hover::-webkit-scrollbar-thumb {
+        background-color: rgb(146, 146, 146);
+    }
+
+    &::-webkit-scrollbar-track {
+        background: transparent;
+    }
+}
