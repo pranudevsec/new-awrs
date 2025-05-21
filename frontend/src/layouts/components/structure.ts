@@ -4,7 +4,7 @@ export const sidebarStructure = [
   {
     label: "Applications",
     icon: SVGICON.sidebar.applications,
-    to: "/",
+    to: "/applications",
   },
   {
     label: "Profile Settings",

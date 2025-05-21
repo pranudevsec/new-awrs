@@ -22,7 +22,7 @@ const Login = () => {
         },
         validationSchema: LoginSchema,
         onSubmit: () => {
-            setTimeout(() => navigate("/"), 400);
+            setTimeout(() => navigate("/applications"), 400);
         }
         // onSubmit: async (values, { resetForm }) => {
         //     const resultAction = await dispatch(reqToLogin(values));
@@ -36,8 +36,13 @@ const Login = () => {
 
     return (
         <div className="auth-section min-vh-100">
-            <div className="container-fluid">
-                <div className="row align-items-center justify-content-center">
+            <div className="container-fluid h-100">
+                <div className="row align-items-center justify-content-center h-100">
+                    <div className="col-xxl-7 col-lg-6 d-lg-block d-none h-100">
+                        <div className="auth-image-area d-flex align-items-end justify-content-center">
+                            <img src="/media/auth/military.png" alt="Military" className="img-fluid" />
+                        </div>
+                    </div>
                     <div className="col-xxl-5 col-lg-6 col-md-10">
                         <div className="auth-form-area">
                             <img src="/media/logo/logo-text.svg" alt="Logo" className="mb-4" />
@@ -50,7 +55,14 @@ const Login = () => {
                                     >
                                         Role
                                     </label>
-                                    <input
+                                    <select name="user_role" id="user_role" className={`form-select ${formik.errors.user_role && formik.touched.user_role ? "invalid" : ""}`}>
+                                        <option value="unit">Unit</option>
+                                        <option value="brigade">Brigade</option>
+                                        <option value="divison">Divison</option>
+                                        <option value="corps">Corps</option>
+                                        <option value="command">Command</option>
+                                    </select>
+                                    {/* <input
                                         type="text"
                                         className={`form-control ${formik.errors.user_role && formik.touched.user_role ? "invalid" : ""}`}
                                         id="user_role"
@@ -60,7 +72,7 @@ const Login = () => {
                                         value={formik.values.user_role}
                                         onChange={formik.handleChange}
                                         onBlur={formik.handleBlur}
-                                    />
+                                    /> */}
                                     {formik.errors.user_role && formik.touched.user_role && (
                                         <p className="error-text">{formik.errors.user_role}</p>
                                     )}
@@ -143,11 +155,6 @@ const Login = () => {
                                     Sign in
                                 </button>
                             </form>
-                        </div>
-                    </div>
-                    <div className="col-xxl-7 col-lg-6 d-lg-block d-none">
-                        <div className="auth-image-area d-flex align-items-end justify-content-center">
-                            <img src="/media/auth/military.png" alt="Military" className="img-fluid" />
                         </div>
                     </div>
                 </div>

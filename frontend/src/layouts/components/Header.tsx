@@ -19,7 +19,7 @@ const Header = () => {
     const handleSignOut = () => {
         dispatch(signOut());
         localStorage.removeItem("persist:admin");
-        navigate("/authentication/sign-in");
+        navigate("/");
     }
 
     useEffect(() => {
@@ -67,9 +67,9 @@ const Header = () => {
                                 </div>
                                 <hr />
                                 <div className="p-2">
-                                    <Link to="/" className="dropdown-item">My Profile</Link>
-                                    <Link to="/" className="dropdown-item">Account Settings</Link>
-                                    <Link to="/" className="dropdown-item">Activity Log</Link>
+                                    <Link to="/applications" className="dropdown-item">My Profile</Link>
+                                    <Link to="/applications" className="dropdown-item">Account Settings</Link>
+                                    <Link to="/applications" className="dropdown-item">Activity Log</Link>
                                 </div>
                                 <hr />
                                 <div className="p-2">

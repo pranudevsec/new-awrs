@@ -1,12 +1,16 @@
 .auth-section {
-    padding: 40px;
-    // background-image: url("../../../../../../public/media/auth/auth-bg.png");
-    // background-size: cover;
-    // background-position: center;
-    // background-repeat: no-repeat;
+    padding: 40px 70px 0 40px;
+    background-image: url("/media/auth/auth-bg.png");
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    height: 100vh;
 
     .auth-form-area {
-        padding: 0 64px;
+        padding: 64px;
+        background-color: var(--background);
+        border-radius: 20px;
+        overflow: auto;
 
         h2 {
             font-size: 36px;
@@ -22,7 +26,8 @@
             color: var(--gray-600);
         }
 
-        .form-control {
+        .form-control,
+        .form-select {
             font-size: 14px;
             font-weight: 400;
             color: var(--gray-900);
@@ -58,10 +63,11 @@
     }
 
     .auth-image-area {
-        background-color: var(--gray-50);
-        border-radius: 20px;
+        // background-color: var(--gray-50);
+        // border-radius: 20px;
         padding: 40px 40px 0;
-        min-height: calc(100vh - 80px);
+        // min-height: calc(100vh - 80px);
+        height: 100%;
     }
 }
 
