@@ -1,0 +1,15 @@
+const express = require("express");
+const router = express.Router();
+const CitationController = require("../controllers/CitationController.js");
+const authMiddleware = require("../middlewares/authMiddleware");
+const { validateCreateCitation, validateUpdateCitation } = require("../validations/citationValidator.js");
+
+router.use(authMiddleware);
+
+router.post("/",validateCreateCitation, CitationController.createCitation);
+router.get("/", CitationController.getAllCitations);
+router.get("/:id", CitationController.getCitationById);
+router.put("/:id",validateUpdateCitation, CitationController.updateCitation);
+router.delete("/:id", CitationController.deleteCitation);
+
+module.exports = router;
