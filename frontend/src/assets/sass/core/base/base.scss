@@ -135,8 +135,6 @@ input[type="number"] {
 
 /* Elements
 -------------------------------------------------------------- */
-
-
 * {
     margin: 0;
     padding: 0;
@@ -162,17 +160,6 @@ body {
     overflow-x: hidden;
 }
 
-
-h1,
-h2,
-h3,
-h4,
-h5,
-h6,
-p {
-    margin: 0;
-}
-
 ul,
 li {
     list-style-type: none;
@@ -187,6 +174,15 @@ a {
 
 /* Typography
 -------------------------------------------------------------- */
+h1,
+h2,
+h3,
+h4,
+h5,
+h6,
+p {
+    margin: 0;
+}
 
 .title-display,
 h1,
@@ -201,7 +197,7 @@ h6 {
 }
 
 h1 {
-    font-size: 56px;
+    font-size: 50px;
 }
 
 h2 {
@@ -270,12 +266,12 @@ p {
     font-family: var(--font-inter);
 }
 
-.error-text {
-    color: var(--red-default);
+.font-kaushan {
+    font-family: var(--font-kaushan);
 }
 
-.form-control.invalid {
-    border-color: var(--red-default) !important;
+.error-text {
+    color: var(--red-default);
 }
 
 .breadcrumb-title {

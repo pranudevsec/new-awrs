@@ -1,6 +1,6 @@
 import type { FC } from "react"
-import Offcanvas from "react-bootstrap/Offcanvas";
 import { Link, NavLink } from "react-router-dom";
+import Offcanvas from "react-bootstrap/Offcanvas";
 import { sidebarStructure } from "../layouts/components/structure";
 
 interface SidebarMobileMenuProps {

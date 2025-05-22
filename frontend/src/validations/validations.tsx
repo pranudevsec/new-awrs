@@ -9,3 +9,11 @@ export const LoginSchema = Yup.object().shape({
         .min(4, 'Password must be at least 4 characters')
         .required('Password is required'),
 });
+
+export const ProfileSettingSchema = Yup.object().shape({
+    unit: Yup.string().required("Unit is required"),
+    brigade: Yup.string().required("Brigade is required"),
+    divison: Yup.string().required("Divison is required"),
+    corps: Yup.string().required("Corps is required"),
+    command: Yup.string().required("Command is required"),
+});

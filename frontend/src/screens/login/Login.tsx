@@ -3,8 +3,18 @@ import { Link, useNavigate } from "react-router-dom"
 import { useFormik } from "formik";
 // import { unwrapResult } from "@reduxjs/toolkit";
 import { LoginSchema } from "../../validations/validations";
+import FormInput from "../../components/form/FormInput";
+import FormSelect from "../../components/form/FormSelect";
 // import { useAppDispatch } from "../../reduxToolkit/hooks";
 // import { reqToLogin } from "../../reduxToolkit/services/auth/authService";
+
+const roleOptions: OptionType[] = [
+    { value: 'unit', label: 'Unit' },
+    { value: 'brigade', label: 'Brigade' },
+    { value: 'divison', label: 'Divison' },
+    { value: 'corps', label: 'Corps' },
+    { value: 'command', label: 'Command' },
+]
 
 const Login = () => {
     const navigate = useNavigate();
@@ -51,46 +61,33 @@ const Login = () => {
                                 <h2 className="font-lexend fw-6 mb-3">Welcome back! Please Sign in to continue.</h2>
                                 <form onSubmit={formik.handleSubmit}>
                                     <div className="mb-3">
-                                        <label
-                                            htmlFor="user_role"
-                                            className="form-label mb-1"
-                                        >
-                                            Role
-                                        </label>
-                                        <select name="user_role" id="user_role" className={`form-select ${formik.errors.user_role && formik.touched.user_role ? "invalid" : ""}`} value={formik.values.user_role} onChange={formik.handleChange}
-                                            onBlur={formik.handleBlur}>
-                                            <option value="">Select</option>
-                                            <option value="unit">Unit</option>
-                                            <option value="brigade">Brigade</option>
-                                            <option value="divison">Divison</option>
-                                            <option value="corps">Corps</option>
-                                            <option value="command">Command</option>
-                                        </select>
-                                        {formik.errors.user_role && formik.touched.user_role && (
-                                            <p className="error-text">{formik.errors.user_role}</p>
-                                        )}
+                                        <FormSelect
+                                            label="Role"
+                                            name="user_role"
+                                            options={roleOptions}
+                                            value={roleOptions.find((opt) => opt.value === formik.values.user_role) || null}
+                                            onChange={(selectedOption) =>
+                                                formik.setFieldValue(
+                                                    "user_role",
+                                                    selectedOption?.value || ""
+                                                )
+                                            }
+                                            placeholder="Select role"
+                                            errors={formik.errors.user_role}
+                                            touched={formik.touched.user_role}
+                                        />
                                     </div>
                                     <div className="mb-3">
-                                        <label
-                                            htmlFor="username"
-                                            className="form-label mb-1"
-                                        >
-                                            Service Number / ID
-                                        </label>
-                                        <input
-                                            type="text"
-                                            className={`form-control ${formik.errors.username && formik.touched.username ? "invalid" : ""}`}
-                                            id="username"
+                                        <FormInput
+                                            label="Service Number / ID"
                                             name="username"
                                             placeholder="Enter service number / ID"
-                                            autoComplete="off"
                                             value={formik.values.username}
                                             onChange={formik.handleChange}
                                             onBlur={formik.handleBlur}
+                                            errors={formik.errors.username}
+                                            touched={formik.touched.username}
                                         />
-                                        {formik.errors.username && formik.touched.username && (
-                                            <p className="error-text">{formik.errors.username}</p>
-                                        )}
                                     </div>
                                     <div className="mb-3">
                                         <label

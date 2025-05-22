@@ -1,10 +1,13 @@
 import { lazy, type ReactElement } from "react";
 import { Navigate } from "react-router-dom";
 import Login from "../screens/login/Login";
-import ApplyCitation from "../screens/applications/modules/ApplyCitation";
-import ApplyAppreciation from "../screens/applications/modules/ApplyAppreciation";
 
 const Applications = lazy(() => import('../screens/applications/Applications'))
+const ApplyCitation = lazy(() => import('../screens/applications/modules/ApplyCitation'))
+const ApplyAppreciation = lazy(() => import('../screens/applications/modules/ApplyAppreciation'))
+const Thanks = lazy(() => import('../screens/applications/modules/Thanks'))
+const ProfileSettings = lazy(() => import('../screens/profile-settings/ProfileSettings'))
+const Clarification = lazy(() => import('../screens/clarification/Clarification'))
 
 interface RouteConfig {
     path: string;
@@ -21,7 +24,11 @@ export const authProtectedRoutes: RouteConfig[] = [
     { path: '/applications', element: <Applications /> },
     { path: '/applications/citation', element: <ApplyCitation /> },
     { path: '/applications/appreciation', element: <ApplyAppreciation /> },
+    { path: '/applications/thanks', element: <Thanks /> },
 
-    { path: '/profile-settings', element: <Applications /> },
-    { path: '/clarification', element: <Applications /> },
+    // Profile
+    { path: '/profile-settings', element: <ProfileSettings /> },
+
+    // Clarification
+    { path: '/clarification', element: <Clarification /> },
 ];

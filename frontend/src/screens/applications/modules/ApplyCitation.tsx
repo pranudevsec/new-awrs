@@ -1,3 +1,5 @@
+import FormInput from "../../../components/form/FormInput"
+
 const ApplyCitation = () => {
     return (
         <div className="apply-citation-section">
@@ -5,51 +7,39 @@ const ApplyCitation = () => {
             <div className="top-fields-area">
                 <div className="row align-items-center justify-content-between row-gap-2">
                     <div className="col-md-4">
-                        <label
-                            htmlFor="awardType"
-                            className="form-label mb-1"
-                        >
-                            Award Type:
-                        </label>
-                        <input
-                            type="text"
-                            className={`form-control`}
-                            id="awardType"
+                        <FormInput
+                            label="Award Type:"
                             name="awardType"
                             placeholder="Enter award type"
-                            autoComplete="off"
+                            value=""
+                        // onChange={formik.handleChange}
+                        // onBlur={formik.handleBlur}
+                        // errors={formik.errors.username}
+                        // touched={formik.touched.username}
                         />
                     </div>
                     <div className="col-md-4">
-                        <label
-                            htmlFor="cyclePeriod"
-                            className="form-label mb-1"
-                        >
-                            Cycle Period:
-                        </label>
-                        <input
-                            type="text"
-                            className={`form-control`}
-                            id="cyclePeriod"
+                        <FormInput
+                            label="Cycle Period:"
                             name="cyclePeriod"
-                            placeholder="Enter award type"
-                            autoComplete="off"
+                            placeholder="Enter cycle period"
+                            value=""
+                        // onChange={formik.handleChange}
+                        // onBlur={formik.handleBlur}
+                        // errors={formik.errors.username}
+                        // touched={formik.touched.username}
                         />
                     </div>
                     <div className="col-md-4">
-                        <label
-                            htmlFor="lastDate"
-                            className="form-label mb-1"
-                        >
-                            Last date:
-                        </label>
-                        <input
-                            type="text"
-                            className={`form-control`}
-                            id="lastDate"
+                        <FormInput
+                            label="Last Date:"
                             name="lastDate"
-                            placeholder="Enter award type"
-                            autoComplete="off"
+                            placeholder="Enter last date"
+                            value=""
+                        // onChange={formik.handleChange}
+                        // onBlur={formik.handleBlur}
+                        // errors={formik.errors.username}
+                        // touched={formik.touched.username}
                         />
                     </div>
                 </div>
@@ -246,6 +236,13 @@ const ApplyCitation = () => {
                             </td>
                             <td style={{ width: 300 }}>
                                 <input type="file" className="form-control" autoComplete="off" />
+                            </td>
+                        </tr>
+                        <tr>
+                            <td colSpan={4}>
+                                <div className="d-flex justify-content-end">
+                                    <button className="submit-btn border-0">Submit</button>
+                                </div>
                             </td>
                         </tr>
                     </tbody>
