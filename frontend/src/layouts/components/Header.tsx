@@ -1,13 +1,13 @@
 import { useEffect, useRef, useState } from "react";
 import SidebarMobileMenu from "../../offcanvas/SidebarMobileMenu";
 import { Link, useNavigate } from "react-router-dom";
-import { useAppDispatch } from "../../reduxToolkit/hooks";
-import { signOut } from "../../reduxToolkit/slices/auth/authSlice";
+// import { useAppDispatch } from "../../reduxToolkit/hooks";
+// import { signOut } from "../../reduxToolkit/slices/auth/authSlice";
 import { SVGICON } from "../../constants/iconsList";
 
 const Header = () => {
     const navigate = useNavigate();
-    const dispatch = useAppDispatch();
+    // const dispatch = useAppDispatch();
 
     const dropdownRef = useRef<HTMLDivElement | null>(null);
 
@@ -16,10 +16,15 @@ const Header = () => {
     const [mobileMenuShow, setMobileMenu] = useState<boolean>(false);
 
     // Sign out function
+    // const handleSignOut = () => {
+    //     dispatch(signOut());
+    //     localStorage.removeItem("persist:admin");
+    //     navigate("/authentication/sign-in");
+    // }
+
     const handleSignOut = () => {
-        dispatch(signOut());
-        localStorage.removeItem("persist:admin");
-        navigate("/");
+        localStorage.removeItem("token");
+        navigate("/authentication/sign-in");
     }
 
     useEffect(() => {
