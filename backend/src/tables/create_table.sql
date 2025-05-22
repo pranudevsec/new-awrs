@@ -48,6 +48,7 @@ CREATE TABLE Parameter_Master (
     name CHAR(25) NOT NULL,
     description VARCHAR NOT NULL,
     negative BOOLEAN NOT NULL,
+    per_unit_mark INTEGER NOT NULL DEFAULT 1,
     max_marks INTEGER NOT NULL,
     proof_reqd BOOLEAN NOT NULL,
     weightage INTEGER NOT NULL,
@@ -112,16 +113,60 @@ CREATE TABLE Appre_tab (
     )
 );
 
+--------------------------------------------------------------------------------------------Clarification_tab-------------------------------------------------------------------------------------------------------------------------------
+-- Drop the Clarification_tab table if it exists
+DROP TABLE IF EXISTS Clarification_tab;
+
+-- Create the Clarification_tab table
+CREATE TABLE Clarification_tab (
+    clarification_id SERIAL PRIMARY KEY,
+    
+    -- Auto-generated application ID (6-digit numeric as string)
+    application_id CHAR(6) UNIQUE NOT NULL,
+
+    -- award_type: citation or appreciation
+    award_type CHAR(12) NOT NULL CHECK (award_type IN ('citation', 'appreciation')),
+
+    -- Foreign key references
+    unit_id INTEGER NOT NULL REFERENCES Unit_tab(unit_id),
+    created_by_id INTEGER NOT NULL REFERENCES User_tab(user_id),
+    created_by_role VARCHAR(20) NOT NULL,  -- e.g., 'bridge', 'division'
+
+    -- Tab ID reference (Appre_tab or Citation_tab)
+    fds_tab_id INTEGER NOT NULL,
+
+    -- Parameter under review
+    parameter_name CHAR(25) NOT NULL,
+
+    -- Reviewer's comment (display only)
+    review_comment TEXT NOT NULL,
+
+    -- Document uploaded as clarification
+    clarification_doc VARCHAR,
+
+    -- User's clarification comment
+    clarification_comment TEXT,
+
+    -- Status of the clarification
+    status VARCHAR(20) DEFAULT 'pending' CHECK (
+        status IN ('pending', 'responded', 'reviewed', 'resolved', 'rejected')
+    ),
+
+    -- Audit fields
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
 --------------------------------------------------------------------------------------------Insert Data----------------------------------------------------------------------------------------------------------------------
 
 -- Insert dummy parameters
 INSERT INTO Parameter_Master (
     comd, award_type, applicability, name, description, negative,
-    max_marks, proof_reqd, weightage, param_sequence, param_mark
+    max_marks, proof_reqd, weightage, param_sequence, param_mark, per_unit_mark
 ) VALUES
-('NC', 'citation', 'ALL', 'Enemy Kills', 'Number of enemies neutralized', FALSE, 20, TRUE, 5, 1, 4),
-('WC', 'citation', 'ARMY', 'Rescue Ops', 'Rescue operations conducted', FALSE, 15, TRUE, 4, 2, 5),
-('SC', 'appreciation', 'ALL', 'Medical Camps', 'Organized medical camps', FALSE, 10, FALSE, 3, 3, 2);
+('NC', 'citation', 'ALL', 'Enemy Kills', 'Number of enemies neutralized', FALSE, 20, TRUE, 5, 1, 4, 4),
+('WC', 'citation', 'ARMY', 'Rescue Ops', 'Rescue operations conducted', FALSE, 15, TRUE, 4, 2, 5, 5),
+('SC', 'appreciation', 'ALL', 'Medical Camps', 'Organized medical camps', FALSE, 10, FALSE, 3, 3, 2, 2);
 
 INSERT INTO Config_tab (deadline, docu_path_base)
 VALUES ('2025-12-31', '/mnt/data/documents');
@@ -185,4 +230,45 @@ VALUES (
         ]
     }'::json,
     'submitted'
+);
+
+INSERT INTO User_tab (pers_no, rank, name, user_role, username, password)
+VALUES ('12345678', 'some', 'Reviewer Alpha', 'bridge', 'testuser2', '$2b$10$FCHwKvPqS2IrJY2OZtJ2OemtfeFiz1Cj/ez8bv6NwTk5.Se.YaFwq');
+
+-- Insert into Clarification_tab for a citation parameter
+INSERT INTO Clarification_tab (
+    application_id, award_type, unit_id, created_by_id, created_by_role,
+    fds_tab_id, parameter_name, review_comment, clarification_doc,
+    clarification_comment, status
+) VALUES (
+    '000001',                       -- 6-digit application ID
+    'citation',
+    1,                              -- Unit ID from Unit_tab
+    1,                              -- User ID from User_tab
+    'bridge',                       -- Created by role
+    1,                              -- fds_tab_id (Citation_tab id)
+    'Enemy Kills',                 -- parameter from citation_fds
+    'Please explain how kills were verified.',
+    'uploads/enemy_kills_clarification.pdf',
+    'Kills confirmed via enemy radio intercepts.',
+    'responded'
+);
+
+-- Insert into Clarification_tab for an appreciation parameter
+INSERT INTO Clarification_tab (
+    application_id, award_type, unit_id, created_by_id, created_by_role,
+    fds_tab_id, parameter_name, review_comment, clarification_doc,
+    clarification_comment, status
+) VALUES (
+    '000002',
+    'appreciation',
+    1,
+    1,
+    'division',
+    1,                             
+    'Medical Camps',
+    'Clarify the number of beneficiaries attended.',
+    'uploads/medical_camps_clarification.pdf',
+    'Total of 180 civilians attended across 3 camps.',
+    'responded'
 );

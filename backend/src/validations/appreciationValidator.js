@@ -1,7 +1,6 @@
 const { body } = require("express-validator");
 const handleValidationErrors = require("../utils/validationMiddleware");
 const MSG = require("../utils/MSG");
-
 exports.validateCreateAppreciation = [
   body("unit_id")
     .notEmpty().withMessage("unit_id is required")
@@ -36,11 +35,11 @@ exports.validateCreateAppreciation = [
         if (param.count !== undefined && (typeof param.count !== "number" || param.count < 0)) {
           throw new Error(`parameters[${index}].count must be a non-negative number`);
         }
-        if (param.marks !== undefined && (typeof param.marks !== "number" || param.marks < 0)) {
+        if (param.marks !== undefined && (typeof param.marks !== "number" || param.marks < 0)) { 
           throw new Error(`parameters[${index}].marks must be a non-negative number`);
         }
         if (param.upload && typeof param.upload !== "string") {
-          throw new Error(`parameters[${index}].upload must be a file path string`);
+          throw new Error(`parameters[${index}].upload must be a file path string`); 
         }
       });
       return true;

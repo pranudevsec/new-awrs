@@ -5,6 +5,40 @@ exports.createCitation = async (data) => {
   const client = await dbService.getClient();
   try {
     const { unit_id, date_init, citation_fds, status_flag } = data;
+    const { award_type, parameters } = citation_fds;
+
+    const paramResult = await client.query(
+      `SELECT name, per_unit_mark, max_marks
+       FROM Parameter_Master
+       WHERE award_type = $1`,
+      [award_type]
+    );
+
+    const paramMap = {};
+    paramResult.rows.forEach(p => {
+      paramMap[p.name.trim()] = {
+        per_unit_mark: p.per_unit_mark,
+        max_marks: p.max_marks,
+      };
+    });
+
+    const updatedParameters = parameters.map(p => {
+      const matchedParam = paramMap[p.name.trim()];
+      if (!matchedParam) {
+        throw new Error(`Parameter "${p.name}" not found in master for award_type "${award_type}"`);
+      }
+
+      const calculatedMarks = p.count * matchedParam.per_unit_mark;
+      const cappedMarks = Math.min(calculatedMarks, matchedParam.max_marks);
+
+      return {
+        ...p,
+        marks: cappedMarks,
+        info: `1 ${p.name} = ${matchedParam.per_unit_mark} marks (Max ${matchedParam.max_marks} marks)`
+      };
+    });
+
+    citation_fds.parameters = updatedParameters;
 
     const result = await client.query(
       `INSERT INTO Citation_tab (unit_id, date_init, citation_fds, status_flag)
@@ -14,6 +48,8 @@ exports.createCitation = async (data) => {
     );
 
     return ResponseHelper.success(201, "Citation created", result.rows[0]);
+  } catch (err) {
+    return ResponseHelper.error(400, err.message);
   } finally {
     client.release();
   }
@@ -51,6 +87,43 @@ exports.updateCitation = async (id, data) => {
       return ResponseHelper.error(400, "No valid fields to update");
     }
 
+    if (keys.includes("citation_fds")) {
+      const { award_type, parameters } = data.citation_fds;
+
+      const paramResult = await client.query(
+        `SELECT name, per_unit_mark, max_marks
+         FROM Parameter_Master
+         WHERE award_type = $1`,
+        [award_type]
+      );
+
+      const paramMap = {};
+      paramResult.rows.forEach(p => {
+        paramMap[p.name.trim()] = {
+          per_unit_mark: p.per_unit_mark,
+          max_marks: p.max_marks,
+        };
+      });
+
+      const updatedParameters = parameters.map(p => {
+        const matchedParam = paramMap[p.name.trim()];
+        if (!matchedParam) {
+          throw new Error(`Parameter "${p.name}" not found in master for award_type "${award_type}"`);
+        }
+
+        const calculatedMarks = p.count * matchedParam.per_unit_mark;
+        const cappedMarks = Math.min(calculatedMarks, matchedParam.max_marks);
+
+        return {
+          ...p,
+          marks: cappedMarks,
+          info: `1 ${p.name} = ${matchedParam.per_unit_mark} marks (Max ${matchedParam.max_marks} marks)`
+        };
+      });
+
+      data.citation_fds.parameters = updatedParameters;
+    }
+
     const values = keys.map((key) =>
       key === "citation_fds" ? JSON.stringify(data[key]) : data[key]
     );
@@ -64,6 +137,8 @@ exports.updateCitation = async (id, data) => {
     return result.rows[0]
       ? ResponseHelper.success(200, "Citation updated", result.rows[0])
       : ResponseHelper.error(404, "Citation not found");
+  } catch (err) {
+    return ResponseHelper.error(400, err.message);
   } finally {
     client.release();
   }
