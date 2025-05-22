@@ -12,6 +12,7 @@ const ApplyCitation = () => {
                             name="awardType"
                             placeholder="Enter award type"
                             value=""
+                            readOnly={true}
                         // onChange={formik.handleChange}
                         // onBlur={formik.handleBlur}
                         // errors={formik.errors.username}
@@ -24,6 +25,7 @@ const ApplyCitation = () => {
                             name="cyclePeriod"
                             placeholder="Enter cycle period"
                             value=""
+                            readOnly={true}
                         // onChange={formik.handleChange}
                         // onBlur={formik.handleBlur}
                         // errors={formik.errors.username}
@@ -36,6 +38,7 @@ const ApplyCitation = () => {
                             name="lastDate"
                             placeholder="Enter last date"
                             value=""
+                            readOnly={true}
                         // onChange={formik.handleChange}
                         // onBlur={formik.handleBlur}
                         // errors={formik.errors.username}

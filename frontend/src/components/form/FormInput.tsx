@@ -14,6 +14,7 @@ interface FormInputProps {
     isBorder?: string;
     as?: "input" | "textarea";
     rows?: number;
+    readOnly?: boolean
 }
 
 const FormInput: FC<FormInputProps> = ({
@@ -30,8 +31,8 @@ const FormInput: FC<FormInputProps> = ({
     isBorder = "invalid",
     as = "input",
     rows = 4,
+    readOnly = false
 }) => {
-
     const hasError = touched && !!errors;
     const inputClass = `form-control ${hasError ? isBorder : ""}`;
 
@@ -53,6 +54,7 @@ const FormInput: FC<FormInputProps> = ({
                     onChange={onChange}
                     onBlur={onBlur}
                     disabled={disabled}
+                    readOnly={readOnly}
                     autoComplete="off"
                 />
             ) : (
@@ -67,6 +69,7 @@ const FormInput: FC<FormInputProps> = ({
                     onBlur={onBlur}
                     disabled={disabled}
                     autoComplete="off"
+                    readOnly={readOnly}
                 />
             )}
             {hasError && <p className="error-text">{errors}</p>}
