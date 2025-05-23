@@ -45,12 +45,7 @@
 }
 
 .apply-citation-section {
-    .top-fields-area {
-        border: 1px solid var(--muted);
-        padding: 30px;
-        border-radius: 10px;
-        margin-bottom: 40px;
-    }
+
 
     .main-table {
         .input-with-tooltip {
@@ -132,7 +127,8 @@
         tbody {
             td {
                 padding: 16px 12px;
-                min-width: 200px;
+                // min-width: 200px;
+                max-width: 200px;
                 vertical-align: middle;
 
                 p {
@@ -152,7 +148,9 @@
         margin: 30px -32px 0;
 
         .submit-btn,
-        .draft-btn {
+        .draft-btn,
+        .accept-btn,
+        .reject-btn {
             font-size: 14px;
             font-weight: 500;
             color: var(--gray-0);
@@ -167,7 +165,24 @@
             color: var(--gray-700);
             border: 1px solid var(--muted);
         }
+
+        .accept-btn {
+            border: 1px solid var(--green-default);
+            background-color: var(--green-default);
+        }
+
+        .reject-btn {
+            border: 1px solid var(--red-default);
+            background-color: var(--red-default);
+        }
     }
+}
+
+.filters-fields-area {
+    border: 1px solid var(--muted);
+    padding: 30px;
+    border-radius: 10px;
+    margin-bottom: 40px;
 }
 
 .thanks-section {
@@ -188,15 +203,17 @@
 // Media query
 @media (max-width:575px) {
     .apply-citation-section {
-        .top-fields-area {
-            padding: 18px;
-            margin-bottom: 30px;
-        }
+
 
         .submit-button-wrapper {
             margin: 30px -20px 0;
             padding: 15px 18px;
         }
+    }
+
+    .filters-fields-area {
+        padding: 18px;
+        margin-bottom: 30px;
     }
 
     .thanks-section {

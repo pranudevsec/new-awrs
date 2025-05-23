@@ -16,4 +16,9 @@ export const sidebarStructure = [
     icon: SVGICON.sidebar.clarification,
     to: "/clarification",
   },
+  // {
+  //   label: "Command Panel",
+  //   icon: SVGICON.sidebar.commandPanel,
+  //   to: "/command-panel",
+  // },
 ];

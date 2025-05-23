@@ -2,6 +2,7 @@ import { lazy, type ReactElement } from "react";
 import { Navigate } from "react-router-dom";
 import Login from "../screens/auth/Login";
 import SignUp from "../screens/auth/SignUp";
+import CommandPanel from "../screens/command-panel/CommandPanel";
 
 const Applications = lazy(() => import('../screens/applications/Applications'))
 const ApplyCitation = lazy(() => import('../screens/applications/modules/ApplyCitation'))
@@ -9,6 +10,7 @@ const ApplyAppreciation = lazy(() => import('../screens/applications/modules/App
 const Thanks = lazy(() => import('../screens/applications/modules/Thanks'))
 const ProfileSettings = lazy(() => import('../screens/profile-settings/ProfileSettings'))
 const Clarification = lazy(() => import('../screens/clarification/Clarification'))
+const UnitClarificationDetail = lazy(() => import('../screens/clarification/UnitClarificationDetail'))
 const ClarificationDetail = lazy(() => import('../screens/clarification/ClarificationDetail'))
 
 interface RouteConfig {
@@ -34,5 +36,9 @@ export const authProtectedRoutes: RouteConfig[] = [
 
     // Clarification
     { path: '/clarification', element: <Clarification /> },
+    { path: '/clarification/unit/:id', element: <UnitClarificationDetail /> },
     { path: '/clarification/:id', element: <ClarificationDetail /> },
+
+    // Command Panel
+    { path: '/command-panel', element: <CommandPanel /> },
 ];

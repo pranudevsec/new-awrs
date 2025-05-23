@@ -1,0 +1,28 @@
+// clarification-modal.scss
+.clarification-modal {
+    .modal-dialog {
+        max-width: 600px;
+        margin: auto;
+    }
+
+    .modal-content {
+        background-color: transparent;
+        border: none;
+        box-shadow: none;
+    }
+
+    .modal-body {
+        background: var(--background);
+        border-radius: 12px;
+    }
+
+    .submit-btn {
+        font-size: 15px;
+        font-weight: 500;
+        color: var(--gray-0);
+        background-color: var(--secondary-default);
+        border-radius: 5px;
+        padding: 10px 20px;
+        min-width: 120px;
+    }
+}

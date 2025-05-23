@@ -59,6 +59,9 @@ const Header = () => {
                                     <h6 className="font-lexend fw-6">Albert Flores</h6>
                                     <p className="fw-4">flores@doe.io</p>
                                 </div>
+                                <div>
+                                    {SVGICON.header.downArrow}
+                                </div>
                             </button>
                             <div className={`profile-dropdown-menu ${open ? "show" : ""}`}>
                                 <div className="p-2">

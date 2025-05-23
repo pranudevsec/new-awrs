@@ -11,6 +11,7 @@ interface FormSelectProps {
     errors?: string;
     touched?: boolean;
     placeholder?: string;
+    isDisabled?: boolean
 }
 
 const FormSelect: FC<FormSelectProps> = ({
@@ -22,6 +23,7 @@ const FormSelect: FC<FormSelectProps> = ({
     placeholder = 'Select',
     errors,
     touched,
+    isDisabled = false
 }) => {
     const isInvalid = !!(touched && errors);
 
@@ -38,6 +40,7 @@ const FormSelect: FC<FormSelectProps> = ({
                 onChange={onChange}
                 styles={CustomStyles(isInvalid)}
                 placeholder={placeholder}
+                isDisabled={isDisabled}
             />
             {isInvalid && <p className="error-text">{errors}</p>}
         </Fragment>

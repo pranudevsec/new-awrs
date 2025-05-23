@@ -1,5 +1,5 @@
 const CustomStyles = (isInvalid: boolean) => ({
-  control: (provided: any, state: { isFocused: boolean }) => ({
+  control: (provided: any, state: { isFocused: boolean, isDisabled: boolean }) => ({
     ...provided,
     borderRadius: '6px',
     border: isInvalid ? '2px solid var(--red-default)' : '2px solid var(--muted)',
@@ -8,6 +8,9 @@ const CustomStyles = (isInvalid: boolean) => ({
     padding: "0 8px",
     fontSize: "14px",
     fontWeight: "400",
+    opacity: state.isDisabled ? 1 : 1,
+    cursor: state.isDisabled ? 'default' : 'pointer',
+    backgroundColor: state.isDisabled ? 'transparent' : 'transparent',
     color: "var(--gray-900)",
     '&:hover': {
       borderColor: state.isFocused ? 'var(--muted)' : isInvalid ? 'red' : 'var(--muted)',

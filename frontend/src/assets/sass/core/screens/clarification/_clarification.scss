@@ -1,11 +1,23 @@
 .clarification-section {
-    .search-wrapper {
-        button {
-            left: 15px;
+    .filter-wrapper {
+        .search-wrapper {
+            button {
+                left: 15px;
+            }
+
+            .form-control {
+                padding: 7px 20px 7px 40px;
+                min-height: 40px;
+            }
         }
 
-        .form-control {
-            padding: 11px 16px 11px 35px;
+        .css-annyam-control,
+        .css-1mwd2k4-control {
+            min-height: 40px;
+        }
+
+        .css-hlgwow {
+            padding: 0 8px;
         }
     }
 
@@ -56,7 +68,8 @@
 
             td {
                 padding: 16px 12px;
-                min-width: 200px;
+                // min-width: 200px;
+                max-width: 200px;
                 vertical-align: middle;
                 border-bottom: 1px solid var(--gray-200);
 

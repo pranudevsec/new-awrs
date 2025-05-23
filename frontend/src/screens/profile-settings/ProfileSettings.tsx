@@ -34,7 +34,7 @@ const ProfileSettings = () => {
             <Breadcrumb title="Profile Settings" />
             <form onSubmit={formik.handleSubmit}>
                 <div className="row">
-                    <div className="col-6 mb-3">
+                    <div className="col-sm-6 mb-3">
                         <FormSelect
                             label="Unit"
                             name="unit"
@@ -51,7 +51,7 @@ const ProfileSettings = () => {
                             touched={formik.touched.unit}
                         />
                     </div>
-                    <div className="col-6 mb-3">
+                    <div className="col-sm-6 mb-3">
                         <FormSelect
                             label="Brigade"
                             name="brigade"
@@ -68,7 +68,7 @@ const ProfileSettings = () => {
                             touched={formik.touched.brigade}
                         />
                     </div>
-                    <div className="col-6 mb-3">
+                    <div className="col-sm-6 mb-3">
                         <FormSelect
                             label="Divison"
                             name="divison"
@@ -85,7 +85,7 @@ const ProfileSettings = () => {
                             touched={formik.touched.divison}
                         />
                     </div>
-                    <div className="col-6 mb-3">
+                    <div className="col-sm-6 mb-3">
                         <FormSelect
                             label="Corps"
                             name="corps"
@@ -102,7 +102,7 @@ const ProfileSettings = () => {
                             touched={formik.touched.corps}
                         />
                     </div>
-                    <div className="col-6 mb-4">
+                    <div className="col-sm-6 mb-4">
                         <FormSelect
                             label="Command"
                             name="command"

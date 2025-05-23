@@ -138,6 +138,10 @@ input[type="date"]::-webkit-calendar-picker-indicator {
     height: 20px;
 }
 
+textarea {
+    resize: none;
+}
+
 /* Elements
 -------------------------------------------------------------- */
 * {

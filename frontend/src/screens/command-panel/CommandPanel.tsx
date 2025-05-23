@@ -1,29 +1,69 @@
-import { Link } from "react-router-dom";
 import { SVGICON } from "../../constants/iconsList";
 import Breadcrumb from "../../components/ui/breadcrumb/Breadcrumb"
 import FormSelect from "../../components/form/FormSelect";
 import Pagination from "../../components/ui/pagination/Pagination";
+import FormInput from "../../components/form/FormInput";
 
 const awardTypeOptions: OptionType[] = [
     { value: "citation", label: "Citation" },
     { value: "clarification", label: "Clarification" },
 ];
 
-const Clarification = () => {
+const CommandPanel = () => {
     return (
         <div className="clarification-section">
-            <Breadcrumb title="Application Listing" />
+            <Breadcrumb title="Command Panel" />
+            <div className="filters-fields-area">
+                <div className="row align-items-center justify-content-between row-gap-2">
+                    <div className="col-md-4">
+                        <FormSelect
+                            label="Award Type"
+                            name="awardType"
+                            options={awardTypeOptions}
+                            value={awardTypeOptions.find((opt) => opt.value === "citation") || null}
+                            placeholder="Select award type"
+                            isDisabled={true}
+                        />
+                    </div>
+                    <div className="col-md-4">
+                        {/* <FormInput
+                            label="Cycle Period"
+                            name="cyclePeriod"
+                            placeholder="Enter cycle period"
+                            type="month"
+                            value=""
+                        /> */}
+                        <FormInput
+                            label="Cycle Period"
+                            name="cyclePeriod"
+                            placeholder="Enter cycle period"
+                            type="text"
+                            value="2024 - H1"
+                        />
+                    </div>
+                    <div className="col-md-4">
+                        <FormInput
+                            label="Last Date"
+                            name="lastDate"
+                            type="date"
+                            placeholder="Enter last date"
+                            value={new Date().toISOString().split("T")[0]}
+                            readOnly={true}
+                        />
+                    </div>
+                </div>
+            </div>
             <div className="filter-wrapper d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
                 <div className="search-wrapper position-relative">
                     <button className="border-0 bg-transparent position-absolute translate-middle-y top-50">{SVGICON.app.search}</button>
                     <input type="text" placeholder="search..." className="form-control" />
                 </div>
-                <FormSelect
+                {/* <FormSelect
                     name="awardType"
                     options={awardTypeOptions}
                     value={null}
                     placeholder="Select type"
-                />
+                /> */}
             </div>
             <div className="table-responsive">
                 <table className="main-table w-100">
@@ -36,12 +76,15 @@ const Clarification = () => {
                                 <div className="d-flex align-items-start">Unit ID</div>
                             </th>
                             <th style={{ width: 200, minWidth: 200, maxWidth: 200 }}>
-                                <div className="d-flex align-items-start">Submition Date</div>
+                                <div className="d-flex align-items-start">Type</div>
                             </th>
                             <th style={{ width: 200, minWidth: 200, maxWidth: 200 }}>
-                                <div className="d-flex align-items-start">Dead Line</div>
+                                <div className="d-flex align-items-start">Cycle Period</div>
                             </th>
-                            <th style={{ width: 150, minWidth: 150, maxWidth: 150 }}>
+                            <th style={{ width: 200, minWidth: 200, maxWidth: 200 }}>
+                                <div className="d-flex align-items-start">Final Score</div>
+                            </th>
+                            {/* <th style={{ width: 150, minWidth: 150, maxWidth: 150 }}>
                                 <div className="d-flex align-items-start">Type</div>
                             </th>
                             <th style={{ width: 200, minWidth: 200, maxWidth: 200 }}>
@@ -49,7 +92,7 @@ const Clarification = () => {
                             </th>
                             <th style={{ width: 100, minWidth: 100, maxWidth: 100 }}>
                                 <div className="d-flex align-items-start"></div>
-                            </th>
+                            </th> */}
                         </tr>
                     </thead>
                     <tbody>
@@ -61,24 +104,13 @@ const Clarification = () => {
                                 <p className="fw-4">#123456</p>
                             </td>
                             <td style={{ width: 200, minWidth: 200, maxWidth: 200 }}>
-                                <p className="fw-4">12-05-2025</p>
-                            </td>
-                            <td style={{ width: 200, minWidth: 200, maxWidth: 200 }}>
-                                <p className="fw-4">12-05-2025</p>
-                            </td>
-                            <td style={{ width: 150, minWidth: 150, maxWidth: 150 }}>
                                 <p className="fw-4">Citation</p>
                             </td>
                             <td style={{ width: 200, minWidth: 200, maxWidth: 200 }}>
-                                <div className="status-content pending d-flex align-items-center gap-3">
-                                    <span></span>
-                                    <p className="text-capitalize fw-5">pending</p>
-                                </div>
+                                <p className="fw-4">Jan-June 2025</p>
                             </td>
-                            <td style={{ width: 100, minWidth: 100, maxWidth: 100 }}>
-                                <div>
-                                    <Link to="/clarification/unit/1" className="action-btn bg-transparent d-inline-flex align-items-center justify-content-center">{SVGICON.app.eye}</Link>
-                                </div>
+                            <td style={{ width: 150, minWidth: 150, maxWidth: 150 }}>
+                                <p className="fw-4">96</p>
                             </td>
                         </tr>
                         <tr>
@@ -89,24 +121,13 @@ const Clarification = () => {
                                 <p className="fw-4">#123456</p>
                             </td>
                             <td style={{ width: 200, minWidth: 200, maxWidth: 200 }}>
-                                <p className="fw-4">12-05-2025</p>
-                            </td>
-                            <td style={{ width: 200, minWidth: 200, maxWidth: 200 }}>
-                                <p className="fw-4">12-05-2025</p>
-                            </td>
-                            <td style={{ width: 150, minWidth: 150, maxWidth: 150 }}>
                                 <p className="fw-4">Citation</p>
                             </td>
                             <td style={{ width: 200, minWidth: 200, maxWidth: 200 }}>
-                                <div className="status-content approved pending d-flex align-items-center gap-3">
-                                    <span></span>
-                                    <p className="text-capitalize fw-5">Accepted</p>
-                                </div>
+                                <p className="fw-4">Jan-June 2025</p>
                             </td>
-                            <td style={{ width: 100, minWidth: 100, maxWidth: 100 }}>
-                                <div>
-                                    <Link to="/clarification/1" className="action-btn bg-transparent d-inline-flex align-items-center justify-content-center">{SVGICON.app.eye}</Link>
-                                </div>
+                            <td style={{ width: 150, minWidth: 150, maxWidth: 150 }}>
+                                <p className="fw-4">96</p>
                             </td>
                         </tr>
                         <tr>
@@ -117,24 +138,13 @@ const Clarification = () => {
                                 <p className="fw-4">#123456</p>
                             </td>
                             <td style={{ width: 200, minWidth: 200, maxWidth: 200 }}>
-                                <p className="fw-4">12-05-2025</p>
-                            </td>
-                            <td style={{ width: 200, minWidth: 200, maxWidth: 200 }}>
-                                <p className="fw-4">12-05-2025</p>
-                            </td>
-                            <td style={{ width: 150, minWidth: 150, maxWidth: 150 }}>
                                 <p className="fw-4">Citation</p>
                             </td>
                             <td style={{ width: 200, minWidth: 200, maxWidth: 200 }}>
-                                <div className="status-content reject pending d-flex align-items-center gap-3">
-                                    <span></span>
-                                    <p className="text-capitalize fw-5">Reject</p>
-                                </div>
+                                <p className="fw-4">Jan-June 2025</p>
                             </td>
-                            <td style={{ width: 100, minWidth: 100, maxWidth: 100 }}>
-                                <div>
-                                    <Link to="/clarification/1" className="action-btn bg-transparent d-inline-flex align-items-center justify-content-center">{SVGICON.app.eye}</Link>
-                                </div>
+                            <td style={{ width: 150, minWidth: 150, maxWidth: 150 }}>
+                                <p className="fw-4">96</p>
                             </td>
                         </tr>
                         <tr>
@@ -145,24 +155,30 @@ const Clarification = () => {
                                 <p className="fw-4">#123456</p>
                             </td>
                             <td style={{ width: 200, minWidth: 200, maxWidth: 200 }}>
-                                <p className="fw-4">12-05-2025</p>
-                            </td>
-                            <td style={{ width: 200, minWidth: 200, maxWidth: 200 }}>
-                                <p className="fw-4">12-05-2025</p>
-                            </td>
-                            <td style={{ width: 150, minWidth: 150, maxWidth: 150 }}>
                                 <p className="fw-4">Citation</p>
                             </td>
                             <td style={{ width: 200, minWidth: 200, maxWidth: 200 }}>
-                                <div className="status-content pending d-flex align-items-center gap-3">
-                                    <span></span>
-                                    <p className="text-capitalize fw-5">pending</p>
-                                </div>
+                                <p className="fw-4">Jan-June 2025</p>
                             </td>
-                            <td style={{ width: 100, minWidth: 100, maxWidth: 100 }}>
-                                <div>
-                                    <Link to="/clarification/unit/1" className="action-btn bg-transparent d-inline-flex align-items-center justify-content-center">{SVGICON.app.eye}</Link>
-                                </div>
+                            <td style={{ width: 150, minWidth: 150, maxWidth: 150 }}>
+                                <p className="fw-4">96</p>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td style={{ width: 150, minWidth: 150, maxWidth: 150 }}>
+                                <p className="fw-4">#123456</p>
+                            </td>
+                            <td style={{ width: 150, minWidth: 150, maxWidth: 150 }}>
+                                <p className="fw-4">#123456</p>
+                            </td>
+                            <td style={{ width: 200, minWidth: 200, maxWidth: 200 }}>
+                                <p className="fw-4">Citation</p>
+                            </td>
+                            <td style={{ width: 200, minWidth: 200, maxWidth: 200 }}>
+                                <p className="fw-4">Jan-June 2025</p>
+                            </td>
+                            <td style={{ width: 150, minWidth: 150, maxWidth: 150 }}>
+                                <p className="fw-4">96</p>
                             </td>
                         </tr>
                     </tbody>
@@ -173,4 +189,4 @@ const Clarification = () => {
     )
 }
 
-export default Clarification
+export default CommandPanel
