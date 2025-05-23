@@ -14,9 +14,14 @@
     .modal-body {
         background: var(--background);
         border-radius: 12px;
+
+        h4 {
+            font-size: 26px;
+        }
     }
 
-    .submit-btn {
+    .submit-btn,
+    .close-btn {
         font-size: 15px;
         font-weight: 500;
         color: var(--gray-0);
@@ -24,5 +29,10 @@
         border-radius: 5px;
         padding: 10px 20px;
         min-width: 120px;
+    }
+
+    .close-btn {
+        color: var(--gray-700);
+        border: 1px solid var(--muted);
     }
 }

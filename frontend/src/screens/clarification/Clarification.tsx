@@ -22,7 +22,7 @@ const Clarification = () => {
                     name="awardType"
                     options={awardTypeOptions}
                     value={null}
-                    placeholder="Select type"
+                    placeholder="Select Type"
                 />
             </div>
             <div className="table-responsive">

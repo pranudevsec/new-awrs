@@ -72,7 +72,7 @@ const Login = () => {
                                     </div>
                                     <div className="mb-3">
                                         <FormInput
-                                            label="User name"
+                                            label="User Name"
                                             name="username"
                                             placeholder="Enter username"
                                             value={formik.values.username}

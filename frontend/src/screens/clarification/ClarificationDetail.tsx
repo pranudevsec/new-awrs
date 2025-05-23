@@ -1,5 +1,12 @@
+import FormInput from "../../components/form/FormInput";
+import FormSelect from "../../components/form/FormSelect";
 import Breadcrumb from "../../components/ui/breadcrumb/Breadcrumb"
 import { SVGICON } from "../../constants/iconsList";
+
+const awardTypeOptions: OptionType[] = [
+    { value: "citation", label: "Citation" },
+    { value: "clarification", label: "Clarification" },
+];
 
 const ClarificationDetail = () => {
     return (
@@ -8,9 +15,48 @@ const ClarificationDetail = () => {
                 title="Application ID: #12345"
                 paths={[
                     { label: "Clarification", href: "/clarification" },
-                    { label: "Application #12345", href: "/clarification/1" }
+                    { label: "Details", href: "/clarification/1" }
                 ]}
             />
+            <div className="filters-fields-area">
+                <div className="row align-items-center justify-content-between row-gap-2">
+                    <div className="col-md-4">
+                        <FormSelect
+                            label="Award Type"
+                            name="awardType"
+                            options={awardTypeOptions}
+                            value={awardTypeOptions.find((opt) => opt.value === "citation") || null}
+                            placeholder="Select award type"
+                            isDisabled={true}
+                        />
+                    </div>
+                    <div className="col-md-4">
+                        {/* <FormInput
+                            label="Cycle Period"
+                            name="cyclePeriod"
+                            placeholder="Enter cycle period"
+                            type="month"
+                            value=""
+                        /> */}
+                        <FormInput
+                            label="Cycle Period"
+                            name="cyclePeriod"
+                            placeholder="Enter cycle period"
+                            type="text"
+                            value="2024 - H1"
+                        />
+                    </div>
+                    <div className="col-md-4">
+                        <FormInput
+                            label="Unit"
+                            name="lastDate"
+                            placeholder="Enter unit"
+                            value=""
+                            readOnly={true}
+                        />
+                    </div>
+                </div>
+            </div>
             <div className="table-responsive">
                 <table className="main-table w-100">
                     <thead>

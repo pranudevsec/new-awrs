@@ -259,6 +259,7 @@ const ApplyCitation = () => {
             </div>
             <div className="submit-button-wrapper">
                 <div className="d-flex  gap-3 justify-content-end">
+                    <button className="reject-btn">Delete</button>
                     <button className="draft-btn bg-transparent">Save as Draft</button>
                     <button className="submit-btn border-0" onClick={() => navigate("/applications/thanks")}>Submit</button>
                 </div>

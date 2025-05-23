@@ -98,7 +98,7 @@ const SignUp = () => {
                                     </div>
                                     <div className="mb-2">
                                         <FormInput
-                                            label="User name"
+                                            label="User Name"
                                             name="username"
                                             placeholder="Enter username"
                                             value={formik.values.username}
