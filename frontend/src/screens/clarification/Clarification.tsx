@@ -1,197 +1,166 @@
-import FormInput from "../../components/form/FormInput"
+import Breadcrumb from "../../components/ui/breadcrumb/Breadcrumb"
+import FormSelect from "../../components/form/FormSelect";
+import { SVGICON } from "../../constants/iconsList";
+import { Link } from "react-router-dom";
+
+const awardTypeOptions: OptionType[] = [
+    { value: "citation", label: "Citation" },
+    { value: "clarification", label: "Clarification" },
+];
 
 const Clarification = () => {
     return (
-        <div className="apply-citation-section">
-            <h3 className="breadcrumb-title font-lexend fw-6 mb-3">Clarification</h3>
-            <div className="top-fields-area">
-                <div className="row align-items-center justify-content-between row-gap-2">
-                    <div className="col-md-4">
-                        <FormInput
-                            label="Award Type:"
-                            name="awardType"
-                            placeholder="Enter award type"
-                            value=""
-                            readOnly={true}
-                        // onChange={formik.handleChange}
-                        // onBlur={formik.handleBlur}
-                        // errors={formik.errors.username}
-                        // touched={formik.touched.username}
-                        />
-                    </div>
-                    <div className="col-md-4">
-                        <FormInput
-                            label="Cycle Period:"
-                            name="cyclePeriod"
-                            placeholder="Enter cycle period"
-                            value=""
-                            readOnly={true}
-                        // onChange={formik.handleChange}
-                        // onBlur={formik.handleBlur}
-                        // errors={formik.errors.username}
-                        // touched={formik.touched.username}
-                        />
-                    </div>
-                    <div className="col-md-4">
-                        <FormInput
-                            label="Last Date:"
-                            name="lastDate"
-                            placeholder="Enter last date"
-                            value=""
-                            readOnly={true}
-                        // onChange={formik.handleChange}
-                        // onBlur={formik.handleBlur}
-                        // errors={formik.errors.username}
-                        // touched={formik.touched.username}
-                        />
-                    </div>
+        <div className="clarification-section">
+            <Breadcrumb title="Application Listing" />
+            <div className="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-4">
+                <div className="search-wrapper position-relative">
+                    <button className="border-0 bg-transparent position-absolute translate-middle-y top-50">{SVGICON.app.search}</button>
+                    <input type="text" placeholder="search..." className="form-control" />
                 </div>
+                <FormSelect
+                    name="awardType"
+                    options={awardTypeOptions}
+                    value={null}
+                    placeholder="Select type"
+                />
             </div>
             <div className="table-responsive">
                 <table className="main-table w-100">
                     <thead>
                         <tr>
-                            <th style={{ width: 200 }}>
+                            <th>
                                 <div className="d-flex align-items-start">Application Id</div>
                             </th>
-                            <th style={{ width: 200 }}>
-                                <div className="d-flex align-items-start">Parameter</div>
+                            <th>
+                                <div className="d-flex align-items-start">Unit ID</div>
                             </th>
-                            <th style={{ width: 300 }}>
-                                <div className="d-flex align-items-start">Review</div>
+                            <th>
+                                <div className="d-flex align-items-start">Submition Date</div>
                             </th>
-                            <th style={{ width: 300 }}>
-                                <div className="d-flex align-items-start">Your Comment</div>
+                            <th>
+                                <div className="d-flex align-items-start">Dead Line</div>
                             </th>
-                            <th style={{ width: 300 }}>
-                                <div className="d-flex align-items-start">Upload Doc</div>
+                            <th>
+                                <div className="d-flex align-items-start">Type</div>
+                            </th>
+                            <th>
+                                <div className="d-flex align-items-start">Status</div>
+                            </th>
+                            <th style={{ width: 100, minWidth: 100 }}>
+                                <div className="d-flex align-items-start"></div>
                             </th>
                         </tr>
                     </thead>
                     <tbody>
                         <tr>
-                            <td style={{ width: 200 }}>
-                                <p className="fw-5">#123456</p>
+                            <td>
+                                <p className="fw-4">#123456</p>
                             </td>
-                            <td style={{ width: 200 }}>
-                                <p className="fw-5">Enemy Kills</p>
+                            <td>
+                                <p className="fw-4">#123456</p>
                             </td>
-                            <td style={{ width: 300 }}>
-                                <p className="fw-4">Please upload the correct document for parameter 4</p>
+                            <td>
+                                <p className="fw-4">12-05-2025</p>
                             </td>
-                            <td style={{ width: 300 }}>
-                                <input type="text" className="form-control" placeholder="Enter comment" autoComplete="off" />
+                            <td>
+                                <p className="fw-4">12-05-2025</p>
                             </td>
-                            <td style={{ width: 300 }}>
-                                <input type="file" className="form-control" autoComplete="off" />
+                            <td>
+                                <p className="fw-4">Citation</p>
                             </td>
-                        </tr>
-                        <tr>
-                            <td style={{ width: 200 }}>
-                                <p className="fw-5">#123456</p>
+                            <td>
+                                <div className="status-content pending d-flex align-items-center gap-3">
+                                    <span></span>
+                                    <p className="text-capitalize fw-5">pending</p>
+                                </div>
                             </td>
-                            <td style={{ width: 200 }}>
-                                <p className="fw-5">Parameter 1</p>
-                            </td>
-                            <td style={{ width: 200 }}>
-                                <p className="fw-4">Please upload the correct document for parameter 4</p>
-                            </td>
-                            <td style={{ width: 300 }}>
-                                <input type="text" className="form-control" placeholder="Enter comment" autoComplete="off" />
-                            </td>
-                            <td style={{ width: 300 }}>
-                                <input type="file" className="form-control" autoComplete="off" />
+                            <td style={{ width: 100, minWidth: 100 }}>
+                                <div>
+                                    <Link to="/clarification/1" className="action-btn bg-transparent d-inline-flex align-items-center justify-content-center">{SVGICON.app.eye}</Link>
+                                </div>
                             </td>
                         </tr>
                         <tr>
-                            <td style={{ width: 200 }}>
-                                <p className="fw-5">#123456</p>
+                            <td>
+                                <p className="fw-4">#123456</p>
                             </td>
-                            <td style={{ width: 200 }}>
-                                <p className="fw-5">Parameter 2</p>
+                            <td>
+                                <p className="fw-4">#123456</p>
                             </td>
-                            <td style={{ width: 200 }}>
-                                <p className="fw-4">Please upload the correct document for parameter 4</p>
+                            <td>
+                                <p className="fw-4">12-05-2025</p>
                             </td>
-                            <td style={{ width: 300 }}>
-                                <input type="text" className="form-control" placeholder="Enter comment" autoComplete="off" />
+                            <td>
+                                <p className="fw-4">12-05-2025</p>
                             </td>
-                            <td style={{ width: 300 }}>
-                                <input type="file" className="form-control" autoComplete="off" />
+                            <td>
+                                <p className="fw-4">Citation</p>
                             </td>
-                        </tr>
-                        <tr>
-                            <td style={{ width: 200 }}>
-                                <p className="fw-5">#123456</p>
+                            <td>
+                                <div className="status-content approved d-flex align-items-center gap-3">
+                                    <span></span>
+                                    <p className="text-capitalize fw-5">Accepted</p>
+                                </div>
                             </td>
-                            <td style={{ width: 200 }}>
-                                <p className="fw-5">Parameter 3</p>
-                            </td>
-                            <td style={{ width: 200 }}>
-                                <p className="fw-4">Please upload the correct document for parameter 4</p>
-                            </td>
-                            <td style={{ width: 300 }}>
-                                <input type="text" className="form-control" placeholder="Enter comment" autoComplete="off" />
-                            </td>
-                            <td style={{ width: 300 }}>
-                                <input type="file" className="form-control" autoComplete="off" />
+                            <td style={{ width: 100, minWidth: 100 }}>
+                                <div>
+                                    <Link to="/clarification/1" className="action-btn bg-transparent d-inline-flex align-items-center justify-content-center">{SVGICON.app.eye}</Link>
+                                </div>
                             </td>
                         </tr>
                         <tr>
-                            <td style={{ width: 200 }}>
-                                <p className="fw-5">#123456</p>
+                            <td>
+                                <p className="fw-4">#123456</p>
                             </td>
-                            <td style={{ width: 200 }}>
-                                <p className="fw-5">Parameter 4</p>
+                            <td>
+                                <p className="fw-4">#123456</p>
                             </td>
-                            <td style={{ width: 200 }}>
-                                <p className="fw-4">Please upload the correct document for parameter 4</p>
+                            <td>
+                                <p className="fw-4">12-05-2025</p>
                             </td>
-                            <td style={{ width: 300 }}>
-                                <input type="text" className="form-control" placeholder="Enter comment" autoComplete="off" />
+                            <td>
+                                <p className="fw-4">12-05-2025</p>
                             </td>
-                            <td style={{ width: 300 }}>
-                                <input type="file" className="form-control" autoComplete="off" />
+                            <td>
+                                <p className="fw-4">Citation</p>
                             </td>
-                        </tr>
-                        <tr>
-                            <td style={{ width: 200 }}>
-                                <p className="fw-5">#123456</p>
+                            <td>
+                                <div className="status-content reject d-flex align-items-center gap-3">
+                                    <span></span>
+                                    <p className="text-capitalize fw-5">pending</p>
+                                </div>
                             </td>
-                            <td style={{ width: 200 }}>
-                                <p className="fw-5">Parameter 5</p>
-                            </td>
-                            <td style={{ width: 200 }}>
-                                <p className="fw-4">Please upload the correct document for parameter 4</p>
-                            </td>
-                            <td style={{ width: 300 }}>
-                                <input type="text" className="form-control" placeholder="Enter comment" autoComplete="off" />
-                            </td>
-                            <td style={{ width: 300 }}>
-                                <input type="file" className="form-control" autoComplete="off" />
+                            <td style={{ width: 100, minWidth: 100 }}>
+                                <div>
+                                    <Link to="/clarification/1" className="action-btn bg-transparent d-inline-flex align-items-center justify-content-center">{SVGICON.app.eye}</Link>
+                                </div>
                             </td>
                         </tr>
                         <tr>
-                            <td style={{ width: 200 }}>
-                                <p className="fw-5">#123456</p>
+                            <td>
+                                <p className="fw-4">#123456</p>
                             </td>
-                            <td style={{ width: 200 }}>
-                                <p className="fw-5">Parameter 6</p>
+                            <td>
+                                <p className="fw-4">#123456</p>
                             </td>
-                            <td style={{ width: 200 }}>
-                                <p className="fw-4">Please upload the correct document for parameter 4</p>
+                            <td>
+                                <p className="fw-4">12-05-2025</p>
                             </td>
-                            <td style={{ width: 300 }}>
-                                <input type="text" className="form-control" placeholder="Enter comment" autoComplete="off" />
+                            <td>
+                                <p className="fw-4">12-05-2025</p>
                             </td>
-                            <td style={{ width: 300 }}>
-                                <input type="file" className="form-control" autoComplete="off" />
+                            <td>
+                                <p className="fw-4">Citation</p>
                             </td>
-                        </tr>
-                        <tr>
-                            <td colSpan={5}>
-                                <div className="d-flex justify-content-end">
-                                    <button className="submit-btn border-0">Submit</button>
+                            <td>
+                                <div className="status-content pending d-flex align-items-center gap-3">
+                                    <span></span>
+                                    <p className="text-capitalize fw-5">pending</p>
+                                </div>
+                            </td>
+                            <td style={{ width: 100, minWidth: 100 }}>
+                                <div>
+                                    <Link to="/clarification/1" className="action-btn bg-transparent d-inline-flex align-items-center justify-content-center">{SVGICON.app.eye}</Link>
                                 </div>
                             </td>
                         </tr>

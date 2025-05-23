@@ -5,16 +5,9 @@ import { useFormik } from "formik";
 import { LoginSchema } from "../../validations/validations";
 import FormInput from "../../components/form/FormInput";
 import FormSelect from "../../components/form/FormSelect";
+import { roleOptions } from "./options";
 // import { useAppDispatch } from "../../reduxToolkit/hooks";
 // import { reqToLogin } from "../../reduxToolkit/services/auth/authService";
-
-const roleOptions: OptionType[] = [
-    { value: 'unit', label: 'Unit' },
-    { value: 'brigade', label: 'Brigade' },
-    { value: 'divison', label: 'Divison' },
-    { value: 'corps', label: 'Corps' },
-    { value: 'command', label: 'Command' },
-]
 
 const Login = () => {
     const navigate = useNavigate();
@@ -79,9 +72,9 @@ const Login = () => {
                                     </div>
                                     <div className="mb-3">
                                         <FormInput
-                                            label="Service Number / ID"
+                                            label="User name"
                                             name="username"
-                                            placeholder="Enter service number / ID"
+                                            placeholder="Enter username"
                                             value={formik.values.username}
                                             onChange={formik.handleChange}
                                             onBlur={formik.handleBlur}
@@ -144,6 +137,9 @@ const Login = () => {
                                     <button type="submit" className="border-0 w-100 submit-btn">
                                         Sign in
                                     </button>
+                                    <p className="sign-up-text mt-4">
+                                        Don’t have an account? <Link to="/authentication/sign-up" className="fw-6">Sign up</Link>
+                                    </p>
                                 </form>
                             </div>
                         </div>

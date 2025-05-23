@@ -1,42 +1,8 @@
 import { useFormik } from "formik";
 import { ProfileSettingSchema } from "../../validations/validations";
+import { unitOptions, brigadeOptions, divisonOptions, corpsOptions, commandOptions } from "./options";
 import FormSelect from "../../components/form/FormSelect";
-
-const unitOptions: OptionType[] = [
-    { value: 'unit1', label: 'Unit 1' },
-    { value: 'unit2', label: 'Unit 2' },
-    { value: 'unit3', label: 'Unit 3' },
-    { value: 'unit4', label: 'Unit 4' },
-    { value: 'unit5', label: 'Unit 5' },
-]
-const brigadeOptions: OptionType[] = [
-    { value: 'brigade1', label: 'Brigade 1' },
-    { value: 'brigade2', label: 'Brigade 2' },
-    { value: 'brigade3', label: 'Brigade 3' },
-    { value: 'brigade4', label: 'Brigade 4' },
-    { value: 'brigade5', label: 'Brigade 5' },
-]
-const divisonOptions: OptionType[] = [
-    { value: 'divison1', label: 'Divison 1' },
-    { value: 'divison2', label: 'Divison 2' },
-    { value: 'divison3', label: 'Divison 3' },
-    { value: 'divison4', label: 'Divison 4' },
-    { value: 'divison5', label: 'Divison 5' },
-]
-const corpsOptions: OptionType[] = [
-    { value: 'corps1', label: 'Corps 1' },
-    { value: 'corps2', label: 'Corps 2' },
-    { value: 'corps3', label: 'Corps 3' },
-    { value: 'corps4', label: 'Corps 4' },
-    { value: 'corps5', label: 'Corps 5' },
-]
-const commandOptions: OptionType[] = [
-    { value: 'command1', label: 'Command 1' },
-    { value: 'command2', label: 'Command 2' },
-    { value: 'command3', label: 'Command 3' },
-    { value: 'command4', label: 'Command 4' },
-    { value: 'command5', label: 'Command 5' },
-]
+import Breadcrumb from "../../components/ui/breadcrumb/Breadcrumb";
 
 const ProfileSettings = () => {
 
@@ -65,10 +31,10 @@ const ProfileSettings = () => {
 
     return (
         <div className="profile-settings-section">
-            <h3 className="breadcrumb-title font-lexend fw-6 mb-3">Profile Settings</h3>
+            <Breadcrumb title="Profile Settings" />
             <form onSubmit={formik.handleSubmit}>
                 <div className="row">
-                    <div className="col-12 mb-3">
+                    <div className="col-6 mb-3">
                         <FormSelect
                             label="Unit"
                             name="unit"
@@ -85,7 +51,7 @@ const ProfileSettings = () => {
                             touched={formik.touched.unit}
                         />
                     </div>
-                    <div className="col-12 mb-3">
+                    <div className="col-6 mb-3">
                         <FormSelect
                             label="Brigade"
                             name="brigade"
@@ -102,7 +68,7 @@ const ProfileSettings = () => {
                             touched={formik.touched.brigade}
                         />
                     </div>
-                    <div className="col-12 mb-3">
+                    <div className="col-6 mb-3">
                         <FormSelect
                             label="Divison"
                             name="divison"
@@ -119,7 +85,7 @@ const ProfileSettings = () => {
                             touched={formik.touched.divison}
                         />
                     </div>
-                    <div className="col-12 mb-3">
+                    <div className="col-6 mb-3">
                         <FormSelect
                             label="Corps"
                             name="corps"
@@ -136,7 +102,7 @@ const ProfileSettings = () => {
                             touched={formik.touched.corps}
                         />
                     </div>
-                    <div className="col-12 mb-4">
+                    <div className="col-6 mb-4">
                         <FormSelect
                             label="Command"
                             name="command"
@@ -154,7 +120,7 @@ const ProfileSettings = () => {
                         />
                     </div>
                     <div className="col-12">
-                        <div className="d-flex align-items-center justify-content-end">
+                        <div className="d-flex align-items-center">
                             <button type="submit" className="submit-btn border-0">Submit</button>
                         </div>
                     </div>

@@ -132,6 +132,11 @@ input[type="number"] {
     appearance: textfield;
 }
 
+input[type="date"]::-webkit-calendar-picker-indicator {
+    background: url("/media/icons/calendar.svg") no-repeat;
+    width: 20px;
+    height: 20px;
+}
 
 /* Elements
 -------------------------------------------------------------- */
@@ -272,8 +277,4 @@ p {
 
 .error-text {
     color: var(--red-default);
-}
-
-.breadcrumb-title {
-    font-size: 20px;
 }

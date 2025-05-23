@@ -1,48 +1,50 @@
 import FormInput from "../../../components/form/FormInput"
+import FormSelect from "../../../components/form/FormSelect";
+import Breadcrumb from "../../../components/ui/breadcrumb/Breadcrumb"
+
+const awardTypeOptions: OptionType[] = [
+    { value: "citation", label: "Citation" },
+    { value: "clarification", label: "Clarification" },
+];
 
 const ApplyCitation = () => {
     return (
         <div className="apply-citation-section">
-            <h3 className="breadcrumb-title font-lexend fw-6 mb-3">Apply for Citation</h3>
+            <Breadcrumb
+                title="Apply for Citation"
+                paths={[
+                    { label: "Applications", href: "/applications" },
+                    { label: "Apply for Citation", href: "/applications/citation" }
+                ]}
+            />
             <div className="top-fields-area">
                 <div className="row align-items-center justify-content-between row-gap-2">
                     <div className="col-md-4">
-                        <FormInput
-                            label="Award Type:"
+                        <FormSelect
+                            label="Award Type"
                             name="awardType"
-                            placeholder="Enter award type"
-                            value=""
-                            readOnly={true}
-                        // onChange={formik.handleChange}
-                        // onBlur={formik.handleBlur}
-                        // errors={formik.errors.username}
-                        // touched={formik.touched.username}
+                            options={awardTypeOptions}
+                            value={awardTypeOptions.find((opt) => opt.value === "citation") || null}
+                            placeholder="Select award type"
                         />
                     </div>
                     <div className="col-md-4">
                         <FormInput
-                            label="Cycle Period:"
+                            label="Cycle Period"
                             name="cyclePeriod"
                             placeholder="Enter cycle period"
+                            type="month"
                             value=""
-                            readOnly={true}
-                        // onChange={formik.handleChange}
-                        // onBlur={formik.handleBlur}
-                        // errors={formik.errors.username}
-                        // touched={formik.touched.username}
                         />
                     </div>
                     <div className="col-md-4">
                         <FormInput
-                            label="Last Date:"
+                            label="Last Date"
                             name="lastDate"
+                            type="date"
                             placeholder="Enter last date"
-                            value=""
+                            value={new Date().toISOString().split("T")[0]}
                             readOnly={true}
-                        // onChange={formik.handleChange}
-                        // onBlur={formik.handleBlur}
-                        // errors={formik.errors.username}
-                        // touched={formik.touched.username}
                         />
                     </div>
                 </div>
@@ -241,15 +243,14 @@ const ApplyCitation = () => {
                                 <input type="file" className="form-control" autoComplete="off" />
                             </td>
                         </tr>
-                        <tr>
-                            <td colSpan={4}>
-                                <div className="d-flex justify-content-end">
-                                    <button className="submit-btn border-0">Submit</button>
-                                </div>
-                            </td>
-                        </tr>
                     </tbody>
                 </table>
+            </div>
+            <div className="submit-button-wrapper">
+                <div className="d-flex  gap-3 justify-content-end">
+                    <button className="draft-btn bg-transparent">Save as Draft</button>
+                    <button className="submit-btn border-0">Submit</button>
+                </div>
             </div>
         </div>
     )

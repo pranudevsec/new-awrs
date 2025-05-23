@@ -23,6 +23,14 @@
             margin-top: 30px;
         }
 
+        .sign-up-text {
+            color: var(--gray-500);
+
+            a {
+                color: var(--secondary-default);
+            }
+        }
+
         .nav-link {
             font-size: 14px;
             color: var(--blue-default);

@@ -1,9 +1,9 @@
 import { useEffect, useRef, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { SVGICON } from "../../constants/iconsList";
 import SidebarMobileMenu from "../../offcanvas/SidebarMobileMenu";
-import { Link, useNavigate } from "react-router-dom";
 // import { useAppDispatch } from "../../reduxToolkit/hooks";
 // import { signOut } from "../../reduxToolkit/slices/auth/authSlice";
-import { SVGICON } from "../../constants/iconsList";
 
 const Header = () => {
     const navigate = useNavigate();
@@ -43,11 +43,11 @@ const Header = () => {
                         onClick={() => setMobileMenu(true)}>
                         {SVGICON.header.togglemenu}
                     </button>
-                    <div className="d-flex align-items-center gap-4">
+                    <div className="d-flex align-items-center gap-sm-4 gap-3">
                         <button className="nav-icon-btn d-inline-flex align-items-center justify-content-center bg-transparent border-0" >{SVGICON.header.notification}
                         </button>
                         <div className="position-relative" ref={dropdownRef}>
-                            <button className="bg-transparent border-0" onClick={() => setOpen((prev) => !prev)}>
+                            <button className="profile-info border-0 bg-transparent d-flex align-items-center gap-sm-3 gap-2" onClick={() => setOpen((prev) => !prev)}>
                                 <img
                                     src="/media/avatar/profile-avatar.webp"
                                     alt="Profile"
@@ -55,28 +55,12 @@ const Header = () => {
                                     width={40}
                                     height={40}
                                 />
+                                <div>
+                                    <h6 className="font-lexend fw-6">Albert Flores</h6>
+                                    <p className="fw-4">flores@doe.io</p>
+                                </div>
                             </button>
                             <div className={`profile-dropdown-menu ${open ? "show" : ""}`}>
-                                <div className="profile-info d-flex align-items-center gap-3">
-                                    <img
-                                        src="/media/avatar/profile-avatar.webp"
-                                        alt="Profile"
-                                        className="rounded-circle"
-                                        width={40}
-                                        height={40}
-                                    />
-                                    <div>
-                                        <h6 className="font-lexend fw-6">Albert Flores</h6>
-                                        <p className="fw-4">flores@doe.io</p>
-                                    </div>
-                                </div>
-                                <hr />
-                                <div className="p-2">
-                                    <Link to="/applications" className="dropdown-item">My Profile</Link>
-                                    <Link to="/applications" className="dropdown-item">Account Settings</Link>
-                                    <Link to="/applications" className="dropdown-item">Activity Log</Link>
-                                </div>
-                                <hr />
                                 <div className="p-2">
                                     <button className="dropdown-item" onClick={handleSignOut}>Sign Out</button>
                                 </div>

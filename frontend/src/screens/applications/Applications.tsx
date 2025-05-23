@@ -1,9 +1,10 @@
 import { Link } from "react-router-dom"
+import Breadcrumb from "../../components/ui/breadcrumb/Breadcrumb"
 
 const Applications = () => {
     return (
         <div className="application-section">
-            <h3 className="breadcrumb-title font-lexend fw-6 mb-3">Applications</h3>
+            <Breadcrumb title="Applications" />
             <div className="row row-gap-3">
                 <div className="col-lg-3 col-sm-6">
                     <Link to="/applications/citation">

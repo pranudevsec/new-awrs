@@ -1,6 +1,7 @@
 import { lazy, type ReactElement } from "react";
 import { Navigate } from "react-router-dom";
-import Login from "../screens/login/Login";
+import Login from "../screens/auth/Login";
+import SignUp from "../screens/auth/SignUp";
 
 const Applications = lazy(() => import('../screens/applications/Applications'))
 const ApplyCitation = lazy(() => import('../screens/applications/modules/ApplyCitation'))
@@ -8,6 +9,7 @@ const ApplyAppreciation = lazy(() => import('../screens/applications/modules/App
 const Thanks = lazy(() => import('../screens/applications/modules/Thanks'))
 const ProfileSettings = lazy(() => import('../screens/profile-settings/ProfileSettings'))
 const Clarification = lazy(() => import('../screens/clarification/Clarification'))
+const ClarificationDetail = lazy(() => import('../screens/clarification/ClarificationDetail'))
 
 interface RouteConfig {
     path: string;
@@ -16,6 +18,7 @@ interface RouteConfig {
 
 export const publicRoutes: RouteConfig[] = [
     { path: '/authentication/sign-in', element: <Login /> },
+    { path: '/authentication/sign-up', element: <SignUp /> },
 ];
 
 export const authProtectedRoutes: RouteConfig[] = [
@@ -31,4 +34,5 @@ export const authProtectedRoutes: RouteConfig[] = [
 
     // Clarification
     { path: '/clarification', element: <Clarification /> },
+    { path: '/clarification/:id', element: <ClarificationDetail /> },
 ];

@@ -10,3 +10,30 @@
 // Fonts 
 @import url('https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&family=Lexend+Deca:wght@100..900&display=swap');
 @import url('https://fonts.googleapis.com/css2?family=Kaushan+Script&display=swap');
+
+
+
+
+.main-breadcrumb {
+    margin-bottom: 28px;
+
+    h3 {
+        font-size: 20px;
+    }
+
+    a {
+        font-size: 14px;
+        color: var(--gray-700);
+
+        &:last-child {
+            pointer-events: none;
+            color: var(--gray-500);
+        }
+    }
+
+    span {
+        width: 4px;
+        height: 4px;
+        background-color: var(--gray-300);
+    }
+}
