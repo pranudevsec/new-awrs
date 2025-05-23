@@ -7,6 +7,7 @@ router.use(authMiddleware);
 
 router.get("/units",  ApplicationController.getAllApplicationsForUnit);
 router.get("/subordinates",  ApplicationController.getApplicationsOfSubordinates);
+router.put("/:id",  ApplicationController.updateApplicationStatus);
 
 
 module.exports = router;

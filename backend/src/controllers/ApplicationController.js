@@ -23,3 +23,26 @@ exports.getApplicationsOfSubordinates = async (req, res) => {
     }
   };
   
+  exports.updateApplicationStatus = async (req, res) => {
+    try {
+      const { type, status } = req.body;
+      const id=req.params.id;
+      if (!['approved', 'rejected'].includes(status)) {
+        return res.status(StatusCodes.BAD_REQUEST).send(
+          ResponseHelper.error(StatusCodes.BAD_REQUEST, "Invalid status value")
+        );
+      }
+  
+      const result = await ApplicationService.updateApplicationStatus(id, type, status, req.user);
+  
+      res.status(StatusCodes.OK).send(
+        ResponseHelper.success(StatusCodes.OK, "Application status updated", result)
+      );
+    } catch (error) {
+      res.status(StatusCodes.INTERNAL_SERVER_ERROR).send(
+        ResponseHelper.error(StatusCodes.INTERNAL_SERVER_ERROR, "Internal Server Error", error.message)
+      );
+    }
+  };
+  
+  
