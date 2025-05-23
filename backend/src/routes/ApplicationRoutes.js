@@ -1,0 +1,12 @@
+const express = require("express");
+const router = express.Router();
+const ApplicationController = require("../controllers/ApplicationController");
+const authMiddleware = require("../middlewares/authMiddleware");
+
+router.use(authMiddleware);
+
+router.get("/units",  ApplicationController.getAllApplicationsForUnit);
+router.get("/subordinates",  ApplicationController.getApplicationsOfSubordinates);
+
+
+module.exports = router;

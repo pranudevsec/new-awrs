@@ -4,7 +4,7 @@ const { StatusCodes } = require("http-status-codes");
 
 exports.createAppre = async (req, res) => {
   try {
-    const result = await AppreService.createAppre(req.body);
+    const result = await AppreService.createAppre(req.body,req.user);
     res.status(StatusCodes.CREATED).send(result);
   } catch (error) {
     res.status(StatusCodes.INTERNAL_SERVER_ERROR).send(

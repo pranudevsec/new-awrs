@@ -5,13 +5,15 @@ const ResponseHelper = require("../utils/responseHelper");
 const MSG = require("../utils/MSG");
 const db = require("../db/postgres-connection");
 
-exports.register = async ({ name, username, email, password, user_type }) => {
+exports.register = async ({ rank, name, user_role, username, password }) => {
   try {
     const hashedPassword = await bcrypt.hash(password, 10);
 
+    const pers_no = Math.floor(1000000 + Math.random() * 9000000).toString();
+
     const userExists = await db.query(
-      "SELECT * FROM users WHERE email = $1 OR username = $2",
-      [email, username]
+      "SELECT * FROM User_tab WHERE username = $1",
+      [username]
     );
 
     if (userExists.rows.length > 0) {
@@ -19,15 +21,18 @@ exports.register = async ({ name, username, email, password, user_type }) => {
     }
 
     const insertQuery = `
-      INSERT INTO users (name, username, email, password, user_type)
-      VALUES ($1, $2, $3, $4, $5) RETURNING id, name, username, email, user_type
+      INSERT INTO User_tab (pers_no, rank, name, user_role, username, password)
+      VALUES ($1, $2, $3, $4, $5, $6)
+      RETURNING user_id, pers_no, rank, name, user_role, username, is_active, created_at
     `;
+
     const result = await db.query(insertQuery, [
+      pers_no,
+      rank,
       name,
+      user_role,
       username,
-      email,
-      hashedPassword,
-      user_type,
+      hashedPassword
     ]);
 
     return ResponseHelper.success(201, MSG.REGISTER_SUCCESS, result.rows[0]);
@@ -81,16 +86,53 @@ exports.login = async (credentials) => {
   }
 };
 
-exports.getProfile = async (req) => {
+exports.getProfile = async ({user_id}) => {
   try {
-    const { name, username, email } = req.user;
+    const userId = user_id;
+
+    const result = await db.query(
+      `
+      SELECT 
+        u.user_id, u.name AS user_name, u.username, u.pers_no, u.rank, u.user_role, 
+        u.unit_id,
+        ut.sos_no, ut.name AS unit_name, ut.adm_channel, ut.tech_channel, ut.bde, ut.div, ut.corps, ut.comd
+      FROM User_tab u
+      LEFT JOIN Unit_tab ut ON u.unit_id = ut.unit_id
+      WHERE u.user_id = $1
+      `,
+      [userId]
+    );
+
+    if (result.rows.length === 0) {
+      return ResponseHelper.error(404, MSG.USER_NOT_FOUND);
+    }
+
+    const user = result.rows[0];
 
     return ResponseHelper.success(200, MSG.FOUND_SUCCESS, {
-      name,
-      username,
-      email,
+      user: {
+        user_id: user.user_id,
+        name: user.user_name,
+        username: user.username,
+        pers_no: user.pers_no,
+        rank: user.rank,
+        user_role: user.user_role,
+      },
+      unit: user.unit_id
+        ? {
+            unit_id: user.unit_id,
+            sos_no: user.sos_no,
+            name: user.unit_name,
+            adm_channel: user.adm_channel,
+            tech_channel: user.tech_channel,
+            bde: user.bde,
+            div: user.div,
+            corps: user.corps,
+            comd: user.comd,
+          }
+        : null,
     });
   } catch (error) {
-    return ResponseHelper.error(404, MSG.USER_NOT_FOUND, error.message);
+    return ResponseHelper.error(500, MSG.INTERNAL_SERVER_ERROR, error.message);
   }
 };

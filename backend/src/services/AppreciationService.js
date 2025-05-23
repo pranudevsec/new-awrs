@@ -1,11 +1,26 @@
 const dbService = require("../utils/postgres/dbService");
 const ResponseHelper = require("../utils/responseHelper");
-
+const AuthService = require("../services/AuthService.js");
 // Create Appreciation
-exports.createAppre = async (data) => {
+exports.createAppre = async (data,user) => {
   const client = await dbService.getClient();
   try {
-    const { unit_id, date_init, appre_fds, status_flag } = data;
+    const {  date_init, appre_fds } = data;
+    const status_flag = "in_review";
+    const profile = await AuthService.getProfile(user);
+    const unit = profile?.data?.unit;
+
+    const requiredFields = ["name", "bde", "div", "corps", "comd"];
+    const missingFields = requiredFields.filter((field) => !unit?.[field]);
+
+    if (missingFields.length > 0) {
+      throw new Error(
+        `Incomplete unit profile. Please update the following fields in unit settings: ${missingFields.join(
+          ", "
+        )}`
+      );
+    }
+
     const { award_type, parameters } = appre_fds;
 
     const paramResult = await client.query(
@@ -16,17 +31,19 @@ exports.createAppre = async (data) => {
     );
 
     const paramMap = {};
-    paramResult.rows.forEach(p => {
+    paramResult.rows.forEach((p) => {
       paramMap[p.name.trim()] = {
         per_unit_mark: p.per_unit_mark,
         max_marks: p.max_marks,
       };
     });
 
-    const enrichedParams = parameters.map(p => {
+    const enrichedParams = parameters.map((p) => {
       const config = paramMap[p.name.trim()];
       if (!config) {
-        throw new Error(`Parameter "${p.name}" not found in master for award_type "${award_type}"`);
+        throw new Error(
+          `Parameter "${p.name}" not found in master for award_type "${award_type}"`
+        );
       }
 
       const rawMarks = p.count * config.per_unit_mark;
@@ -35,7 +52,7 @@ exports.createAppre = async (data) => {
       return {
         ...p,
         marks: finalMarks,
-        info: `1 ${p.name} = ${config.per_unit_mark} marks (Max ${config.max_marks} marks)`
+        info: `1 ${p.name} = ${config.per_unit_mark} marks (Max ${config.max_marks} marks)`,
       };
     });
 
@@ -48,7 +65,7 @@ exports.createAppre = async (data) => {
       `INSERT INTO Appre_tab (unit_id, date_init, appre_fds, status_flag)
        VALUES ($1, $2, $3, $4)
        RETURNING *`,
-      [unit_id, date_init, JSON.stringify(finalFds), status_flag]
+      [user.unit_id, date_init, JSON.stringify(finalFds), status_flag]
     );
 
     return ResponseHelper.success(201, "Appreciation created", result.rows[0]);
@@ -59,13 +76,18 @@ exports.createAppre = async (data) => {
   }
 };
 
-
 // Get all Appreciations
 exports.getAllAppres = async () => {
   const client = await dbService.getClient();
   try {
-    const result = await client.query("SELECT * FROM Appre_tab ORDER BY appreciation_id DESC");
-    return ResponseHelper.success(200, "Fetched all appreciations", result.rows);
+    const result = await client.query(
+      "SELECT * FROM Appre_tab ORDER BY appreciation_id DESC"
+    );
+    return ResponseHelper.success(
+      200,
+      "Fetched all appreciations",
+      result.rows
+    );
   } finally {
     client.release();
   }
@@ -75,7 +97,10 @@ exports.getAllAppres = async () => {
 exports.getAppreById = async (id) => {
   const client = await dbService.getClient();
   try {
-    const result = await client.query("SELECT * FROM Appre_tab WHERE appreciation_id = $1", [id]);
+    const result = await client.query(
+      "SELECT * FROM Appre_tab WHERE appreciation_id = $1",
+      [id]
+    );
     return result.rows[0]
       ? ResponseHelper.success(200, "Appreciation found", result.rows[0])
       : ResponseHelper.error(404, "Appreciation not found");
@@ -88,7 +113,7 @@ exports.getAppreById = async (id) => {
 exports.updateAppre = async (id, data) => {
   const client = await dbService.getClient();
   try {
-    const allowedFields = ["unit_id", "date_init", "appre_fds", "status_flag"];
+    const allowedFields = [ "date_init", "appre_fds", "status_flag"];
     const keys = Object.keys(data).filter((key) => allowedFields.includes(key));
 
     if (keys.length === 0) {
@@ -106,17 +131,19 @@ exports.updateAppre = async (id, data) => {
       );
 
       const paramMap = {};
-      paramResult.rows.forEach(p => {
+      paramResult.rows.forEach((p) => {
         paramMap[p.name.trim()] = {
           per_unit_mark: p.per_unit_mark,
           max_marks: p.max_marks,
         };
       });
 
-      const enrichedParams = parameters.map(p => {
+      const enrichedParams = parameters.map((p) => {
         const config = paramMap[p.name.trim()];
         if (!config) {
-          throw new Error(`Parameter "${p.name}" not found in master for award_type "${award_type}"`);
+          throw new Error(
+            `Parameter "${p.name}" not found in master for award_type "${award_type}"`
+          );
         }
 
         const rawMarks = p.count * config.per_unit_mark;
@@ -125,7 +152,7 @@ exports.updateAppre = async (id, data) => {
         return {
           ...p,
           marks: finalMarks,
-          info: `1 ${p.name} = ${config.per_unit_mark} marks (Max ${config.max_marks} marks)`
+          info: `1 ${p.name} = ${config.per_unit_mark} marks (Max ${config.max_marks} marks)`,
         };
       });
 
@@ -141,7 +168,9 @@ exports.updateAppre = async (id, data) => {
     const setClause = keys.map((key, idx) => `${key} = $${idx + 1}`).join(", ");
 
     const result = await client.query(
-      `UPDATE Appre_tab SET ${setClause} WHERE appreciation_id = $${keys.length + 1} RETURNING *`,
+      `UPDATE Appre_tab SET ${setClause} WHERE appreciation_id = $${
+        keys.length + 1
+      } RETURNING *`,
       [...values, id]
     );
 

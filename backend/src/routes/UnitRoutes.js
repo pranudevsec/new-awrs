@@ -11,5 +11,6 @@ router.get("/", UnitController.getAllUnits);
 router.get("/:id", UnitController.getUnitById);
 router.put("/:id",validateUpdateUnit, UnitController.updateUnit);
 router.delete("/:id", UnitController.deleteUnit);
+router.post("/add-unit-profile", UnitController.createOrUpdateUnit);
 
 module.exports = router;

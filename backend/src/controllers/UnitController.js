@@ -56,3 +56,21 @@ exports.deleteUnit = async (req, res) => {
     );
   }
 };
+
+exports.createOrUpdateUnit = async (req, res) => {
+  try {
+    const userId = req.user.user_id;
+    const data = req.body;
+    const result = await UnitService.createOrUpdateUnitForUser(userId, data);
+
+    res.status(result.statusCode || StatusCodes.OK).send(result);
+  } catch (error) {
+    res.status(StatusCodes.INTERNAL_SERVER_ERROR).send(
+      ResponseHelper.error(
+        StatusCodes.INTERNAL_SERVER_ERROR,
+        "Internal Server Error",
+        error.message
+      )
+    );
+  }
+};

@@ -4,7 +4,7 @@ const MSG = require("../utils/MSG");
 
 exports.validateCreateUnit = [
   body("sos_no")
-    .notEmpty().withMessage("sos_no is required")
+    .optional()
     .isLength({ min: 8, max: 8 }).withMessage("sos_no must be exactly 8 characters"),
 
   body("name")

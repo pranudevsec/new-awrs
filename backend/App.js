@@ -39,6 +39,7 @@ const ConfigRoutes = require("./src/routes/ConfigRoutes");
 const CitationRoutes = require("./src/routes/CitationRoutes");
 const AppreciationRoutes = require("./src/routes/AppreciationRoutes");
 const UnitRoutes = require("./src/routes/UnitRoutes");
+const ApplicationRoutes = require("./src/routes/ApplicationRoutes");
 
 // Use routes
 app.use("/api/auth", AuthRoutes);
@@ -47,6 +48,7 @@ app.use("/api/config", ConfigRoutes);
 app.use("/api/citation", CitationRoutes);
 app.use("/api/appreciation", AppreciationRoutes);
 app.use("/api/unit", UnitRoutes);
+app.use("/api/applications", ApplicationRoutes);
 
 // Handle uncaught exceptions
 process.on("uncaughtException", (err) => {

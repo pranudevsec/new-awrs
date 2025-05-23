@@ -10,6 +10,7 @@ CREATE TABLE User_tab (
     user_role VARCHAR NOT NULL,
     username VARCHAR UNIQUE NOT NULL,
     password TEXT NOT NULL, -- Assume it's encrypted with AES-256
+    unit_id INTEGER,
 
     is_active BOOLEAN DEFAULT TRUE,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -74,14 +75,16 @@ DROP TABLE IF EXISTS Unit_tab;
 -- Create the Unit_tab table
 CREATE TABLE Unit_tab (
     unit_id SERIAL PRIMARY KEY,
-    sos_no CHAR(8) NOT NULL,
+    sos_no CHAR(8),
     name VARCHAR NOT NULL,
     adm_channel VARCHAR,
     tech_channel VARCHAR,
     bde VARCHAR,
     div VARCHAR,
     corps VARCHAR,
-    comd VARCHAR
+    comd VARCHAR,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
 --------------------------------------------------------------------------------------------Citation_tab----------------------------------------------------------------------------------------------------------------------
@@ -95,7 +98,7 @@ CREATE TABLE Citation_tab (
     date_init DATE NOT NULL,
     citation_fds JSON NOT NULL,  -- Assumed to be stored in encrypted format at the app layer
     status_flag VARCHAR(20) NOT NULL CHECK (
-        status_flag IN ('pending', 'submitted', 'reviewed', 'approved', 'rejected')
+        status_flag IN ( 'in_review', 'in_clarification', 'approved', 'rejected')
     )
 );
 --------------------------------------------------------------------------------------------Appre_tab-------------------------------------------------------------------------------------------------------------------------------
@@ -109,7 +112,7 @@ CREATE TABLE Appre_tab (
     date_init DATE NOT NULL,
     appre_fds JSON NOT NULL, -- JSON and encrypted
      status_flag VARCHAR(20) NOT NULL CHECK (
-        status_flag IN ('pending', 'submitted', 'reviewed', 'approved', 'rejected')
+        status_flag IN ('in_review','in_clarification', 'approved', 'rejected')
     )
 );
 
@@ -202,7 +205,7 @@ VALUES (
             }
         ]
     }'::json,
-    'submitted'
+    'in_review'
 );
 
 -- Insert for Appre_tab
@@ -229,7 +232,7 @@ VALUES (
             }
         ]
     }'::json,
-    'submitted'
+    'in_review'
 );
 
 INSERT INTO User_tab (pers_no, rank, name, user_role, username, password)

@@ -41,7 +41,7 @@ exports.login = async (req, res) => {
 
 exports.getProfile = async (req, res) => {
   try {
-    const result = await AuthService.getProfile(req);
+    const result = await AuthService.getProfile(req.user);
     return res.status(result?.statusCode || StatusCodes.OK).send(result);
   } catch (error) {
     return res

@@ -2,10 +2,6 @@ const { body } = require("express-validator");
 const handleValidationErrors = require("../utils/validationMiddleware");
 const MSG = require("../utils/MSG");
 exports.validateCreateAppreciation = [
-  body("unit_id")
-    .notEmpty().withMessage("unit_id is required")
-    .isInt({ min: 1 }).withMessage("unit_id must be a positive integer"),
-
   body("date_init")
     .notEmpty().withMessage("date_init is required")
     .isISO8601().withMessage("date_init must be a valid date (YYYY-MM-DD)"),
@@ -49,10 +45,6 @@ exports.validateCreateAppreciation = [
 ];
 
 exports.validateUpdateAppreciation = [
-  body("unit_id")
-    .optional()
-    .isInt({ min: 1 }).withMessage("unit_id must be a positive integer"),
-
   body("date_init")
     .optional()
     .isISO8601().withMessage("date_init must be a valid date (YYYY-MM-DD)"),

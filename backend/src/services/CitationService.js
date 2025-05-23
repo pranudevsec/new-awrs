@@ -1,10 +1,26 @@
 const dbService = require("../utils/postgres/dbService");
 const ResponseHelper = require("../utils/responseHelper");
+const AuthService = require("../services/AuthService.js");
 
-exports.createCitation = async (data) => {
+exports.createCitation = async (data, user) => {
   const client = await dbService.getClient();
   try {
-    const { unit_id, date_init, citation_fds, status_flag } = data;
+    const { date_init, citation_fds } = data;
+    const status_flag = "in_review";
+    const profile = await AuthService.getProfile(user);
+    const unit = profile?.data?.unit;
+
+    const requiredFields = ["name", "bde", "div", "corps", "comd"];
+    const missingFields = requiredFields.filter((field) => !unit?.[field]);
+
+    if (missingFields.length > 0) {
+      throw new Error(
+        `Incomplete unit profile. Please update the following fields in unit settings: ${missingFields.join(
+          ", "
+        )}`
+      );
+    }
+
     const { award_type, parameters } = citation_fds;
 
     const paramResult = await client.query(
@@ -15,17 +31,19 @@ exports.createCitation = async (data) => {
     );
 
     const paramMap = {};
-    paramResult.rows.forEach(p => {
+    paramResult.rows.forEach((p) => {
       paramMap[p.name.trim()] = {
         per_unit_mark: p.per_unit_mark,
         max_marks: p.max_marks,
       };
     });
 
-    const updatedParameters = parameters.map(p => {
+    const updatedParameters = parameters.map((p) => {
       const matchedParam = paramMap[p.name.trim()];
       if (!matchedParam) {
-        throw new Error(`Parameter "${p.name}" not found in master for award_type "${award_type}"`);
+        throw new Error(
+          `Parameter "${p.name}" not found in master for award_type "${award_type}"`
+        );
       }
 
       const calculatedMarks = p.count * matchedParam.per_unit_mark;
@@ -34,7 +52,7 @@ exports.createCitation = async (data) => {
       return {
         ...p,
         marks: cappedMarks,
-        info: `1 ${p.name} = ${matchedParam.per_unit_mark} marks (Max ${matchedParam.max_marks} marks)`
+        info: `1 ${p.name} = ${matchedParam.per_unit_mark} marks (Max ${matchedParam.max_marks} marks)`,
       };
     });
 
@@ -44,7 +62,7 @@ exports.createCitation = async (data) => {
       `INSERT INTO Citation_tab (unit_id, date_init, citation_fds, status_flag)
        VALUES ($1, $2, $3, $4)
        RETURNING *`,
-      [unit_id, date_init, JSON.stringify(citation_fds), status_flag]
+      [user.unit_id, date_init, JSON.stringify(citation_fds), status_flag]
     );
 
     return ResponseHelper.success(201, "Citation created", result.rows[0]);
@@ -58,7 +76,9 @@ exports.createCitation = async (data) => {
 exports.getAllCitations = async () => {
   const client = await dbService.getClient();
   try {
-    const result = await client.query("SELECT * FROM Citation_tab ORDER BY citation_id DESC");
+    const result = await client.query(
+      "SELECT * FROM Citation_tab ORDER BY citation_id DESC"
+    );
     return ResponseHelper.success(200, "Fetched all citations", result.rows);
   } finally {
     client.release();
@@ -68,7 +88,10 @@ exports.getAllCitations = async () => {
 exports.getCitationById = async (id) => {
   const client = await dbService.getClient();
   try {
-    const result = await client.query("SELECT * FROM Citation_tab WHERE citation_id = $1", [id]);
+    const result = await client.query(
+      "SELECT * FROM Citation_tab WHERE citation_id = $1",
+      [id]
+    );
     return result.rows[0]
       ? ResponseHelper.success(200, "Citation found", result.rows[0])
       : ResponseHelper.error(404, "Citation not found");
@@ -80,7 +103,12 @@ exports.getCitationById = async (id) => {
 exports.updateCitation = async (id, data) => {
   const client = await dbService.getClient();
   try {
-    const allowedFields = ["unit_id", "date_init", "citation_fds", "status_flag"];
+    const allowedFields = [
+ 
+      "date_init",
+      "citation_fds",
+      "status_flag",
+    ];
     const keys = Object.keys(data).filter((key) => allowedFields.includes(key));
 
     if (keys.length === 0) {
@@ -98,17 +126,19 @@ exports.updateCitation = async (id, data) => {
       );
 
       const paramMap = {};
-      paramResult.rows.forEach(p => {
+      paramResult.rows.forEach((p) => {
         paramMap[p.name.trim()] = {
           per_unit_mark: p.per_unit_mark,
           max_marks: p.max_marks,
         };
       });
 
-      const updatedParameters = parameters.map(p => {
+      const updatedParameters = parameters.map((p) => {
         const matchedParam = paramMap[p.name.trim()];
         if (!matchedParam) {
-          throw new Error(`Parameter "${p.name}" not found in master for award_type "${award_type}"`);
+          throw new Error(
+            `Parameter "${p.name}" not found in master for award_type "${award_type}"`
+          );
         }
 
         const calculatedMarks = p.count * matchedParam.per_unit_mark;
@@ -117,7 +147,7 @@ exports.updateCitation = async (id, data) => {
         return {
           ...p,
           marks: cappedMarks,
-          info: `1 ${p.name} = ${matchedParam.per_unit_mark} marks (Max ${matchedParam.max_marks} marks)`
+          info: `1 ${p.name} = ${matchedParam.per_unit_mark} marks (Max ${matchedParam.max_marks} marks)`,
         };
       });
 
@@ -130,7 +160,9 @@ exports.updateCitation = async (id, data) => {
     const setClause = keys.map((key, idx) => `${key} = $${idx + 1}`).join(", ");
 
     const result = await client.query(
-      `UPDATE Citation_tab SET ${setClause} WHERE citation_id = $${keys.length + 1} RETURNING *`,
+      `UPDATE Citation_tab SET ${setClause} WHERE citation_id = $${
+        keys.length + 1
+      } RETURNING *`,
       [...values, id]
     );
 
@@ -147,7 +179,10 @@ exports.updateCitation = async (id, data) => {
 exports.deleteCitation = async (id) => {
   const client = await dbService.getClient();
   try {
-    const result = await client.query("DELETE FROM Citation_tab WHERE citation_id = $1 RETURNING *", [id]);
+    const result = await client.query(
+      "DELETE FROM Citation_tab WHERE citation_id = $1 RETURNING *",
+      [id]
+    );
     return result.rows[0]
       ? ResponseHelper.success(200, "Citation deleted")
       : ResponseHelper.error(404, "Citation not found");
