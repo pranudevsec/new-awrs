@@ -6,10 +6,8 @@ exports.validateCreateAppreciation = [
     .notEmpty().withMessage("date_init is required")
     .isISO8601().withMessage("date_init must be a valid date (YYYY-MM-DD)"),
 
-  body("status_flag")
-    .notEmpty().withMessage("status_flag is required")
-    .isIn(["pending", "submitted", "reviewed", "approved", "rejected"])
-    .withMessage("status_flag must be one of 'pending', 'submitted', 'reviewed', 'approved', 'rejected'"),
+    body("status_flag")
+    .optional(),
 
   body("appre_fds")
     .notEmpty().withMessage("appre_fds is required")

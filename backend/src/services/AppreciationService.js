@@ -110,16 +110,25 @@ exports.getAppreById = async (id) => {
 };
 
 // Update Appreciation
-exports.updateAppre = async (id, data) => {
+exports.updateAppre = async (id, data,user) => {
   const client = await dbService.getClient();
   try {
-    const allowedFields = [ "date_init", "appre_fds", "status_flag"];
+    const allowedFields = [ "date_init", "appre_fds", "status_flag","isShortlisted"];
     const keys = Object.keys(data).filter((key) => allowedFields.includes(key));
 
     if (keys.length === 0) {
       return ResponseHelper.error(400, "No valid fields to update");
     }
-
+      if (keys.includes("isShortlisted")) {
+        const allowedRoles = ["command", "headquarter"];
+        if (!allowedRoles.includes(user.user_role?.toLowerCase())) {
+          return ResponseHelper.error(
+            403,
+            `Only users with roles ${allowedRoles.join(" or ")} can update isShortlisted`
+          );
+        }
+      }
+      
     if (data.appre_fds) {
       const { award_type, parameters } = data.appre_fds;
 

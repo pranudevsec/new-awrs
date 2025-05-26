@@ -100,11 +100,11 @@ exports.getCitationById = async (id) => {
   }
 };
 
-exports.updateCitation = async (id, data) => {
+exports.updateCitation = async (id, data,user) => {
   const client = await dbService.getClient();
   try {
     const allowedFields = [
- 
+      "isShortlisted",
       "date_init",
       "citation_fds",
       "status_flag",
@@ -114,6 +114,16 @@ exports.updateCitation = async (id, data) => {
     if (keys.length === 0) {
       return ResponseHelper.error(400, "No valid fields to update");
     }
+    
+    if (keys.includes("isShortlisted")) {
+        const allowedRoles = ["command", "headquarter"];
+        if (!allowedRoles.includes(user.user_role?.toLowerCase())) {
+          return ResponseHelper.error(
+            403,
+            `Only users with roles ${allowedRoles.join(" or ")} can update isShortlisted`
+          );
+        }
+      }
 
     if (keys.includes("citation_fds")) {
       const { award_type, parameters } = data.citation_fds;

@@ -92,7 +92,6 @@ exports.addClarification = async (user, data) => {
 
   exports.updateClarification = async (user, data, clarification_id) => {
     const client = await dbService.getClient();
-  
     try {
       const {
         clarification,
@@ -104,13 +103,23 @@ exports.addClarification = async (user, data) => {
         return ResponseHelper.error(400, "clarification_id is required");
       }
   
-      // Build dynamic SET clause based on user role
+      const clarificationRes = await client.query(
+        `SELECT * FROM Clarification_tab WHERE clarification_id = $1`,
+        [clarification_id]
+      );
+  
+      if (clarificationRes.rowCount === 0) {
+        return ResponseHelper.error(404, "Clarification not found");
+      }
+  
+      const clarificationRow = clarificationRes.rows[0];
+      const { application_type, application_id } = clarificationRow;
+  
       const updates = [];
       const values = [];
       let i = 1;
   
-      if (user.user_role === "unit") {
-        // unit can update only clarification and clarification_doc
+      if (["unit", "brigade", "division", "corps", "command"].includes(user.user_role) && !clarification_status) {
         if (clarification !== undefined) {
           updates.push(`clarification = $${i++}`);
           values.push(clarification);
@@ -121,22 +130,19 @@ exports.addClarification = async (user, data) => {
           values.push(clarification_doc);
         }
       } else {
-        // others can update only clarification_status
         if (clarification_status !== undefined) {
           updates.push(`clarification_status = $${i++}`);
           values.push(clarification_status);
         }
       }
   
-      // If no valid fields provided, return error
       if (updates.length === 0) {
         return ResponseHelper.error(400, "No permitted update fields provided");
       }
   
-      // Always update clarified_at timestamp when status changes or unit edits text/doc
       updates.push(`clarified_at = NOW()`);
   
-      const query = `
+      const updateQuery = `
         UPDATE Clarification_tab
         SET ${updates.join(", ")}
         WHERE clarification_id = $${i}
@@ -144,16 +150,85 @@ exports.addClarification = async (user, data) => {
       `;
       values.push(clarification_id);
   
-      const result = await client.query(query, values);
+      const updateResult = await client.query(updateQuery, values);
   
-      if (result.rowCount === 0) {
-        return ResponseHelper.error(404, "Clarification not found");
+      if (
+        clarification_status === "clarified" &&
+        application_type &&
+        application_id
+      ) {
+        let appQuery = "";
+        let tableName = "";
+        let jsonField = "";
+        let idField = "";
+      
+        if (application_type === "citation") {
+          appQuery = `SELECT citation_fds FROM Citation_tab WHERE citation_id = $1`;
+          tableName = "Citation_tab";
+          jsonField = "citation_fds";
+          idField = "citation_id";
+        } else if (application_type === "appreciation") {
+          appQuery = `SELECT appre_fds FROM Appre_tab WHERE appreciation_id = $1`;
+          tableName = "Appre_tab";
+          jsonField = "appre_fds";
+          idField = "appreciation_id";
+        }
+      
+        if (appQuery) {
+          const appResult = await client.query(appQuery, [application_id]);
+      
+          if (appResult.rowCount > 0) {
+            const fds = appResult.rows[0][jsonField];
+      
+            if (fds?.parameters && Array.isArray(fds.parameters)) {
+            
+              let wasClarificationRemoved = false;
+            
+              fds.parameters = fds.parameters.map(param => {
+                if (param.clarification_id == clarification_id) {
+                  wasClarificationRemoved = true;
+                  const { clarification_id, ...rest } = param;
+                  return rest;
+                }
+                return param;
+              });
+            
+              if (wasClarificationRemoved) {
+                const updateJSONQuery = `
+                  UPDATE ${tableName}
+                  SET ${jsonField} = $1
+                  WHERE ${application_type === "citation" ? "citation_id" : "appreciation_id"} = $2
+                `;
+            
+                await client.query(updateJSONQuery, [fds, application_id]);
+            
+                const clarifiedEntry = {
+                  clarification_id,
+                  removed_at: new Date().toISOString(),
+                  action: 'clarification_id_clarified',
+                };
+            
+                const updateHistoryQuery = `
+                  UPDATE Clarification_tab
+                  SET clarified_history = COALESCE(clarified_history, '[]'::jsonb) || $1::jsonb
+                  WHERE clarification_id = $2
+                `;
+            
+                await client.query(updateHistoryQuery, [JSON.stringify([clarifiedEntry]), clarification_id]);
+              }
+            }
+            
+            const updatedFdsRes = await client.query(appQuery, [application_id]);
+            const updatedFds = updatedFdsRes.rows[0][jsonField];
+      
+          }
+        }
       }
-  
+      
       return ResponseHelper.success(
         200,
         "Clarification updated successfully",
-        result.rows[0]
+        updateResult.rows[0]
       );
     } catch (err) {
       return ResponseHelper.error(500, "Failed to update clarification", err.message);
@@ -161,6 +236,7 @@ exports.addClarification = async (user, data) => {
       client.release();
     }
   };
+  
   
   exports.getAllApplicationsWithClarificationsForUnit = async (user, query) => {
     const client = await dbService.getClient();
@@ -282,6 +358,90 @@ exports.addClarification = async (user, data) => {
       return ResponseHelper.success(200, "Fetched applications with clarifications", filteredApplications);
     } catch (err) {
       return ResponseHelper.error(500, "Failed to fetch data", err.message);
+    } finally {
+      client.release();
+    }
+  };
+  exports.getAllApplicationsWithClarificationsForSubordinates = async (user, query) => {
+    const client = await dbService.getClient();
+    try {
+      const { user_role, user_id, unit_id } = user;
+      const roleHierarchy = ['unit', 'brigade', 'division', 'corps', 'command'];
+      const currentRoleIndex = roleHierarchy.indexOf(user_role.toLowerCase());
+  
+      if (currentRoleIndex === -1 || currentRoleIndex >= roleHierarchy.length - 1) {
+        return ResponseHelper.error(400, 'Invalid or top-level role');
+      }
+  
+      const seniorRole = roleHierarchy[currentRoleIndex + 1];
+      const matchingField = {
+        brigade: 'bde',
+        division: 'div',
+        corps: 'corps',
+        command: 'comd',
+      }[user_role.toLowerCase()];
+  
+  
+      const ownUnitQuery = `SELECT * FROM Unit_tab WHERE unit_id = $1`;
+      const ownUnitRes = await client.query(ownUnitQuery, [unit_id]);
+      const ownUnitData = ownUnitRes.rows[0];
+  
+      if (!ownUnitData) {
+        return ResponseHelper.error(404, 'Unit not found for current user');
+      }
+  
+      const ownUnitName = ownUnitData.name;
+  
+      const clarificationQuery = `
+        SELECT * FROM Clarification_tab 
+        WHERE clarification_by_role = $1
+        AND clarification_status = 'pending'
+      `;
+      const clarificationsResult = await client.query(clarificationQuery, [seniorRole]);
+      const clarifications = clarificationsResult.rows;
+  
+  
+      const enrichedClarifications = [];
+  
+      for (const clarification of clarifications) {
+        let applicationData = null;
+        let unitData = null;
+  
+        if (clarification.application_type === 'citation') {
+          const citationQuery = `SELECT * FROM Citation_tab WHERE citation_id = $1`;
+          const res = await client.query(citationQuery, [clarification.application_id]);
+          applicationData = res.rows[0] || null;
+        } else if (clarification.application_type === 'appreciation') {
+          const appreQuery = `SELECT * FROM Appre_tab WHERE appreciation_id = $1`;
+          const res = await client.query(appreQuery, [clarification.application_id]);
+          applicationData = res.rows[0] || null;
+        }
+  
+        if (applicationData?.unit_id) {
+          const unitQuery = `SELECT * FROM Unit_tab WHERE unit_id = $1`;
+          const res = await client.query(unitQuery, [applicationData.unit_id]);
+          unitData = res.rows[0] || null;
+        }
+  
+        if (
+          unitData &&
+          matchingField &&
+          unitData[matchingField] === ownUnitName
+        ) {
+          enrichedClarifications.push({
+            ...clarification,
+          });
+        }
+      }
+  
+      return ResponseHelper.success(
+        200,
+        'Fetched pending clarifications',
+        enrichedClarifications
+      );
+    } catch (err) {
+      console.error(`[Clarification API] Error: ${err.message}`);
+      return ResponseHelper.error(500, 'Failed to fetch clarifications', err.message);
     } finally {
       client.release();
     }

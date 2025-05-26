@@ -10,7 +10,7 @@ router.use(authMiddleware);
 router.post("/",checkRole(["unit"]),validateCreateCitation, CitationController.createCitation);
 router.get("/", CitationController.getAllCitations);
 router.get("/:id", CitationController.getCitationById);
-router.put("/:id",checkRole(["unit"]),validateUpdateCitation, CitationController.updateCitation);
+router.put("/:id",checkRole(["unit","command","headquarter"]),validateUpdateCitation, CitationController.updateCitation);
 router.delete("/:id", CitationController.deleteCitation);
 
 module.exports = router;

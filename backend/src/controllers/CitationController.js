@@ -40,7 +40,7 @@ exports.getCitationById = async (req, res) => {
 
 exports.updateCitation = async (req, res) => {
   try {
-    const result = await CitationService.updateCitation(req.params.id, req.body);
+    const result = await CitationService.updateCitation(req.params.id, req.body,req.user);
     res.status(StatusCodes.OK).send(result);
   } catch (error) {
     res.status(StatusCodes.INTERNAL_SERVER_ERROR).send(

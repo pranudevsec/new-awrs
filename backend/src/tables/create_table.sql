@@ -97,11 +97,12 @@ CREATE TABLE Citation_tab (
     unit_id INTEGER NOT NULL REFERENCES Unit_tab(unit_id),
     date_init DATE NOT NULL,
     citation_fds JSON NOT NULL,  -- Assumed to be stored in encrypted format at the app layer
-    ADD COLUMN last_approved_by_role VARCHAR(50),
-ADD COLUMN last_approved_at TIMESTAMP,
+    last_approved_by_role VARCHAR(50),
+last_approved_at TIMESTAMP,
     status_flag VARCHAR(20) NOT NULL CHECK (
         status_flag IN ( 'in_review', 'in_clarification', 'approved', 'rejected')
-    )
+    ),
+    isShortlisted BOOLEAN DEFAULT FALSE
 );
 --------------------------------------------------------------------------------------------Appre_tab-------------------------------------------------------------------------------------------------------------------------------
 -- Drop if exists
@@ -113,11 +114,12 @@ CREATE TABLE Appre_tab (
     unit_id INTEGER NOT NULL REFERENCES Unit_tab(unit_id),
     date_init DATE NOT NULL,
     appre_fds JSON NOT NULL, -- JSON and encrypted
-        ADD COLUMN last_approved_by_role VARCHAR(50),
-ADD COLUMN last_approved_at TIMESTAMP,
+    last_approved_by_role VARCHAR(50),
+last_approved_at TIMESTAMP,
      status_flag VARCHAR(20) NOT NULL CHECK (
         status_flag IN ('in_review','in_clarification', 'approved', 'rejected')
-    )
+    ),
+    isShortlisted BOOLEAN DEFAULT FALSE 
 );
 
 --------------------------------------------------------------------------------------------Clarification_tab-------------------------------------------------------------------------------------------------------------------------------
@@ -138,6 +140,7 @@ CREATE TABLE Clarification_tab (
     reviewer_comment TEXT,
     clarification TEXT,
     clarification_doc TEXT,
+    clarified_history JSONB DEFAULT '[]',
 
     clarification_sent_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     clarified_at TIMESTAMP

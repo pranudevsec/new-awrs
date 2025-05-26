@@ -8,9 +8,7 @@ exports.validateCreateCitation = [
     .isISO8601().withMessage("date_init must be a valid date (YYYY-MM-DD)"),
 
   body("status_flag")
-    .notEmpty().withMessage("status_flag is required")
-    .isIn(["pending", "submitted", "reviewed", "approved", "rejected"])
-    .withMessage("status_flag must be one of 'pending', 'submitted', 'reviewed', 'approved', 'rejected'"),
+   .optional(),
 
   body("citation_fds")
     .notEmpty().withMessage("citation_fds is required")

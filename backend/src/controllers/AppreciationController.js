@@ -40,7 +40,7 @@ exports.getAppreById = async (req, res) => {
 
 exports.updateAppre = async (req, res) => {
   try {
-    const result = await AppreService.updateAppre(req.params.id, req.body);
+    const result = await AppreService.updateAppre(req.params.id, req.body,req.user);
     res.status(StatusCodes.OK).send(result);
   } catch (error) {
     res.status(StatusCodes.INTERNAL_SERVER_ERROR).send(
