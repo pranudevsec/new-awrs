@@ -2,7 +2,6 @@ import { lazy, type ReactElement } from "react";
 import { Navigate } from "react-router-dom";
 import Login from "../screens/auth/Login";
 import SignUp from "../screens/auth/SignUp";
-import CommandPanel from "../screens/command-panel/CommandPanel";
 
 const Applications = lazy(() => import('../screens/applications/Applications'))
 const ApplyCitation = lazy(() => import('../screens/applications/modules/ApplyCitation'))
@@ -12,6 +11,9 @@ const ProfileSettings = lazy(() => import('../screens/profile-settings/ProfileSe
 const Clarification = lazy(() => import('../screens/clarification/Clarification'))
 const UnitClarificationDetail = lazy(() => import('../screens/clarification/UnitClarificationDetail'))
 const ClarificationDetail = lazy(() => import('../screens/clarification/ClarificationDetail'))
+const CommandPanel = lazy(() => import('../screens/command-panel/CommandPanel'))
+const CommandPanelDetail = lazy(() => import('../screens/command-panel/CommandPanelDetail'))
+const Winners = lazy(() => import('../screens/winners/Winners'))
 
 interface RouteConfig {
     path: string;
@@ -41,4 +43,6 @@ export const authProtectedRoutes: RouteConfig[] = [
 
     // Command Panel
     { path: '/command-panel', element: <CommandPanel /> },
+    { path: '/command-panel/:id', element: <CommandPanelDetail /> },
+    { path: '/winners', element: <Winners /> },
 ];

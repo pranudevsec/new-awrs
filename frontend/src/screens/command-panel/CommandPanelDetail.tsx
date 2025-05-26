@@ -2,10 +2,10 @@ import { useState } from "react";
 import { SVGICON } from "../../constants/iconsList";
 import Breadcrumb from "../../components/ui/breadcrumb/Breadcrumb"
 import ClarificationModal from "../../modals/ClarificationModal";
-import UnitClarificationCanvas from "./offcanvas/UnitClarificationCanvas";
+import UnitClarificationCanvas from "../clarification/offcanvas/UnitClarificationCanvas";
 
 
-const UnitClarificationDetail = () => {
+const CommandPanelDetail = () => {
     // States
     const [clarificationShow, setClarificationShow] = useState(false)
     const [filterVisible, setFilterVisible] = useState(false);
@@ -17,8 +17,8 @@ const UnitClarificationDetail = () => {
                     <Breadcrumb
                         title="Application ID: #12345"
                         paths={[
-                            { label: "Clarification", href: "/clarification" },
-                            { label: "Details", href: "/clarification/1" }
+                            { label: "Scoreboard", href: "/command-panel" },
+                            { label: "Details", href: "/command-panel/1" }
                         ]}
                     />
                     <button className="filter-btn d-inline-flex align-items-center justify-content-center gap-1 border-0 mt-sm-0 mt-3" onClick={() => setFilterVisible(true)}>
@@ -455,4 +455,4 @@ const UnitClarificationDetail = () => {
     )
 }
 
-export default UnitClarificationDetail
+export default CommandPanelDetail

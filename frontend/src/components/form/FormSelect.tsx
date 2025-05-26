@@ -1,5 +1,5 @@
 import { Fragment, type FC } from 'react';
-import Select from 'react-select';
+import Select, { type MenuPlacement } from 'react-select';
 import CustomStyles from './components/CustomStyles';
 
 interface FormSelectProps {
@@ -12,6 +12,7 @@ interface FormSelectProps {
     touched?: boolean;
     placeholder?: string;
     isDisabled?: boolean
+    menuPlacement?: MenuPlacement
 }
 
 const FormSelect: FC<FormSelectProps> = ({
@@ -23,7 +24,8 @@ const FormSelect: FC<FormSelectProps> = ({
     placeholder = 'Select',
     errors,
     touched,
-    isDisabled = false
+    isDisabled = false,
+    menuPlacement = "bottom"
 }) => {
     const isInvalid = !!(touched && errors);
 
@@ -41,6 +43,7 @@ const FormSelect: FC<FormSelectProps> = ({
                 styles={CustomStyles(isInvalid)}
                 placeholder={placeholder}
                 isDisabled={isDisabled}
+                menuPlacement={menuPlacement}
             />
             {isInvalid && <p className="error-text">{errors}</p>}
         </Fragment>

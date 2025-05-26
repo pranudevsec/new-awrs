@@ -4,7 +4,9 @@ import Breadcrumb from "../../components/ui/breadcrumb/Breadcrumb"
 const Applications = () => {
     return (
         <div className="application-section">
-            <Breadcrumb title="Applications" />
+            <div className="d-flex flex-sm-row flex-column align-items-sm-center justify-content-between mb-4">
+                <Breadcrumb title="Applications" />
+            </div>
             <div className="row row-gap-3">
                 <div className="col-lg-3 col-sm-6">
                     <Link to="/applications/citation">

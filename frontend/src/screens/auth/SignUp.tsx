@@ -45,15 +45,15 @@ const SignUp = () => {
             <div className="container-fluid">
                 <div className="row min-vh-100 align-items-stretch justify-content-center">
                     <div className="col-xxl-6 col-xl-6 d-xl-block d-none">
-                        <div className="auth-image-area d-flex align-items-end justify-content-center h-100">
+                        <div className="auth-image-area d-flex align-items-end h-100">
                             <img src="/media/auth/military.png" alt="Military" className="img-fluid object-fit-contain" />
                         </div>
                     </div>
-                    <div className="col-xxl-6 col-xl-6 col-md-10 d-flex align-items-center justify-content-center">
-                        <div className="auth-form-wrapper w-100 d-flex justify-content-center">
+                    <div className="col-xxl-4 col-xl-5 col-md-10 d-flex align-items-center justify-content-center">
+                        <div className="auth-form-wrapper w-100 d-flex flex-column align-items-center justify-content-center">
+                            <img src="/media/logo/logo.svg" alt="Logo" className="mb-3 mx-auto" width={110} />
                             <div className="auth-form-area w-100">
-                                <img src="/media/logo/logo-text.svg" alt="Logo" className="mb-4" />
-                                <h2 className="font-lexend fw-6 mb-3">Create an Account</h2>
+                                <h2 className="font-lexend fw-6">Create an Account</h2>
                                 <form onSubmit={formik.handleSubmit}>
                                     <div className="mb-2">
                                         <FormInput

@@ -2,7 +2,7 @@ import { Link } from "react-router-dom";
 import { SVGICON } from "../../constants/iconsList";
 import Breadcrumb from "../../components/ui/breadcrumb/Breadcrumb"
 import FormSelect from "../../components/form/FormSelect";
-import Pagination from "../../components/ui/pagination/Pagination";
+// import Pagination from "../../components/ui/pagination/Pagination";
 
 const awardTypeOptions: OptionType[] = [
     { value: "citation", label: "Citation" },
@@ -12,7 +12,9 @@ const awardTypeOptions: OptionType[] = [
 const Clarification = () => {
     return (
         <div className="clarification-section">
-            <Breadcrumb title="Application Listing" />
+            <div className="d-flex flex-sm-row flex-column align-items-sm-center justify-content-between mb-4">
+                <Breadcrumb title="Application Listing" />
+            </div>
             <div className="filter-wrapper d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
                 <div className="search-wrapper position-relative">
                     <button className="border-0 bg-transparent position-absolute translate-middle-y top-50">{SVGICON.app.search}</button>
@@ -168,7 +170,7 @@ const Clarification = () => {
                     </tbody>
                 </table>
             </div>
-            <Pagination />
+            {/* <Pagination /> */}
         </div>
     )
 }

@@ -46,6 +46,35 @@
 
 .apply-citation-section {
 
+    .filter-btn {
+        font-size: 14px;
+        font-weight: 500;
+        background-color: var(--secondary-default);
+        color: var(--background);
+        padding: 8px 16px;
+        height: 40px;
+        border-radius: 6px;
+
+        span {
+            font-size: 16px;
+        }
+    }
+
+    .action-btn {
+        width: 32px;
+        height: 32px;
+        padding: 2px;
+        border: 1px solid var(--muted);
+        border-radius: 4px;
+        color: var(--gray-500);
+        transition: all 0.3s ease;
+
+        &:hover {
+            border: 1px solid var(--secondary-default);
+            color: var(--secondary-default);
+        }
+    }
+
 
     .main-table {
         .input-with-tooltip {
@@ -134,6 +163,18 @@
                 p {
                     color: var(--gray-900);
                 }
+
+                .submit-btn {
+                    font-size: 14px;
+                    font-weight: 500;
+                    color: var(--gray-0);
+                    background-color: var(--secondary-default);
+                    border: 1px solid var(--secondary-default);
+                    border-radius: 5px;
+                    padding: 7px 16px;
+                    min-width: 120px;
+                }
+
             }
         }
     }

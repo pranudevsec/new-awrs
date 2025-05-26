@@ -1,4 +1,28 @@
 .clarification-section {
+    .export-wrapper {
+        margin-bottom: 28px;
+
+        .button-area {
+            button {
+                font-size: 14px;
+                font-weight: 500;
+                border-radius: 5px;
+                padding: 7px 16px;
+            }
+
+            .export-btn {
+                color: var(--gray-700);
+                border: 1px solid var(--muted);
+            }
+
+            .publish-btn {
+                color: var(--gray-0);
+                background-color: var(--secondary-default);
+                border: 1px solid var(--secondary-default);
+            }
+        }
+    }
+
     .filter-wrapper {
         .search-wrapper {
             button {
@@ -133,6 +157,5 @@
             }
         }
     }
-
 
 }

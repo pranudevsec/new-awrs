@@ -31,7 +31,9 @@ const ProfileSettings = () => {
 
     return (
         <div className="profile-settings-section">
-            <Breadcrumb title="Profile Settings" />
+            <div className="d-flex flex-sm-row flex-column align-items-sm-center justify-content-between mb-4">
+                <Breadcrumb title="Profile Settings" />
+            </div>
             <form onSubmit={formik.handleSubmit}>
                 <div className="row">
                     <div className="col-sm-6 mb-3">

@@ -21,7 +21,7 @@ const AuthLayout = ({ children }: { children: React.ReactNode }) => {
                 {/* Header */}
                 <Header />
                 {/* /Header */}
-                <div className="scroll-style-110 flex-grow-1 overflow-auto">
+                <div className="scroll-style-110 overflow-auto">
                     {children}
                 </div>
             </div>
