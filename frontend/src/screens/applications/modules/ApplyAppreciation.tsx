@@ -8,6 +8,13 @@ const awardTypeOptions: OptionType[] = [
     { value: "clarification", label: "Clarification" },
 ];
 
+const cyclePeriodOptions: OptionType[] = [
+    { value: "2024 - H1", label: "2024 - H1" },
+    { value: "2024 - H2", label: "2024 - H2" },
+    { value: "2025 - H1", label: "2025 - H1" },
+    { value: "2025 - H2", label: "2025 - H2" },
+];
+
 const ApplyAppreciation = () => {
     const navigate = useNavigate();
 
@@ -74,12 +81,12 @@ const ApplyAppreciation = () => {
                             />
                         </div>
                         <div className="col-lg-3 col-sm-4 mb-sm-0 mb-2">
-                            <FormInput
+                            <FormSelect
                                 label="Cycle Period"
                                 name="cyclePeriod"
-                                placeholder="Enter cycle period"
-                                type="text"
-                                value="2024 - H1"
+                                options={cyclePeriodOptions}
+                                value={cyclePeriodOptions.find((opt) => opt.value === "citation") || null}
+                                placeholder="Select award type"
                             />
                         </div>
                         <div className="col-lg-3 col-sm-4">

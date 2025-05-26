@@ -3,6 +3,8 @@ import { Link } from "react-router-dom";
 import { SVGICON } from "../../constants/iconsList";
 import Pagination from "../../components/ui/pagination/Pagination";
 import ScoreboardCanvas from "./offcanvas/ScoreboardCanvas";
+// import FormSelect from "../../components/form/FormSelect";
+// import FormInput from "../../components/form/FormInput";
 
 // const awardTypeOptions: OptionType[] = [
 //     { value: "citation", label: "Citation" },
@@ -27,6 +29,7 @@ const CommandPanel = () => {
                         <button className="publish-btn">Publish Winner</button>
                     </div>
                 </div>
+
                 {/* <div className="filters-fields-area">
                 <div className="row align-items-center justify-content-between row-gap-2">
                     <div className="col-md-4">
@@ -64,7 +67,7 @@ const CommandPanel = () => {
                         <button className="border-0 bg-transparent position-absolute translate-middle-y top-50">{SVGICON.app.search}</button>
                         <input type="text" placeholder="search..." className="form-control" />
                     </div>
-                    <button className="filters-btn bg-transparent d-inline-flex align-items-center gap-1" onClick={() => setFilterVisible(true)}>{SVGICON.app.filters2} Filters</button>
+                    {/* <button className="filters-btn bg-transparent d-inline-flex align-items-center gap-1" onClick={() => setFilterVisible(true)}>{SVGICON.app.filters2} Filters</button> */}
                 </div>
                 <div className="table-responsive">
                     <table className="main-table w-100">

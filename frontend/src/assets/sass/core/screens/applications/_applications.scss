@@ -263,3 +263,16 @@
         }
     }
 }
+
+
+.clarification-btn {
+    font-size: 14px;
+    font-weight: 500;
+    background-color: transparent;
+    border: 1px solid var(--secondary-default);
+    border-radius: 5px;
+    padding: 7px 16px;
+    min-width: 120px;
+    color: var(--gray-700);
+    border: 1px solid var(--muted);
+}

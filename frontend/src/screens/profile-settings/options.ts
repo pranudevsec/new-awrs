@@ -1,4 +1,5 @@
 export const unitOptions: OptionType[] = [
+  { value: "n/a", label: "N/A" },
   { value: "unit1", label: "Unit 1" },
   { value: "unit2", label: "Unit 2" },
   { value: "unit3", label: "Unit 3" },
@@ -6,6 +7,7 @@ export const unitOptions: OptionType[] = [
   { value: "unit5", label: "Unit 5" },
 ];
 export const brigadeOptions: OptionType[] = [
+  { value: "n/a", label: "N/A" },
   { value: "brigade1", label: "Brigade 1" },
   { value: "brigade2", label: "Brigade 2" },
   { value: "brigade3", label: "Brigade 3" },
@@ -13,6 +15,7 @@ export const brigadeOptions: OptionType[] = [
   { value: "brigade5", label: "Brigade 5" },
 ];
 export const divisonOptions: OptionType[] = [
+  { value: "n/a", label: "N/A" },
   { value: "divison1", label: "Divison 1" },
   { value: "divison2", label: "Divison 2" },
   { value: "divison3", label: "Divison 3" },
@@ -20,6 +23,7 @@ export const divisonOptions: OptionType[] = [
   { value: "divison5", label: "Divison 5" },
 ];
 export const corpsOptions: OptionType[] = [
+  { value: "n/a", label: "N/A" },
   { value: "corps1", label: "Corps 1" },
   { value: "corps2", label: "Corps 2" },
   { value: "corps3", label: "Corps 3" },
@@ -27,6 +31,7 @@ export const corpsOptions: OptionType[] = [
   { value: "corps5", label: "Corps 5" },
 ];
 export const commandOptions: OptionType[] = [
+  { value: "n/a", label: "N/A" },
   { value: "command1", label: "Command 1" },
   { value: "command2", label: "Command 2" },
   { value: "command3", label: "Command 3" },

@@ -1,13 +1,22 @@
 import { useState } from "react";
-import { SVGICON } from "../../constants/iconsList";
+// import { SVGICON } from "../../constants/iconsList";
 import Breadcrumb from "../../components/ui/breadcrumb/Breadcrumb";
 import Pagination from "../../components/ui/pagination/Pagination";
 import WinnersCanvas from "./offcanvas/WinnersCanvas";
+import FormSelect from "../../components/form/FormSelect";
+import FormInput from "../../components/form/FormInput";
 
-// const awardTypeOptions: OptionType[] = [
-//     { value: "citation", label: "Citation" },
-//     { value: "clarification", label: "Clarification" },
-// ];
+const awardTypeOptions: OptionType[] = [
+    { value: "citation", label: "Citation" },
+    { value: "clarification", label: "Clarification" },
+];
+
+const cyclePeriodOptions: OptionType[] = [
+    { value: "2024 - H1", label: "2024 - H1" },
+    { value: "2024 - H2", label: "2024 - H2" },
+    { value: "2025 - H1", label: "2025 - H1" },
+    { value: "2025 - H2", label: "2025 - H2" },
+];
 
 const Winners = () => {
     // States
@@ -17,10 +26,42 @@ const Winners = () => {
         <>
             <div className="clarification-section">
                 <div className="d-flex flex-sm-row flex-column justify-content-between mb-4">
-                    <Breadcrumb title="Winners" />
-                    <button className="filter-btn d-inline-flex align-items-center justify-content-center gap-1 border-0 mt-sm-0 mt-3" onClick={() => setFilterVisible(true)}>
+                    <Breadcrumb title="Last Year Winners" />
+                    {/* <button className="filter-btn d-inline-flex align-items-center justify-content-center gap-1 border-0 mt-sm-0 mt-3" onClick={() => setFilterVisible(true)}>
                         <span className="rotate-90">{SVGICON.app.filters}</span>Filters
-                    </button>
+                    </button> */}
+                </div>
+                <div className="table-filter-area mb-4">
+                    <div className="row">
+                        <div className="col-lg-3 col-sm-4 mb-sm-0 mb-2">
+                            <FormSelect
+                                label="Award Type"
+                                name="awardType"
+                                options={awardTypeOptions}
+                                value={awardTypeOptions.find((opt) => opt.value === "citation") || null}
+                                placeholder="Select award type"
+                                isDisabled={true}
+                            />
+                        </div>
+                        <div className="col-lg-3 col-sm-4 mb-sm-0 mb-2">
+                            <FormSelect
+                                label="Cycle Period"
+                                name="cyclePeriod"
+                                options={cyclePeriodOptions}
+                                value={cyclePeriodOptions.find((opt) => opt.value === "citation") || null}
+                                placeholder="Select award type"
+                            />
+                        </div>
+                        <div className="col-lg-3 col-sm-4">
+                            <FormInput
+                                label="Unit"
+                                name="lastDate"
+                                placeholder="Enter unit"
+                                value=""
+                                readOnly={true}
+                            />
+                        </div>
+                    </div>
                 </div>
                 {/* <div className="filters-fields-area">
                     <div className="row align-items-center justify-content-between row-gap-2">

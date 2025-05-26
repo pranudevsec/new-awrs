@@ -9,6 +9,13 @@ const awardTypeOptions: OptionType[] = [
     { value: "clarification", label: "Clarification" },
 ];
 
+const cyclePeriodOptions: OptionType[] = [
+    { value: "2024 - H1", label: "2024 - H1" },
+    { value: "2024 - H2", label: "2024 - H2" },
+    { value: "2025 - H1", label: "2025 - H1" },
+    { value: "2025 - H2", label: "2025 - H2" },
+];
+
 interface ApplyCitationCanvasProps {
     show: boolean;
     handleClose: () => void;
@@ -38,12 +45,12 @@ const ApplyCitationCanvas: FC<ApplyCitationCanvasProps> = ({ show, handleClose }
                     />
                 </div>
                 <div className="mb-4">
-                    <FormInput
+                    <FormSelect
                         label="Cycle Period"
                         name="cyclePeriod"
-                        placeholder="Enter cycle period"
-                        type="text"
-                        value="2024 - H1"
+                        options={cyclePeriodOptions}
+                        value={cyclePeriodOptions.find((opt) => opt.value === "citation") || null}
+                        placeholder="Select award type"
                     />
                 </div>
                 <div className="mb-4">

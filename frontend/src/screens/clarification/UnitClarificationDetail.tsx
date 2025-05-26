@@ -2,12 +2,26 @@ import { useState } from "react";
 import { SVGICON } from "../../constants/iconsList";
 import Breadcrumb from "../../components/ui/breadcrumb/Breadcrumb"
 import ClarificationModal from "../../modals/ClarificationModal";
-import UnitClarificationCanvas from "./offcanvas/UnitClarificationCanvas";
+// import UnitClarificationCanvas from "./offcanvas/UnitClarificationCanvas";
+import FormSelect from "../../components/form/FormSelect";
+import FormInput from "../../components/form/FormInput";
+
+const awardTypeOptions: OptionType[] = [
+    { value: "citation", label: "Citation" },
+    { value: "clarification", label: "Clarification" },
+];
+
+const cyclePeriodOptions: OptionType[] = [
+    { value: "2024 - H1", label: "2024 - H1" },
+    { value: "2024 - H2", label: "2024 - H2" },
+    { value: "2025 - H1", label: "2025 - H1" },
+    { value: "2025 - H2", label: "2025 - H2" },
+];
 
 const UnitClarificationDetail = () => {
     // States
     const [clarificationShow, setClarificationShow] = useState(false)
-    const [filterVisible, setFilterVisible] = useState(false);
+    // const [filterVisible, setFilterVisible] = useState(false);
 
     return (
         <>
@@ -20,9 +34,41 @@ const UnitClarificationDetail = () => {
                             { label: "Details", href: "/clarification/1" }
                         ]}
                     />
-                    <button className="filter-btn d-inline-flex align-items-center justify-content-center gap-1 border-0 mt-sm-0 mt-3" onClick={() => setFilterVisible(true)}>
+                    {/* <button className="filter-btn d-inline-flex align-items-center justify-content-center gap-1 border-0 mt-sm-0 mt-3" onClick={() => setFilterVisible(true)}>
                         <span className="rotate-90">{SVGICON.app.filters}</span>Filters
-                    </button>
+                    </button> */}
+                </div>
+                <div className="table-filter-area mb-4">
+                    <div className="row">
+                        <div className="col-lg-3 col-sm-4 mb-sm-0 mb-2">
+                            <FormSelect
+                                label="Award Type"
+                                name="awardType"
+                                options={awardTypeOptions}
+                                value={awardTypeOptions.find((opt) => opt.value === "citation") || null}
+                                placeholder="Select award type"
+                                isDisabled={true}
+                            />
+                        </div>
+                        <div className="col-lg-3 col-sm-4 mb-sm-0 mb-2">
+                            <FormSelect
+                                label="Cycle Period"
+                                name="cyclePeriod"
+                                options={cyclePeriodOptions}
+                                value={cyclePeriodOptions.find((opt) => opt.value === "citation") || null}
+                                placeholder="Select award type"
+                            />
+                        </div>
+                        <div className="col-lg-3 col-sm-4">
+                            <FormInput
+                                label="Unit"
+                                name="lastDate"
+                                placeholder="Enter unit"
+                                value=""
+                                readOnly={true}
+                            />
+                        </div>
+                    </div>
                 </div>
                 {/* <div className="filters-fields-area flex-shrink-0">
                     <div className="row align-items-center justify-content-between row-gap-2">
@@ -107,9 +153,10 @@ const UnitClarificationDetail = () => {
                                     <input type="file" className="form-control" autoComplete="off" />
                                 </td>
                                 <td style={{ width: 200, minWidth: 200, maxWidth: 200 }}>
-                                    <button className="action-btn bg-transparent d-inline-flex align-items-center justify-content-center"
+                                    {/* <button className="action-btn bg-transparent d-inline-flex align-items-center justify-content-center"
                                         onClick={() => setClarificationShow(true)}>{SVGICON.app.edit}
-                                    </button>
+                                    </button> */}
+                                    <button className="clarification-btn" onClick={() => setClarificationShow(true)}>Add Clarification</button>
                                 </td>
                                 <td style={{ width: 200, minWidth: 200, maxWidth: 200 }}>
                                     <button className="submit-btn">Submit</button>
@@ -135,11 +182,12 @@ const UnitClarificationDetail = () => {
                                     <input type="file" className="form-control" autoComplete="off" />
                                 </td>
                                 <td style={{ width: 200, minWidth: 200, maxWidth: 200 }}>
-                                    <button className="action-btn bg-transparent d-inline-flex align-items-center justify-content-center"
+                                    {/* <button className="action-btn bg-transparent d-inline-flex align-items-center justify-content-center"
                                         onClick={() => setClarificationShow(true)}>{SVGICON.app.edit}
-                                    </button>
+                                    </button> */}
+                                    <button className="clarification-btn" onClick={() => setClarificationShow(true)}>Add Clarification</button>
                                 </td>
-                                <td style={{ width: 150, minWidth: 150, maxWidth: 150 }}>
+                                <td style={{ width: 200, minWidth: 200, maxWidth: 200 }}>
                                     <button className="submit-btn">Submit</button>
                                 </td>
                             </tr>
@@ -163,11 +211,12 @@ const UnitClarificationDetail = () => {
                                     <input type="file" className="form-control" autoComplete="off" />
                                 </td>
                                 <td style={{ width: 200, minWidth: 200, maxWidth: 200 }}>
-                                    <button className="action-btn bg-transparent d-inline-flex align-items-center justify-content-center"
+                                    {/* <button className="action-btn bg-transparent d-inline-flex align-items-center justify-content-center"
                                         onClick={() => setClarificationShow(true)}>{SVGICON.app.edit}
-                                    </button>
+                                    </button> */}
+                                    <button className="clarification-btn" onClick={() => setClarificationShow(true)}>Add Clarification</button>
                                 </td>
-                                <td style={{ width: 150, minWidth: 150, maxWidth: 150 }}>
+                                <td style={{ width: 200, minWidth: 200, maxWidth: 200 }}>
                                     <button className="submit-btn">Submit</button>
                                 </td>
                             </tr>
@@ -191,11 +240,12 @@ const UnitClarificationDetail = () => {
                                     <input type="file" className="form-control" autoComplete="off" />
                                 </td>
                                 <td style={{ width: 200, minWidth: 200, maxWidth: 200 }}>
-                                    <button className="action-btn bg-transparent d-inline-flex align-items-center justify-content-center"
+                                    {/* <button className="action-btn bg-transparent d-inline-flex align-items-center justify-content-center"
                                         onClick={() => setClarificationShow(true)}>{SVGICON.app.edit}
-                                    </button>
+                                    </button> */}
+                                    <button className="clarification-btn" onClick={() => setClarificationShow(true)}>Add Clarification</button>
                                 </td>
-                                <td style={{ width: 150, minWidth: 150, maxWidth: 150 }}>
+                                <td style={{ width: 200, minWidth: 200, maxWidth: 200 }}>
                                     <button className="submit-btn">Submit</button>
                                 </td>
                             </tr>
@@ -219,11 +269,12 @@ const UnitClarificationDetail = () => {
                                     <input type="file" className="form-control" autoComplete="off" />
                                 </td>
                                 <td style={{ width: 200, minWidth: 200, maxWidth: 200 }}>
-                                    <button className="action-btn bg-transparent d-inline-flex align-items-center justify-content-center"
+                                    {/* <button className="action-btn bg-transparent d-inline-flex align-items-center justify-content-center"
                                         onClick={() => setClarificationShow(true)}>{SVGICON.app.edit}
-                                    </button>
+                                    </button> */}
+                                    <button className="clarification-btn" onClick={() => setClarificationShow(true)}>Add Clarification</button>
                                 </td>
-                                <td style={{ width: 150, minWidth: 150, maxWidth: 150 }}>
+                                <td style={{ width: 200, minWidth: 200, maxWidth: 200 }}>
                                     <button className="submit-btn">Submit</button>
                                 </td>
                             </tr>
@@ -247,14 +298,46 @@ const UnitClarificationDetail = () => {
                                     <input type="file" className="form-control" autoComplete="off" />
                                 </td>
                                 <td style={{ width: 200, minWidth: 200, maxWidth: 200 }}>
-                                    <button className="action-btn bg-transparent d-inline-flex align-items-center justify-content-center"
+                                    {/* <button className="action-btn bg-transparent d-inline-flex align-items-center justify-content-center"
                                         onClick={() => setClarificationShow(true)}>{SVGICON.app.edit}
-                                    </button>
+                                    </button> */}
+                                    <button className="clarification-btn" onClick={() => setClarificationShow(true)}>Add Clarification</button>
                                 </td>
-                                <td style={{ width: 150, minWidth: 150, maxWidth: 150 }}>
+                                <td style={{ width: 200, minWidth: 200, maxWidth: 200 }}>
                                     <button className="submit-btn">Submit</button>
                                 </td>
                             </tr>
+                            <tr>
+                                <td style={{ width: 150, minWidth: 150, maxWidth: 150 }}>
+                                    <p className="fw-5">Parameter 1</p>
+                                </td>
+                                <td style={{ width: 100, minWidth: 100, maxWidth: 100 }}>
+                                    <p className="fw-5">2</p>
+                                </td>
+                                <td style={{ width: 100, minWidth: 100, maxWidth: 100 }}>
+                                    <p className="fw-5">8</p>
+                                </td>
+                                <td style={{ width: 100, minWidth: 100, maxWidth: 100 }}>
+                                    <div style={{ fontSize: 18 }}>{SVGICON.app.pdf}</div>
+                                </td>
+                                <td style={{ width: 200, minWidth: 200, maxWidth: 200 }}>
+                                    <p className="fw-4">Please upload the correct  document for parameter 4</p>
+                                </td>
+                                <td style={{ width: 300, minWidth: 300, maxWidth: 300 }}>
+                                    <input type="file" className="form-control" autoComplete="off" />
+                                </td>
+                                <td style={{ width: 200, minWidth: 200, maxWidth: 200 }}>
+                                    {/* <button className="action-btn bg-transparent d-inline-flex align-items-center justify-content-center"
+                                        onClick={() => setClarificationShow(true)}>{SVGICON.app.edit}
+                                    </button> */}
+                                    <button className="clarification-btn" onClick={() => setClarificationShow(true)}>Add Clarification</button>
+                                </td>
+                                <td style={{ width: 200, minWidth: 200, maxWidth: 200 }}>
+                                    <button className="submit-btn">Submit</button>
+                                </td>
+                            </tr>
+
+
                             {/* <tr>
                                 <td style={{ width: 150, minWidth: 150, maxWidth: 150 }}>
                                     <p className="fw-5">Parameter 1</p>
@@ -449,7 +532,7 @@ const UnitClarificationDetail = () => {
                 </div> */}
             </div>
             <ClarificationModal show={clarificationShow} handleClose={() => setClarificationShow(false)} />
-            <UnitClarificationCanvas show={filterVisible} handleClose={() => setFilterVisible(false)} />
+            {/* <UnitClarificationCanvas show={filterVisible} handleClose={() => setFilterVisible(false)} /> */}
         </>
     )
 }
