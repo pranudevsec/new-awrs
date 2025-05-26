@@ -2,6 +2,7 @@ import { Link } from "react-router-dom";
 import { SVGICON } from "../../constants/iconsList";
 import Breadcrumb from "../../components/ui/breadcrumb/Breadcrumb"
 import FormSelect from "../../components/form/FormSelect";
+import Pagination from "../../components/ui/pagination/Pagination";
 // import Pagination from "../../components/ui/pagination/Pagination";
 
 const awardTypeOptions: OptionType[] = [
@@ -170,7 +171,7 @@ const Clarification = () => {
                     </tbody>
                 </table>
             </div>
-            {/* <Pagination /> */}
+            <Pagination />
         </div>
     )
 }

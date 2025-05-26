@@ -20,7 +20,7 @@ interface UnitClarificationCanvasProps {
     handleClose: () => void;
 }
 
-const UnitClarificationCanvas: FC<UnitClarificationCanvasProps> = ({ show, handleClose }) => {
+const WinnersCanvas: FC<UnitClarificationCanvasProps> = ({ show, handleClose }) => {
     return (
         <Offcanvas
             show={show}
@@ -40,15 +40,6 @@ const UnitClarificationCanvas: FC<UnitClarificationCanvasProps> = ({ show, handl
                         options={awardTypeOptions}
                         value={null}
                         placeholder="Select award type"
-                    />
-                </div>
-                <div className="mb-4">
-                    <FormInput
-                        label="Cycle Period"
-                        name="cyclePeriod"
-                        placeholder="Enter cycle period"
-                        type="text"
-                        value="2024 - H1"
                     />
                 </div>
                 <div className="mb-4">
@@ -77,4 +68,4 @@ const UnitClarificationCanvas: FC<UnitClarificationCanvasProps> = ({ show, handl
     )
 }
 
-export default UnitClarificationCanvas
+export default WinnersCanvas

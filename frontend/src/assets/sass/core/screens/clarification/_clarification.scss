@@ -1,4 +1,18 @@
 .clarification-section {
+    .filter-btn {
+        font-size: 14px;
+        font-weight: 500;
+        background-color: var(--secondary-default);
+        color: var(--background);
+        padding: 8px 16px;
+        height: 40px;
+        border-radius: 6px;
+
+        span {
+            font-size: 16px;
+        }
+    }
+
     .export-wrapper {
         margin-bottom: 28px;
 
@@ -32,6 +46,22 @@
             .form-control {
                 padding: 7px 20px 7px 40px;
                 min-height: 40px;
+            }
+
+
+        }
+
+        .filters-btn {
+            font-size: 14px;
+            font-weight: 500;
+            color: var(--gray-700);
+            border: 1px solid var(--muted);
+            padding: 8px 14px;
+            height: 40px;
+            border-radius: 6px;
+
+            span {
+                font-size: 16px;
             }
         }
 

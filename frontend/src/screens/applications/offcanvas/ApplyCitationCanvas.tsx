@@ -4,7 +4,6 @@ import Offcanvas from "react-bootstrap/Offcanvas";
 import FormSelect from "../../../components/form/FormSelect";
 import FormInput from "../../../components/form/FormInput";
 
-
 const awardTypeOptions: OptionType[] = [
     { value: "citation", label: "Citation" },
     { value: "clarification", label: "Clarification" },

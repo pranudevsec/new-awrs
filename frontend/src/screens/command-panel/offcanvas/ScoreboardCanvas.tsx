@@ -9,18 +9,12 @@ const awardTypeOptions: OptionType[] = [
     { value: "clarification", label: "Clarification" },
 ];
 
-const statusOptions: OptionType[] = [
-    { value: "Paid", label: "paid" },
-    { value: "Pending", label: "pending" },
-    { value: "Reject", label: "reject" },
-];
-
 interface UnitClarificationCanvasProps {
     show: boolean;
     handleClose: () => void;
 }
 
-const UnitClarificationCanvas: FC<UnitClarificationCanvasProps> = ({ show, handleClose }) => {
+const ScoreboardCanvas: FC<UnitClarificationCanvasProps> = ({ show, handleClose }) => {
     return (
         <Offcanvas
             show={show}
@@ -44,15 +38,6 @@ const UnitClarificationCanvas: FC<UnitClarificationCanvasProps> = ({ show, handl
                 </div>
                 <div className="mb-4">
                     <FormInput
-                        label="Cycle Period"
-                        name="cyclePeriod"
-                        placeholder="Enter cycle period"
-                        type="text"
-                        value="2024 - H1"
-                    />
-                </div>
-                <div className="mb-4">
-                    <FormInput
                         label="Unit"
                         name="unit"
                         placeholder="Enter unit"
@@ -61,12 +46,12 @@ const UnitClarificationCanvas: FC<UnitClarificationCanvasProps> = ({ show, handl
                     />
                 </div>
                 <div className="mb-4">
-                    <FormSelect
-                        label="Status"
-                        name="status"
-                        options={statusOptions}
-                        value={null}
-                        placeholder="Select status"
+                    <FormInput
+                        label="Cycle Period"
+                        name="cyclePeriod"
+                        placeholder="Enter cycle period"
+                        type="text"
+                        value="2024 - H1"
                     />
                 </div>
             </div>
@@ -77,4 +62,4 @@ const UnitClarificationCanvas: FC<UnitClarificationCanvasProps> = ({ show, handl
     )
 }
 
-export default UnitClarificationCanvas
+export default ScoreboardCanvas

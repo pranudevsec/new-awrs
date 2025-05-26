@@ -1,14 +1,18 @@
-import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { SVGICON } from "../../../constants/iconsList";
 import Breadcrumb from "../../../components/ui/breadcrumb/Breadcrumb"
-import ApplyCitationCanvas from "../offcanvas/ApplyCitationCanvas";
+import FormSelect from "../../../components/form/FormSelect";
+import FormInput from "../../../components/form/FormInput";
+
+const awardTypeOptions: OptionType[] = [
+    { value: "citation", label: "Citation" },
+    { value: "clarification", label: "Clarification" },
+];
 
 const ApplyCitation = () => {
     const navigate = useNavigate();
 
     // States
-    const [filterVisible, setFilterVisible] = useState(false);
+    // const [filterVisible, setFilterVisible] = useState(false);
 
     return (
         <>
@@ -21,9 +25,73 @@ const ApplyCitation = () => {
                             { label: "Apply for Citation", href: "/applications/citation" }
                         ]}
                     />
-                    <button className="filter-btn d-inline-flex align-items-center justify-content-center gap-1 border-0 mt-sm-0 mt-3" onClick={() => setFilterVisible(true)}>
+                    {/* <button className="filter-btn d-inline-flex align-items-center justify-content-center gap-1 border-0 mt-sm-0 mt-3" onClick={() => setFilterVisible(true)}>
                         <span className="rotate-90">{SVGICON.app.filters}</span>Filters
-                    </button>
+                    </button> */}
+                </div>
+                {/* <div className="filters-fields-area">
+                    <div className="row align-items-center justify-content-between row-gap-2">
+                        <div className="col-md-4">
+                            <FormSelect
+                                label="Award Type"
+                                name="awardType"
+                                options={awardTypeOptions}
+                                value={awardTypeOptions.find((opt) => opt.value === "citation") || null}
+                                placeholder="Select award type"
+                                isDisabled={true}
+                            />
+                        </div>
+                        <div className="col-md-4">
+                            <FormInput
+                                label="Cycle Period"
+                                name="cyclePeriod"
+                                placeholder="Enter cycle period"
+                                type="text"
+                                value="2024 - H1"
+                            />
+                        </div>
+                        <div className="col-md-4">
+                            <FormInput
+                                label="Unit"
+                                name="lastDate"
+                                placeholder="Enter unit"
+                                value=""
+                                readOnly={true}
+                            />
+                        </div>
+                    </div>
+                </div> */}
+                <div className="table-filter-area mb-4">
+                    <div className="row">
+                        <div className="col-lg-3 col-sm-4 mb-sm-0 mb-2">
+                            <FormSelect
+                                label="Award Type"
+                                name="awardType"
+                                options={awardTypeOptions}
+                                value={awardTypeOptions.find((opt) => opt.value === "citation") || null}
+                                placeholder="Select award type"
+                                isDisabled={true}
+                            />
+                        </div>
+                        <div className="col-lg-3 col-sm-4 mb-sm-0 mb-2">
+                            <FormInput
+                                label="Cycle Period"
+                                name="cyclePeriod"
+                                placeholder="Enter cycle period"
+                                type="text"
+                                value="2024 - H1"
+                            />
+                        </div>
+                        <div className="col-lg-3 col-sm-4">
+                            <FormInput
+                                label="Unit"
+                                name="lastDate"
+                                placeholder="Enter unit"
+                                value=""
+                                readOnly={true}
+                            />
+                        </div>
+                    </div>
                 </div>
                 <div className="table-responsive">
                     <table className="main-table w-100">
@@ -230,7 +298,7 @@ const ApplyCitation = () => {
                     </div>
                 </div>
             </div>
-            <ApplyCitationCanvas show={filterVisible} handleClose={() => setFilterVisible(false)} />
+            {/* <ApplyCitationCanvas show={filterVisible} handleClose={() => setFilterVisible(false)} /> */}
         </>
     )
 }

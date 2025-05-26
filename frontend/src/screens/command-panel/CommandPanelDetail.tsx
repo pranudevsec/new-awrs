@@ -4,7 +4,6 @@ import Breadcrumb from "../../components/ui/breadcrumb/Breadcrumb"
 import ClarificationModal from "../../modals/ClarificationModal";
 import UnitClarificationCanvas from "../clarification/offcanvas/UnitClarificationCanvas";
 
-
 const CommandPanelDetail = () => {
     // States
     const [clarificationShow, setClarificationShow] = useState(false)
