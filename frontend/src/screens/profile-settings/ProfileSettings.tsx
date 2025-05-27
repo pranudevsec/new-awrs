@@ -111,7 +111,7 @@ const ProfileSettings = () => {
               touched={formik.touched.corps}
             />
           </div>
-          <div className="col-sm-6 mb-4">
+          <div className="col-sm-6 mb-3">
             <FormSelect
               label="Command"
               name="command"
@@ -129,7 +129,7 @@ const ProfileSettings = () => {
               touched={formik.touched.command}
             />
           </div>
-          <div className="col-12">
+          <div className="col-12 mt-2">
             <div className="d-flex align-items-center">
               <button type="submit" className="_btn _btn-lg primary">
                 Submit

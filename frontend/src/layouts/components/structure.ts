@@ -7,6 +7,11 @@ export const sidebarStructure = [
     to: "/applications",
   },
   {
+    label: "Dashboard",
+    icon: SVGICON.sidebar.dashboard,
+    to: "/dashboard",
+  },
+  {
     label: "Profile Settings",
     icon: SVGICON.sidebar.profile,
     to: "/profile-settings",

@@ -16,7 +16,6 @@ const cyclePeriodOptions: OptionType[] = [
   { value: "2025 - H2", label: "2025 - H2" },
 ];
 
-
 const CommandPanel = () => {
 
   return (

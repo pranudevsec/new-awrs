@@ -101,9 +101,9 @@ const ClarificationDetails = () => {
                                 <th style={{ width: 200, minWidth: 200, maxWidth: 200 }}>
                                     <div className="d-flex align-items-start">Clarification</div>
                                 </th>
-                                <th style={{ width: 150, minWidth: 150, maxWidth: 150 }}>
+                                {/* <th style={{ width: 150, minWidth: 150, maxWidth: 150 }}>
                                     <div className="d-flex align-items-start"></div>
-                                </th>
+                                </th> */}
                             </tr>
                         </thead>
                         <tbody>
@@ -140,9 +140,9 @@ const ClarificationDetails = () => {
                                         Add Clarification
                                     </button>
                                 </td>
-                                <td style={{ width: 200, minWidth: 200, maxWidth: 200 }}>
+                                {/* <td style={{ width: 200, minWidth: 200, maxWidth: 200 }}>
                                     <button className="_btn primary">Submit</button>
-                                </td>
+                                </td> */}
                             </tr>
                             <tr>
                                 <td style={{ width: 150, minWidth: 150, maxWidth: 150 }}>
@@ -177,9 +177,9 @@ const ClarificationDetails = () => {
                                         Add Clarification
                                     </button>
                                 </td>
-                                <td style={{ width: 200, minWidth: 200, maxWidth: 200 }}>
+                                {/* <td style={{ width: 200, minWidth: 200, maxWidth: 200 }}>
                                     <button className="_btn primary">Submit</button>
-                                </td>
+                                </td> */}
                             </tr>
                             <tr>
                                 <td style={{ width: 150, minWidth: 150, maxWidth: 150 }}>
@@ -214,9 +214,9 @@ const ClarificationDetails = () => {
                                         Add Clarification
                                     </button>
                                 </td>
-                                <td style={{ width: 200, minWidth: 200, maxWidth: 200 }}>
+                                {/* <td style={{ width: 200, minWidth: 200, maxWidth: 200 }}>
                                     <button className="_btn primary">Submit</button>
-                                </td>
+                                </td> */}
                             </tr>
                         </tbody>
                     </table>
