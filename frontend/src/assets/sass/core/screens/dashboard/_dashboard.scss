@@ -36,85 +36,27 @@
             color: var(--gray-900);
         }
 
-        .chart-container {
-            height: 300px;
-        }
-
-        /* Axis labels */
         .recharts-cartesian-axis-tick-value tspan {
             fill: var(--gray-600);
-        }
-
-        /* Tooltip label styling (optional) */
-        .recharts-tooltip-label {
-            color: var(--secondary-default);
+            font-weight: 400;
         }
     }
 
     .application-status-chart {
-        background-color: var(--orange-lighter);
         border-radius: 8px;
-        font-family: var(--font-inter);
+        padding: 28px;
+        border: 1px solid var(--muted);
 
-        h5 {
-            font-weight: 600;
-            color: var(--primary-default);
-        }
-
-        .text-muted {
-            font-size: 0.9rem;
-            color: var(--gray-600);
-        }
-
-        .legend-text {
-            color: var(--gray-700);
-            font-size: 14px;
-        }
-
-        .recharts-tooltip-label {
-            font-weight: 500;
-            color: var(--gray-800);
-        }
-
-        .chart-wrapper {
-            height: 250px;
-        }
-    }
-
-    .top-winners-list {
-        h3 {
-            font-size: 20px;
+        h2 {
+            font-size: 22px;
             color: var(--gray-900);
         }
+
+
     }
-}
 
-
-// Media query
-
-@media (max-width: 480px) {
-    .dashboard-section .assets-details-cards .card {
-        padding: 20px 10px;
-
-        .left-content {
-            .icon {
-                width: 55px;
-                height: 55px;
-            }
-
-            .text {
-                h6 {
-                    font-size: 14px;
-                }
-
-                h4 {
-                    font-size: 20px;
-                }
-            }
-        }
-
-        .right-content span {
-            font-size: 14px;
-        }
+    .top-winners-list h3 {
+        font-size: 20px;
+        color: var(--gray-900);
     }
 }

@@ -6,50 +6,89 @@ import {
     Tooltip,
     Legend
 } from 'recharts';
+import FormSelect from '../../../components/form/FormSelect';
+import { useState } from 'react';
 
 const data = [
-    { name: 'Pending', value: 40 },
-    { name: 'Clarification', value: 30 },
-    { name: 'Rejected', value: 30 },
+    { name: 'Pending', value: 58 },
+    { name: 'Clarification', value: 45 },
+    { name: 'Rejected', value: 32 },
 ];
 
-const COLORS = [
-    '#3e4b11', // dark green for Pending
-    '#fdf4dc', // light yellow for Clarification
-    '#6b2d20'  // deep brown-red for Rejected
+const cyclePeriodOptions: OptionType[] = [
+    { value: "Jan - Jun 2024", label: "Jan - Jun 2024" },
+    { value: "July - Dec 2024", label: "July - Dec 2024" },
+    { value: "Jan - Jun 2025", label: "Jan - Jun 2025" },
+    { value: "July - Dec 2025", label: "July - Dec 2025" },
 ];
+
+const COLORS = ['#FFE089', '#1A7262', '#7AD9D2', '#21438D'];
+
+const CustomTooltip = ({ active, payload }: any) => {
+    if (!active || !payload || payload.length === 0) return null;
+
+    const { name, value } = payload[0].payload;
+
+    return (
+        <div
+            style={{
+                backgroundColor: '#fff',
+                border: '1px solid var(--muted)',
+                padding: '10px 15px',
+                borderRadius: '6px',
+                boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
+                display: "flex",
+                alignItems: "center"
+            }}
+        >
+            <p style={{ margin: 0, fontSize: 12 }}>{name}</p>
+            <p style={{ margin: 0, fontSize: 12, fontWeight: 'bold' }}>: {value}</p>
+        </div>
+    );
+};
+
 
 const ApplicationStatus = () => {
+
+    const [applicationDate, setApplicationDate] = useState("Jan - Jun 2025")
+
     return (
-        <div className="container application-status-chart p-4">
-            <div className="d-flex justify-content-between align-items-center mb-3">
-                <h5 className="mb-0">Applications by Status</h5>
-                <span className="text-muted">Jan–Jun 2025</span>
+        <div className="application-status-chart h-100">
+            <div className="d-flex flex-wrap gap-2 justify-content-between align-items-center mb-3">
+                <h2 className="fw-6">Top Units by Total Score</h2>
+                <FormSelect
+                    name="cyclePeriod"
+                    options={cyclePeriodOptions}
+                    value={cyclePeriodOptions.find((opt) => opt.value === applicationDate) || null}
+                    onChange={(e: any) => setApplicationDate(e?.value)}
+                    placeholder="Select"
+                />
             </div>
-            <div className="chart-wrapper">
-                <ResponsiveContainer width="100%" height={250}>
-                    <PieChart>
+            <div style={{ height: 250, overflowX: "auto" }}>
+                <ResponsiveContainer width="100%" height="100%" minWidth={400}>
+                    <PieChart margin={{ top: 20, right: 0, left: -25, bottom: 0 }} >
                         <Pie
                             data={data}
                             cx="50%"
                             cy="50%"
-                            labelLine={false}
-                            outerRadius={80}
-                            fill="#8884d8"
+                            innerRadius={50}
+                            outerRadius={100}
+                            paddingAngle={5}
+                            cornerRadius={10}
                             dataKey="value"
                         >
                             {data.map((_, index) => (
                                 <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                             ))}
                         </Pie>
-                        <Tooltip />
+                        <Tooltip content={<CustomTooltip />} />
                         <Legend
                             verticalAlign="middle"
                             align="right"
                             layout="vertical"
                             iconType="circle"
                             formatter={(value) => (
-                                <span className="legend-text">{value}</span>
+                                <span className="legend-text" style={{ fontSize: 14, fontWeight: 600, }}>{value}</span>
                             )}
                         />
                     </PieChart>
