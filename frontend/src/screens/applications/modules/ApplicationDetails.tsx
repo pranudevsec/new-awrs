@@ -5,6 +5,9 @@ import UnitClarificationModal from "../../../modals/UnitClarificationModal";
 import FormSelect from "../../../components/form/FormSelect";
 import FormInput from "../../../components/form/FormInput";
 import ReqClarificationModal from "../../../modals/ReqClarificationModal";
+import { Link } from "react-router-dom";
+import { IoMdCheckmark } from "react-icons/io";
+import { MdClose } from "react-icons/md";
 
 const awardTypeOptions: OptionType[] = [
     { value: "citation", label: "Citation" },
@@ -98,10 +101,10 @@ const ApplicationDetails = () => {
                                 <th style={{ width: 150, minWidth: 150, maxWidth: 150 }}>
                                     <div className="d-flex align-items-start">Add Clarification</div>
                                 </th>
-                                <th style={{ width: 150, minWidth: 150, maxWidth: 150 }}>
+                                <th style={{ width: 200, minWidth: 200, maxWidth: 200 }}>
                                     <div className="d-flex align-items-start">Requested Clarification</div>
                                 </th>
-                                <th style={{ width: 200, minWidth: 200, maxWidth: 200 }}>
+                                <th style={{ width: 150, minWidth: 150, maxWidth: 150 }}>
                                     <div className="d-flex align-items-start"></div>
                                 </th>
                             </tr>
@@ -140,15 +143,21 @@ const ApplicationDetails = () => {
                                     </button> */}
                                     <p className="fw-5">Already Asked</p>
                                 </td>
-                                <td style={{ width: 100, minWidth: 100, maxWidth: 100 }}>
+                                <td style={{ width: 200, minWidth: 200, maxWidth: 200 }}>
                                     <button className="action-btn bg-transparent d-inline-flex align-items-center justify-content-center" onClick={() => setReqClarificationShow(true)}>
                                         {SVGICON.app.eye}
                                     </button>
                                 </td>
-                                <td style={{ width: 200, minWidth: 200, maxWidth: 200 }}>
+                                <td style={{ width: 150, minWidth: 150, maxWidth: 150 }}>
                                     <div className="d-flex gap-3">
-                                        <button className="_btn success">Accepted</button>
-                                        <button className="_btn danger">Reject</button>
+                                        <button className="action-btn bg-transparent d-flex align-items-center justify-content-center"
+                                            style={{ color: "var(--green-default)" }}>
+                                            <IoMdCheckmark />
+                                        </button>
+                                        <button className="action-btn bg-transparent d-flex align-items-center justify-content-center"
+                                            style={{ color: "var(--red-default)" }}>
+                                            <MdClose />
+                                        </button>
                                     </div>
                                 </td>
                             </tr>
@@ -176,20 +185,19 @@ const ApplicationDetails = () => {
                                     />
                                 </td>
                                 <td style={{ width: 120, minWidth: 120, maxWidth: 120 }}>
-                                    <button
+                                    {/* <button
                                         className="border-0 bg-transparent"
                                         style={{ color: "var(--secondary-default)" }}
                                         onClick={() => setClarificationShow(true)}
                                     >
                                         {SVGICON.app.clarification}
-                                    </button>
-                                </td>
-                                <td style={{ width: 100, minWidth: 100, maxWidth: 100 }}>
-                                    -
+                                    </button> */}
+                                    <Link to="#" onClick={() => setClarificationShow(true)} className="fw-5 text-decoration-underline" style={{ fontSize: 14 }}>Ask Clarification</Link>
                                 </td>
                                 <td style={{ width: 200, minWidth: 200, maxWidth: 200 }}>
-
+                                    -
                                 </td>
+                                <td style={{ width: 150, minWidth: 150, maxWidth: 150 }}></td>
                             </tr>
                             <tr>
                                 <td style={{ width: 150, minWidth: 150, maxWidth: 150 }}>
@@ -224,15 +232,21 @@ const ApplicationDetails = () => {
                                     </button> */}
                                     <p className="fw-5">Already Asked</p>
                                 </td>
-                                <td style={{ width: 100, minWidth: 100, maxWidth: 100 }}>
+                                <td style={{ width: 200, minWidth: 200, maxWidth: 200 }}>
                                     <button className="action-btn bg-transparent d-inline-flex align-items-center justify-content-center" onClick={() => setReqClarificationShow(true)}>
                                         {SVGICON.app.eye}
                                     </button>
                                 </td>
-                                <td style={{ width: 200, minWidth: 200, maxWidth: 200 }}>
+                                <td style={{ width: 150, minWidth: 150, maxWidth: 150 }}>
                                     <div className="d-flex gap-3">
-                                        <button className="_btn success">Accepted</button>
-                                        <button className="_btn danger">Reject</button>
+                                        <button className="action-btn bg-transparent d-flex align-items-center justify-content-center"
+                                            style={{ color: "var(--green-default)" }}>
+                                            <IoMdCheckmark />
+                                        </button>
+                                        <button className="action-btn bg-transparent d-flex align-items-center justify-content-center"
+                                            style={{ color: "var(--red-default)" }}>
+                                            <MdClose />
+                                        </button>
                                     </div>
                                 </td>
                             </tr>
