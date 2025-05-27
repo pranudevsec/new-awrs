@@ -54,18 +54,20 @@ const UnitClarificationDetail = () => {
                 name="cyclePeriod"
                 options={cyclePeriodOptions}
                 value={
-                  cyclePeriodOptions.find((opt) => opt.value === "citation") ||
+                  cyclePeriodOptions.find((opt) => opt.value === "2024 - H1") ||
                   null
                 }
                 placeholder="Select"
+                isDisabled={true}
               />
             </div>
             <div className="col-lg-3 col-sm-4">
               <FormInput
-                label="Unit"
+                label="Last Date"
                 name="lastDate"
-                placeholder="Enter unit"
-                value=""
+                placeholder="Enter last date"
+                type="date"
+                value="2025-04-15"
                 readOnly={true}
               />
             </div>
@@ -84,6 +86,9 @@ const UnitClarificationDetail = () => {
                 <th style={{ width: 100, minWidth: 100, maxWidth: 100 }}>
                   <div className="d-flex align-items-start">Marks</div>
                 </th>
+                <th style={{ width: 200, minWidth: 200, maxWidth: 200 }}>
+                  <div className="d-flex align-items-start">Total applied marks</div>
+                </th>
                 <th style={{ width: 100, minWidth: 100, maxWidth: 100 }}>
                   <div className="d-flex align-items-start">Document</div>
                 </th>
@@ -92,14 +97,11 @@ const UnitClarificationDetail = () => {
                     Reviewers Comment
                   </div>
                 </th>
-                <th style={{ width: 300, minWidth: 300, maxWidth: 300 }}>
+                <th style={{ width: 200, minWidth: 200, maxWidth: 200 }}>
                   <div className="d-flex align-items-start">Upload Doc</div>
                 </th>
                 <th style={{ width: 200, minWidth: 200, maxWidth: 200 }}>
                   <div className="d-flex align-items-start">Clarification</div>
-                </th>
-                <th style={{ width: 150, minWidth: 150, maxWidth: 150 }}>
-                  <div className="d-flex align-items-start"></div>
                 </th>
               </tr>
             </thead>
@@ -114,6 +116,9 @@ const UnitClarificationDetail = () => {
                 <td style={{ width: 100, minWidth: 100, maxWidth: 100 }}>
                   <p className="fw-5">8</p>
                 </td>
+                <td style={{ width: 200, minWidth: 200, maxWidth: 200 }}>
+                  <p className="fw-5">8</p>
+                </td>
                 <td style={{ width: 100, minWidth: 100, maxWidth: 100 }}>
                   <div style={{ fontSize: 18 }}>{SVGICON.app.pdf}</div>
                 </td>
@@ -122,7 +127,7 @@ const UnitClarificationDetail = () => {
                     Please upload the correct document for parameter 4
                   </p>
                 </td>
-                <td style={{ width: 300, minWidth: 300, maxWidth: 300 }}>
+                <td style={{ width: 200, minWidth: 200, maxWidth: 200 }}>
                   <input
                     type="file"
                     className="form-control"
@@ -136,9 +141,6 @@ const UnitClarificationDetail = () => {
                   >
                     Add Clarification
                   </button>
-                </td>
-                <td style={{ width: 200, minWidth: 200, maxWidth: 200 }}>
-                  <button className="_btn primary">Submit</button>
                 </td>
               </tr>
               <tr>
@@ -151,6 +153,9 @@ const UnitClarificationDetail = () => {
                 <td style={{ width: 100, minWidth: 100, maxWidth: 100 }}>
                   <p className="fw-5">8</p>
                 </td>
+                <td style={{ width: 200, minWidth: 200, maxWidth: 200 }}>
+                  <p className="fw-5">8</p>
+                </td>
                 <td style={{ width: 100, minWidth: 100, maxWidth: 100 }}>
                   <div style={{ fontSize: 18 }}>{SVGICON.app.pdf}</div>
                 </td>
@@ -159,7 +164,7 @@ const UnitClarificationDetail = () => {
                     Please upload the correct document for parameter 4
                   </p>
                 </td>
-                <td style={{ width: 300, minWidth: 300, maxWidth: 300 }}>
+                <td style={{ width: 200, minWidth: 200, maxWidth: 200 }}>
                   <input
                     type="file"
                     className="form-control"
@@ -173,9 +178,6 @@ const UnitClarificationDetail = () => {
                   >
                     Add Clarification
                   </button>
-                </td>
-                <td style={{ width: 200, minWidth: 200, maxWidth: 200 }}>
-                  <button className="_btn primary">Submit</button>
                 </td>
               </tr>
               <tr>
@@ -188,6 +190,9 @@ const UnitClarificationDetail = () => {
                 <td style={{ width: 100, minWidth: 100, maxWidth: 100 }}>
                   <p className="fw-5">8</p>
                 </td>
+                <td style={{ width: 200, minWidth: 200, maxWidth: 200 }}>
+                  <p className="fw-5">8</p>
+                </td>
                 <td style={{ width: 100, minWidth: 100, maxWidth: 100 }}>
                   <div style={{ fontSize: 18 }}>{SVGICON.app.pdf}</div>
                 </td>
@@ -196,7 +201,7 @@ const UnitClarificationDetail = () => {
                     Please upload the correct document for parameter 4
                   </p>
                 </td>
-                <td style={{ width: 300, minWidth: 300, maxWidth: 300 }}>
+                <td style={{ width: 200, minWidth: 200, maxWidth: 200 }}>
                   <input
                     type="file"
                     className="form-control"
@@ -210,9 +215,6 @@ const UnitClarificationDetail = () => {
                   >
                     Add Clarification
                   </button>
-                </td>
-                <td style={{ width: 200, minWidth: 200, maxWidth: 200 }}>
-                  <button className="_btn primary">Submit</button>
                 </td>
               </tr>
               <tr>
@@ -225,6 +227,9 @@ const UnitClarificationDetail = () => {
                 <td style={{ width: 100, minWidth: 100, maxWidth: 100 }}>
                   <p className="fw-5">8</p>
                 </td>
+                <td style={{ width: 200, minWidth: 200, maxWidth: 200 }}>
+                  <p className="fw-5">8</p>
+                </td>
                 <td style={{ width: 100, minWidth: 100, maxWidth: 100 }}>
                   <div style={{ fontSize: 18 }}>{SVGICON.app.pdf}</div>
                 </td>
@@ -233,7 +238,7 @@ const UnitClarificationDetail = () => {
                     Please upload the correct document for parameter 4
                   </p>
                 </td>
-                <td style={{ width: 300, minWidth: 300, maxWidth: 300 }}>
+                <td style={{ width: 200, minWidth: 200, maxWidth: 200 }}>
                   <input
                     type="file"
                     className="form-control"
@@ -247,9 +252,6 @@ const UnitClarificationDetail = () => {
                   >
                     Add Clarification
                   </button>
-                </td>
-                <td style={{ width: 200, minWidth: 200, maxWidth: 200 }}>
-                  <button className="_btn primary">Submit</button>
                 </td>
               </tr>
               <tr>
@@ -262,41 +264,7 @@ const UnitClarificationDetail = () => {
                 <td style={{ width: 100, minWidth: 100, maxWidth: 100 }}>
                   <p className="fw-5">8</p>
                 </td>
-                <td style={{ width: 100, minWidth: 100, maxWidth: 100 }}>
-                  <div style={{ fontSize: 18 }}>{SVGICON.app.pdf}</div>
-                </td>
                 <td style={{ width: 200, minWidth: 200, maxWidth: 200 }}>
-                  <p className="fw-4">
-                    Please upload the correct document for parameter 4
-                  </p>
-                </td>
-                <td style={{ width: 300, minWidth: 300, maxWidth: 300 }}>
-                  <input
-                    type="file"
-                    className="form-control"
-                    autoComplete="off"
-                  />
-                </td>
-                <td style={{ width: 200, minWidth: 200, maxWidth: 200 }}>
-                  <button
-                    className="_btn outline"
-                    onClick={() => setClarificationShow(true)}
-                  >
-                    Add Clarification
-                  </button>
-                </td>
-                <td style={{ width: 200, minWidth: 200, maxWidth: 200 }}>
-                  <button className="_btn primary">Submit</button>
-                </td>
-              </tr>
-              <tr>
-                <td style={{ width: 150, minWidth: 150, maxWidth: 150 }}>
-                  <p className="fw-5">Parameter 1</p>
-                </td>
-                <td style={{ width: 100, minWidth: 100, maxWidth: 100 }}>
-                  <p className="fw-5">2</p>
-                </td>
-                <td style={{ width: 100, minWidth: 100, maxWidth: 100 }}>
                   <p className="fw-5">8</p>
                 </td>
                 <td style={{ width: 100, minWidth: 100, maxWidth: 100 }}>
@@ -307,7 +275,7 @@ const UnitClarificationDetail = () => {
                     Please upload the correct document for parameter 4
                   </p>
                 </td>
-                <td style={{ width: 300, minWidth: 300, maxWidth: 300 }}>
+                <td style={{ width: 200, minWidth: 200, maxWidth: 200 }}>
                   <input
                     type="file"
                     className="form-control"
@@ -321,46 +289,6 @@ const UnitClarificationDetail = () => {
                   >
                     Add Clarification
                   </button>
-                </td>
-                <td style={{ width: 200, minWidth: 200, maxWidth: 200 }}>
-                  <button className="_btn primary">Submit</button>
-                </td>
-              </tr>
-              <tr>
-                <td style={{ width: 150, minWidth: 150, maxWidth: 150 }}>
-                  <p className="fw-5">Parameter 1</p>
-                </td>
-                <td style={{ width: 100, minWidth: 100, maxWidth: 100 }}>
-                  <p className="fw-5">2</p>
-                </td>
-                <td style={{ width: 100, minWidth: 100, maxWidth: 100 }}>
-                  <p className="fw-5">8</p>
-                </td>
-                <td style={{ width: 100, minWidth: 100, maxWidth: 100 }}>
-                  <div style={{ fontSize: 18 }}>{SVGICON.app.pdf}</div>
-                </td>
-                <td style={{ width: 200, minWidth: 200, maxWidth: 200 }}>
-                  <p className="fw-4">
-                    Please upload the correct document for parameter 4
-                  </p>
-                </td>
-                <td style={{ width: 300, minWidth: 300, maxWidth: 300 }}>
-                  <input
-                    type="file"
-                    className="form-control"
-                    autoComplete="off"
-                  />
-                </td>
-                <td style={{ width: 200, minWidth: 200, maxWidth: 200 }}>
-                  <button
-                    className="_btn outline"
-                    onClick={() => setClarificationShow(true)}
-                  >
-                    Add Clarification
-                  </button>
-                </td>
-                <td style={{ width: 200, minWidth: 200, maxWidth: 200 }}>
-                  <button className="_btn primary">Submit</button>
                 </td>
               </tr>
             </tbody>

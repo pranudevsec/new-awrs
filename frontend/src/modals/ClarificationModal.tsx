@@ -1,6 +1,7 @@
 import Modal from "react-bootstrap/Modal";
 import FormInput from "../components/form/FormInput";
 import { SVGICON } from "../constants/iconsList";
+import { useState } from "react";
 
 interface ClarificationModalProps {
   show: boolean;
@@ -11,6 +12,8 @@ const ClarificationModal: React.FC<ClarificationModalProps> = ({
   show,
   handleClose,
 }) => {
+  const [clarification, setSlarification] = useState("")
+
   return (
     <Modal
       centered
@@ -33,12 +36,13 @@ const ClarificationModal: React.FC<ClarificationModalProps> = ({
               type="text"
               as="textarea"
               rows={8}
-              value=""
+              value={clarification}
+              onChange={(e) => setSlarification(e.target.value)}
             />
           </div>
           <div className="d-flex align-items-center justify-content-end gap-3">
             <button type="submit" className="_btn primary">
-              Submit
+              Add
             </button>
           </div>
         </form>

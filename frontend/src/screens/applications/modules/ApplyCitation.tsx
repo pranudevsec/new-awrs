@@ -59,10 +59,10 @@ const ApplyCitation = () => {
             </div>
             <div className="col-lg-3 col-sm-4">
               <FormInput
-                label="Unit"
+                label="Last Date"
                 name="lastDate"
-                placeholder="Enter unit"
-                value=""
+                type="date"
+                value="2025-04-15"
                 readOnly={true}
               />
             </div>

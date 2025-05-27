@@ -1,19 +1,5 @@
 import Breadcrumb from "../../components/ui/breadcrumb/Breadcrumb";
 import Pagination from "../../components/ui/pagination/Pagination";
-import FormSelect from "../../components/form/FormSelect";
-import FormInput from "../../components/form/FormInput";
-
-const awardTypeOptions: OptionType[] = [
-  { value: "citation", label: "Citation" },
-  { value: "clarification", label: "Clarification" },
-];
-
-const cyclePeriodOptions: OptionType[] = [
-  { value: "2024 - H1", label: "2024 - H1" },
-  { value: "2024 - H2", label: "2024 - H2" },
-  { value: "2025 - H1", label: "2025 - H1" },
-  { value: "2025 - H2", label: "2025 - H2" },
-];
 
 const Winners = () => {
   return (
@@ -22,7 +8,7 @@ const Winners = () => {
         <div className="d-flex flex-sm-row flex-column justify-content-between mb-4">
           <Breadcrumb title="Last Year Winners" />
         </div>
-        <div className="table-filter-area mb-4">
+        {/* <div className="table-filter-area mb-4">
           <div className="row">
             <div className="col-lg-3 col-sm-4 mb-sm-0 mb-2">
               <FormSelect
@@ -53,13 +39,13 @@ const Winners = () => {
               <FormInput
                 label="Unit"
                 name="lastDate"
-                placeholder="Enter unit"
+                placeholder="Search by unit"
                 value=""
                 readOnly={true}
               />
             </div>
           </div>
-        </div>
+        </div> */}
         <div className="table-responsive">
           <table className="table-style-2 w-100">
             <thead>

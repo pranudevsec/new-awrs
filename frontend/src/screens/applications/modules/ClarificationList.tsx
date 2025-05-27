@@ -47,7 +47,7 @@ const ClarificationList = () => {
                                 <div className="d-flex align-items-start">Unit ID</div>
                             </th>
                             <th style={{ width: 200, minWidth: 200, maxWidth: 200 }}>
-                                <div className="d-flex align-items-start">Submition Date</div>
+                                <div className="d-flex align-items-start">Submission Date</div>
                             </th>
                             <th style={{ width: 200, minWidth: 200, maxWidth: 200 }}>
                                 <div className="d-flex align-items-start">Dead Line</div>

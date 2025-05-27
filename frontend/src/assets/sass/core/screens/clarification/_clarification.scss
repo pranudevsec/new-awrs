@@ -7,15 +7,24 @@
     .form-control {
       padding: 7px 20px 7px 40px;
       min-height: 40px;
+      width: 100%;
+      max-width: 100%;
     }
   }
 
-  .css-annyam-control,
-  .css-1mwd2k4-control {
-    min-height: 40px;
+  .form-control,
+  .css-3iigni-container,
+  .css-b62m3t-container {
+    max-width: 180px;
+    min-width: 180px;
   }
 
-  .css-hlgwow {
-    padding: 0 8px;
-  }
+  // .css-annyam-control,
+  // .css-1mwd2k4-control {
+  //   min-height: 40px;
+  // }
+
+  // .css-hlgwow {
+  //   padding: 0 8px;
+  // }
 }

@@ -1,16 +1,29 @@
-import { Link, useNavigate } from "react-router-dom";
+import { Link, } from "react-router-dom";
 import { SVGICON } from "../../constants/iconsList";
 import Pagination from "../../components/ui/pagination/Pagination";
 import Breadcrumb from "../../components/ui/breadcrumb/Breadcrumb";
+import FormSelect from "../../components/form/FormSelect";
+
+const awardTypeOptions: OptionType[] = [
+  { value: "citation", label: "Citation" },
+  { value: "clarification", label: "Clarification" },
+];
+
+const cyclePeriodOptions: OptionType[] = [
+  { value: "2024 - H1", label: "2024 - H1" },
+  { value: "2024 - H2", label: "2024 - H2" },
+  { value: "2025 - H1", label: "2025 - H1" },
+  { value: "2025 - H2", label: "2025 - H2" },
+];
+
 
 const CommandPanel = () => {
-  const navigate = useNavigate();
 
   return (
     <>
       <div className="clarification-section">
         <div className="d-flex flex-sm-row flex-column justify-content-between mb-4">
-          <Breadcrumb title="Scoreboard" />
+          <Breadcrumb title="Scoreboard Listing" />
           <div className="d-flex align-items-center justify-content-end gap-3 mt-sm-0 mt-3">
             <button className="_btn outline d-flex align-items-center justify-content-center gap-2">
               <span>{SVGICON.app.export}</span>Export
@@ -18,7 +31,7 @@ const CommandPanel = () => {
             <button className="_btn primary">Publish Winner</button>
           </div>
         </div>
-        <div className="filter-wrapper d-flex align-items-center justify-content-between gap-2 mb-3">
+        {/* <div className="filter-wrapper d-flex align-items-center justify-content-between gap-2 mb-3">
           <div className="search-wrapper position-relative">
             <button className="border-0 bg-transparent position-absolute translate-middle-y top-50">
               {SVGICON.app.search}
@@ -29,6 +42,38 @@ const CommandPanel = () => {
               className="form-control"
             />
           </div>
+        </div> */}
+        <div className="filter-wrapper d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
+          <div className="search-wrapper position-relative">
+            <button className="border-0 bg-transparent position-absolute translate-middle-y top-50">
+              {SVGICON.app.search}
+            </button>
+            <input type="text" placeholder="search..." className="form-control" />
+          </div>
+          <div className="d-flex flex-wrap align-items-center gap-2">
+            {/* <FormInput
+              name="unit"
+              placeholder="Search by unit"
+              value=""
+              readOnly={true}
+            /> */}
+            <FormSelect
+              name="awardType"
+              options={awardTypeOptions}
+              value={null}
+              placeholder="award type"
+            />
+            <FormSelect
+              name="cyclePeriod"
+              options={cyclePeriodOptions}
+              value={
+                cyclePeriodOptions.find((opt) => opt.value === "citation") ||
+                null
+              }
+              placeholder="cycle period"
+            />
+          </div>
+
         </div>
         <div className="table-responsive">
           <table className="table-style-2 w-100">
@@ -58,7 +103,7 @@ const CommandPanel = () => {
               </tr>
             </thead>
             <tbody>
-              <tr onClick={() => navigate("/command-panel/1")}>
+              <tr>
                 <td style={{ width: 200, minWidth: 200, maxWidth: 200 }}>
                   <p className="fw-4">#123456</p>
                 </td>
@@ -99,7 +144,7 @@ const CommandPanel = () => {
                   </div>
                 </td>
               </tr>
-              <tr onClick={() => navigate("/command-panel/1")}>
+              <tr>
                 <td style={{ width: 200, minWidth: 200, maxWidth: 200 }}>
                   <p className="fw-4">#123456</p>
                 </td>
@@ -140,7 +185,7 @@ const CommandPanel = () => {
                   </div>
                 </td>
               </tr>
-              <tr onClick={() => navigate("/command-panel/1")}>
+              <tr>
                 <td style={{ width: 200, minWidth: 200, maxWidth: 200 }}>
                   <p className="fw-4">#123456</p>
                 </td>
@@ -181,7 +226,7 @@ const CommandPanel = () => {
                   </div>
                 </td>
               </tr>
-              <tr onClick={() => navigate("/command-panel/1")}>
+              <tr>
                 <td style={{ width: 200, minWidth: 200, maxWidth: 200 }}>
                   <p className="fw-4">#123456</p>
                 </td>
@@ -222,7 +267,7 @@ const CommandPanel = () => {
                   </div>
                 </td>
               </tr>
-              <tr onClick={() => navigate("/command-panel/1")}>
+              <tr>
                 <td style={{ width: 200, minWidth: 200, maxWidth: 200 }}>
                   <p className="fw-4">#123456</p>
                 </td>
@@ -263,7 +308,7 @@ const CommandPanel = () => {
                   </div>
                 </td>
               </tr>
-              <tr onClick={() => navigate("/command-panel/1")}>
+              <tr>
                 <td style={{ width: 200, minWidth: 200, maxWidth: 200 }}>
                   <p className="fw-4">#123456</p>
                 </td>

@@ -55,18 +55,20 @@ const ClarificationDetails = () => {
                                 name="cyclePeriod"
                                 options={cyclePeriodOptions}
                                 value={
-                                    cyclePeriodOptions.find((opt) => opt.value === "citation") ||
+                                    cyclePeriodOptions.find((opt) => opt.value === "2024 - H1") ||
                                     null
                                 }
                                 placeholder="Select"
+                                isDisabled={true}
                             />
                         </div>
                         <div className="col-lg-3 col-sm-4">
                             <FormInput
-                                label="Unit"
+                                label="Last Date"
                                 name="lastDate"
-                                placeholder="Enter unit"
-                                value=""
+                                placeholder="Enter last date"
+                                type="date"
+                                value="2025-04-15"
                                 readOnly={true}
                             />
                         </div>

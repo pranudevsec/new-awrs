@@ -1,4 +1,3 @@
-import { Link, useNavigate } from "react-router-dom";
 import { SVGICON } from "../../constants/iconsList";
 import Breadcrumb from "../../components/ui/breadcrumb/Breadcrumb";
 import FormSelect from "../../components/form/FormSelect";
@@ -10,7 +9,6 @@ const awardTypeOptions: OptionType[] = [
 ];
 
 const ParametersList = () => {
-    const navigate = useNavigate()
     return (
         <div className="clarification-section">
             <div className="d-flex flex-sm-row flex-column justify-content-between mb-4">
@@ -52,13 +50,10 @@ const ParametersList = () => {
                             <th style={{ width: 150, minWidth: 150, maxWidth: 150 }}>
                                 <div className="d-flex align-items-start">Is Proof required</div>
                             </th>
-                            <th style={{ width: 150, minWidth: 150, maxWidth: 150 }}>
-                                <div className="d-flex align-items-start"></div>
-                            </th>
                         </tr>
                     </thead>
                     <tbody>
-                        <tr onClick={() => navigate("/clarification/unit/2")}>
+                        <tr>
                             <td style={{ width: 150 }}>
                                 <p className="fw-4">Rescue Ops</p>
                             </td>
@@ -74,19 +69,9 @@ const ParametersList = () => {
                             <td style={{ width: 150 }}>
                                 <p className="fw-4">Yes</p>
                             </td>
-                            <td style={{ width: 100 }}>
-                                <div>
-                                    <Link
-                                        to="/clarification/unit/2"
-                                        className="action-btn bg-transparent d-inline-flex align-items-center justify-content-center"
-                                    >
-                                        {SVGICON.app.eye}
-                                    </Link>
-                                </div>
-                            </td>
                         </tr>
 
-                        <tr onClick={() => navigate("/clarification/unit/1")}>
+                        <tr>
                             <td style={{ width: 150 }}>
                                 <p className="fw-4">Enemy Kills</p>
                             </td>
@@ -102,19 +87,9 @@ const ParametersList = () => {
                             <td style={{ width: 150 }}>
                                 <p className="fw-4">Yes</p>
                             </td>
-                            <td style={{ width: 100 }}>
-                                <div>
-                                    <Link
-                                        to="/clarification/unit/1"
-                                        className="action-btn bg-transparent d-inline-flex align-items-center justify-content-center"
-                                    >
-                                        {SVGICON.app.eye}
-                                    </Link>
-                                </div>
-                            </td>
                         </tr>
 
-                        <tr onClick={() => navigate("/clarification/unit/3")}>
+                        <tr>
                             <td style={{ width: 150 }}>
                                 <p className="fw-4">Medical Camps</p>
                             </td>
@@ -129,16 +104,6 @@ const ParametersList = () => {
                             </td>
                             <td style={{ width: 150 }}>
                                 <p className="fw-4">No</p>
-                            </td>
-                            <td style={{ width: 100 }}>
-                                <div>
-                                    <Link
-                                        to="/clarification/unit/3"
-                                        className="action-btn bg-transparent d-inline-flex align-items-center justify-content-center"
-                                    >
-                                        {SVGICON.app.eye}
-                                    </Link>
-                                </div>
                             </td>
                         </tr>
                     </tbody>

@@ -77,6 +77,6 @@ export const authProtectedRoutes: RouteConfig[] = [
   // Admin setting
   { path: "/admin-settings", element: <AdminSettings /> },
 
-  // Admin setting
+  // Parameters
   { path: "/parameters", element: <ParametersList /> },
 ];

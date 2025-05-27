@@ -1,3 +1,4 @@
+
 import { Link, useNavigate } from "react-router-dom";
 import { SVGICON } from "../../constants/iconsList";
 import Breadcrumb from "../../components/ui/breadcrumb/Breadcrumb";
@@ -41,7 +42,7 @@ const Clarification = () => {
                 <div className="d-flex align-items-start">Unit ID</div>
               </th>
               <th style={{ width: 200, minWidth: 200, maxWidth: 200 }}>
-                <div className="d-flex align-items-start">Submition Date</div>
+                <div className="d-flex align-items-start">Submission Date</div>
               </th>
               <th style={{ width: 200, minWidth: 200, maxWidth: 200 }}>
                 <div className="d-flex align-items-start">Dead Line</div>
@@ -50,7 +51,7 @@ const Clarification = () => {
                 <div className="d-flex align-items-start">Type</div>
               </th>
               <th style={{ width: 200, minWidth: 200, maxWidth: 200 }}>
-                <div className="d-flex align-items-start">Status</div>
+                <div className="d-flex align-items-start">Clarifications</div>
               </th>
               <th style={{ width: 100, minWidth: 100, maxWidth: 100 }}>
                 <div className="d-flex align-items-start"></div>
@@ -75,81 +76,15 @@ const Clarification = () => {
                 <p className="fw-4">Citation</p>
               </td>
               <td style={{ width: 200, minWidth: 200, maxWidth: 200 }}>
-                <div className="status-content pending d-flex align-items-center gap-3">
+                <div className="status-content approved reject d-flex align-items-center gap-3">
                   <span></span>
-                  <p className="text-capitalize fw-5">pending</p>
+                  <p className="text-capitalize text-danger fw-5">3 Clarifications</p>
                 </div>
               </td>
               <td style={{ width: 100, minWidth: 100, maxWidth: 100 }}>
                 <div>
                   <Link
                     to="/clarification/unit/1"
-                    className="action-btn bg-transparent d-inline-flex align-items-center justify-content-center"
-                  >
-                    {SVGICON.app.eye}
-                  </Link>
-                </div>
-              </td>
-            </tr>
-            <tr onClick={() => navigate("/clarification/1")}>
-              <td style={{ width: 150, minWidth: 150, maxWidth: 150 }}>
-                <p className="fw-4">#123456</p>
-              </td>
-              <td style={{ width: 150, minWidth: 150, maxWidth: 150 }}>
-                <p className="fw-4">#123456</p>
-              </td>
-              <td style={{ width: 200, minWidth: 200, maxWidth: 200 }}>
-                <p className="fw-4">12-05-2025</p>
-              </td>
-              <td style={{ width: 200, minWidth: 200, maxWidth: 200 }}>
-                <p className="fw-4">12-05-2025</p>
-              </td>
-              <td style={{ width: 150, minWidth: 150, maxWidth: 150 }}>
-                <p className="fw-4">Citation</p>
-              </td>
-              <td style={{ width: 200, minWidth: 200, maxWidth: 200 }}>
-                <div className="status-content approved pending d-flex align-items-center gap-3">
-                  <span></span>
-                  <p className="text-capitalize fw-5">Accepted</p>
-                </div>
-              </td>
-              <td style={{ width: 100, minWidth: 100, maxWidth: 100 }}>
-                <div>
-                  <Link
-                    to="/clarification/1"
-                    className="action-btn bg-transparent d-inline-flex align-items-center justify-content-center"
-                  >
-                    {SVGICON.app.eye}
-                  </Link>
-                </div>
-              </td>
-            </tr>
-            <tr onClick={() => navigate("/clarification/1")}>
-              <td style={{ width: 150, minWidth: 150, maxWidth: 150 }}>
-                <p className="fw-4">#123456</p>
-              </td>
-              <td style={{ width: 150, minWidth: 150, maxWidth: 150 }}>
-                <p className="fw-4">#123456</p>
-              </td>
-              <td style={{ width: 200, minWidth: 200, maxWidth: 200 }}>
-                <p className="fw-4">12-05-2025</p>
-              </td>
-              <td style={{ width: 200, minWidth: 200, maxWidth: 200 }}>
-                <p className="fw-4">12-05-2025</p>
-              </td>
-              <td style={{ width: 150, minWidth: 150, maxWidth: 150 }}>
-                <p className="fw-4">Citation</p>
-              </td>
-              <td style={{ width: 200, minWidth: 200, maxWidth: 200 }}>
-                <div className="status-content reject pending d-flex align-items-center gap-3">
-                  <span></span>
-                  <p className="text-capitalize fw-5">Reject</p>
-                </div>
-              </td>
-              <td style={{ width: 100, minWidth: 100, maxWidth: 100 }}>
-                <div>
-                  <Link
-                    to="/clarification/1"
                     className="action-btn bg-transparent d-inline-flex align-items-center justify-content-center"
                   >
                     {SVGICON.app.eye}
@@ -174,9 +109,9 @@ const Clarification = () => {
                 <p className="fw-4">Citation</p>
               </td>
               <td style={{ width: 200, minWidth: 200, maxWidth: 200 }}>
-                <div className="status-content pending d-flex align-items-center gap-3">
+                <div className="status-content approved pending d-flex align-items-center gap-3">
                   <span></span>
-                  <p className="text-capitalize fw-5">pending</p>
+                  <p className="text-capitalize fw-5">No Clarifications</p>
                 </div>
               </td>
               <td style={{ width: 100, minWidth: 100, maxWidth: 100 }}>

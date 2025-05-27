@@ -3,7 +3,6 @@ import { SVGICON } from "../../constants/iconsList";
 import Breadcrumb from "../../components/ui/breadcrumb/Breadcrumb";
 import UnitClarificationModal from "../../modals/UnitClarificationModal";
 import FormSelect from "../../components/form/FormSelect";
-import FormInput from "../../components/form/FormInput";
 
 const awardTypeOptions: OptionType[] = [
   { value: "citation", label: "Citation" },
@@ -60,15 +59,15 @@ const ClarificationDetail = () => {
                 placeholder="Select"
               />
             </div>
-            <div className="col-lg-3 col-sm-4">
+            {/* <div className="col-lg-3 col-sm-4">
               <FormInput
                 label="Unit"
                 name="lastDate"
-                placeholder="Enter unit"
+                placeholder="Search by unit"
                 value=""
                 readOnly={true}
               />
-            </div>
+            </div> */}
           </div>
         </div>
         <div className="table-responsive">
