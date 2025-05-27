@@ -2,7 +2,7 @@ import { SVGICON } from "../../constants/iconsList";
 
 export const sidebarStructure = [
   {
-    label: "Applications",
+    label: "Home",
     icon: SVGICON.sidebar.applications,
     to: "/applications",
   },
@@ -25,5 +25,15 @@ export const sidebarStructure = [
     label: "Winners",
     icon: SVGICON.sidebar.winners,
     to: "/winners",
+  },
+  {
+    label: "Admin Settings",
+    icon: SVGICON.sidebar.adminSettings,
+    to: "/admin-settings",
+  },
+  {
+    label: "Parameters",
+    icon: SVGICON.sidebar.parameters,
+    to: "/parameters",
   },
 ];

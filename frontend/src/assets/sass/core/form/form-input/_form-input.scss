@@ -1,36 +1,30 @@
 .form-label {
-    font-size: 14px;
-    font-weight: 500;
-    color: var(--gray-600);
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--gray-600);
 }
 
 .form-control,
 .form-select {
-    font-size: 14px;
-    font-weight: 400;
-    color: var(--gray-900);
-    border: 2px solid var(--muted);
-    background-color: transparent;
-    padding: 11px 16px;
-    transition: all 0.3s ease;
-    width: 100%;
+  font-size: 14px;
+  font-weight: 400;
+  color: var(--gray-900);
+  border: 2px solid var(--muted);
+  background-color: transparent;
+  padding: 11px 16px;
+  transition: all 0.3s ease;
+  width: 100%;
 
-    &:focus {
-        box-shadow: none;
-        border: 2px solid var(--primary-default);
-    }
+  &:focus {
+    box-shadow: none;
+    border: 2px solid var(--primary-default);
+  }
 
-    &::placeholder {
-        color: var(--gray-400);
-    }
-
-    // &:disabled {
-    //     background-color: var(--gray-50);
-    //     opacity: 0.8;
-    // }
+  &::placeholder {
+    color: var(--gray-400);
+  }
 }
 
-
 .form-control.invalid {
-    border-color: var(--red-default) !important;
+  border-color: var(--red-default) !important;
 }

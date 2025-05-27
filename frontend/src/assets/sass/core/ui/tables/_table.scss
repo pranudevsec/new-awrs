@@ -1,0 +1,147 @@
+.table-style-1 {
+  thead {
+    background-color: var(--gray-100);
+
+    th {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--gray-500);
+      letter-spacing: 0.6px;
+      padding: 12px;
+      text-transform: uppercase;
+      white-space: nowrap;
+
+      &:first-child {
+        border-top-left-radius: 8px;
+        border-bottom-left-radius: 8px;
+      }
+
+      &:last-child {
+        border-top-right-radius: 8px;
+        border-bottom-right-radius: 8px;
+      }
+    }
+  }
+
+  tbody {
+    td {
+      padding: 16px 12px;
+      // min-width: 200px;
+      max-width: 200px;
+      vertical-align: middle;
+
+      p {
+        color: var(--gray-900);
+      }
+
+      .submit-btn {
+        font-size: 14px;
+        font-weight: 500;
+        color: var(--gray-0);
+        background-color: var(--secondary-default);
+        border: 1px solid var(--secondary-default);
+        border-radius: 5px;
+        padding: 7px 16px;
+        min-width: 120px;
+      }
+    }
+  }
+}
+
+.table-style-2 {
+  border-collapse: separate;
+  border-spacing: 0;
+  width: 100%;
+  border: 1px solid var(--gray-200);
+  border-radius: 8px;
+
+  thead {
+    background-color: var(--gray-100);
+
+    th {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--gray-500);
+      letter-spacing: 0.6px;
+      padding: 12px;
+      text-transform: uppercase;
+      white-space: nowrap;
+      border-bottom: 1px solid var(--gray-200);
+
+      &:first-child {
+        border-top-left-radius: 8px;
+      }
+
+      &:last-child {
+        border-top-right-radius: 8px;
+      }
+    }
+  }
+
+  tbody {
+    tr {
+      border-bottom: 1px solid var(--gray-200);
+      cursor: pointer;
+
+      &:last-child {
+        td {
+          border-bottom: none;
+        }
+      }
+
+      &:hover {
+        background-color: var(--gray-50);
+      }
+    }
+
+    td {
+      padding: 16px 12px;
+      max-width: 200px;
+      vertical-align: middle;
+      border-bottom: 1px solid var(--gray-200);
+
+      p {
+        color: var(--gray-900);
+      }
+
+      .status-content {
+        &.pending {
+          span {
+            background-color: var(--orange-dark);
+          }
+
+          p {
+            color: var(--orange-dark);
+          }
+        }
+
+        &.approved {
+          span {
+            background-color: var(--green-dark);
+          }
+
+          p {
+            color: var(--green-dark);
+          }
+        }
+
+        &.reject {
+          span {
+            background-color: var(--red-dark);
+          }
+
+          p {
+            color: var(--red-dark);
+          }
+        }
+
+        span {
+          width: 8px;
+          height: 8px;
+          border-radius: 50%;
+          display: inline-block;
+        }
+      }
+    }
+  }
+}

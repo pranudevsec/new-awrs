@@ -1,66 +1,64 @@
 @use "../../core/mixins/custom-scrollbar" as scrollbar;
 
 .sidebar-menu {
-    position: fixed;
-    bottom: 0;
-    top: 0;
-    left: 0;
-    z-index: 50;
-    width: 290px;
-    background-color: var(--background);
-    overflow: hidden;
-    border-right: 2px solid var(--gray-100);
+  position: fixed;
+  bottom: 0;
+  top: 0;
+  left: 0;
+  z-index: 50;
+  width: 290px;
+  background-color: var(--background);
+  overflow: hidden;
+  border-right: 2px solid var(--gray-100);
 
-    .scroll-style-85 {
-        @include scrollbar.custom-scrollbar(calc(100% - 117px), 0);
-    }
+  .scroll-style-85 {
+    @include scrollbar.custom-scrollbar(calc(100% - 117px), 0);
+  }
 }
 
 .sidebar-wrapper .nav-items {
-    font-size: 14px;
-    line-height: 14px;
-    color: var(--gray-700);
-    text-transform: capitalize;
-    border-radius: 6px;
-    margin: 8px 20px;
-    padding: 8px 12px;
-    transition: all 0.3s ease;
+  font-size: 14px;
+  line-height: 14px;
+  color: var(--gray-700);
+  text-transform: capitalize;
+  border-radius: 6px;
+  margin: 8px 20px;
+  padding: 8px 12px;
+  transition: all 0.3s ease;
 
-    &:hover:not(.active) {
-        background-color: var(--gray-100);
-        color: var(--gray-900);
-    }
+  &:hover:not(.active) {
+    background-color: var(--gray-100);
+    color: var(--gray-900);
+  }
 
-    &.active {
-        color: var(--secondary-default);
-
-        &::before {
-            transform: scaleY(1);
-            opacity: 1;
-            transition:
-                transform 0.2s cubic-bezier(0.645, 0.045, 0.355, 1),
-                opacity 0.2s cubic-bezier(0.645, 0.045, 0.355, 1);
-        }
-    }
+  &.active {
+    color: var(--secondary-default);
 
     &::before {
-        position: absolute;
-        content: '';
-        left: 0;
-        width: 4px;
-        height: 80%;
-        margin-left: -20px;
-        background-color: var(--secondary-default);
-        border-radius: 0 6px 6px 0;
-        transform: scaleY(0.0001);
-        opacity: 0;
-        z-index: 9;
-        transition:
-            transform 0.2s cubic-bezier(0.215, 0.61, 0.355, 1),
-            opacity 0.2s cubic-bezier(0.215, 0.61, 0.355, 1);
+      transform: scaleY(1);
+      opacity: 1;
+      transition: transform 0.2s cubic-bezier(0.645, 0.045, 0.355, 1),
+        opacity 0.2s cubic-bezier(0.645, 0.045, 0.355, 1);
     }
+  }
 
-    .nav-icon {
-        font-size: 20px;
-    }
+  &::before {
+    position: absolute;
+    content: "";
+    left: 0;
+    width: 4px;
+    height: 80%;
+    margin-left: -20px;
+    background-color: var(--secondary-default);
+    border-radius: 0 6px 6px 0;
+    transform: scaleY(0.0001);
+    opacity: 0;
+    z-index: 9;
+    transition: transform 0.2s cubic-bezier(0.215, 0.61, 0.355, 1),
+      opacity 0.2s cubic-bezier(0.215, 0.61, 0.355, 1);
+  }
+
+  .nav-icon {
+    font-size: 20px;
+  }
 }

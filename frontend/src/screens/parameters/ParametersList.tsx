@@ -1,0 +1,152 @@
+import { Link, useNavigate } from "react-router-dom";
+import { SVGICON } from "../../constants/iconsList";
+import Breadcrumb from "../../components/ui/breadcrumb/Breadcrumb";
+import FormSelect from "../../components/form/FormSelect";
+import Pagination from "../../components/ui/pagination/Pagination";
+
+const awardTypeOptions: OptionType[] = [
+    { value: "citation", label: "Citation" },
+    { value: "clarification", label: "Clarification" },
+];
+
+const ParametersList = () => {
+    const navigate = useNavigate()
+    return (
+        <div className="clarification-section">
+            <div className="d-flex flex-sm-row flex-column justify-content-between mb-4">
+                <Breadcrumb title="Parameters Listing" />
+                <div className="d-flex align-items-center justify-content-end gap-3 mt-sm-0 mt-3">
+                    <button className="_btn primary">Add Parameter</button>
+                </div>
+            </div>
+            <div className="filter-wrapper d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
+                <div className="search-wrapper position-relative">
+                    <button className="border-0 bg-transparent position-absolute translate-middle-y top-50">
+                        {SVGICON.app.search}
+                    </button>
+                    <input type="text" placeholder="search..." className="form-control" />
+                </div>
+                <FormSelect
+                    name="awardType"
+                    options={awardTypeOptions}
+                    value={null}
+                    placeholder="Select Type"
+                />
+            </div>
+            <div className="table-responsive">
+                <table className="table-style-2 w-100">
+                    <thead>
+                        <tr>
+                            <th style={{ width: 150, minWidth: 150, maxWidth: 150 }}>
+                                <div className="d-flex align-items-start">Name</div>
+                            </th>
+                            <th style={{ width: 150, minWidth: 150, maxWidth: 150 }}>
+                                <div className="d-flex align-items-start">Award Type</div>
+                            </th>
+                            <th style={{ width: 200, minWidth: 200, maxWidth: 200 }}>
+                                <div className="d-flex align-items-start">Per unit mark</div>
+                            </th>
+                            <th style={{ width: 200, minWidth: 200, maxWidth: 200 }}>
+                                <div className="d-flex align-items-start">Max marks</div>
+                            </th>
+                            <th style={{ width: 150, minWidth: 150, maxWidth: 150 }}>
+                                <div className="d-flex align-items-start">Is Proof required</div>
+                            </th>
+                            <th style={{ width: 150, minWidth: 150, maxWidth: 150 }}>
+                                <div className="d-flex align-items-start"></div>
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr onClick={() => navigate("/clarification/unit/2")}>
+                            <td style={{ width: 150 }}>
+                                <p className="fw-4">Rescue Ops</p>
+                            </td>
+                            <td style={{ width: 150 }}>
+                                <p className="fw-4">Citation</p>
+                            </td>
+                            <td style={{ width: 200 }}>
+                                <p className="fw-4">5</p>
+                            </td>
+                            <td style={{ width: 200 }}>
+                                <p className="fw-4">15</p>
+                            </td>
+                            <td style={{ width: 150 }}>
+                                <p className="fw-4">Yes</p>
+                            </td>
+                            <td style={{ width: 100 }}>
+                                <div>
+                                    <Link
+                                        to="/clarification/unit/2"
+                                        className="action-btn bg-transparent d-inline-flex align-items-center justify-content-center"
+                                    >
+                                        {SVGICON.app.eye}
+                                    </Link>
+                                </div>
+                            </td>
+                        </tr>
+
+                        <tr onClick={() => navigate("/clarification/unit/1")}>
+                            <td style={{ width: 150 }}>
+                                <p className="fw-4">Enemy Kills</p>
+                            </td>
+                            <td style={{ width: 150 }}>
+                                <p className="fw-4">Citation</p>
+                            </td>
+                            <td style={{ width: 200 }}>
+                                <p className="fw-4">4</p>
+                            </td>
+                            <td style={{ width: 200 }}>
+                                <p className="fw-4">20</p>
+                            </td>
+                            <td style={{ width: 150 }}>
+                                <p className="fw-4">Yes</p>
+                            </td>
+                            <td style={{ width: 100 }}>
+                                <div>
+                                    <Link
+                                        to="/clarification/unit/1"
+                                        className="action-btn bg-transparent d-inline-flex align-items-center justify-content-center"
+                                    >
+                                        {SVGICON.app.eye}
+                                    </Link>
+                                </div>
+                            </td>
+                        </tr>
+
+                        <tr onClick={() => navigate("/clarification/unit/3")}>
+                            <td style={{ width: 150 }}>
+                                <p className="fw-4">Medical Camps</p>
+                            </td>
+                            <td style={{ width: 150 }}>
+                                <p className="fw-4">Appreciation</p>
+                            </td>
+                            <td style={{ width: 200 }}>
+                                <p className="fw-4">2</p>
+                            </td>
+                            <td style={{ width: 200 }}>
+                                <p className="fw-4">10</p>
+                            </td>
+                            <td style={{ width: 150 }}>
+                                <p className="fw-4">No</p>
+                            </td>
+                            <td style={{ width: 100 }}>
+                                <div>
+                                    <Link
+                                        to="/clarification/unit/3"
+                                        className="action-btn bg-transparent d-inline-flex align-items-center justify-content-center"
+                                    >
+                                        {SVGICON.app.eye}
+                                    </Link>
+                                </div>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            <Pagination />
+        </div >
+    );
+};
+
+export default ParametersList;

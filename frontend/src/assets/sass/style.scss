@@ -10,10 +10,6 @@
 
 // Fonts 
 @import url('https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&family=Lexend+Deca:wght@100..900&display=swap');
-@import url('https://fonts.googleapis.com/css2?family=Kaushan+Script&display=swap');
-
-
-
 
 .main-breadcrumb {
     // margin-bottom: 28px;
@@ -37,4 +33,65 @@
         height: 4px;
         background-color: var(--gray-300);
     }
+}
+
+
+
+
+
+.tag-input-area {
+    min-height: 46px;
+    padding: 8px 12px;
+    background-color: transparent;
+    border: 2px solid var(--muted);
+    border-radius: 4px;
+    font-size: 14px;
+    font-weight: 400;
+    color: var(--gray-900);
+    transition: all 0.3s ease;
+}
+
+.tag-input-area:focus-within {
+    border-color: var(--secondary-default);
+    box-shadow: none;
+}
+
+.tag-input-area.disabled {
+    background-color: var(--gray-100);
+    cursor: not-allowed;
+}
+
+.tag-item {
+    background-color: var(--secondary-default);
+    color: #fff;
+    padding: 4px 10px;
+    border-radius: 30px;
+    font-size: 13px;
+    display: flex;
+    align-items: center;
+}
+
+.tag-remove-btn {
+    background: none;
+    border: none;
+    color: #fff;
+    margin-left: 6px;
+    font-size: 16px;
+    cursor: pointer;
+    line-height: 1;
+}
+
+.tag-input-field {
+    border: none;
+    outline: none;
+    flex: 1;
+    min-width: 120px;
+    font-size: 14px;
+    padding: 6px 0;
+    background-color: transparent;
+    color: var(--gray-900);
+}
+
+.tag-input-field::placeholder {
+    color: var(--gray-400);
 }

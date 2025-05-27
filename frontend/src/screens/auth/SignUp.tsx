@@ -79,7 +79,7 @@ const SignUp = () => {
                                                     selectedOption?.value || ""
                                                 )
                                             }
-                                            placeholder="Select role"
+                                            placeholder="Select"
                                             errors={formik.errors.user_role}
                                             touched={formik.touched.user_role}
                                         />

@@ -1,13 +1,16 @@
-import { Link } from "react-router-dom"
+import { Link } from "react-router-dom";
 
 const Thanks = () => {
-    return (
-        <div className="thanks-section text-center">
-            {/* <img src="/media/icons/confirm.gif" alt="Confirm" className="img-fluid mx-auto" /> */}
-            <h1 className="font-lexend mb-5 fw-5">Thanks! Application submitted <br /> on 22-05-2025</h1>
-            <Link to="/" className="border-0 return-btn">Go Home</Link>
-        </div>
-    )
-}
+  return (
+    <div className="thanks-section text-center">
+      <h1 className="font-lexend mb-5 fw-5">
+        Thanks! Application submitted <br /> on 22-05-2025
+      </h1>
+      <Link to="/" className="_btn _btn-lg primary">
+        Go Home
+      </Link>
+    </div>
+  );
+};
 
-export default Thanks
+export default Thanks;

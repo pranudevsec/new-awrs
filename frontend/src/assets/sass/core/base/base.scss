@@ -82,17 +82,17 @@ time,
 mark,
 audio,
 video {
-    margin: 0;
-    padding: 0;
-    border: 0;
-    outline: 0;
-    font-size: 100%;
-    font: inherit;
-    vertical-align: baseline;
-    font-family: inherit;
-    font-size: 100%;
-    font-style: inherit;
-    font-weight: inherit;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  outline: 0;
+  font-size: 100%;
+  font: inherit;
+  vertical-align: baseline;
+  font-family: inherit;
+  font-size: 100%;
+  font-style: inherit;
+  font-weight: inherit;
 }
 
 article,
@@ -106,7 +106,7 @@ hgroup,
 menu,
 nav,
 section {
-    display: block;
+  display: block;
 }
 
 audio,
@@ -117,68 +117,67 @@ img,
 object,
 svg,
 video {
-    display: block;
+  display: block;
 }
 
 input[type="number"] {
+  &::-webkit-outer-spin-button,
+  &::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+  }
 
-    &::-webkit-outer-spin-button,
-    &::-webkit-inner-spin-button {
-        -webkit-appearance: none;
-        margin: 0;
-    }
-
-    -moz-appearance: textfield;
-    appearance: textfield;
+  -moz-appearance: textfield;
+  appearance: textfield;
 }
 
 input[type="date"]::-webkit-calendar-picker-indicator {
-    background: url("/media/icons/calendar.svg") no-repeat;
-    width: 20px;
-    height: 20px;
+  background: url("/media/icons/calendar.svg") no-repeat;
+  width: 20px;
+  height: 20px;
 }
 
 textarea {
-    resize: none;
+  resize: none;
 }
 
 /* Elements
 -------------------------------------------------------------- */
 * {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
 }
 
 html {
-    scroll-behavior: smooth;
+  scroll-behavior: smooth;
 }
 
 body {
-    font-family: var(--font-inter);
-    font-size: 16px;
-    line-height: 26px;
-    font-weight: 400;
+  font-family: var(--font-inter);
+  font-size: 16px;
+  line-height: 26px;
+  font-weight: 400;
 }
 
 html,
 body {
-    height: 100%;
-    margin: 0;
-    padding: 0;
-    overflow-x: hidden;
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  overflow-x: hidden;
 }
 
 ul,
 li {
-    list-style-type: none;
-    margin-bottom: 0;
-    padding-left: 0;
-    list-style: none;
+  list-style-type: none;
+  margin-bottom: 0;
+  padding-left: 0;
+  list-style: none;
 }
 
 a {
-    text-decoration: none;
+  text-decoration: none;
 }
 
 /* Typography
@@ -190,7 +189,7 @@ h4,
 h5,
 h6,
 p {
-    margin: 0;
+  margin: 0;
 }
 
 .title-display,
@@ -200,89 +199,85 @@ h3,
 h4,
 h5,
 h6 {
-    font-weight: 500;
-    color: var(--gray-900);
-    line-height: normal;
+  font-weight: 500;
+  color: var(--gray-900);
+  line-height: normal;
 }
 
 h1 {
-    font-size: 50px;
+  font-size: 50px;
 }
 
 h2 {
-    font-size: 44px;
+  font-size: 44px;
 }
 
 h3 {
-    font-size: 40px;
+  font-size: 40px;
 }
 
 h4 {
-    font-size: 30px;
+  font-size: 30px;
 }
 
 h5 {
-    font-size: 18px;
-    line-height: 20px;
+  font-size: 18px;
+  line-height: 20px;
 }
 
 h6 {
-    font-size: 16px;
-    line-height: 18px;
+  font-size: 16px;
+  line-height: 18px;
 }
 
 p {
-    font-size: 14px;
+  font-size: 14px;
 }
 
 .fw-4 {
-    font-weight: 400 !important;
+  font-weight: 400 !important;
 }
 
 .fw-5 {
-    font-weight: 500 !important;
+  font-weight: 500 !important;
 }
 
 .fw-6 {
-    font-weight: 600 !important;
+  font-weight: 600 !important;
 }
 
 .fw-7 {
-    font-weight: 700 !important;
+  font-weight: 700 !important;
 }
 
 .fw-8 {
-    font-weight: 800 !important;
+  font-weight: 800 !important;
 }
 
 .mb_30 {
-    margin-bottom: 30px;
+  margin-bottom: 30px;
 }
 
 .rotate-90 {
-    transform: rotate(90deg);
+  transform: rotate(90deg);
 }
 
 .rotate-180 {
-    transform: rotate(180deg);
+  transform: rotate(180deg);
 }
 
 .z-neg-1 {
-    z-index: -1;
+  z-index: -1;
 }
 
 .font-lexend {
-    font-family: var(--font-lexend-deca);
+  font-family: var(--font-lexend-deca);
 }
 
 .font-inter {
-    font-family: var(--font-inter);
-}
-
-.font-kaushan {
-    font-family: var(--font-kaushan);
+  font-family: var(--font-inter);
 }
 
 .error-text {
-    color: var(--red-default);
+  color: var(--red-default);
 }

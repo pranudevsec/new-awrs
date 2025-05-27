@@ -1,191 +1,21 @@
-.clarification-section {
-    .filter-btn {
-        font-size: 14px;
-        font-weight: 500;
-        background-color: var(--secondary-default);
-        color: var(--background);
-        padding: 8px 16px;
-        height: 40px;
-        border-radius: 6px;
-
-        span {
-            font-size: 16px;
-        }
+.filter-wrapper {
+  .search-wrapper {
+    button {
+      left: 15px;
     }
 
-    .export-wrapper {
-        margin-bottom: 28px;
-
-        .button-area {
-            button {
-                font-size: 14px;
-                font-weight: 500;
-                border-radius: 5px;
-                padding: 7px 16px;
-            }
-
-            .export-btn {
-                color: var(--gray-700);
-                border: 1px solid var(--muted);
-            }
-
-            .publish-btn {
-                color: var(--gray-0);
-                background-color: var(--secondary-default);
-                border: 1px solid var(--secondary-default);
-            }
-        }
+    .form-control {
+      padding: 7px 20px 7px 40px;
+      min-height: 40px;
     }
+  }
 
-    .filter-wrapper {
-        .search-wrapper {
-            button {
-                left: 15px;
-            }
+  .css-annyam-control,
+  .css-1mwd2k4-control {
+    min-height: 40px;
+  }
 
-            .form-control {
-                padding: 7px 20px 7px 40px;
-                min-height: 40px;
-            }
-
-
-        }
-
-        .filters-btn {
-            font-size: 14px;
-            font-weight: 500;
-            color: var(--gray-700);
-            border: 1px solid var(--muted);
-            padding: 8px 14px;
-            height: 40px;
-            border-radius: 6px;
-
-            span {
-                font-size: 16px;
-            }
-        }
-
-        .css-annyam-control,
-        .css-1mwd2k4-control {
-            min-height: 40px;
-        }
-
-        .css-hlgwow {
-            padding: 0 8px;
-        }
-    }
-
-    .main-table {
-        border-collapse: separate;
-        border-spacing: 0;
-        width: 100%;
-        border: 1px solid var(--gray-200);
-        border-radius: 8px;
-
-        thead {
-            background-color: var(--gray-100);
-
-            th {
-                font-size: 12px;
-                font-weight: 600;
-                color: var(--gray-500);
-                letter-spacing: 0.6px;
-                padding: 12px;
-                text-transform: uppercase;
-                white-space: nowrap;
-                border-bottom: 1px solid var(--gray-200);
-
-                &:first-child {
-                    border-top-left-radius: 8px;
-                }
-
-                &:last-child {
-                    border-top-right-radius: 8px;
-                }
-            }
-        }
-
-        tbody {
-            tr {
-                border-bottom: 1px solid var(--gray-200);
-
-                &:last-child {
-                    td {
-                        border-bottom: none;
-                    }
-                }
-
-                &:hover {
-                    background-color: var(--gray-50);
-                }
-            }
-
-            td {
-                padding: 16px 12px;
-                // min-width: 200px;
-                max-width: 200px;
-                vertical-align: middle;
-                border-bottom: 1px solid var(--gray-200);
-
-                p {
-                    color: var(--gray-900);
-                }
-
-                .status-content {
-                    &.pending {
-                        span {
-                            background-color: var(--orange-dark);
-                        }
-
-                        p {
-                            color: var(--orange-dark);
-                        }
-                    }
-
-                    &.approved {
-                        span {
-                            background-color: var(--green-dark);
-                        }
-
-                        p {
-                            color: var(--green-dark);
-                        }
-                    }
-
-                    &.reject {
-                        span {
-                            background-color: var(--red-dark);
-                        }
-
-                        p {
-                            color: var(--red-dark);
-                        }
-                    }
-
-                    span {
-                        width: 8px;
-                        height: 8px;
-                        border-radius: 50%;
-                        display: inline-block;
-                    }
-                }
-
-                .action-btn {
-                    width: 32px;
-                    height: 32px;
-                    padding: 2px;
-                    border: 1px solid var(--muted);
-                    border-radius: 4px;
-                    color: var(--gray-500);
-                    transition: all 0.3s ease;
-
-                    &:hover {
-                        border: 1px solid var(--secondary-default);
-                        color: var(--secondary-default);
-                    }
-                }
-            }
-        }
-    }
-
+  .css-hlgwow {
+    padding: 0 8px;
+  }
 }
