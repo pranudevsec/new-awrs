@@ -9,6 +9,7 @@ import ClarificationList from "../screens/applications/modules/ClarificationList
 import ClarificationDetails from "../screens/applications/modules/ClarificationDetails";
 import AdminSettings from "../screens/admin-settings/AdminSettings";
 import ParametersList from "../screens/parameters/ParametersList";
+import AddParameters from "../screens/parameters/AddParameters";
 
 const Applications = lazy(() => import("../screens/applications/Applications"));
 const ApplyCitation = lazy(
@@ -79,4 +80,5 @@ export const authProtectedRoutes: RouteConfig[] = [
 
   // Parameters
   { path: "/parameters", element: <ParametersList /> },
+  { path: "/parameters/add", element: <AddParameters /> },
 ];

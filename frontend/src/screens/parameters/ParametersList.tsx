@@ -14,6 +14,7 @@ const ParametersList = () => {
             <div className="d-flex flex-sm-row flex-column justify-content-between mb-4">
                 <Breadcrumb title="Parameters Listing" />
                 <div className="d-flex align-items-center justify-content-end gap-3 mt-sm-0 mt-3">
+                    {/* <Link to="/parameters/add" className="_btn primary">Add Parameter</Link> */}
                     <button className="_btn primary">Add Parameter</button>
                 </div>
             </div>

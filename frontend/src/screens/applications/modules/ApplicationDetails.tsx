@@ -4,6 +4,7 @@ import Breadcrumb from "../../../components/ui/breadcrumb/Breadcrumb";
 import UnitClarificationModal from "../../../modals/UnitClarificationModal";
 import FormSelect from "../../../components/form/FormSelect";
 import FormInput from "../../../components/form/FormInput";
+import ReqClarificationModal from "../../../modals/ReqClarificationModal";
 
 const awardTypeOptions: OptionType[] = [
     { value: "citation", label: "Citation" },
@@ -20,6 +21,7 @@ const cyclePeriodOptions: OptionType[] = [
 const ApplicationDetails = () => {
     // States
     const [clarificationShow, setClarificationShow] = useState(false);
+    const [reqClarificationShow, setReqClarificationShow] = useState(false);
 
     return (
         <>
@@ -93,8 +95,11 @@ const ApplicationDetails = () => {
                                 <th style={{ width: 200, minWidth: 200, maxWidth: 200 }}>
                                     <div className="d-flex align-items-start">Approved Marks</div>
                                 </th>
-                                <th style={{ width: 120, minWidth: 120, maxWidth: 120 }}>
-                                    <div className="d-flex align-items-start">Clarification</div>
+                                <th style={{ width: 150, minWidth: 150, maxWidth: 150 }}>
+                                    <div className="d-flex align-items-start">Add Clarification</div>
+                                </th>
+                                <th style={{ width: 150, minWidth: 150, maxWidth: 150 }}>
+                                    <div className="d-flex align-items-start">Requested Clarification</div>
                                 </th>
                                 <th style={{ width: 200, minWidth: 200, maxWidth: 200 }}>
                                     <div className="d-flex align-items-start"></div>
@@ -121,18 +126,23 @@ const ApplicationDetails = () => {
                                         className="form-control"
                                         placeholder="Enter approved marks"
                                         autoComplete="off"
-                                        value="0"
+                                        value="8"
                                         readOnly
                                     />
                                 </td>
                                 <td style={{ width: 120, minWidth: 120, maxWidth: 120 }}>
-                                    {/* <button className="_btn outline" onClick={() => setClarificationShow(true)} >Add Clarification</button> */}
-                                    <button
+                                    {/* <button
                                         className="border-0 bg-transparent"
                                         style={{ color: "var(--secondary-default)" }}
                                         onClick={() => setClarificationShow(true)}
                                     >
                                         {SVGICON.app.clarification}
+                                    </button> */}
+                                    <p className="fw-5">Already Asked</p>
+                                </td>
+                                <td style={{ width: 100, minWidth: 100, maxWidth: 100 }}>
+                                    <button className="action-btn bg-transparent d-inline-flex align-items-center justify-content-center" onClick={() => setReqClarificationShow(true)}>
+                                        {SVGICON.app.eye}
                                     </button>
                                 </td>
                                 <td style={{ width: 200, minWidth: 200, maxWidth: 200 }}>
@@ -144,13 +154,13 @@ const ApplicationDetails = () => {
                             </tr>
                             <tr>
                                 <td style={{ width: 150, minWidth: 150, maxWidth: 150 }}>
-                                    <p className="fw-5">Parameter 1</p>
+                                    <p className="fw-5">Parameter 2</p>
                                 </td>
                                 <td style={{ width: 100, minWidth: 100, maxWidth: 100 }}>
-                                    <p className="fw-5">2</p>
+                                    <p className="fw-5">3</p>
                                 </td>
                                 <td style={{ width: 100, minWidth: 100, maxWidth: 100 }}>
-                                    <p className="fw-5">8</p>
+                                    <p className="fw-5">10</p>
                                 </td>
                                 <td style={{ width: 100, minWidth: 100, maxWidth: 100 }}>
                                     <div style={{ fontSize: 18 }}>{SVGICON.app.pdf}</div>
@@ -161,12 +171,11 @@ const ApplicationDetails = () => {
                                         className="form-control"
                                         placeholder="Enter approved marks"
                                         autoComplete="off"
-                                        value="0"
+                                        value="10"
                                         readOnly
                                     />
                                 </td>
                                 <td style={{ width: 120, minWidth: 120, maxWidth: 120 }}>
-                                    {/* <button className="_btn outline" onClick={() => setClarificationShow(true)} >Add Clarification</button> */}
                                     <button
                                         className="border-0 bg-transparent"
                                         style={{ color: "var(--secondary-default)" }}
@@ -175,22 +184,22 @@ const ApplicationDetails = () => {
                                         {SVGICON.app.clarification}
                                     </button>
                                 </td>
+                                <td style={{ width: 100, minWidth: 100, maxWidth: 100 }}>
+                                    -
+                                </td>
                                 <td style={{ width: 200, minWidth: 200, maxWidth: 200 }}>
-                                    <div className="d-flex gap-3">
-                                        <button className="_btn success">Accepted</button>
-                                        <button className="_btn danger">Reject</button>
-                                    </div>
+
                                 </td>
                             </tr>
                             <tr>
                                 <td style={{ width: 150, minWidth: 150, maxWidth: 150 }}>
-                                    <p className="fw-5">Parameter 1</p>
+                                    <p className="fw-5">Parameter 2</p>
                                 </td>
                                 <td style={{ width: 100, minWidth: 100, maxWidth: 100 }}>
-                                    <p className="fw-5">2</p>
+                                    <p className="fw-5">4</p>
                                 </td>
                                 <td style={{ width: 100, minWidth: 100, maxWidth: 100 }}>
-                                    <p className="fw-5">8</p>
+                                    <p className="fw-5">12</p>
                                 </td>
                                 <td style={{ width: 100, minWidth: 100, maxWidth: 100 }}>
                                     <div style={{ fontSize: 18 }}>{SVGICON.app.pdf}</div>
@@ -201,18 +210,23 @@ const ApplicationDetails = () => {
                                         className="form-control"
                                         placeholder="Enter approved marks"
                                         autoComplete="off"
-                                        value="0"
+                                        value="12"
                                         readOnly
                                     />
                                 </td>
                                 <td style={{ width: 120, minWidth: 120, maxWidth: 120 }}>
-                                    {/* <button className="_btn outline" onClick={() => setClarificationShow(true)} >Add Clarification</button> */}
-                                    <button
+                                    {/* <button
                                         className="border-0 bg-transparent"
                                         style={{ color: "var(--secondary-default)" }}
                                         onClick={() => setClarificationShow(true)}
                                     >
                                         {SVGICON.app.clarification}
+                                    </button> */}
+                                    <p className="fw-5">Already Asked</p>
+                                </td>
+                                <td style={{ width: 100, minWidth: 100, maxWidth: 100 }}>
+                                    <button className="action-btn bg-transparent d-inline-flex align-items-center justify-content-center" onClick={() => setReqClarificationShow(true)}>
+                                        {SVGICON.app.eye}
                                     </button>
                                 </td>
                                 <td style={{ width: 200, minWidth: 200, maxWidth: 200 }}>
@@ -229,6 +243,10 @@ const ApplicationDetails = () => {
             <UnitClarificationModal
                 show={clarificationShow}
                 handleClose={() => setClarificationShow(false)}
+            />
+            <ReqClarificationModal
+                show={reqClarificationShow}
+                handleClose={() => setReqClarificationShow(false)}
             />
         </>
     );

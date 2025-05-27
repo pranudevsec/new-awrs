@@ -33,7 +33,7 @@ export const sidebarStructure = [
   },
   {
     label: "Parameters",
-    icon: SVGICON.sidebar.parameters,
+    icon: SVGICON.sidebar.profile,
     to: "/parameters",
   },
 ];
