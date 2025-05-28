@@ -20,19 +20,20 @@ const ProfileSettings = () => {
   const getVisibleFields = (role: UserRole): string[] => {
     switch (role) {
       case "unit":
-        return ["unit", "brigade", "division", "corps", "command"];
+        return ["unit", "brigade", "division", "corps", "command"].slice().reverse();
       case "brigade":
-        return ["unit", "division", "corps", "command"];
+        return ["unit", "division", "corps", "command"].slice().reverse();
       case "division":
-        return ["unit", "corps", "command"];
+        return ["unit", "corps", "command"].slice().reverse();
       case "corps":
-        return ["unit", "command"];
+        return ["unit", "command"].slice().reverse();
       case "command":
-        return ["unit"];
+        return ["unit"].slice().reverse();
       default:
         return [];
     }
   };
+  
 
   const visibleFields = getVisibleFields(profile?.user?.user_role ?? "");
 
@@ -99,7 +100,43 @@ const ProfileSettings = () => {
 
       <form onSubmit={formik.handleSubmit}>
         <div className="row">
-          <div className="col-sm-6 mb-3">
+       
+
+          {/* Conditionally render select fields based on role */}
+          {visibleFields.map((field) => {
+            const optionsForField =
+            field === "unit"
+              ? {
+                  unit: unitOptions,
+                  brigade: brigadeOptions,
+                  division: divisionOptions,
+                  corps: corpsOptions,
+                  command: commandOptions,
+                }[profile?.user?.user_role ?? "unit"] || []
+              : optionsMap[field] || [];
+
+            return (
+              <div className="col-sm-6 mb-3" key={field}>
+                <FormSelect
+                  label={field.charAt(0).toUpperCase() + field.slice(1)}
+                  name={field}
+                  options={optionsForField}
+                  value={
+                    optionsForField.find(
+                      (opt: any) => opt.value === formik.values[field]
+                    ) || null
+                  }
+                  onChange={(selectedOption) =>
+                    formik.setFieldValue(field, selectedOption?.value || "")
+                  }
+                  placeholder={getPlaceholder(profile?.user?.user_role ?? "", field)}
+                  errors={formik.errors[field]}
+                  touched={formik.touched[field]}
+                />
+              </div>
+            );
+          })}
+   <div className="col-sm-6 mb-3">
             <label htmlFor="adm_channel" className="form-label">
               Adm Channel
             </label>
@@ -145,42 +182,6 @@ const ProfileSettings = () => {
               <div className="invalid-feedback">{formik.errors.tech_channel}</div>
             )}
           </div>
-
-          {/* Conditionally render select fields based on role */}
-          {visibleFields.map((field) => {
-            const optionsForField =
-            field === "unit"
-              ? {
-                  unit: unitOptions,
-                  brigade: brigadeOptions,
-                  division: divisionOptions,
-                  corps: corpsOptions,
-                  command: commandOptions,
-                }[profile?.user?.user_role ?? "unit"] || []
-              : optionsMap[field] || [];
-
-            return (
-              <div className="col-sm-6 mb-3" key={field}>
-                <FormSelect
-                  label={field.charAt(0).toUpperCase() + field.slice(1)}
-                  name={field}
-                  options={optionsForField}
-                  value={
-                    optionsForField.find(
-                      (opt: any) => opt.value === formik.values[field]
-                    ) || null
-                  }
-                  onChange={(selectedOption) =>
-                    formik.setFieldValue(field, selectedOption?.value || "")
-                  }
-                  placeholder={getPlaceholder(profile?.user?.user_role ?? "", field)}
-                  errors={formik.errors[field]}
-                  touched={formik.touched[field]}
-                />
-              </div>
-            );
-          })}
-
           <div className="col-12 mt-2">
             <div className="d-flex align-items-center">
               <button type="submit" className="_btn _btn-lg primary">

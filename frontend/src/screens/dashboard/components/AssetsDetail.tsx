@@ -10,7 +10,7 @@ const AssetsDetail = () => {
                                 </div> */}
                             <div className="text ">
                                 <h6 className="fw-4 mb-2">Application Pending</h6>
-                                <h4 className="fw-6 font-lexend">12</h4>
+                                <h4 className="fw-6 font-lexend color-pending">12</h4>
                             </div>
                         </div>
                     </div>
@@ -23,7 +23,7 @@ const AssetsDetail = () => {
                                 </div> */}
                             <div className="text">
                                 <h6 className="fw-4 mb-2">Clarification Requests</h6>
-                                <h4 className="fw-6 font-lexend">5</h4>
+                                <h4 className="fw-6 font-lexend color-request">5</h4>
                             </div>
                         </div>
                     </div>
@@ -36,7 +36,7 @@ const AssetsDetail = () => {
                                 </div> */}
                             <div className="text">
                                 <h6 className="fw-4 mb-2">Clarification Raised</h6>
-                                <h4 className="fw-6 font-lexend">3</h4>
+                                <h4 className="fw-6 font-lexend color-raised">3</h4>
                             </div>
                         </div>
                     </div>
@@ -49,7 +49,7 @@ const AssetsDetail = () => {
                                 </div> */}
                             <div className="text">
                                 <h6 className="fw-4 mb-2">Rejected</h6>
-                                <h4 className="fw-6 font-lexend">2</h4>
+                                <h4 className="fw-6 font-lexend color-rejected">2</h4>
                             </div>
                         </div>
                     </div>
