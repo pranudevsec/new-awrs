@@ -2,12 +2,14 @@ import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { SVGICON } from "../../constants/iconsList";
 import SidebarMobileMenu from "../../offcanvas/SidebarMobileMenu";
-// import { useAppDispatch } from "../../reduxToolkit/hooks";
-// import { signOut } from "../../reduxToolkit/slices/auth/authSlice";
+import { useAppDispatch, useAppSelector } from "../../reduxToolkit/hooks";
+import { getProfile } from "../../reduxToolkit/services/auth/authService";
+import { signOut } from "../../reduxToolkit/slices/auth/authSlice";
 
 const Header = () => {
     const navigate = useNavigate();
-    // const dispatch = useAppDispatch();
+    const dispatch = useAppDispatch();
+    const profile = useAppSelector((state) => state.admin.profile);
 
     const dropdownRef = useRef<HTMLDivElement | null>(null);
 
@@ -16,16 +18,17 @@ const Header = () => {
     const [mobileMenuShow, setMobileMenu] = useState<boolean>(false);
 
     // Sign out function
-    // const handleSignOut = () => {
-    //     dispatch(signOut());
-    //     localStorage.removeItem("persist:admin");
-    //     navigate("/authentication/sign-in");
-    // }
-
     const handleSignOut = () => {
-        localStorage.removeItem("token");
+        dispatch(signOut());
+        localStorage.removeItem("persist:admin");
         navigate("/authentication/sign-in");
     }
+    
+    useEffect(() => {
+        if (!profile) {
+            dispatch(getProfile());
+        }
+    }, [dispatch, profile]);
 
     useEffect(() => {
         const handleClickOutside = (event: MouseEvent) => {
@@ -56,8 +59,8 @@ const Header = () => {
                                     height={40}
                                 />
                                 <div>
-                                    <h6 className="font-lexend fw-6">Albert Flores</h6>
-                                    <p className="fw-4">flores@doe.io</p>
+                                    <h6 className="font-lexend fw-6">{profile?.user?.name || 'User'}</h6>
+                                    <p className="fw-4">{profile?.user?.username || ''}</p>
                                 </div>
                                 <div>
                                     {SVGICON.header.downArrow}

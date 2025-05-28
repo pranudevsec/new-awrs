@@ -1,10 +1,10 @@
 import { Fragment, type ReactNode } from 'react';
 import { Navigate } from 'react-router-dom';
-// import { useAppSelector } from '../reduxToolkit/hooks';
+import { useAppSelector } from '../reduxToolkit/hooks';
 
 const PublicLayout = ({ children }: { children: ReactNode }) => {
-    // const token = !!useAppSelector((state) => state.admin).admin?.token;
-    const token = localStorage.getItem("token");
+    const token = !!useAppSelector((state) => state.admin).admin?.token;
+    // const token = localStorage.getItem("token");
 
     if (token) return <Navigate to="/" />;
 

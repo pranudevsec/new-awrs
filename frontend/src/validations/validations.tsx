@@ -22,14 +22,6 @@ export const SignUpSchema = Yup.object().shape({
         .required('Password is required'),
 });
 
-export const ProfileSettingSchema = Yup.object().shape({
-    unit: Yup.string().required("Unit is required"),
-    brigade: Yup.string().required("Brigade is required"),
-    divison: Yup.string().required("Divison is required"),
-    corps: Yup.string().required("Corps is required"),
-    command: Yup.string().required("Command is required"),
-});
-
 export const ParametersSchema = Yup.object().shape({
     award_type: Yup.string().required('Award type is required'),
     applicability: Yup.string().required('Applicability is required'),
@@ -52,4 +44,40 @@ export const ParametersSchema = Yup.object().shape({
     param_mark: Yup.number()
         .typeError('Parameter mark must be a number')
         .required('Parameter mark is required'),
+});
+
+export const AdminSettingSchema = Yup.object().shape({
+  lastDate: Yup.string().required("Deadline date is required"),
+  cycle_period: Yup.array()
+    .min(1, "At least one cycle period is required")
+    .of(Yup.string().required("Cycle period cannot be empty")),
+});
+
+export const CreateCitationSchema = Yup.object().shape({
+  date_init: Yup.string()
+    .required('Initial date is required')
+    .matches(/^\d{4}-\d{2}-\d{2}$/, 'Date must be in YYYY-MM-DD format'),
+
+  citation_fds: Yup.object().shape({
+    award_type: Yup.string()
+      .required('Award type is required')
+      .oneOf(['citation'], 'Only "citation" is allowed'),
+
+    cycle_period: Yup.string()
+      .required('Cycle period is required'),
+
+    last_date: Yup.string()
+      .required('Last date is required')
+      .matches(/^\d{4}-\d{2}-\d{2}$/, 'Date must be in YYYY-MM-DD format'),
+
+    // Optionally validate `parameters` if needed
+    // parameters: Yup.array().of(
+    //   Yup.object().shape({
+    //     name: Yup.string().required('Parameter name is required'),
+    //     count: Yup.number().min(0).required('Count is required'),
+    //     marks: Yup.number().min(0).required('Marks are required'),
+    //     upload: Yup.string().required('Upload path is required'),
+    //   })
+    // ),
+  }),
 });

@@ -6,7 +6,7 @@ interface FormSelectProps {
     label?: string;
     name: string;
     options: OptionType[];
-    value: OptionType | null;
+    value: any;
     onChange?: (option: OptionType | null) => void;
     errors?: string;
     touched?: boolean;

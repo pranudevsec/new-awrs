@@ -14,7 +14,7 @@ export const roleOptions: OptionType[] = [
     { value: "all", label: "All" },
     { value: "unit", label: "Unit" },
     { value: "brigade", label: "Brigade" },
-    { value: "divison", label: "Divison" },
+    { value: "division", label: "Division" },
     { value: "corps", label: "Corps" },
     { value: "command", label: "Command" },
 ];

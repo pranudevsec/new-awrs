@@ -1,17 +1,17 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom"
 import { useFormik } from "formik";
-// import { unwrapResult } from "@reduxjs/toolkit";
+import { unwrapResult } from "@reduxjs/toolkit";
 import { LoginSchema } from "../../validations/validations";
 import FormInput from "../../components/form/FormInput";
 import FormSelect from "../../components/form/FormSelect";
 import { roleOptions } from "./options";
-// import { useAppDispatch } from "../../reduxToolkit/hooks";
-// import { reqToLogin } from "../../reduxToolkit/services/auth/authService";
+import { useAppDispatch } from "../../reduxToolkit/hooks";
+import { reqToLogin } from "../../reduxToolkit/services/auth/authService";
 
 const Login = () => {
     const navigate = useNavigate();
-    // const dispatch = useAppDispatch();
+    const dispatch = useAppDispatch();
 
     // States 
     const [passwordType, setPasswordType] = useState<string>("password");
@@ -24,18 +24,14 @@ const Login = () => {
             password: "12345678"
         },
         validationSchema: LoginSchema,
-        onSubmit: () => {
-            localStorage.setItem("token", "xzCfMEGhZx7ys90F18mZ8qXcHc7vdbGmat2t5g15ikoWgZCXhKLyrDtWtrzgw7p4")
-            setTimeout(() => navigate("/applications"), 400);
-        }
-        // onSubmit: async (values, { resetForm }) => {
-        //     const resultAction = await dispatch(reqToLogin(values));
-        //     const result = unwrapResult(resultAction);
-        //     if (result.success) {
-        //         resetForm();
-        //         setTimeout(() => navigate("/"), 400);
-        //     }
-        // },
+        onSubmit: async (values, { resetForm }) => {
+            const resultAction = await dispatch(reqToLogin(values));
+            const result = unwrapResult(resultAction);
+            if (result.success) {
+                resetForm();
+                setTimeout(() => navigate("/"), 400);
+            }
+        },
     });
 
     return (

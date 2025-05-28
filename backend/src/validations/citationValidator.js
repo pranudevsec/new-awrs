@@ -36,9 +36,6 @@ exports.validateCreateCitation = [
         if (typeof param.marks !== "number" || param.marks < 0) {
           throw new Error(`parameters[${index}].marks must be a non-negative number`);
         }
-        if (!param.upload || typeof param.upload !== "string") {
-          throw new Error(`parameters[${index}].upload must be a file path string`);
-        }
       });
       return true;
     }),
@@ -84,9 +81,6 @@ exports.validateUpdateCitation = [
             }
             if (param.marks !== undefined && (typeof param.marks !== "number" || param.marks < 0)) {
               throw new Error(`parameters[${index}].marks must be a non-negative number`);
-            }
-            if (param.upload && typeof param.upload !== "string") {
-              throw new Error(`parameters[${index}].upload must be a file path string`);
             }
           });
           

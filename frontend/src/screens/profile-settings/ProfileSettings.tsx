@@ -1,5 +1,4 @@
 import { useFormik } from "formik";
-import { ProfileSettingSchema } from "../../validations/validations";
 import {
   unitOptions,
   brigadeOptions,
@@ -9,29 +8,83 @@ import {
 } from "./options";
 import FormSelect from "../../components/form/FormSelect";
 import Breadcrumb from "../../components/ui/breadcrumb/Breadcrumb";
+import { useAppSelector, useAppDispatch } from "../../reduxToolkit/hooks";
+import { unwrapResult } from "@reduxjs/toolkit";
+import { getProfile, reqToUpdateUnitProfile } from "../../reduxToolkit/services/auth/authService";
 
 const ProfileSettings = () => {
-  // Formik
-  const formik = useFormik({
+  const dispatch = useAppDispatch();
+  const profile = useAppSelector((state) => state.admin.profile);
+  type UserRole = "unit" | "brigade" | "division" | "corps" | "command" | string;
+
+  const getVisibleFields = (role: UserRole): string[] => {
+    switch (role) {
+      case "unit":
+        return ["unit", "brigade", "division", "corps", "command"];
+      case "brigade":
+        return ["unit", "divison", "corps", "command"];
+      case "division":
+        return ["unit", "corps", "command"];
+      case "corps":
+        return ["unit", "command"];
+      case "command":
+        return ["unit"];
+      default:
+        return [];
+    }
+  };
+
+  const visibleFields = getVisibleFields(profile?.user?.user_role ?? "");
+
+  const optionsMap: Record<string, any> = {
+    unit: unitOptions,
+    brigade: brigadeOptions,
+    divison: divisonOptions,
+    corps: corpsOptions,
+    command: commandOptions,
+  };
+
+  const getPlaceholder = (role: string, field: string) => {
+    const capRole = role.charAt(0).toUpperCase() + role.slice(1);
+    const capField = field.charAt(0).toUpperCase() + field.slice(1);
+
+    if (field === "unit") {
+      return `Select ${capRole} Unit`;
+    } else {
+      return `Select ${capField}`;
+    }
+  };
+
+  const formik :any= useFormik({
     initialValues: {
-      unit: "",
-      brigade: "",
-      divison: "",
-      corps: "",
-      command: "",
+      unit: profile?.unit?.name || "",
+      brigade: profile?.unit?.bde || "",
+      divison: profile?.unit?.div || "",
+      corps: profile?.unit?.corps || "",
+      command: profile?.unit?.comd || "",
+      adm_channel: profile?.unit?.adm_channel || "",
+      tech_channel: profile?.unit?.tech_channel || "",
     },
-    validationSchema: ProfileSettingSchema,
-    onSubmit: (values) => {
-      console.log("values -> ", values);
+    enableReinitialize: true,
+    onSubmit: async (values: any, { resetForm }) => {
+      try {
+        const payload = {
+          ...values,
+          name: values.unit,
+        };
+        delete payload.unit;
+  
+        const resultAction = await dispatch(reqToUpdateUnitProfile(payload));
+        const result = unwrapResult(resultAction);
+  
+        if (result.success) {
+          resetForm();
+          await dispatch(getProfile());
+        }
+      } catch (err) {
+        console.error("Update failed", err);
+      }
     },
-    // onSubmit: async (values, { resetForm }) => {
-    //     const resultAction = await dispatch(reqToLogin(values));
-    //     const result = unwrapResult(resultAction);
-    //     if (result.success) {
-    //         resetForm();
-    //         setTimeout(() => navigate("/"), 400);
-    //     }
-    // },
   });
 
   return (
@@ -39,96 +92,91 @@ const ProfileSettings = () => {
       <div className="d-flex flex-sm-row flex-column align-items-sm-center justify-content-between mb-4">
         <Breadcrumb title="Profile Settings" />
       </div>
+
       <form onSubmit={formik.handleSubmit}>
         <div className="row">
           <div className="col-sm-6 mb-3">
-            <FormSelect
-              label="Unit"
-              name="unit"
-              options={unitOptions}
-              value={
-                unitOptions.find((opt) => opt.value === formik.values.unit) ||
-                null
-              }
-              onChange={(selectedOption) =>
-                formik.setFieldValue("unit", selectedOption?.value || "")
-              }
-              placeholder="Select"
-              errors={formik.errors.unit}
-              touched={formik.touched.unit}
+            <label htmlFor="adm_channel" className="form-label">
+              Adm Channel
+            </label>
+            <input
+              id="adm_channel"
+              name="adm_channel"
+              type="text"
+              className={`form-control ${
+                formik.touched.adm_channel && formik.errors.adm_channel
+                  ? "is-invalid"
+                  : ""
+              }`}
+              value={formik.values.adm_channel}
+              onChange={formik.handleChange}
+              onBlur={formik.handleBlur}
+              placeholder="Enter Adm Channel"
             />
+            {formik.touched.adm_channel && formik.errors.adm_channel && (
+              <div className="invalid-feedback">{formik.errors.adm_channel}</div>
+            )}
           </div>
+
+          {/* Always show tech_channel */}
           <div className="col-sm-6 mb-3">
-            <FormSelect
-              label="Brigade"
-              name="brigade"
-              options={brigadeOptions}
-              value={
-                brigadeOptions.find(
-                  (opt) => opt.value === formik.values.brigade
-                ) || null
-              }
-              onChange={(selectedOption) =>
-                formik.setFieldValue("brigade", selectedOption?.value || "")
-              }
-              placeholder="Select"
-              errors={formik.errors.brigade}
-              touched={formik.touched.brigade}
+            <label htmlFor="tech_channel" className="form-label">
+              Tech Channel
+            </label>
+            <input
+              id="tech_channel"
+              name="tech_channel"
+              type="text"
+              className={`form-control ${
+                formik.touched.tech_channel && formik.errors.tech_channel
+                  ? "is-invalid"
+                  : ""
+              }`}
+              value={formik.values.tech_channel}
+              onChange={formik.handleChange}
+              onBlur={formik.handleBlur}
+              placeholder="Enter Tech Channel"
             />
+            {formik.touched.tech_channel && formik.errors.tech_channel && (
+              <div className="invalid-feedback">{formik.errors.tech_channel}</div>
+            )}
           </div>
-          <div className="col-sm-6 mb-3">
-            <FormSelect
-              label="Divison"
-              name="divison"
-              options={divisonOptions}
-              value={
-                divisonOptions.find(
-                  (opt) => opt.value === formik.values.divison
-                ) || null
-              }
-              onChange={(selectedOption) =>
-                formik.setFieldValue("divison", selectedOption?.value || "")
-              }
-              placeholder="Select"
-              errors={formik.errors.divison}
-              touched={formik.touched.divison}
-            />
-          </div>
-          <div className="col-sm-6 mb-3">
-            <FormSelect
-              label="Corps"
-              name="corps"
-              options={corpsOptions}
-              value={
-                corpsOptions.find((opt) => opt.value === formik.values.corps) ||
-                null
-              }
-              onChange={(selectedOption) =>
-                formik.setFieldValue("corps", selectedOption?.value || "")
-              }
-              placeholder="Select"
-              errors={formik.errors.corps}
-              touched={formik.touched.corps}
-            />
-          </div>
-          <div className="col-sm-6 mb-3">
-            <FormSelect
-              label="Command"
-              name="command"
-              options={commandOptions}
-              value={
-                commandOptions.find(
-                  (opt) => opt.value === formik.values.command
-                ) || null
-              }
-              onChange={(selectedOption) =>
-                formik.setFieldValue("command", selectedOption?.value || "")
-              }
-              placeholder="Select"
-              errors={formik.errors.command}
-              touched={formik.touched.command}
-            />
-          </div>
+
+          {/* Conditionally render select fields based on role */}
+          {visibleFields.map((field) => {
+            const optionsForField =
+            field === "unit"
+              ? {
+                  unit: unitOptions,
+                  brigade: brigadeOptions,
+                  division: divisonOptions,
+                  corps: corpsOptions,
+                  command: commandOptions,
+                }[profile?.user?.user_role ?? "unit"] || []
+              : optionsMap[field] || [];
+
+            return (
+              <div className="col-sm-6 mb-3" key={field}>
+                <FormSelect
+                  label={field.charAt(0).toUpperCase() + field.slice(1)}
+                  name={field}
+                  options={optionsForField}
+                  value={
+                    optionsForField.find(
+                      (opt: any) => opt.value === formik.values[field]
+                    ) || null
+                  }
+                  onChange={(selectedOption) =>
+                    formik.setFieldValue(field, selectedOption?.value || "")
+                  }
+                  placeholder={getPlaceholder(profile?.user?.user_role ?? "", field)}
+                  errors={formik.errors[field]}
+                  touched={formik.touched[field]}
+                />
+              </div>
+            );
+          })}
+
           <div className="col-12 mt-2">
             <div className="d-flex align-items-center">
               <button type="submit" className="_btn _btn-lg primary">
@@ -143,3 +191,4 @@ const ProfileSettings = () => {
 };
 
 export default ProfileSettings;
+

@@ -3,6 +3,11 @@ import { combineReducers, configureStore } from '@reduxjs/toolkit';
 // Reducers
 import storage from 'redux-persist/lib/storage';
 import authReducer from './slices/auth/authSlice';
+import configReducer from './slices/config/configSlice';
+import parameterReducer from './slices/parameter/parameterSlice';
+import citationReducer from './slices/citation/citationSlice';
+import appreciationReducer from './slices/appreciation/appreciationSlice';
+import applicationReducer from './slices/application/applicationSlice';
 
 const getConfig = (key: string, whitelist: string[]) => {
     return {
@@ -14,6 +19,11 @@ const getConfig = (key: string, whitelist: string[]) => {
 
 const reducer = combineReducers({
     admin: persistReducer(getConfig('admin', ['admin']), authReducer),
+    config:configReducer,
+    parameter:parameterReducer,
+    citation:citationReducer,
+    appreciation:appreciationReducer,
+    application:applicationReducer,
 });
 
 export const store = configureStore({

@@ -1,6 +1,6 @@
 /// <reference types="vite/client" />
 
-interface OptionType {
+ interface OptionType {
   value: string;
   label: string;
 }

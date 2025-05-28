@@ -64,8 +64,9 @@ DROP TABLE IF EXISTS Config_tab;
 -- Create the Config_tab table
 CREATE TABLE Config_tab (
     config_id SERIAL PRIMARY KEY,
-    deadline DATE NOT NULL,
-    docu_path_base VARCHAR NOT NULL
+    deadline DATE, -- optional
+    docu_path_base VARCHAR, -- optional
+    cycle_period TEXT[] -- array of text
 );
 
 --------------------------------------------------------------------------------------------Unit_tab----------------------------------------------------------------------------------------------------------------------
@@ -157,8 +158,12 @@ INSERT INTO Parameter_Master (
 ('WC', 'citation', 'ARMY', 'Rescue Ops', 'Rescue operations conducted', FALSE, 15, TRUE, 4, 2, 5, 5),
 ('SC', 'appreciation', 'ALL', 'Medical Camps', 'Organized medical camps', FALSE, 10, FALSE, 3, 3, 2, 2);
 
-INSERT INTO Config_tab (deadline, docu_path_base)
-VALUES ('2025-12-31', '/mnt/data/documents');
+INSERT INTO Config_tab (deadline, docu_path_base, cycle_period)
+VALUES (
+    '2025-12-31',
+    '/mnt/data/documents',
+    ARRAY['2024 - H1', '2024 - H2']
+);
 
 -- Insert dummy data into Unit_tab
 INSERT INTO Unit_tab (

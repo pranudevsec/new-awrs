@@ -1,3 +1,4 @@
+// authInterface.ts
 export interface User {
   name: string;
   username: string;
@@ -21,4 +22,50 @@ export interface LoginRequest {
   user_role: string;
   username: string;
   password: string;
+}
+
+export interface ProfileUser {
+  user_id: number;
+  name: string;
+  username: string;
+  pers_no: string;
+  rank: string;
+  user_role: string;
+}
+
+export interface ProfileUnit {
+  unit_id: number;
+  sos_no: string | null;
+  name: string;
+  adm_channel: string | null;
+  tech_channel: string | null;
+  bde: string | null;
+  div: string;
+  corps: string;
+  comd: string;
+}
+
+export interface ProfileResponse {
+  success: boolean;
+  message: string;
+  data: {
+    user: ProfileUser;
+    unit: ProfileUnit;
+  };
+}
+
+export interface UpdateUnitProfileRequest {
+  name: string;
+  adm_channel: string | null;
+  tech_channel: string | null;
+  bde: string | null;
+  div: string | null;
+  corps: string | null;
+  comd: string | null;
+}
+
+export interface UpdateUnitProfileResponse {
+  statusCode: number;
+  success: boolean;
+  message: string;
 }
