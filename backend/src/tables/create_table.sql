@@ -46,7 +46,8 @@ CREATE TABLE Parameter_Master (
     comd CHAR(3) NOT NULL,
     award_type CHAR(25) NOT NULL CHECK (award_type IN ('citation', 'appreciation')),
     applicability CHAR(4) NOT NULL,
-    name CHAR(25) NOT NULL,
+    category CHAR(50) NOT NULL,
+    name CHAR(50) NOT NULL,
     description VARCHAR NOT NULL,
     negative BOOLEAN NOT NULL,
     per_unit_mark INTEGER NOT NULL DEFAULT 1,
@@ -151,12 +152,19 @@ CREATE TABLE Clarification_tab (
 
 -- Insert dummy parameters
 INSERT INTO Parameter_Master (
-    comd, award_type, applicability, name, description, negative,
+    comd, award_type, applicability, category, name, description, negative,
     max_marks, proof_reqd, weightage, param_sequence, param_mark, per_unit_mark
 ) VALUES
-('NC', 'citation', 'ALL', 'Enemy Kills', 'Number of enemies neutralized', FALSE, 20, TRUE, 5, 1, 4, 4),
-('WC', 'citation', 'ARMY', 'Rescue Ops', 'Rescue operations conducted', FALSE, 15, TRUE, 4, 2, 5, 5),
-('SC', 'appreciation', 'ALL', 'Medical Camps', 'Organized medical camps', FALSE, 10, FALSE, 3, 3, 2, 2);
+('NC', 'appreciation', 'ALL', 'recovery', 'Enemy Kills', 'Number of enemies neutralized', FALSE, 20, TRUE, 5, 1, 4, 4),
+('WC', 'appreciation', 'ARMY', 'terrorist', 'Rescue Ops', 'Rescue operations conducted', FALSE, 15, TRUE, 4, 2, 5, 5),
+('NC', 'citation', 'ALL', 'terrorist', 'Terrorist Killed', 'Number of terrorists neutralized (killed)', FALSE, 25, TRUE, 5, 1, 5, 5),
+('NC', 'citation', 'ALL', 'terrorist', 'Terrorist Apprehended with Weapon', 'Number of terrorists apprehended with weapon', FALSE, 20, TRUE, 4, 2, 4, 4),
+('NC', 'citation', 'ALL', 'terrorist', 'Terrorist Surrendered with Weapon', 'Number of terrorists surrendered with weapon', FALSE, 15, TRUE, 3, 3, 3, 3),
+('NC', 'citation', 'ALL', 'recovery', 'Heavy Weapon Recovery', 'Number of heavy weapons recovered', FALSE, 20, TRUE, 5, 1, 5, 5),
+('NC', 'citation', 'ALL', 'recovery', 'UMG Recovery', 'Number of UMGs recovered', FALSE, 15, TRUE, 4, 2, 4, 4),
+('NC', 'citation', 'ALL', 'recovery', 'Pistol Recovery', 'Number of pistols recovered', FALSE, 10, TRUE, 3, 3, 3, 3),
+('NC', 'citation', 'ALL', 'recovery', 'Radioset Recovery', 'Number of radiosets recovered', FALSE, 10, TRUE, 2, 4, 2, 2),
+('NC', 'appreciation', 'ALL', 'recovery', 'Medical Camps', 'Organized medical camps', FALSE, 10, FALSE, 3, 3, 2, 2);
 
 INSERT INTO Config_tab (deadline, docu_path_base, cycle_period)
 VALUES (

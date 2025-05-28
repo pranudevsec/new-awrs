@@ -1,6 +1,7 @@
 import Breadcrumb from "../../components/ui/breadcrumb/Breadcrumb"
 import ApplicationStatus from "./components/ApplicationStatus"
 import AssetsDetail from "./components/AssetsDetail"
+import TopCandidates from "./components/TopCandidates"
 import TopWinnersList from "./components/TopWinnersList"
 import UnitScoreChart from "./components/UnitScoreChart"
 
@@ -12,11 +13,14 @@ const Dashboard = () => {
             </div>
             <AssetsDetail />
             <div className="row mb-4 row-gap-4">
-                <div className="col-lg-5">
+                <div className="col-lg-4">
                     <UnitScoreChart />
                 </div>
-                <div className="col-lg-7">
+                <div className="col-lg-5">
                     <ApplicationStatus />
+                </div>
+                <div className="col-lg-3">
+                    <TopCandidates />
                 </div>
             </div>
             <TopWinnersList />

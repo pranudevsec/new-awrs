@@ -130,9 +130,17 @@ const Login = () => {
                                         </label>
                                         <Link to="/forgot-password" className="nav-link fw-6">Forgot Password?</Link>
                                     </div>
-                                    <button type="submit" className="border-0 w-100 submit-btn">
-                                        Sign in
-                                    </button>
+                                    <button type="submit" className="border-0 w-100 submit-btn" disabled={formik.isSubmitting}>
+    {formik.isSubmitting ? (
+        <span>
+            <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+            Signing in...
+        </span>
+    ) : (
+        "Sign in"
+    )}
+</button>
+
                                     <p className="sign-up-text mt-4">
                                         Don’t have an account? <Link to="/authentication/sign-up" className="fw-6">Sign up</Link>
                                     </p>

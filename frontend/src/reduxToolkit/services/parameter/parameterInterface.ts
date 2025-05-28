@@ -4,6 +4,7 @@ export interface Parameter {
     id: number;
     name: string;
     value: string;
+    category: string;
   }
   
   export interface ParameterResponse {

@@ -25,6 +25,15 @@ export const divisonOptions: OptionType[] = [
   { value: "divison4", label: "Divison 4" },
   { value: "divison5", label: "Divison 5" },
 ];
+export const divisionOptions: OptionType[] = [
+  { value: "n/a", label: "N/A" },
+  { value: "mydiv", label: "My Division" },
+  { value: "divison1", label: "Divison 1" },
+  { value: "divison2", label: "Divison 2" },
+  { value: "divison3", label: "Divison 3" },
+  { value: "divison4", label: "Divison 4" },
+  { value: "divison5", label: "Divison 5" },
+];
 export const corpsOptions: OptionType[] = [
   { value: "n/a", label: "N/A" },
   { value: "mycorps", label: "My Corps" },

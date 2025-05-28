@@ -2,7 +2,7 @@ import { useFormik } from "formik";
 import {
   unitOptions,
   brigadeOptions,
-  divisonOptions,
+  divisionOptions,
   corpsOptions,
   commandOptions,
 } from "./options";
@@ -22,7 +22,7 @@ const ProfileSettings = () => {
       case "unit":
         return ["unit", "brigade", "division", "corps", "command"];
       case "brigade":
-        return ["unit", "divison", "corps", "command"];
+        return ["unit", "division", "corps", "command"];
       case "division":
         return ["unit", "corps", "command"];
       case "corps":
@@ -39,7 +39,7 @@ const ProfileSettings = () => {
   const optionsMap: Record<string, any> = {
     unit: unitOptions,
     brigade: brigadeOptions,
-    divison: divisonOptions,
+    division: divisionOptions,
     corps: corpsOptions,
     command: commandOptions,
   };
@@ -59,7 +59,7 @@ const ProfileSettings = () => {
     initialValues: {
       unit: profile?.unit?.name || "",
       brigade: profile?.unit?.bde || "",
-      divison: profile?.unit?.div || "",
+      division: profile?.unit?.div || "",
       corps: profile?.unit?.corps || "",
       command: profile?.unit?.comd || "",
       adm_channel: profile?.unit?.adm_channel || "",
@@ -71,6 +71,10 @@ const ProfileSettings = () => {
         const payload = {
           ...values,
           name: values.unit,
+          "bde": values.brigade,
+          "div": values.division,
+          "corps": values.corps,
+          "comd": values.command,
         };
         delete payload.unit;
   
@@ -149,7 +153,7 @@ const ProfileSettings = () => {
               ? {
                   unit: unitOptions,
                   brigade: brigadeOptions,
-                  division: divisonOptions,
+                  division: divisionOptions,
                   corps: corpsOptions,
                   command: commandOptions,
                 }[profile?.user?.user_role ?? "unit"] || []

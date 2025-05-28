@@ -2,7 +2,7 @@ import { useNavigate } from "react-router-dom";
 import Breadcrumb from "../../../components/ui/breadcrumb/Breadcrumb";
 import FormSelect from "../../../components/form/FormSelect";
 import FormInput from "../../../components/form/FormInput";
-import { useAppDispatch, useAppSelector } from "../../../reduxToolkit/hooks";
+import { useAppDispatch } from "../../../reduxToolkit/hooks";
 import { useEffect, useState } from "react";
 import { getConfig } from "../../../reduxToolkit/services/config/configService";
 import type { Parameter } from "../../../reduxToolkit/services/parameter/parameterInterface";
@@ -12,7 +12,6 @@ import toast from "react-hot-toast";
 import { resetCitationState } from "../../../reduxToolkit/slices/citation/citationSlice";
 import { createCitation } from "../../../reduxToolkit/services/citation/citationService";
 import { unwrapResult } from "@reduxjs/toolkit";
-import { Accordion } from "react-bootstrap";
 
 interface OptionType {
   label: string;
@@ -26,19 +25,9 @@ const awardTypeOptions: OptionType[] = [
 
 const DRAFT_STORAGE_KEY = "applyCitationDraft";
 
-const groupParametersByCategory = (params: Parameter[]) => {
-  return params.reduce((acc: Record<string, Parameter[]>, param) => {
-    const category = param.category || "Uncategorized";
-    if (!acc[category]) acc[category] = [];
-    acc[category].push(param);
-    return acc;
-  }, {});
-};
-
 const ApplyCitation = () => {
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
-  const profile = useAppSelector((state) => state.admin.profile);
 
   const [cyclePeriodOptions, setCyclePeriodOptions] = useState<OptionType[]>([]);
   const [parameters, setParameters] = useState<Parameter[]>([]);
@@ -163,7 +152,6 @@ const ApplyCitation = () => {
     setCounts({});
     setMarks({});
   };
-  const groupedParams = groupParametersByCategory(parameters);
 
   return (
     <div className="apply-citation-section">
@@ -209,81 +197,66 @@ const ApplyCitation = () => {
                 readOnly
               />
             </div>
-            <div className="col-lg-3 col-sm-4">
-              <FormInput
-                label="Command"
-                name="command"
-                value={profile?.unit?.comd || "--"}
-                onChange={formik.handleChange}
-                readOnly
-              />
-            </div>
           </div>
         </div>
 
-        <Accordion defaultActiveKey="">
-  {Object.entries(groupedParams).map(([category, params], index) => (
-    <Accordion.Item eventKey={String(index)} key={category}>
-      <Accordion.Header>  <span className="form-label mb-1">{category.toUpperCase()}</span>
-      </Accordion.Header>
-      <Accordion.Body>
-        <table className="table-style-1 w-100">
-          <thead>
-            <tr>
-              <th>Parameter</th>
-              <th>Count</th>
-              <th>Marks</th>
-              <th>Upload</th>
-            </tr>
-          </thead>
-          <tbody>
-            {params.map((param: any) => (
-              <tr key={param.param_id}>
-                <td><p className="fw-5">{param.name}</p></td>
-                <td>
-                  <input
-                    type="text"
-                    className="form-control"
-                    placeholder="Enter count"
-                    autoComplete="off"
-                    value={counts[param.param_id] ?? ""}
-                    onChange={(e) => handleCountChange(param.param_id, e.target.value)}
-                    inputMode="numeric"
-                    pattern="[0-9]*"
-                  />
-                </td>
-                <td>
-                  <div className="input-with-tooltip">
-                    <input
-                      type="number"
-                      className="form-control"
-                      placeholder="Marks"
-                      value={marks[param.param_id] ?? 0}
-                      readOnly
-                    />
-                    <div className="tooltip-icon">
-                      <i className="info-circle">i</i>
-                      <span className="tooltip-text">
-                        {`1 unit = ${param.per_unit_mark} marks, max ${param.max_marks} marks`}
-                      </span>
-                    </div>
-                  </div>
-                </td>
-                <td>
-                  {param.proof_reqd ? (
-                    <input type="file" className="form-control" autoComplete="off" />
-                  ) : (
-                    <span>Not required</span>
-                  )}
-                </td>
+        <div className="table-responsive">
+          <table className="table-style-1 w-100">
+            <thead>
+              <tr>
+                <th>Parameter</th>
+                <th>Count</th>
+                <th>Marks</th>
+                <th>Upload</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
-      </Accordion.Body>
-    </Accordion.Item>
-  ))}
-</Accordion>
+            </thead>
+            <tbody>
+              {parameters.map((param: any) => (
+                <tr key={param.param_id}>
+                  <td>
+                    <p className="fw-5">{param.name}</p>
+                  </td>
+                  <td>
+                    <input
+                      type="text"
+                      className="form-control"
+                      placeholder="Enter count"
+                      autoComplete="off"
+                      value={counts[param.param_id] ?? ""}
+                      onChange={(e) => handleCountChange(param.param_id, e.target.value)}
+                      inputMode="numeric"
+                      pattern="[0-9]*"
+                    />
+                  </td>
+                  <td>
+                    <div className="input-with-tooltip">
+                      <input
+                        type="number"
+                        className="form-control"
+                        placeholder="Marks"
+                        value={marks[param.param_id] ?? 0}
+                        readOnly
+                      />
+                      <div className="tooltip-icon">
+                        <i className="info-circle">i</i>
+                        <span className="tooltip-text">
+                          {`1 unit = ${param.per_unit_mark} marks, max ${param.max_marks} marks`}
+                        </span>
+                      </div>
+                    </div>
+                  </td>
+                  <td>
+                    {param.proof_reqd ? (
+                      <input type="file" className="form-control" autoComplete="off" />
+                    ) : (
+                      <span>Not required</span>
+                    )}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
 
         <div className="submit-button-wrapper">
           <div className="d-flex flex-sm-row flex-column gap-sm-3 gap-1 justify-content-end">
@@ -312,4 +285,3 @@ const ApplyCitation = () => {
 };
 
 export default ApplyCitation;
-

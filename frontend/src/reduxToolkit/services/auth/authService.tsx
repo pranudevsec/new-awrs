@@ -12,7 +12,6 @@ export const reqToLogin = createAsyncThunk<LoginResponse, LoginRequest>(
     try {
       const response = await Axios.post(apiEndPoints.login, data);
       if (response.data.success) {
-        toast.success('Login successfully!');
         return response.data;
       } else {
         toast.error('Login failed. Please check your details and try again.');

@@ -6,28 +6,39 @@ const SidebarMenu = () => {
     const profile = useAppSelector((state) => state.admin.profile);
     const userRole = profile?.user?.user_role;
     const isAdmin = userRole === "admin";
-    
+
     const alwaysVisible: string[] = [];
     if (!isAdmin) {
         alwaysVisible.push("Clarification", "Home", "Profile Settings");
     }
-    
-    const filteredStructure = sidebarStructure.filter(item => {
+
+    // Find dashboard item from structure
+    const dashboardItem = sidebarStructure.find(item => item.label === "Dashboard");
+
+    // Filter rest of the items excluding dashboard to prevent duplication
+    let filteredStructure = sidebarStructure.filter((item) => {
+        if (item.label === "Dashboard") return false; // Skip, we'll manually add
+
         if (alwaysVisible.includes(item.label)) {
             return true;
         }
-    
+
         if (userRole === "command") {
-            return ["Scoreboard", "Winners"].includes(item.label);
+            return false; // Don't include any other items
         }
-    
+
         if (userRole === "admin") {
             return ["Admin Settings", "Parameters"].includes(item.label);
         }
-    
+
         return false;
     });
-    
+
+    // If command user, show Dashboard on top
+    if (userRole === "command" && dashboardItem) {
+        filteredStructure = [dashboardItem, ...filteredStructure];
+    }
+
     return (
         <aside className="sidebar-menu flex-shrink-0 d-xl-block d-none">
             <div className="position-sticky top-0">
