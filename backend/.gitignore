@@ -22,5 +22,4 @@ token_storage
 *.njsproj
 *.sln
 *.sw?
-.env
 uploads
