@@ -3,11 +3,19 @@
   "version": "1.0.0",
   "private": true,
   "scripts": {
-    "dev": "concurrently \"npm run watch --prefix backend\" \"npm run dev --prefix frontend\"",
-    "dev:backend": "npm run watch --prefix backend",
-    "build": "concurrently \"npm run build --prefix backend\" \"npm run build --prefix frontend\"",
+    "dev": "concurrently \"npm run dev --prefix backend\" \"npm run dev --prefix frontend\"",
+    "dev:backend": "npm run dev --prefix backend",
+    "start:backend": "npm run start --prefix backend",
+    "prod:backend": "npm run prod --prefix backend",
+    "seed:backend": "npm run seed --prefix backend",
+    "tables:backend": "npm run createtables --prefix backend",
+    "dev:frontend": "npm run dev --prefix frontend",
+    "build:frontend": "npm run build --prefix frontend",
+    "lint:frontend": "npm run lint --prefix frontend",
+    "preview:frontend": "npm run preview --prefix frontend",
     "install:frontend": "npm install --prefix frontend",
-    "install:backend": "npm install --prefix backend"
+    "install:backend": "npm install --prefix backend",
+    "build": "concurrently \"npm run build --prefix backend\" \"npm run build --prefix frontend\""
   },
   "devDependencies": {
     "concurrently": "^8.2.2"
