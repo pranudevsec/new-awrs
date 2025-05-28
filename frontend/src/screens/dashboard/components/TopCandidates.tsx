@@ -1,4 +1,3 @@
-import { useState } from 'react';
 import FormSelect from '../../../components/form/FormSelect';
 
 const topCandidateOptions :any= [
@@ -9,11 +8,10 @@ const topCandidateOptions :any= [
 ];
 
 const TopCandidates = () => {
-    const [topCount, setTopCount] = useState(topCandidateOptions[1].value); // Default to Top 5
 
     const handleDownload = () => {
         // Simulate or trigger actual report download
-        console.log(`Downloading report for Top ${topCount} candidates...`);
+        console.log(`Downloading report for Top ${topCandidateOptions[1].value} candidates...`);
         // You can replace this with actual API logic or file generation
     };
 
@@ -25,7 +23,7 @@ const TopCandidates = () => {
   <FormSelect
     name="topCandidates"
     options={topCandidateOptions}
-    value={topCandidateOptions.find((opt) => opt.value === topCount) || null}
+    value={topCandidateOptions.find((opt:any) => opt.value === topCandidateOptions[1].value) || null}
     placeholder="Select"
   />
   <button
