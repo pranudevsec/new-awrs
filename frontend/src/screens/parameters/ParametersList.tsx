@@ -46,6 +46,9 @@ const ParametersList = () => {
                                     <div className="d-flex align-items-start">Name</div>
                                 </th>
                                 <th style={{ width: 150, minWidth: 150, maxWidth: 150 }}>
+                                    <div className="d-flex align-items-start">Category</div>
+                                </th>
+                                <th style={{ width: 150, minWidth: 150, maxWidth: 150 }}>
                                     <div className="d-flex align-items-start">Award Type</div>
                                 </th>
                                 <th style={{ width: 200, minWidth: 200, maxWidth: 200 }}>
@@ -66,6 +69,9 @@ const ParametersList = () => {
                             <tr>
                                 <td style={{ width: 150 }}>
                                     <p className="fw-4">Rescue Ops</p>
+                                </td>
+                                <td style={{ width: 150 }}>
+                                    <p className="fw-4">Some1</p>
                                 </td>
                                 <td style={{ width: 150 }}>
                                     <p className="fw-4">Citation</p>
@@ -100,6 +106,9 @@ const ParametersList = () => {
                                     <p className="fw-4">Enemy Kills</p>
                                 </td>
                                 <td style={{ width: 150 }}>
+                                    <p className="fw-4">Some2</p>
+                                </td>
+                                <td style={{ width: 150 }}>
                                     <p className="fw-4">Citation</p>
                                 </td>
                                 <td style={{ width: 200 }}>
@@ -130,6 +139,9 @@ const ParametersList = () => {
                             <tr>
                                 <td style={{ width: 150 }}>
                                     <p className="fw-4">Medical Camps</p>
+                                </td>
+                                <td style={{ width: 150 }}>
+                                    <p className="fw-4">Some3</p>
                                 </td>
                                 <td style={{ width: 150 }}>
                                     <p className="fw-4">Appreciation</p>

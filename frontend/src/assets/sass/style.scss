@@ -107,3 +107,16 @@
   background-color: transparent;
   color: inherit; 
 }
+
+.custom-tabs .nav-link {
+    border: none !important; /* Remove all borders */
+    border-bottom: 2px solid transparent; /* Keep space to prevent layout jump */
+    color: inherit; /* Keep default text color */
+    transition: border-color 0.3s ease;
+  }
+  
+  .custom-tabs .nav-link.active {
+    border-bottom: 2px solid black !important; /* Black bottom border for active tab */
+    color: inherit; /* Optionally keep text color or customize */
+    font-weight: 600; /* Optional: make active tab text a bit bolder */
+  }

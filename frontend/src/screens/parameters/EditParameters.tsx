@@ -26,6 +26,7 @@ const EditParameters = () => {
             award_type: "",
             applicability: "",
             name: "",
+            category: "",
             description: "",
             negative: null,
             per_unit_mark: "",
@@ -93,6 +94,18 @@ const EditParameters = () => {
                             onBlur={formik.handleBlur}
                             errors={formik.errors.name}
                             touched={formik.touched.name}
+                        />
+                    </div>
+                    <div className="col-sm-6 mb-3">
+                        <FormInput
+                            label="Category"
+                            name="category"
+                            placeholder="Enter category"
+                            value={formik.values.category}
+                            onChange={formik.handleChange}
+                            onBlur={formik.handleBlur}
+                            errors={formik.errors.category}
+                            touched={formik.touched.category}
                         />
                     </div>
                     <div className="col-sm-6 mb-3">

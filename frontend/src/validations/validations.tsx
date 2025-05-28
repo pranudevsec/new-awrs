@@ -26,6 +26,7 @@ export const ParametersSchema = Yup.object().shape({
     award_type: Yup.string().required('Award type is required'),
     applicability: Yup.string().required('Applicability is required'),
     name: Yup.string().required('Name is required'),
+    category: Yup.string().required('Category is required'),
     description: Yup.string().required('Description is required'),
     negative: Yup.boolean().nullable().required('Negative selection is required'),
     per_unit_mark: Yup.number()

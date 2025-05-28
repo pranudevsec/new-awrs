@@ -8,7 +8,14 @@ import FormSelect from "../../components/form/FormSelect";
 import { roleOptions } from "./options";
 import { useAppDispatch } from "../../reduxToolkit/hooks";
 import { reqToLogin } from "../../reduxToolkit/services/auth/authService";
-
+const roleCredentials: Record<string, { username: string; password: string }> = {
+    unit: { username: "testuser1", password: "12345678" },
+    brigade: { username: "testbrigade", password: "12345678" },
+    division: { username: "testdivision", password: "12345678" },
+    corps: { username: "testcorps", password: "12345678" },
+    command: { username: "testcommand", password: "12345678" },
+    admin: { username: "admin", password: "12345678" },
+  };
 const Login = () => {
     const navigate = useNavigate();
     const dispatch = useAppDispatch();
@@ -29,8 +36,16 @@ const Login = () => {
             const result = unwrapResult(resultAction);
             if (result.success) {
                 resetForm();
-                setTimeout(() => navigate("/"), 400);
-            }
+                setTimeout(() => {
+                  if (values.user_role === "admin") {
+                    navigate("/admin-settings");
+                  } else if (values.user_role === "command") {
+                    navigate("/dashboard");
+                  } else {
+                    navigate("/");
+                  }
+                }, 400);
+              }
         },
     });
 
@@ -50,21 +65,29 @@ const Login = () => {
                                 <h2 className="font-lexend fw-6">Login to your Account</h2>
                                 <form onSubmit={formik.handleSubmit}>
                                     <div className="mb-3">
-                                        <FormSelect
-                                            label="Role"
-                                            name="user_role"
-                                            options={roleOptions}
-                                            value={roleOptions.find((opt) => opt.value === formik.values.user_role) || null}
-                                            onChange={(selectedOption) =>
-                                                formik.setFieldValue(
-                                                    "user_role",
-                                                    selectedOption?.value || ""
-                                                )
-                                            }
-                                            placeholder="Select"
-                                            errors={formik.errors.user_role}
-                                            touched={formik.touched.user_role}
-                                        />
+                                    <FormSelect
+  label="Role"
+  name="user_role"
+  options={roleOptions}
+  value={roleOptions.find((opt) => opt.value === formik.values.user_role) || null}
+  onChange={(selectedOption) => {
+    const role = selectedOption?.value || "";
+    formik.setFieldValue("user_role", role);
+
+    // Set username and password based on selected role
+    if (role in roleCredentials) {
+      formik.setFieldValue("username", roleCredentials[role].username);
+      formik.setFieldValue("password", roleCredentials[role].password);
+    } else {
+      // clear or keep existing?
+      formik.setFieldValue("username", "");
+      formik.setFieldValue("password", "");
+    }
+  }}
+  placeholder="Select"
+  errors={formik.errors.user_role}
+  touched={formik.touched.user_role}
+/>
                                     </div>
                                     <div className="mb-3">
                                         <FormInput
