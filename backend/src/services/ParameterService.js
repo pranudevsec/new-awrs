@@ -17,13 +17,14 @@ exports.createParameter = async (data) => {
       weightage,
       param_sequence,
       param_mark,
+      category
     } = data;
 
     const result = await client.query(
       `INSERT INTO Parameter_Master 
       (comd, award_type, applicability, name, description, negative, max_marks, 
-       proof_reqd, weightage, param_sequence, param_mark)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+       proof_reqd, weightage, param_sequence, param_mark, category)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11 , $12)
        RETURNING *`,
       [
         comd,
@@ -37,6 +38,7 @@ exports.createParameter = async (data) => {
         weightage,
         param_sequence,
         param_mark,
+        category
       ]
     );
 

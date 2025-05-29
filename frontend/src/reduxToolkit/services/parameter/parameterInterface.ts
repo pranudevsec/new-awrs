@@ -1,4 +1,7 @@
 export interface Parameter {
+  id: number;
+  clarification_id: number;
+  value: string;
   param_id: string;
   comd: string;
   award_type: string;

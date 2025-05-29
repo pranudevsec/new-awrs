@@ -18,8 +18,13 @@ export const apiEndPoints = {
     // Appreciation
     appreciation: '/api/appreciation',
 
-    // Applications
-    applicationUnits: '/api/applications/units',
+   // Applications
+   applicationUnits: '/api/applications/units',
+   applicationUnitDetail:'/api/applications/unit-detail',
+   applicationSubordinates:'/api/applications/subordinates',
+
+   // Clarification
+   clarification: '/api/clarification',
 
     // Dashboard
     dashboardStats: '/api/dashboard/stats',

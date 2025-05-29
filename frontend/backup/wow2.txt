@@ -156,7 +156,7 @@ const handleTabSelect = (key: string | null) => {
       try {
         const [configRes, paramsRes] = await Promise.all([
           dispatch(getConfig()).unwrap(),
-          dispatch(fetchParameters({ awardType: "citation",search:"" })).unwrap(),
+          dispatch(fetchParameters({ awardType: "citation" })).unwrap(),
         ]);
 
         if (configRes?.success && configRes.data) {

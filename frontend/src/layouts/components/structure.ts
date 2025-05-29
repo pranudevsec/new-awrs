@@ -17,7 +17,7 @@ export const sidebarStructure = [
     to: "/profile-settings",
   },
   {
-    label: "Clarification",
+    label: "Clarifications to Resolve",
     icon: SVGICON.sidebar.clarification,
     to: "/clarification",
   },

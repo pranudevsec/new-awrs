@@ -37,7 +37,10 @@ const Applications = () => {
                 </div>
               </Link>
             </div>
-            <div className="col-lg-3 col-sm-6">
+           
+          </>
+        )}
+<div className="col-lg-3 col-sm-6">
               <Link to="/applications/list">
                 <div className="card border-0 d-flex align-items-center justify-content-center position-relative">
                   <span className="count-badge">5</span>
@@ -48,9 +51,6 @@ const Applications = () => {
                 </div>
               </Link>
             </div>
-          </>
-        )}
-
         {isHigherRole && (
           <>
             <div className="col-lg-3 col-sm-6">
@@ -60,7 +60,7 @@ const Applications = () => {
                   <div className="card-icon">
                     <img src="/media/icons/clarifications.png" alt="Applications" width={100} />
                   </div>
-                  <h5 className="fw-6 mt-4">Asked Clarifications</h5>
+                  <h5 className="fw-6 mt-4">Clarifications I Raised</h5>
                 </div>
               </Link>
             </div>
@@ -71,7 +71,7 @@ const Applications = () => {
                   <div className="card-icon">
                     <img src="/media/icons/raised-clarification.png" alt="Clarifications" width={100} />
                   </div>
-                  <h5 className="fw-6 mt-4">Raised Clarifications</h5>
+                  <h5 className="fw-6 mt-4">Clarifications to Resolve</h5>
                 </div>
               </Link>
             </div>

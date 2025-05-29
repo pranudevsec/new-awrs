@@ -2,6 +2,7 @@ export interface Config {
     deadline: string;
     docu_path_base: string;
     cycle_period: string[];
+    current_cycle_period: string;
   }
   
   export interface ConfigResponse {
@@ -15,5 +16,6 @@ export interface Config {
     deadline?: string;
     docu_path_base?: string;
     cycle_period?: string[];
+    current_cycle_period?: string;
   }
   

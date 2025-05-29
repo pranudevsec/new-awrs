@@ -1,37 +1,51 @@
-import { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { SVGICON } from "../../../constants/iconsList";
 import Breadcrumb from "../../../components/ui/breadcrumb/Breadcrumb";
 import UnitClarificationModal from "../../../modals/UnitClarificationModal";
-import FormSelect from "../../../components/form/FormSelect";
 import FormInput from "../../../components/form/FormInput";
 import ReqClarificationModal from "../../../modals/ReqClarificationModal";
-import { Link } from "react-router-dom";
+import {  useParams, useSearchParams } from "react-router-dom";
 import { IoMdCheckmark } from "react-icons/io";
 import { MdClose } from "react-icons/md";
-
-const awardTypeOptions: OptionType[] = [
-    { value: "citation", label: "Citation" },
-    { value: "clarification", label: "Clarification" },
-];
-
-const cyclePeriodOptions: OptionType[] = [
-    { value: "2024 - H1", label: "2024 - H1" },
-    { value: "2024 - H2", label: "2024 - H2" },
-    { value: "2025 - H1", label: "2025 - H1" },
-    { value: "2025 - H2", label: "2025 - H2" },
-];
+import { useAppDispatch, useAppSelector } from "../../../reduxToolkit/hooks";
+import { fetchApplicationUnitDetail } from "../../../reduxToolkit/services/application/applicationService";
 
 const ApplicationDetails = () => {
-    // States
     const [clarificationShow, setClarificationShow] = useState(false);
+    const [clarificationType, setClarificationType] = React.useState<"citation" | "appreciation">("appreciation");
+    const [clarificationApplicationId, setClarificationApplicationId] = React.useState<number>(0);
+    const [clarificationParameterName, setClarificationParameterName] = React.useState<string>("");
+    const [clarificationDocForView, setClarificationDocForView] = useState<string | null>(null);
+const [clarificationClarificationForView, setClarificationClarificationForView] = useState<string | null>(null);
     const [reqClarificationShow, setReqClarificationShow] = useState(false);
+    const [isRefreshData, setIsRefreshData] = useState(false);
+    const [unitDetail, setUnitDetail] = useState<any>(null);
+    const profile = useAppSelector((state) => state.admin.profile);
+const isUnitRole = profile?.user?.user_role === "unit";
+    const dispatch = useAppDispatch();
+    const [searchParams] = useSearchParams();
+    const { application_id } = useParams(); 
+    const award_type = searchParams.get("award_type") || "";
+    const numericAppId = Number(application_id);
+    useEffect(() => {
+      if (award_type && numericAppId) {
+        dispatch(fetchApplicationUnitDetail({ award_type, numericAppId }))
+          .unwrap()
+          .then((res) => {
+            setUnitDetail(res.data);
+          })
+          .catch((err) => {
+            console.error("Fetch failed:", err);
+          });
+      }
+    }, [award_type, numericAppId, dispatch,isRefreshData]);
 
     return (
         <>
             <div className="apply-citation-section">
                 <div className="d-flex flex-sm-row flex-column align-items-sm-center justify-content-between mb-4">
                     <Breadcrumb
-                        title="Application ID: #12345"
+                        title={`Application ID: #${unitDetail?.id}`}
                         paths={[
                             { label: "Home", href: "/applications" },
                             { label: "Application Listing", href: "/applications/list" },
@@ -42,226 +56,173 @@ const ApplicationDetails = () => {
                 <div className="table-filter-area mb-4">
                     <div className="row">
                         <div className="col-lg-3 col-sm-4 mb-sm-0 mb-2">
-                            <FormSelect
+                                   <FormInput
                                 label="Award Type"
                                 name="awardType"
-                                options={awardTypeOptions}
-                                value={
-                                    awardTypeOptions.find((opt) => opt.value === "citation") ||
-                                    null
-                                }
-                                placeholder="Select"
-                                isDisabled={true}
+                                value={unitDetail?.type || "--"}
+                                readOnly={true}
                             />
                         </div>
                         <div className="col-lg-3 col-sm-4 mb-sm-0 mb-2">
-                            <FormSelect
+                       
+                                        <FormInput
                                 label="Cycle Period"
                                 name="cyclePeriod"
-                                options={cyclePeriodOptions}
-                                value={
-                                    cyclePeriodOptions.find((opt) => opt.value === "2024 - H1") ||
-                                    null
-                                }
-                                placeholder="Select"
-                                isDisabled={true}
+                                value={unitDetail?.fds?.cycle_period || "--"}
+                                readOnly={true}
                             />
                         </div>
                         <div className="col-lg-3 col-sm-4">
                             <FormInput
                                 label="Last Date"
                                 name="lastDate"
-                                placeholder="Enter last date"
                                 type="date"
-                                value="2025-04-15"
+                                value={unitDetail?.fds?.last_date || "--"}
+                                readOnly={true}
+                            />
+                        </div>
+                        <div className="col-lg-3 col-sm-4">
+                        <FormInput
+                                label="Command"
+                                name="command"
+                                value={unitDetail?.fds?.command || "--"}
                                 readOnly={true}
                             />
                         </div>
                     </div>
                 </div>
                 <div className="table-responsive">
-                    <table className="table-style-1 w-100">
-                        <thead>
-                            <tr>
-                                <th style={{ width: 150, minWidth: 150, maxWidth: 150 }}>
-                                    <div className="d-flex align-items-start">Parameter</div>
-                                </th>
-                                <th style={{ width: 100, minWidth: 100, maxWidth: 100 }}>
-                                    <div className="d-flex align-items-start">Count</div>
-                                </th>
-                                <th style={{ width: 100, minWidth: 100, maxWidth: 100 }}>
-                                    <div className="d-flex align-items-start">Marks</div>
-                                </th>
-                                <th style={{ width: 100, minWidth: 100, maxWidth: 100 }}>
-                                    <div className="d-flex align-items-start">Document</div>
-                                </th>
-                                <th style={{ width: 200, minWidth: 200, maxWidth: 200 }}>
-                                    <div className="d-flex align-items-start">Approved Marks</div>
-                                </th>
-                                <th style={{ width: 150, minWidth: 150, maxWidth: 150 }}>
-                                    <div className="d-flex align-items-start">Add Clarification</div>
-                                </th>
-                                <th style={{ width: 200, minWidth: 200, maxWidth: 200 }}>
-                                    <div className="d-flex align-items-start">Requested Clarification</div>
-                                </th>
-                                <th style={{ width: 150, minWidth: 150, maxWidth: 150 }}>
-                                    <div className="d-flex align-items-start"></div>
-                                </th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr>
-                                <td style={{ width: 150, minWidth: 150, maxWidth: 150 }}>
-                                    <p className="fw-5">Parameter 1</p>
-                                </td>
-                                <td style={{ width: 100, minWidth: 100, maxWidth: 100 }}>
-                                    <p className="fw-5">2</p>
-                                </td>
-                                <td style={{ width: 100, minWidth: 100, maxWidth: 100 }}>
-                                    <p className="fw-5">8</p>
-                                </td>
-                                <td style={{ width: 100, minWidth: 100, maxWidth: 100 }}>
-                                    <div style={{ fontSize: 18 }}>{SVGICON.app.pdf}</div>
-                                </td>
-                                <td style={{ width: 200, minWidth: 200, maxWidth: 200 }}>
-                                    <input
-                                        type="text"
-                                        className="form-control"
-                                        placeholder="Enter approved marks"
-                                        autoComplete="off"
-                                        value="8"
-                                        readOnly
-                                    />
-                                </td>
-                                <td style={{ width: 120, minWidth: 120, maxWidth: 120 }}>
-                                    {/* <button
-                                        className="border-0 bg-transparent"
-                                        style={{ color: "var(--secondary-default)" }}
-                                        onClick={() => setClarificationShow(true)}
-                                    >
-                                        {SVGICON.app.clarification}
-                                    </button> */}
-                                    <p className="fw-5">Already Asked</p>
-                                </td>
-                                <td style={{ width: 200, minWidth: 200, maxWidth: 200 }}>
-                                    <button className="action-btn bg-transparent d-inline-flex align-items-center justify-content-center" onClick={() => setReqClarificationShow(true)}>
-                                        {SVGICON.app.eye}
-                                    </button>
-                                </td>
-                                <td style={{ width: 150, minWidth: 150, maxWidth: 150 }}>
-                                    <div className="d-flex gap-3">
-                                        <button className="action-btn bg-transparent d-flex align-items-center justify-content-center"
-                                            style={{ color: "var(--green-default)" }}>
-                                            <IoMdCheckmark />
-                                        </button>
-                                        <button className="action-btn bg-transparent d-flex align-items-center justify-content-center"
-                                            style={{ color: "var(--red-default)" }}>
-                                            <MdClose />
-                                        </button>
-                                    </div>
-                                </td>
-                            </tr>
-                            <tr>
-                                <td style={{ width: 150, minWidth: 150, maxWidth: 150 }}>
-                                    <p className="fw-5">Parameter 2</p>
-                                </td>
-                                <td style={{ width: 100, minWidth: 100, maxWidth: 100 }}>
-                                    <p className="fw-5">3</p>
-                                </td>
-                                <td style={{ width: 100, minWidth: 100, maxWidth: 100 }}>
-                                    <p className="fw-5">10</p>
-                                </td>
-                                <td style={{ width: 100, minWidth: 100, maxWidth: 100 }}>
-                                    <div style={{ fontSize: 18 }}>{SVGICON.app.pdf}</div>
-                                </td>
-                                <td style={{ width: 200, minWidth: 200, maxWidth: 200 }}>
-                                    <input
-                                        type="text"
-                                        className="form-control"
-                                        placeholder="Enter approved marks"
-                                        autoComplete="off"
-                                        value="10"
-                                        readOnly
-                                    />
-                                </td>
-                                <td style={{ width: 120, minWidth: 120, maxWidth: 120 }}>
-                                    {/* <button
-                                        className="border-0 bg-transparent"
-                                        style={{ color: "var(--secondary-default)" }}
-                                        onClick={() => setClarificationShow(true)}
-                                    >
-                                        {SVGICON.app.clarification}
-                                    </button> */}
-                                    <Link to="#" onClick={() => setClarificationShow(true)} className="fw-5 text-decoration-underline" style={{ fontSize: 14 }}>Ask Clarification</Link>
-                                </td>
-                                <td style={{ width: 200, minWidth: 200, maxWidth: 200 }}>
-                                    -
-                                </td>
-                                <td style={{ width: 150, minWidth: 150, maxWidth: 150 }}></td>
-                            </tr>
-                            <tr>
-                                <td style={{ width: 150, minWidth: 150, maxWidth: 150 }}>
-                                    <p className="fw-5">Parameter 2</p>
-                                </td>
-                                <td style={{ width: 100, minWidth: 100, maxWidth: 100 }}>
-                                    <p className="fw-5">4</p>
-                                </td>
-                                <td style={{ width: 100, minWidth: 100, maxWidth: 100 }}>
-                                    <p className="fw-5">12</p>
-                                </td>
-                                <td style={{ width: 100, minWidth: 100, maxWidth: 100 }}>
-                                    <div style={{ fontSize: 18 }}>{SVGICON.app.pdf}</div>
-                                </td>
-                                <td style={{ width: 200, minWidth: 200, maxWidth: 200 }}>
-                                    <input
-                                        type="text"
-                                        className="form-control"
-                                        placeholder="Enter approved marks"
-                                        autoComplete="off"
-                                        value="12"
-                                        readOnly
-                                    />
-                                </td>
-                                <td style={{ width: 120, minWidth: 120, maxWidth: 120 }}>
-                                    {/* <button
-                                        className="border-0 bg-transparent"
-                                        style={{ color: "var(--secondary-default)" }}
-                                        onClick={() => setClarificationShow(true)}
-                                    >
-                                        {SVGICON.app.clarification}
-                                    </button> */}
-                                    <p className="fw-5">Already Asked</p>
-                                </td>
-                                <td style={{ width: 200, minWidth: 200, maxWidth: 200 }}>
-                                    <button className="action-btn bg-transparent d-inline-flex align-items-center justify-content-center" onClick={() => setReqClarificationShow(true)}>
-                                        {SVGICON.app.eye}
-                                    </button>
-                                </td>
-                                <td style={{ width: 150, minWidth: 150, maxWidth: 150 }}>
-                                    <div className="d-flex gap-3">
-                                        <button className="action-btn bg-transparent d-flex align-items-center justify-content-center"
-                                            style={{ color: "var(--green-default)" }}>
-                                            <IoMdCheckmark />
-                                        </button>
-                                        <button className="action-btn bg-transparent d-flex align-items-center justify-content-center"
-                                            style={{ color: "var(--red-default)" }}>
-                                            <MdClose />
-                                        </button>
-                                    </div>
-                                </td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
+    <table className="table-style-1 w-100">
+        <thead>
+            <tr>
+                <th style={{ width: 150 }}>Parameter</th>
+                <th style={{ width: 100 }}>Count</th>
+                <th style={{ width: 100 }}>Marks</th>
+                <th style={{ width: 100 }}>Document</th>
+                {/* <th style={{ width: 200 }}>Approved Marks</th> */}
+                {!isUnitRole && (
+            <>
+                <th style={{ width: 150 }}>Add Clarification</th>
+                <th style={{ width: 200 }}>Requested Clarification</th>
+                <th style={{ width: 150 }}>Action</th>
+            </>
+        )}
+            </tr>
+        </thead>
+        <tbody>
+            {unitDetail?.fds?.parameters?.map((param:any, index:any) => (
+                <tr key={index}>
+                    <td style={{ width: 150 }}>
+                        <p className="fw-5">{param.name}</p>
+                    </td>
+                    <td style={{ width: 100 }}>
+                        <p className="fw-5">{param.count}</p>
+                    </td>
+                    <td style={{ width: 100 }}>
+                        <p className="fw-5">{param.marks}</p>
+                    </td>
+                    <td style={{ width: 100 }}>
+                        <a href={param.upload} target="_blank" rel="noopener noreferrer" style={{ fontSize: 18 }}>
+                            {SVGICON.app.pdf}
+                        </a>
+                    </td>
+                    {/* <td style={{ width: 200 }}>
+                        <input
+                            type="text"
+                            className="form-control"
+                            placeholder="Enter approved marks"
+                            autoComplete="off"
+                            value={param.marks}
+                            readOnly
+                        />
+                    </td> */}
+                  {!isUnitRole && (
+                <>
+                  <td style={{ width: 120 }}>
+  {param?.clarification_id ? (
+    <p className="fw-5">Already Asked</p>
+  ) : (
+    <button
+      onClick={() => {
+        setClarificationType('appreciation');  // or get dynamically from your data
+        setClarificationApplicationId(unitDetail?.id);  // or appropriate id
+        setClarificationParameterName(param.name);
+        setClarificationDocForView(param.clarification_details.clarification_doc);
+        setClarificationClarificationForView(param.clarification_details.clarification);
+        setClarificationShow(true);
+      }}
+      className="fw-5 text-decoration-underline bg-transparent border-0 "
+      style={{ fontSize: 14 ,color:"#0d6efd"}}
+    >
+      Ask Clarification
+    </button>
+  )}
+</td>
+
+<td style={{ width: 200 }}>
+  {param?.clarification_details?.clarification ? (
+    <button
+      className="action-btn bg-transparent d-inline-flex align-items-center justify-content-center"
+      onClick={() => {
+        setReqClarificationShow(true)
+        setClarificationDocForView(param.clarification_details.clarification_doc);
+        setClarificationClarificationForView(param.clarification_details.clarification);
+      }}
+    >
+      {SVGICON.app.eye}
+    </button>
+  ) : (
+    "--"
+  )}
+</td>
+
+<td style={{ width: 150 }}>
+  {param?.clarification_details?.clarification &&
+   param?.clarification_details?.clarification_status === "pending" &&
+   param?.clarification_details?.clarification_id ? (
+    <div className="d-flex gap-3">
+      <button
+        className="action-btn bg-transparent d-flex align-items-center justify-content-center"
+        style={{ color: "var(--green-default)" }}
+      >
+        <IoMdCheckmark />
+      </button>
+      <button
+        className="action-btn bg-transparent d-flex align-items-center justify-content-center"
+        style={{ color: "var(--red-default)" }}
+      >
+        <MdClose />
+      </button>
+    </div>
+  ) : (
+    "--"
+  )}
+</td>
+
+                </>
+            )}
+                </tr>
+            ))}
+        </tbody>
+    </table>
+</div>
+
             </div>
-            <UnitClarificationModal
-                show={clarificationShow}
-                handleClose={() => setClarificationShow(false)}
-            />
-            <ReqClarificationModal
-                show={reqClarificationShow}
-                handleClose={() => setReqClarificationShow(false)}
-            />
+       <UnitClarificationModal
+  show={clarificationShow}
+  handleClose={() => setClarificationShow(false)}
+  type={clarificationType}
+  application_id={clarificationApplicationId}
+  parameter_name={clarificationParameterName}
+  setIsRefreshData={setIsRefreshData}
+  isRefreshData={isRefreshData}
+/>
+      <ReqClarificationModal
+         show={reqClarificationShow}
+         handleClose={() => setReqClarificationShow(false)}
+  clarification_doc={clarificationDocForView}
+  clarification={clarificationClarificationForView}
+/>
         </>
     );
 };

@@ -17,7 +17,7 @@ exports.validateCreateAppreciation = [
         throw new Error("appre_fds.award_type must be 'appreciation'");
       }
       if (!value.cycle_period || typeof value.cycle_period !== "string") {
-        throw new Error("appre_fds.cycle_period must be a string");
+        throw new Error("Cycle Period is required");
       }
       if (value.last_date && isNaN(Date.parse(value.last_date))) {
         throw new Error("appre_fds.last_date must be a valid date string");
@@ -57,7 +57,7 @@ exports.validateUpdateAppreciation = [
         throw new Error("appre_fds.award_type must be 'appreciation'");
       }
       if (value.cycle_period && typeof value.cycle_period !== "string") {
-        throw new Error("appre_fds.cycle_period must be a string");
+        throw new Error("Cycle Period is required");
       }
       if (value.details) {
         if (!Array.isArray(value.details)) {

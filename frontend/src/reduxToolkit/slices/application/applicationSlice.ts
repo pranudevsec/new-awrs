@@ -1,14 +1,14 @@
-// applicationSlice.ts
-
+import { fetchApplicationUnitDetail, fetchApplicationUnits, fetchSubordinates } from '../../services/application/applicationService';
+import type { ApplicationDetail, ApplicationUnit, FetchApplicationUnitDetailResponse, FetchApplicationUnitsResponse, Subordinate } from '../../services/application/applicationInterface';
 import { createSlice, type PayloadAction } from '@reduxjs/toolkit';
-import { fetchApplicationUnits } from '../../services/application/applicationService';
-import type { ApplicationUnit, FetchApplicationUnitsResponse } from '../../services/application/applicationInterface';
 
 interface ApplicationState {
   loading: boolean;
   success: boolean;
   error: string | null;
   units: ApplicationUnit[];
+  unitDetail: ApplicationDetail | null;
+  subordinates: Subordinate[];
 }
 
 const initialState: ApplicationState = {
@@ -16,6 +16,8 @@ const initialState: ApplicationState = {
   success: false,
   error: null,
   units: [],
+  unitDetail: null,
+  subordinates: [],
 };
 
 const applicationSlice = createSlice({
@@ -27,6 +29,7 @@ const applicationSlice = createSlice({
       state.success = false;
       state.error = null;
       state.units = [];
+      state.unitDetail = null;
     },
   },
   extraReducers: (builder) => {
@@ -44,6 +47,38 @@ const applicationSlice = createSlice({
       state.loading = false;
       state.success = false;
       state.error = action.payload || 'Failed to fetch application units';
+    });
+
+    // 👇 Unit detail cases
+    builder.addCase(fetchApplicationUnitDetail.pending, (state) => {
+      state.loading = true;
+      state.unitDetail = null;
+    });
+    builder.addCase(fetchApplicationUnitDetail.fulfilled, (state, action: PayloadAction<FetchApplicationUnitDetailResponse>) => {
+      state.loading = false;
+      state.unitDetail = action.payload.data;
+    });
+    builder.addCase(fetchApplicationUnitDetail.rejected, (state, action: PayloadAction<any>) => {
+      state.loading = false;
+      state.unitDetail = null;
+      state.error = action.payload || 'Failed to fetch unit detail';
+    });
+
+
+    builder.addCase(fetchSubordinates.pending, (state) => {
+      state.loading = true;
+      state.success = false;
+      state.error = null;
+    });
+    builder.addCase(fetchSubordinates.fulfilled, (state, action: PayloadAction<FetchApplicationUnitsResponse>) => {
+      state.loading = false;
+      state.success = action.payload.success;
+      state.units = action.payload.data;
+    });
+    builder.addCase(fetchSubordinates.rejected, (state, action: PayloadAction<any>) => {
+      state.loading = false;
+      state.success = false;
+      state.error = action.payload || 'Failed to fetch subordinate applications';
     });
   },
 });

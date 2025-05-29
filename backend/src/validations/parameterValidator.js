@@ -15,7 +15,7 @@ const baseValidations = {
 
   applicability: body("applicability")
     .optional()
-    .isLength({ min: 1, max: 4 })
+    .isLength({ min: 1, max: 25 })
     .withMessage("Applicability must be between 1 to 4 characters"),
 
   name: body("name")
@@ -61,8 +61,7 @@ const baseValidations = {
 
 exports.validateCreateParameter = [
     body("comd")
-      .notEmpty()
-      .withMessage("comd is required")
+    .optional()
       .isLength({ min: 3, max: 3 })
       .withMessage("comd must be exactly 3 characters"),
   
@@ -75,7 +74,7 @@ exports.validateCreateParameter = [
     body("applicability")
       .notEmpty()
       .withMessage("applicability is required")
-      .isLength({ min: 1, max: 4 })
+      .isLength({ min: 1, max: 25 })
       .withMessage("Applicability must be between 1 to 4 characters"),
   
     body("name")

@@ -8,6 +8,7 @@ import parameterReducer from './slices/parameter/parameterSlice';
 import citationReducer from './slices/citation/citationSlice';
 import appreciationReducer from './slices/appreciation/appreciationSlice';
 import applicationReducer from './slices/application/applicationSlice';
+import clarificationReducer from './slices/clarification/clarificationSlice';
 
 const getConfig = (key: string, whitelist: string[]) => {
     return {
@@ -24,6 +25,7 @@ const reducer = combineReducers({
     citation: citationReducer,
     appreciation: appreciationReducer,
     application: applicationReducer,
+    clarification:clarificationReducer,
 });
 
 export const store = configureStore({

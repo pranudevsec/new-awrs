@@ -1,8 +1,10 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { SVGICON } from "../../constants/iconsList";
 import Breadcrumb from "../../components/ui/breadcrumb/Breadcrumb";
-import UnitClarificationModal from "../../modals/UnitClarificationModal";
 import FormSelect from "../../components/form/FormSelect";
+import { useAppDispatch } from "../../reduxToolkit/hooks";
+import { useParams, useSearchParams } from "react-router-dom";
+import { fetchApplicationUnitDetail } from "../../reduxToolkit/services/application/applicationService";
 
 const awardTypeOptions: OptionType[] = [
   { value: "citation", label: "Citation" },
@@ -17,8 +19,26 @@ const cyclePeriodOptions: OptionType[] = [
 ];
 
 const ClarificationDetail = () => {
+  const dispatch = useAppDispatch();
+
   // States
   const [clarificationShow, setClarificationShow] = useState(false);
+  console.log(clarificationShow)
+  const [searchParams] = useSearchParams();
+  const { application_id } = useParams(); 
+  const award_type = searchParams.get("award_type") || "";
+  const numericAppId = Number(application_id);
+  useEffect(() => {
+    if (award_type && numericAppId) {
+      dispatch(fetchApplicationUnitDetail({ award_type, numericAppId }))
+        .unwrap()
+        .then(() => {
+        })
+        .catch((err) => {
+          console.error("Fetch failed:", err);
+        });
+    }
+  }, [award_type, numericAppId, dispatch]);
 
   return (
     <>
@@ -369,10 +389,10 @@ const ClarificationDetail = () => {
           </div>
         </div>
       </div>
-      <UnitClarificationModal
+      {/* <UnitClarificationModal
         show={clarificationShow}
         handleClose={() => setClarificationShow(false)}
-      />
+      /> */}
     </>
   );
 };

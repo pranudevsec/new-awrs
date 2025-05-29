@@ -34,7 +34,13 @@ EXECUTE FUNCTION update_user_tab_timestamp();
 
 -- Insert a sample user
 INSERT INTO User_tab (pers_no, rank, name, user_role, username, password)
-VALUES ('12345678', 'some', 'John Doe', 'unit', 'testuser1', '$2b$10$FCHwKvPqS2IrJY2OZtJ2OemtfeFiz1Cj/ez8bv6NwTk5.Se.YaFwq');
+VALUES
+  ('12345678', 'some', 'John Doe', 'unit', 'testuser1', '$2b$10$FCHwKvPqS2IrJY2OZtJ2OemtfeFiz1Cj/ez8bv6NwTk5.Se.YaFwq'),
+  ('87654321', 'some', 'Jane Smith', 'brigade', 'testbrigade', '$2b$10$FCHwKvPqS2IrJY2OZtJ2OemtfeFiz1Cj/ez8bv6NwTk5.Se.YaFwq'),
+  ('56781234', 'some', 'Alex Johnson', 'division', 'testdivision', '$2b$10$FCHwKvPqS2IrJY2OZtJ2OemtfeFiz1Cj/ez8bv6NwTk5.Se.YaFwq'),
+  ('43218765', 'some', 'Maria Lee', 'corps', 'testcorps', '$2b$10$FCHwKvPqS2IrJY2OZtJ2OemtfeFiz1Cj/ez8bv6NwTk5.Se.YaFwq'),
+  ('34567812', 'some', 'David Brown', 'command', 'testcommand', '$2b$10$FCHwKvPqS2IrJY2OZtJ2OemtfeFiz1Cj/ez8bv6NwTk5.Se.YaFwq'),
+  ('34567812', 'some', 'Test Admin', 'admin', 'admin', '$2b$10$FCHwKvPqS2IrJY2OZtJ2OemtfeFiz1Cj/ez8bv6NwTk5.Se.YaFwq');
 
 --------------------------------------------------------------------------------------------Parameter_Master----------------------------------------------------------------------------------------------------------------------
 -- Drop if exists
@@ -43,7 +49,7 @@ DROP TABLE IF EXISTS Parameter_Master;
 -- Create the Parameter_Master table
 CREATE TABLE Parameter_Master (
     param_id SERIAL PRIMARY KEY,
-    comd CHAR(3) NOT NULL,
+    comd CHAR(3),
     award_type CHAR(25) NOT NULL CHECK (award_type IN ('citation', 'appreciation')),
     applicability CHAR(4) NOT NULL,
     category CHAR(50) NOT NULL,
@@ -65,9 +71,10 @@ DROP TABLE IF EXISTS Config_tab;
 -- Create the Config_tab table
 CREATE TABLE Config_tab (
     config_id SERIAL PRIMARY KEY,
-    deadline DATE, -- optional
-    docu_path_base VARCHAR, -- optional
-    cycle_period TEXT[] -- array of text
+    deadline DATE,
+    docu_path_base VARCHAR,
+    cycle_period TEXT[],
+    current_cycle_period VARCHAR
 );
 
 --------------------------------------------------------------------------------------------Unit_tab----------------------------------------------------------------------------------------------------------------------
@@ -166,11 +173,12 @@ INSERT INTO Parameter_Master (
 ('NC', 'citation', 'ALL', 'recovery', 'Radioset Recovery', 'Number of radiosets recovered', FALSE, 10, TRUE, 2, 4, 2, 2),
 ('NC', 'appreciation', 'ALL', 'recovery', 'Medical Camps', 'Organized medical camps', FALSE, 10, FALSE, 3, 3, 2, 2);
 
-INSERT INTO Config_tab (deadline, docu_path_base, cycle_period)
+INSERT INTO Config_tab (deadline, docu_path_base, cycle_period, current_cycle_period)
 VALUES (
     '2025-12-31',
     '/mnt/data/documents',
-    ARRAY['2024 - H1', '2024 - H2']
+    ARRAY['2024 - H1', '2024 - H2'],
+    '2024 - H1'
 );
 
 -- Insert dummy data into Unit_tab

@@ -52,3 +52,12 @@ export const commandOptions: OptionType[] = [
   { value: "command4", label: "Command 4" },
   { value: "command5", label: "Command 5" },
 ];
+
+export const hierarchicalStructure = [
+  ["mycomd", "mycorps", "mydiv", "mybde", "myunit"],
+  ["command1", "corps1", "divison1", "brigade1", "unit1"],
+  ["command2", "corps2", "divison2", "brigade2", "unit2"],
+  ["command3", "corps3", "divison3", "brigade3", "unit3"],
+  ["command4", "corps4", "divison4", "brigade4", "unit4"],
+  ["command5", "corps5", "divison5", "brigade5", "unit5"],
+];

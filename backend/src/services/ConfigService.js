@@ -18,9 +18,11 @@ exports.getFirstConfig = async () => {
 exports.updateFirstConfig = async (data) => {
   const client = await dbService.getClient();
   try {
-    const { deadline, docu_path_base, cycle_period } = data;
+    const { deadline, docu_path_base, cycle_period, current_cycle_period } = data;
 
-    const existing = await client.query("SELECT config_id FROM Config_tab ORDER BY config_id ASC LIMIT 1");
+    const existing = await client.query(
+      "SELECT config_id FROM Config_tab ORDER BY config_id ASC LIMIT 1"
+    );
 
     let result;
 
@@ -29,17 +31,17 @@ exports.updateFirstConfig = async (data) => {
 
       result = await client.query(
         `UPDATE Config_tab 
-         SET deadline = $1, docu_path_base = $2, cycle_period = $3 
-         WHERE config_id = $4 
+         SET deadline = $1, docu_path_base = $2, cycle_period = $3, current_cycle_period = $4
+         WHERE config_id = $5 
          RETURNING *`,
-        [deadline, docu_path_base, cycle_period, configId]
+        [deadline, docu_path_base, cycle_period, current_cycle_period, configId]
       );
     } else {
       result = await client.query(
-        `INSERT INTO Config_tab (deadline, docu_path_base, cycle_period)
-         VALUES ($1, $2, $3)
+        `INSERT INTO Config_tab (deadline, docu_path_base, cycle_period, current_cycle_period)
+         VALUES ($1, $2, $3, $4)
          RETURNING *`,
-        [deadline, docu_path_base, cycle_period]
+        [deadline, docu_path_base, cycle_period, current_cycle_period]
       );
     }
 

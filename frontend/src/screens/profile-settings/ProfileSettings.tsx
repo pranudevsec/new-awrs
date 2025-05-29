@@ -12,6 +12,22 @@ import { useAppSelector, useAppDispatch } from "../../reduxToolkit/hooks";
 import { unwrapResult } from "@reduxjs/toolkit";
 import { getProfile, reqToUpdateUnitProfile } from "../../reduxToolkit/services/auth/authService";
 
+export const hierarchicalStructure = [
+  ["mycomd", "mycorps", "mydiv", "mybde", "myunit"],
+  ["command1", "corps1", "divison1", "brigade1", "unit1"],
+  ["command2", "corps2", "divison2", "brigade2", "unit2"],
+  ["command3", "corps3", "divison3", "brigade3", "unit3"],
+  ["command4", "corps4", "divison4", "brigade4", "unit4"],
+  ["command5", "corps5", "divison5", "brigade5", "unit5"],
+];
+
+// Create a lookup for faster access
+export const hierarchyMap: Record<string, string[]> = {};
+hierarchicalStructure.forEach(([command, corps, division, brigade, unit]) => {
+  hierarchyMap[command] = [corps, division, brigade, unit];
+});
+
+
 const ProfileSettings = () => {
   const dispatch = useAppDispatch();
   const profile = useAppSelector((state) => state.admin.profile);
@@ -50,7 +66,7 @@ const ProfileSettings = () => {
     const capField = field.charAt(0).toUpperCase() + field.slice(1);
 
     if (field === "unit") {
-      return `Select ${capRole} Unit`;
+      return `Select ${capRole}`;
     } else {
       return `Select ${capField}`;
     }
@@ -69,16 +85,34 @@ const ProfileSettings = () => {
     enableReinitialize: true,
     onSubmit: async (values: any, { resetForm }) => {
       try {
-        const payload = {
-          ...values,
-          name: values.unit,
-          "bde": values.brigade,
-          "div": values.division,
-          "corps": values.corps,
-          "comd": values.command,
+        const role = profile?.user?.user_role ?? "";
+        const visibleFields = getVisibleFields(role);
+    
+        // Map to backend field names
+        const fieldMap: Record<string, string> = {
+          unit: "name",
+          brigade: "bde",
+          division: "div",
+          corps: "corps",
+          command: "comd",
         };
-        delete payload.unit;
-  
+    
+        // Prepare payload with visible fields only; others as null
+        const payload:any = {};
+    
+        // Include all relevant fields
+        Object.entries(fieldMap).forEach(([formField, backendField]) => {
+          if (visibleFields.includes(formField)) {
+            payload[backendField] = values[formField];
+          } else {
+            payload[backendField] = null;
+          }
+        });
+    
+        // Add other values
+        payload["adm_channel"] = values.adm_channel;
+        payload["tech_channel"] = values.tech_channel;
+    
         const resultAction = await dispatch(reqToUpdateUnitProfile(payload));
         const result = unwrapResult(resultAction);
   
@@ -104,38 +138,71 @@ const ProfileSettings = () => {
 
           {/* Conditionally render select fields based on role */}
           {visibleFields.map((field) => {
-            const optionsForField =
-            field === "unit"
-              ? {
-                  unit: unitOptions,
-                  brigade: brigadeOptions,
-                  division: divisionOptions,
-                  corps: corpsOptions,
-                  command: commandOptions,
-                }[profile?.user?.user_role ?? "unit"] || []
-              : optionsMap[field] || [];
+  const optionsForField =
+    field === "unit"
+      ? {
+          unit: unitOptions,
+          brigade: brigadeOptions,
+          division: divisionOptions,
+          corps: corpsOptions,
+          command: commandOptions,
+        }[profile?.user?.user_role ?? "unit"] || []
+      : optionsMap[field] || [];
+      const getDynamicLabel = (userRole: string, field: string): string => {
+        const roleMap: Record<string, string> = {
+          unit: "Unit",
+          brigade: "Brigade",
+          division: "Division",
+          corps: "Corps",
+          command: "Command",
+        };
+      
+        if (field === "unit") {
+          const roleLabel = roleMap[userRole] || "Unit";
+          return `My ${roleLabel}`;
+        }
+      
+        return roleMap[field] || field.charAt(0).toUpperCase() + field.slice(1);
+      };
+  return (
+    <div className="col-sm-6 mb-3" key={field}>
+      <FormSelect
+label={getDynamicLabel(profile?.user?.user_role ?? "", field)}
+name={field}
+        options={optionsForField}
+        value={
+          optionsForField.find(
+            (opt: any) => opt.value === formik.values[field]
+          ) || null
+        }
+        onChange={(selectedOption) => {
+          const selectedValue = selectedOption?.value || "";
+          if (selectedValue=='n/a') {
+            formik.setFieldValue("corps", "");
+            formik.setFieldValue("division", "");
+            formik.setFieldValue("brigade", "");
+            formik.setFieldValue("unit", "");
+          }
+          formik.setFieldValue(field, selectedValue);
 
-            return (
-              <div className="col-sm-6 mb-3" key={field}>
-                <FormSelect
-                  label={field.charAt(0).toUpperCase() + field.slice(1)}
-                  name={field}
-                  options={optionsForField}
-                  value={
-                    optionsForField.find(
-                      (opt: any) => opt.value === formik.values[field]
-                    ) || null
-                  }
-                  onChange={(selectedOption) =>
-                    formik.setFieldValue(field, selectedOption?.value || "")
-                  }
-                  placeholder={getPlaceholder(profile?.user?.user_role ?? "", field)}
-                  errors={formik.errors[field]}
-                  touched={formik.touched[field]}
-                />
-              </div>
-            );
-          })}
+
+          // ✅ When command changes, update all child fields
+          if (field === "command" && selectedValue && hierarchyMap[selectedValue]) {
+            const [corps, division, brigade] = hierarchyMap[selectedValue];
+            formik.setFieldValue("corps", corps);
+            formik.setFieldValue("division", division);
+            formik.setFieldValue("brigade", brigade);
+            // formik.setFieldValue("unit", unit);
+          }
+        }}
+        placeholder={getPlaceholder(profile?.user?.user_role ?? "", field)}
+        errors={formik.errors[field]}
+        touched={formik.touched[field]}
+      />
+    </div>
+  );
+})}
+
    <div className="col-sm-6 mb-3">
             <label htmlFor="adm_channel" className="form-label">
               Adm Channel
@@ -196,4 +263,3 @@ const ProfileSettings = () => {
 };
 
 export default ProfileSettings;
-

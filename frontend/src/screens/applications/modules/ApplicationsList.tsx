@@ -5,7 +5,7 @@ import { SVGICON } from "../../../constants/iconsList";
 import Breadcrumb from "../../../components/ui/breadcrumb/Breadcrumb";
 import FormSelect from "../../../components/form/FormSelect";
 import Pagination from "../../../components/ui/pagination/Pagination";
-import { fetchApplicationUnits } from "../../../reduxToolkit/services/application/applicationService";
+import { fetchApplicationUnits, fetchSubordinates } from "../../../reduxToolkit/services/application/applicationService";
 
 interface OptionType {
     label: string;
@@ -20,16 +20,27 @@ interface OptionType {
 const ApplicationsList = () => {
     const navigate = useNavigate();
     const dispatch = useAppDispatch();
-  
+    const profile = useAppSelector((state) => state.admin.profile);
+
     const { units, loading, error } = useAppSelector((state) => state.application);
   
     const [awardType, setAwardType] = useState<string | null>(null);
     const [search, setSearch] = useState<string>('');
 
     useEffect(() => {
-        dispatch(fetchApplicationUnits({ award_type: awardType || '', search }));
-      }, [dispatch, awardType, search]);
-
+      if (!profile?.user?.user_role) return;
+    
+      const fetchData = () => {
+        const params = { award_type: awardType || '', search };
+        if (profile.user.user_role !== 'unit') {
+          dispatch(fetchSubordinates(params));
+        } else {
+          dispatch(fetchApplicationUnits(params));
+        }
+      };
+    
+      fetchData();
+    }, [dispatch, awardType, search, profile]);
   return (
     <div className="clarification-section">
       <div className="d-flex flex-sm-row flex-column align-items-sm-center justify-content-between mb-4">
@@ -112,7 +123,7 @@ const ApplicationsList = () => {
               units.map((unit:any) => (
                 <tr
                   key={unit.id}
-                  onClick={() => navigate(`/applications/list/${unit.id}`)}
+                  onClick={() => navigate(`/applications/list/${unit.id}?award_type=${unit.type}`)}
                   style={{ cursor: "pointer" }}
                 >
                   <td style={{ width: 150, minWidth: 150, maxWidth: 150 }}>

@@ -1,7 +1,6 @@
 const dbService = require("../utils/postgres/dbService");
 const ResponseHelper = require("../utils/responseHelper");
 const AuthService = require("../services/AuthService.js");
-const { createDecipheriv } = require("crypto");
 
 exports.getAllApplicationsForUnit = async (user, query) => {
   const client = await dbService.getClient();
@@ -144,6 +143,97 @@ exports.getAllApplicationsForUnit = async (user, query) => {
     return ResponseHelper.success(200, "Fetched applications with clarifications",paginatedData,pagination);
   } catch (err) {
     return ResponseHelper.error(500, "Failed to fetch data", err.message);
+  } finally {
+    client.release();
+  }
+};
+
+exports.getSingleApplicationForUnit = async (user, { application_id, award_type }) => {
+  const client = await dbService.getClient();
+
+  try {
+    let query = "";
+    let params = [application_id];
+    let application;
+
+    if (award_type === "citation") {
+      query = `
+        SELECT 
+          citation_id AS id,
+          'citation' AS type,
+          unit_id,
+          date_init,
+          citation_fds AS fds,
+          last_approved_by_role,
+          last_approved_at,
+          status_flag,
+          isShortlisted
+        FROM Citation_tab
+        WHERE citation_id = $1
+      `;
+    } else if (award_type === "appreciation") {
+      query = `
+        SELECT 
+          appreciation_id AS id,
+          'appreciation' AS type,
+          unit_id,
+          date_init,
+          appre_fds AS fds,
+          last_approved_by_role,
+          last_approved_at,
+          status_flag,
+          isShortlisted
+        FROM Appre_tab
+        WHERE appreciation_id = $1
+      `;
+    } else {
+      return ResponseHelper.error(400, "Invalid award_type provided");
+    }
+
+    const res = await client.query(query, params);
+    application = res.rows[0];
+
+    if (!application) {
+      return ResponseHelper.error(404, "Application not found");
+    }
+
+    // Parse fds to manipulate parameters array
+    const fds = application.fds;
+      for (let param of fds.parameters) {
+        if (param.clarification_id) {
+          const clarificationsQuery = `
+            SELECT
+              clarification_id,
+              application_type,
+              application_id,
+              parameter_name,
+              clarification_by_id,
+              clarification_by_role,
+              clarification_status,
+              reviewer_comment,
+              clarification,
+              clarification_doc,
+              clarified_history,
+              clarification_sent_at,
+              clarified_at
+            FROM Clarification_tab
+            WHERE clarification_id = $1
+          `;
+
+          const clarRes = await client.query(clarificationsQuery, [param.clarification_id]);
+
+          if (clarRes.rows.length > 0) {
+            param.clarification_details = clarRes.rows[0];
+          } else {
+            param.clarification_details = null;
+          }
+        }
+      }
+    application.fds = fds;
+
+    return ResponseHelper.success(200, "Fetched single application", application);
+  } catch (err) {
+    return ResponseHelper.error(500, "Failed to fetch application", err.message);
   } finally {
     client.release();
   }

@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { useFormik } from "formik";
 import { unwrapResult } from "@reduxjs/toolkit";
 import Breadcrumb from "../../components/ui/breadcrumb/Breadcrumb";
@@ -12,13 +12,11 @@ import {
 } from "../../reduxToolkit/services/config/configService";
 import { AdminSettingSchema } from "../../validations/validations";
 import FormSelect from "../../components/form/FormSelect";
-import Loader from "../../components/ui/loader/Loader";
 
 const AdminSettings = () => {
   const dispatch = useAppDispatch();
 
-  const { config } = useAppSelector((state) => state.config);
-  const [firstLoad, setFirstLoad] = useState(true);
+  const { config, loader, error } = useAppSelector((state) => state.config);
 
   const formik = useFormik({
     enableReinitialize: true,
@@ -48,15 +46,8 @@ const AdminSettings = () => {
   });
 
   useEffect(() => {
-    const fetchData = async () => {
-      await dispatch(getConfig());
-      setFirstLoad(false);
-    };
-    fetchData();
-  }, []);
-    // Show loader
-    if (firstLoad) return <Loader />;
-
+    dispatch(getConfig());
+  }, [dispatch]);
   const cyclePeriodOptions = formik.values.cycle_period.map((item) => ({
     label: item,
     value: item,
@@ -66,6 +57,9 @@ const AdminSettings = () => {
       <div className="d-flex flex-sm-row flex-column align-items-sm-center justify-content-between mb-4">
         <Breadcrumb title="Admin Settings" />
       </div>
+
+      {error && <p className="text-danger">{error}</p>}
+      {loader && <p>Loading...</p>}
 
       <form onSubmit={formik.handleSubmit}>
         <div className="row">
@@ -121,16 +115,13 @@ const AdminSettings = () => {
           </div>
 
           <div className="col-12">
-          <div className="d-flex align-items-center">
-              <button type="submit" className="_btn _btn-lg primary" disabled={formik.isSubmitting}>
-                {formik.isSubmitting ? (
-                  <span>
-                    <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
-                    Submitting...
-                  </span>
-                ) : (
-                  "Submit"
-                )}
+            <div className="d-flex align-items-center">
+              <button
+                type="submit"
+                className="_btn _btn-lg primary"
+                disabled={loader}
+              >
+                Submit
               </button>
             </div>
           </div>

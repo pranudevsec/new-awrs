@@ -347,13 +347,10 @@ exports.addClarification = async (user, data) => {
   
       // Sort by date_init descending
       allApps.sort((a, b) => new Date(b.date_init) - new Date(a.date_init));
-      const filteredApplications = allApps.map(app => {
-        const clarifiedParams = app.fds?.parameters?.filter(param => param.clarification_id);
-        return {
-          id: app.id,
-          parameters: clarifiedParams
-        };
-      }).filter(app => app.parameters.length > 0);
+      const filteredApplications = allApps.filter(app => 
+        app.fds?.parameters?.some(param => param.clarification_id)
+      );
+      
       
       return ResponseHelper.success(200, "Fetched applications with clarifications", filteredApplications);
     } catch (err) {

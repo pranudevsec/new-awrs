@@ -48,7 +48,7 @@ export const authProtectedRoutes: RouteConfig[] = [
   { path: "/applications/citation", element: <ApplyCitation /> },
   { path: "/applications/appreciation", element: <ApplyAppreciation /> },
   { path: "/applications/list", element: <ApplicationsList /> },
-  { path: "/applications/list/:id", element: <ApplicationDetails /> },
+  { path: "/applications/list/:application_id", element: <ApplicationDetails /> },
   { path: "/applications/clarification/list", element: <ClarificationList /> },
   { path: "/applications/clarification/list/:id", element: <ClarificationDetails /> },
   { path: "/applications/thanks", element: <Thanks /> },
@@ -58,7 +58,7 @@ export const authProtectedRoutes: RouteConfig[] = [
 
   // Clarification
   { path: "/clarification", element: <Clarification /> },
-  { path: "/clarification/unit/:id", element: <UnitClarificationDetail /> },
+  { path: "/clarification/unit/:application_id", element: <UnitClarificationDetail /> },
   { path: "/clarification/:id", element: <ClarificationDetail /> },
 
   // Command Panel

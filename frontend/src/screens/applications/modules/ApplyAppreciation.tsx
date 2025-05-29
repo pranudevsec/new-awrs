@@ -86,7 +86,6 @@ const ApplyAppreciation = () => {
         const result = unwrapResult(resultAction);
 
         if (result.success) {
-          toast.success("Appreciation created successfully!");
           formik.resetForm();
           dispatch(resetCitationState());
           navigate("/applications/thanks");
