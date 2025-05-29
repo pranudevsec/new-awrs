@@ -1,5 +1,10 @@
+import { useEffect } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
 import { useFormik } from "formik";
+import { unwrapResult } from "@reduxjs/toolkit";
 import { ParametersSchema } from "../../validations/validations";
+import { useAppDispatch } from "../../reduxToolkit/hooks";
+import { updateParameter } from "../../reduxToolkit/services/parameter/parameterService";
 import Breadcrumb from "../../components/ui/breadcrumb/Breadcrumb";
 import FormInput from "../../components/form/FormInput";
 import FormSelect from "../../components/form/FormSelect";
@@ -7,7 +12,7 @@ import FormRadioButton from "../../components/form/FormRadioButton";
 
 const awardTypeOptions: OptionType[] = [
     { value: "citation", label: "Citation" },
-    { value: "clarification", label: "Clarification" },
+    { value: "appreciation", label: "Appreciation" },
 ];
 
 export const roleOptions: OptionType[] = [
@@ -20,25 +25,46 @@ export const roleOptions: OptionType[] = [
 ];
 
 const EditParameters = () => {
+    const location = useLocation();
+    const navigate = useNavigate();
+    const dispatch = useAppDispatch();
+    const parameters = location.state;
+
+    useEffect(() => {
+        if (!parameters) navigate('/parameters', { replace: true });
+    }, [parameters, navigate]);
+
+    if (!parameters) return null;
+
     // Formik
     const formik = useFormik({
         initialValues: {
-            award_type: "",
-            applicability: "",
-            name: "",
-            category: "",
-            description: "",
-            negative: null,
-            per_unit_mark: "",
-            max_marks: "",
-            proof_reqd: null,
-            weightage: "",
-            param_sequence: "",
-            param_mark: ""
+            award_type: parameters.award_type?.trim() || "",
+            applicability: parameters.applicability?.trim() || "",
+            name: parameters.name?.trim() || "",
+            category: parameters.category?.trim() || "",
+            description: parameters.description?.trim() || "",
+            negative: parameters.negative || false,
+            per_unit_mark: parameters.per_unit_mark || "",
+            max_marks: parameters.max_marks || "",
+            proof_reqd: parameters.proof_reqd || false,
+            weightage: parameters.weightage || "",
+            param_sequence: parameters.param_sequence || "",
+            param_mark: parameters.param_mark || ""
         },
         validationSchema: ParametersSchema,
-        onSubmit: (values) => {
-            console.log("values -> ", values);
+        onSubmit: async (values, { resetForm }) => {
+            const resultAction = await dispatch(
+                updateParameter({
+                    id: parameters.param_id,
+                    payload: values,
+                })
+            );
+            const result = unwrapResult(resultAction);
+            if (result.success) {
+                resetForm();
+                navigate('/parameters');
+            }
         },
     });
 
@@ -63,8 +89,8 @@ const EditParameters = () => {
                             value={awardTypeOptions.find((opt) => opt.value === formik.values.award_type) || null}
                             placeholder="Select"
                             onChange={(selectedOption) => formik.setFieldValue("award_type", selectedOption?.value || "")}
-                            errors={formik.errors.award_type}
-                            touched={formik.touched.award_type}
+                            errors={typeof formik.errors.award_type === 'string' ? formik.errors.award_type : undefined}
+                            touched={typeof formik.touched.award_type === 'boolean' ? formik.touched.award_type : undefined}
                         />
                     </div>
                     <div className="col-sm-6 mb-3">
@@ -80,8 +106,8 @@ const EditParameters = () => {
                                 )
                             }
                             placeholder="Select"
-                            errors={formik.errors.applicability}
-                            touched={formik.touched.applicability}
+                            errors={typeof formik.errors.applicability === 'string' ? formik.errors.applicability : undefined}
+                            touched={typeof formik.touched.applicability === 'boolean' ? formik.touched.applicability : undefined}
                         />
                     </div>
                     <div className="col-sm-6 mb-3">
@@ -92,8 +118,8 @@ const EditParameters = () => {
                             value={formik.values.name}
                             onChange={formik.handleChange}
                             onBlur={formik.handleBlur}
-                            errors={formik.errors.name}
-                            touched={formik.touched.name}
+                            errors={typeof formik.errors.name === 'string' ? formik.errors.name : undefined}
+                            touched={typeof formik.touched.name === 'boolean' ? formik.touched.name : undefined}
                         />
                     </div>
                     <div className="col-sm-6 mb-3">
@@ -104,8 +130,8 @@ const EditParameters = () => {
                             value={formik.values.category}
                             onChange={formik.handleChange}
                             onBlur={formik.handleBlur}
-                            errors={formik.errors.category}
-                            touched={formik.touched.category}
+                            errors={typeof formik.errors.category === 'string' ? formik.errors.category : undefined}
+                            touched={typeof formik.touched.category === 'boolean' ? formik.touched.category : undefined}
                         />
                     </div>
                     <div className="col-sm-6 mb-3">
@@ -117,8 +143,8 @@ const EditParameters = () => {
                             value={formik.values.per_unit_mark}
                             onChange={formik.handleChange}
                             onBlur={formik.handleBlur}
-                            errors={formik.errors.per_unit_mark}
-                            touched={formik.touched.per_unit_mark}
+                            errors={typeof formik.errors.per_unit_mark === 'string' ? formik.errors.per_unit_mark : undefined}
+                            touched={typeof formik.touched.per_unit_mark === 'boolean' ? formik.touched.per_unit_mark : undefined}
                         />
                     </div>
                     <div className="col-sm-6 mb-3">
@@ -130,8 +156,8 @@ const EditParameters = () => {
                             value={formik.values.max_marks}
                             onChange={formik.handleChange}
                             onBlur={formik.handleBlur}
-                            errors={formik.errors.max_marks}
-                            touched={formik.touched.max_marks}
+                            errors={typeof formik.errors.max_marks === 'string' ? formik.errors.max_marks : undefined}
+                            touched={typeof formik.touched.max_marks === 'boolean' ? formik.touched.max_marks : undefined}
                         />
                     </div>
                     <div className="col-sm-6 mb-3">
@@ -143,8 +169,8 @@ const EditParameters = () => {
                             value={formik.values.weightage}
                             onChange={formik.handleChange}
                             onBlur={formik.handleBlur}
-                            errors={formik.errors.weightage}
-                            touched={formik.touched.weightage}
+                            errors={typeof formik.errors.weightage === 'string' ? formik.errors.weightage : undefined}
+                            touched={typeof formik.touched.weightage === 'boolean' ? formik.touched.weightage : undefined}
                         />
                     </div>
                     <div className="col-sm-6 mb-3">
@@ -156,8 +182,8 @@ const EditParameters = () => {
                             value={formik.values.param_sequence}
                             onChange={formik.handleChange}
                             onBlur={formik.handleBlur}
-                            errors={formik.errors.param_sequence}
-                            touched={formik.touched.param_sequence}
+                            errors={typeof formik.errors.param_sequence === 'string' ? formik.errors.param_sequence : undefined}
+                            touched={typeof formik.touched.param_sequence === 'boolean' ? formik.touched.param_sequence : undefined}
                         />
                     </div>
                     <div className="col-sm-6 mb-3">
@@ -169,8 +195,8 @@ const EditParameters = () => {
                             value={formik.values.param_mark}
                             onChange={formik.handleChange}
                             onBlur={formik.handleBlur}
-                            errors={formik.errors.param_mark}
-                            touched={formik.touched.param_mark}
+                            errors={typeof formik.errors.param_mark === 'string' ? formik.errors.param_mark : undefined}
+                            touched={typeof formik.touched.param_mark === 'boolean' ? formik.touched.param_mark : undefined}
                         />
                     </div>
                     <div className="col-sm-6 mb-3">
@@ -195,7 +221,7 @@ const EditParameters = () => {
                                 label="No"
                             />
                         </div>
-                        {formik.errors.negative && formik.touched.negative && (
+                        {typeof formik.errors.negative === 'string' && formik.touched.negative && (
                             <p className="error-text">{formik.errors.negative}</p>
                         )}
                     </div>
@@ -221,7 +247,7 @@ const EditParameters = () => {
                                 label="No"
                             />
                         </div>
-                        {formik.errors.proof_reqd && formik.touched.proof_reqd && (
+                        {typeof formik.errors.proof_reqd === 'string' && formik.touched.proof_reqd && (
                             <p className="error-text">{formik.errors.proof_reqd}</p>
                         )}
                     </div>
@@ -234,15 +260,23 @@ const EditParameters = () => {
                             value={formik.values.description}
                             onChange={formik.handleChange}
                             onBlur={formik.handleBlur}
-                            errors={formik.errors.description}
-                            touched={formik.touched.description}
+                            errors={typeof formik.errors.description === 'string' ? formik.errors.description : undefined}
+                            touched={typeof formik.touched.description === 'boolean' ? formik.touched.description : undefined}
                         />
                     </div>
                     <div className="col-12 mt-2">
                         <div className="d-flex align-items-center">
-                            <button type="submit" className="_btn _btn-lg primary">
-                                Edit
+                            <button type="submit" className="_btn _btn-lg primary" disabled={formik.isSubmitting}>
+                                {formik.isSubmitting ? (
+                                    <span>
+                                        <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                                        Saving changes...
+                                    </span>
+                                ) : (
+                                    "Save Changes"
+                                )}
                             </button>
+
                         </div>
                     </div>
                 </div>

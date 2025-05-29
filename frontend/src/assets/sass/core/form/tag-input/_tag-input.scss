@@ -1,0 +1,57 @@
+.tag-input-area {
+    height: 50px;
+    padding: 6px 12px;
+    background-color: transparent;
+    border: 2px solid var(--muted);
+    border-radius: 4px;
+    font-size: 14px;
+    font-weight: 400;
+    color: var(--gray-900);
+    transition: all 0.3s ease;
+    opacity: 1 !important;
+
+    &:focus-within {
+        border-color: var(--primary-default);
+        box-shadow: none;
+    }
+
+    &.disabled {
+        background-color: var(--gray-100);
+        cursor: not-allowed;
+    }
+
+    .tag-item {
+        background-color: var(--secondary-default);
+        color: var(--background);
+        padding: 4px 10px;
+        border-radius: 30px;
+        font-size: 13px;
+        display: flex;
+        align-items: center;
+
+        .tag-remove-btn {
+            background: none;
+            border: none;
+            color: var(--background);
+            margin-left: 6px;
+            font-size: 16px;
+            cursor: pointer;
+            line-height: 1;
+        }
+    }
+
+    .tag-input-field {
+        border: none;
+        outline: none;
+        flex: 1;
+        min-width: 120px;
+        font-size: 14px;
+        padding: 6px 0;
+        background-color: transparent;
+        color: var(--gray-900);
+
+        &::placeholder {
+            color: var(--gray-400);
+        }
+    }
+}

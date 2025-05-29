@@ -1,10 +1,14 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
+import { unwrapResult } from "@reduxjs/toolkit";
 import { SVGICON } from "../../constants/iconsList";
+import { useAppDispatch, useAppSelector } from "../../reduxToolkit/hooks";
+import { deleteParameter, fetchParameters } from "../../reduxToolkit/services/parameter/parameterService";
 import Breadcrumb from "../../components/ui/breadcrumb/Breadcrumb";
 import FormSelect from "../../components/form/FormSelect";
 import Pagination from "../../components/ui/pagination/Pagination";
 import DeleteModal from "../../modals/DeleteModal";
+import Loader from "../../components/ui/loader/Loader";
 
 const awardTypeOptions: OptionType[] = [
     { value: "citation", label: "Citation" },
@@ -12,8 +16,46 @@ const awardTypeOptions: OptionType[] = [
 ];
 
 const ParametersList = () => {
+    const dispatch = useAppDispatch();
+
+    const { loading, parameters } = useAppSelector((state) => state.parameter);
+
     // States 
+    const [id, setId] = useState<string>("");
+    const [awardType, setAwardType] = useState<string | null>("");
     const [deleteShow, setDeleteShow] = useState<boolean>(false);
+    const [selectedParam, setSelectedParam] = useState<string | null>(null);
+    const [searchTerm, setSearchTerm] = useState<string>("");
+    const [debouncedSearch, setDebouncedSearch] = useState<string>("");
+
+    useEffect(() => {
+        const handler = setTimeout(() => {
+            setDebouncedSearch(searchTerm);
+        }, 500);
+
+        return () => {
+            clearTimeout(handler);
+        };
+    }, [searchTerm]);
+
+    // Get parametes function
+    const fetchParametersList = async () => {
+        await dispatch(fetchParameters({ awardType: awardType || "", search: debouncedSearch }));
+    };
+
+    // Delete paramete function
+    const handleDelete = async () => {
+        const resultAction = await dispatch(deleteParameter({ id }));
+        setDeleteShow(false);
+        const result = unwrapResult(resultAction);
+        if (result.success) fetchParametersList();
+    };
+
+    useEffect(() => {
+        fetchParametersList();
+    }, [awardType, debouncedSearch])
+
+    // if (true) return <Loader inline size={40} />
 
     return (
         <>
@@ -29,12 +71,19 @@ const ParametersList = () => {
                         <button className="border-0 bg-transparent position-absolute translate-middle-y top-50">
                             {SVGICON.app.search}
                         </button>
-                        <input type="text" placeholder="search..." className="form-control" />
+                        <input
+                            type="text"
+                            placeholder="search..."
+                            className="form-control"
+                            value={searchTerm}
+                            onChange={(e) => setSearchTerm(e.target.value)}
+                        />
                     </div>
                     <FormSelect
                         name="awardType"
                         options={awardTypeOptions}
-                        value={null}
+                        value={awardTypeOptions.find((opt) => opt.value === awardType) || null}
+                        onChange={(option) => setAwardType(option?.value || null)}
                         placeholder="Select Type"
                     />
                 </div>
@@ -66,111 +115,64 @@ const ParametersList = () => {
                             </tr>
                         </thead>
                         <tbody>
-                            <tr>
-                                <td style={{ width: 150 }}>
-                                    <p className="fw-4">Rescue Ops</p>
-                                </td>
-                                <td style={{ width: 150 }}>
-                                    <p className="fw-4">Some1</p>
-                                </td>
-                                <td style={{ width: 150 }}>
-                                    <p className="fw-4">Citation</p>
-                                </td>
-                                <td style={{ width: 200 }}>
-                                    <p className="fw-4">5</p>
-                                </td>
-                                <td style={{ width: 200 }}>
-                                    <p className="fw-4">15</p>
-                                </td>
-                                <td style={{ width: 150 }}>
-                                    <p className="fw-4">Yes</p>
-                                </td>
-                                <td style={{ width: 100, minWidth: 100, maxWidth: 100 }}>
-                                    <div className="d-flex align-items-center gap-2">
-                                        <Link
-                                            to="/parameters/1"
-                                            className="action-btn bg-transparent d-inline-flex align-items-center justify-content-center"
-                                        >
-                                            {SVGICON.app.edit}
-                                        </Link>
-                                        <button className="action-btn bg-transparent d-inline-flex align-items-center justify-content-center"
-                                            onClick={() => setDeleteShow(true)}
-                                        >
-                                            {SVGICON.app.delete}
-                                        </button>
-                                    </div>
-                                </td>
-                            </tr>
-                            <tr>
-                                <td style={{ width: 150 }}>
-                                    <p className="fw-4">Enemy Kills</p>
-                                </td>
-                                <td style={{ width: 150 }}>
-                                    <p className="fw-4">Some2</p>
-                                </td>
-                                <td style={{ width: 150 }}>
-                                    <p className="fw-4">Citation</p>
-                                </td>
-                                <td style={{ width: 200 }}>
-                                    <p className="fw-4">4</p>
-                                </td>
-                                <td style={{ width: 200 }}>
-                                    <p className="fw-4">20</p>
-                                </td>
-                                <td style={{ width: 150 }}>
-                                    <p className="fw-4">Yes</p>
-                                </td>
-                                <td style={{ width: 100, minWidth: 100, maxWidth: 100 }}>
-                                    <div className="d-flex align-items-center gap-2">
-                                        <Link
-                                            to="/parameters/1"
-                                            className="action-btn bg-transparent d-inline-flex align-items-center justify-content-center"
-                                        >
-                                            {SVGICON.app.edit}
-                                        </Link>
-                                        <button className="action-btn bg-transparent d-inline-flex align-items-center justify-content-center"
-                                            onClick={() => setDeleteShow(true)}
-                                        >
-                                            {SVGICON.app.delete}
-                                        </button>
-                                    </div>
-                                </td>
-                            </tr>
-                            <tr>
-                                <td style={{ width: 150 }}>
-                                    <p className="fw-4">Medical Camps</p>
-                                </td>
-                                <td style={{ width: 150 }}>
-                                    <p className="fw-4">Some3</p>
-                                </td>
-                                <td style={{ width: 150 }}>
-                                    <p className="fw-4">Appreciation</p>
-                                </td>
-                                <td style={{ width: 200 }}>
-                                    <p className="fw-4">2</p>
-                                </td>
-                                <td style={{ width: 200 }}>
-                                    <p className="fw-4">10</p>
-                                </td>
-                                <td style={{ width: 150 }}>
-                                    <p className="fw-4">No</p>
-                                </td>
-                                <td style={{ width: 100, minWidth: 100, maxWidth: 100 }}>
-                                    <div className="d-flex align-items-center gap-2">
-                                        <Link
-                                            to="/parameters/1"
-                                            className="action-btn bg-transparent d-inline-flex align-items-center justify-content-center"
-                                        >
-                                            {SVGICON.app.edit}
-                                        </Link>
-                                        <button className="action-btn bg-transparent d-inline-flex align-items-center justify-content-center"
-                                            onClick={() => setDeleteShow(true)}
-                                        >
-                                            {SVGICON.app.delete}
-                                        </button>
-                                    </div>
-                                </td>
-                            </tr>
+                            {loading ? (
+                                <tr>
+                                    <td colSpan={7}>
+                                        <div className="d-flex justify-content-center py-5">
+                                            <Loader inline size={40} />
+                                        </div>
+                                    </td>
+                                </tr>
+                            ) : parameters.length > 0 ? (
+                                parameters.map((item, idx) => (
+                                    <tr key={idx}>
+                                        <td style={{ width: 150, minWidth: 150, maxWidth: 150 }}>
+                                            <p className="fw-4">{item.name}</p>
+                                        </td>
+                                        <td style={{ width: 150, minWidth: 150, maxWidth: 150 }}>
+                                            <p className="fw-4">{item.category}</p>
+                                        </td>
+                                        <td style={{ width: 150, minWidth: 150, maxWidth: 150 }}>
+                                            <p className="fw-4">{item.award_type}</p>
+                                        </td>
+                                        <td style={{ width: 200, minWidth: 200, maxWidth: 200 }}>
+                                            <p className="fw-4">{item.per_unit_mark}</p>
+                                        </td>
+                                        <td style={{ width: 200, minWidth: 200, maxWidth: 200 }}>
+                                            <p className="fw-4">{item.max_marks}</p>
+                                        </td>
+                                        <td style={{ width: 150, minWidth: 150, maxWidth: 150 }}>
+                                            <p className="fw-4">{item.proof_reqd ? "Yes" : "No"}</p>
+                                        </td>
+                                        <td style={{ width: 100, minWidth: 100, maxWidth: 100 }}>
+                                            <div className="d-flex align-items-center gap-2">
+                                                <Link
+                                                    to={`/parameters/${item.param_id}`}
+                                                    state={item}
+                                                    className="action-btn bg-transparent d-inline-flex align-items-center justify-content-center"
+                                                >
+                                                    {SVGICON.app.edit}
+                                                </Link>
+                                                <button className="action-btn bg-transparent d-inline-flex align-items-center justify-content-center"
+                                                    onClick={() => {
+                                                        setSelectedParam(item.name);
+                                                        setId(item.param_id);
+                                                        setDeleteShow(true);
+                                                    }}
+                                                >
+                                                    {SVGICON.app.delete}
+                                                </button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                ))
+                            ) : (
+                                <tr>
+                                    <td colSpan={7}>
+                                        <div className="text-center py-5 fw-5">No data found.</div>
+                                    </td>
+                                </tr>
+                            )}
                         </tbody>
                     </table>
                 </div>
@@ -178,11 +180,11 @@ const ParametersList = () => {
             </div>
             {/* Delete Modal */}
             <DeleteModal
-                titleName={`“${'Rescue Ops'}” Parameter`}
+                titleName={`“${selectedParam}” Parameter`}
                 name="Parameter"
                 show={deleteShow}
                 handleClose={() => setDeleteShow(false)}
-            // handleDelete={handleDelete}
+                handleDelete={handleDelete}
             />
         </>
     );

@@ -12,6 +12,7 @@ export const reqToLogin = createAsyncThunk<LoginResponse, LoginRequest>(
     try {
       const response = await Axios.post(apiEndPoints.login, data);
       if (response.data.success) {
+        toast.success('Login successfully!');
         return response.data;
       } else {
         toast.error('Login failed. Please check your details and try again.');
@@ -31,6 +32,7 @@ export const reqToSignUp = createAsyncThunk<SignUpResponse, SignUpRequest>(
     try {
       const response = await Axios.post(apiEndPoints.signUp, data);
       if (response.data.success) {
+        toast.success('Sign up successfully!');
         return response.data;
       } else {
         toast.error('Sign up failed. Please check your details and try again.');

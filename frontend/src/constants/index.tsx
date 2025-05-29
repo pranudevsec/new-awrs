@@ -10,6 +10,7 @@ export const apiEndPoints = {
 
     // Parameter
     parameter: '/api/parameter',
+    parameterEdit: '/api/parameter/:id',
 
     // Citation
     citation: '/api/citation',

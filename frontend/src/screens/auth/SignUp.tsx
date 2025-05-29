@@ -143,8 +143,15 @@ const SignUp = () => {
                                             <p className="error-text">{formik.errors.password}</p>
                                         )}
                                     </div>
-                                    <button type="submit" className="border-0 w-100 submit-btn">
-                                        Sign Up
+                                    <button type="submit" className="border-0 w-100 submit-btn" disabled={formik.isSubmitting}>
+                                        {formik.isSubmitting ? (
+                                            <span>
+                                                <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                                                Signing up...
+                                            </span>
+                                        ) : (
+                                            "Sign Up"
+                                        )}
                                     </button>
                                     <p className="sign-up-text mt-4">
                                         Already have an account? <Link to="/authentication/sign-in" className="fw-6">Sign In</Link>

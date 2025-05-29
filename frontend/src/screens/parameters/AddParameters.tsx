@@ -1,5 +1,9 @@
+import { useNavigate } from "react-router-dom";
 import { useFormik } from "formik";
+import { unwrapResult } from "@reduxjs/toolkit";
+import { useAppDispatch } from "../../reduxToolkit/hooks";
 import { ParametersSchema } from "../../validations/validations";
+import { createParameter } from "../../reduxToolkit/services/parameter/parameterService";
 import Breadcrumb from "../../components/ui/breadcrumb/Breadcrumb";
 import FormInput from "../../components/form/FormInput";
 import FormSelect from "../../components/form/FormSelect";
@@ -7,7 +11,7 @@ import FormRadioButton from "../../components/form/FormRadioButton";
 
 const awardTypeOptions: OptionType[] = [
     { value: "citation", label: "Citation" },
-    { value: "clarification", label: "Clarification" },
+    { value: "appreciation", label: "Appreciation" },
 ];
 
 export const roleOptions: OptionType[] = [
@@ -20,6 +24,9 @@ export const roleOptions: OptionType[] = [
 ];
 
 const AddParameters = () => {
+    const navigate = useNavigate();
+    const dispatch = useAppDispatch();
+
     // Formik
     const formik = useFormik({
         initialValues: {
@@ -37,8 +44,13 @@ const AddParameters = () => {
             param_mark: ""
         },
         validationSchema: ParametersSchema,
-        onSubmit: (values) => {
-            console.log("values -> ", values);
+        onSubmit: async (values, { resetForm }) => {
+            const resultAction = await dispatch(createParameter(values));
+            const result = unwrapResult(resultAction);
+            if (result.success) {
+                resetForm();
+                navigate('/parameters');
+            }
         },
     });
 
@@ -240,8 +252,15 @@ const AddParameters = () => {
                     </div>
                     <div className="col-12 mt-2">
                         <div className="d-flex align-items-center">
-                            <button type="submit" className="_btn _btn-lg primary">
-                                Add
+                            <button type="submit" className="_btn _btn-lg primary" disabled={formik.isSubmitting}>
+                                {formik.isSubmitting ? (
+                                    <span>
+                                        <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                                        Adding...
+                                    </span>
+                                ) : (
+                                    "Add"
+                                )}
                             </button>
                         </div>
                     </div>

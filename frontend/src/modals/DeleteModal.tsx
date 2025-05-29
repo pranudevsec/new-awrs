@@ -5,7 +5,7 @@ interface DeleteModalProps {
     titleName?: string;
     show: boolean;
     handleClose: () => void;
-    // handleDelete: () => void;
+    handleDelete: () => void;
 }
 
 const DeleteModal: React.FC<DeleteModalProps> = ({
@@ -13,7 +13,7 @@ const DeleteModal: React.FC<DeleteModalProps> = ({
     titleName,
     show,
     handleClose,
-    // handleDelete,
+    handleDelete,
 }) => {
     return (
         <Modal centered show={show} onHide={handleClose} className="delete-modal">
@@ -31,7 +31,7 @@ const DeleteModal: React.FC<DeleteModalProps> = ({
             </div>
             <div className="modal-footer justify-content-between border-0 justify-content-center p-0">
                 <button type="button" className="_btn danger"
-                // onClick={handleDelete}
+                    onClick={handleDelete}
                 >
                     Yes, Delete
                 </button>

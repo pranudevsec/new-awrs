@@ -8,7 +8,7 @@ const CustomStyles = (isInvalid: boolean) => ({
     padding: "0 8px",
     fontSize: "14px",
     fontWeight: "400",
-    opacity: state.isDisabled ? 1 : 1,
+    opacity: state.isDisabled ? 0.5 : 1,
     cursor: state.isDisabled ? 'default' : 'pointer',
     backgroundColor: state.isDisabled ? 'transparent' : 'transparent',
     color: "var(--gray-900)",

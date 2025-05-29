@@ -213,6 +213,10 @@ h6 {
   line-height: normal;
 }
 
+span {
+  line-height: normal;
+}
+
 h1 {
   font-size: 50px;
 }
@@ -289,4 +293,61 @@ p {
 
 .error-text {
   color: var(--red-default);
+}
+
+
+.bg-pending {
+  background-color: #ff75480a !important;
+  border: 1px solid rgba(255, 117, 72, .1215686275) !important;
+}
+
+.bg-request {
+  background-color: #4256c61f !important;
+  border: 1px solid rgba(66, 86, 198, .1215686275) !important;
+}
+
+.bg-raised {
+  background-color: #ffc01f1f !important;
+  border: 1px solid rgba(255, 192, 31, .1215686275) !important;
+}
+
+.bg-rejected {
+  background-color: #43d0ff1f !important;
+  border: 1px solid rgba(67, 208, 255, .1215686275) !important;
+}
+
+.color-pending {
+  color: rgba(192, 98, 67, 0.918) !important;
+}
+
+.color-request {
+  color: rgba(70, 87, 189, 0.776) !important;
+}
+
+.color-raised {
+  color: rgb(255, 192, 31) !important;
+}
+
+.color-rejected {
+  color: rgba(70, 190, 230, 0.811) !important;
+}
+
+.accordion-button:focus,
+.accordion-button:not(.collapsed) {
+  box-shadow: none;
+  background-color: transparent;
+  color: inherit;
+}
+
+.custom-tabs .nav-link {
+  border: none !important;
+  border-bottom: 2px solid transparent;
+  color: inherit;
+  transition: border-color 0.3s ease;
+}
+
+.custom-tabs .nav-link.active {
+  border-bottom: 2px solid black !important;
+  color: inherit;
+  font-weight: 600;
 }

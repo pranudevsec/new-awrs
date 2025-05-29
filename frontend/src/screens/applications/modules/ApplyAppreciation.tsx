@@ -72,7 +72,7 @@ const ApplyAppreciation = () => {
           };
         });
 
-        const payload :any= {
+        const payload: any = {
           date_init: "2024-04-01",
           appre_fds: {
             award_type: "appreciation",
@@ -104,7 +104,7 @@ const ApplyAppreciation = () => {
       try {
         const [configRes, paramsRes] = await Promise.all([
           dispatch(getConfig()).unwrap(),
-          dispatch(fetchParameters({ awardType: "appreciation" })).unwrap(),
+          dispatch(fetchParameters({ awardType: "appreciation", search: "" })).unwrap(),
         ]);
 
         if (configRes?.success && configRes.data) {

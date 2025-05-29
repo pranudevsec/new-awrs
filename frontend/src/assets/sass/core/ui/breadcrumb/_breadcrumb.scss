@@ -1,0 +1,21 @@
+.main-breadcrumb {
+    h3 {
+        font-size: 20px;
+    }
+
+    a {
+        font-size: 14px;
+        color: var(--gray-700);
+
+        &:last-child {
+            pointer-events: none;
+            color: var(--gray-500);
+        }
+    }
+
+    span {
+        width: 4px;
+        height: 4px;
+        background-color: var(--gray-300);
+    }
+}

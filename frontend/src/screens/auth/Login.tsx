@@ -163,7 +163,6 @@ const Login = () => {
                                             "Sign in"
                                         )}
                                     </button>
-
                                     <p className="sign-up-text mt-4">
                                         Don’t have an account? <Link to="/authentication/sign-up" className="fw-6">Sign up</Link>
                                     </p>

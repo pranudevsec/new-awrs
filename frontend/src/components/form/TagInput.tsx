@@ -4,12 +4,11 @@ interface TagInputProps {
   label?: string;
   placeholder?: string;
   disabled?: boolean;
-
-  value: string[];                   
-  onChange: (tags: string[]) => void; 
-  onBlur?: () => void;                
-  error?: string | boolean;          
-  name?: string;                    
+  value: string[];
+  onChange: (tags: string[]) => void;
+  onBlur?: () => void;
+  error?: string | boolean;
+  name?: string;
 }
 
 const TagInput: FC<TagInputProps> = ({
@@ -33,7 +32,7 @@ const TagInput: FC<TagInputProps> = ({
       if (!value.includes(input.trim())) {
         onChange([...value, input.trim()]);
       }
-      target.value = ""; 
+      target.value = "";
     }
   };
 

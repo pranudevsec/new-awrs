@@ -1,21 +1,21 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useFormik } from "formik";
 import { unwrapResult } from "@reduxjs/toolkit";
+import { useAppDispatch, useAppSelector } from "../../reduxToolkit/hooks";
+import { getConfig, updateConfig } from "../../reduxToolkit/services/config/configService";
+import { AdminSettingSchema } from "../../validations/validations";
 import Breadcrumb from "../../components/ui/breadcrumb/Breadcrumb";
 import FormInput from "../../components/form/FormInput";
 import TagInput from "../../components/form/TagInput";
-
-import { useAppDispatch, useAppSelector } from "../../reduxToolkit/hooks";
-import {
-  getConfig,
-  updateConfig,
-} from "../../reduxToolkit/services/config/configService";
-import { AdminSettingSchema } from "../../validations/validations";
+import Loader from "../../components/ui/loader/Loader";
 
 const AdminSettings = () => {
   const dispatch = useAppDispatch();
 
-  const { config, loader, error } = useAppSelector((state) => state.config);
+  const { config } = useAppSelector((state) => state.config);
+
+  // State 
+  const [firstLoad, setFirstLoad] = useState(true);
 
   const formik = useFormik({
     enableReinitialize: true,
@@ -25,36 +25,33 @@ const AdminSettings = () => {
     },
     validationSchema: AdminSettingSchema,
     onSubmit: async (values, { resetForm }) => {
-      try {
-        const resultAction = await dispatch(
-          updateConfig({
-            deadline: values.lastDate,
-            cycle_period: values.cycle_period,
-          })
-        );
-        const result = unwrapResult(resultAction);
-        if (result.success) {
-          resetForm();
-        }
-      } catch (err) {
-        console.error("Update failed", err);
-      }
+      const resultAction = await dispatch(
+        updateConfig({
+          deadline: values.lastDate,
+          cycle_period: values.cycle_period,
+        })
+      );
+      const result = unwrapResult(resultAction);
+      if (result.success) resetForm();
     },
   });
 
   useEffect(() => {
-    dispatch(getConfig());
-  }, [dispatch]);
+    const fetchData = async () => {
+      await dispatch(getConfig());
+      setFirstLoad(false);
+    };
+    fetchData();
+  }, []);
+
+  // Show loader
+  if (firstLoad) return <Loader />;
 
   return (
     <div className="profile-settings-section">
       <div className="d-flex flex-sm-row flex-column align-items-sm-center justify-content-between mb-4">
         <Breadcrumb title="Admin Settings" />
       </div>
-
-      {error && <p className="text-danger">{error}</p>}
-      {loader && <p>Loading...</p>}
-
       <form onSubmit={formik.handleSubmit}>
         <div className="row">
           <div className="col-sm-6 mb-3">
@@ -73,7 +70,6 @@ const AdminSettings = () => {
               }
             />
           </div>
-
           <div className="col-sm-6 mb-3">
             <TagInput
               label="Cycle Period"
@@ -91,15 +87,17 @@ const AdminSettings = () => {
               }
             />
           </div>
-
           <div className="col-12">
             <div className="d-flex align-items-center">
-              <button
-                type="submit"
-                className="_btn _btn-lg primary"
-                disabled={loader}
-              >
-                Submit
+              <button type="submit" className="_btn _btn-lg primary" disabled={formik.isSubmitting}>
+                {formik.isSubmitting ? (
+                  <span>
+                    <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                    Submitting...
+                  </span>
+                ) : (
+                  "Submit"
+                )}
               </button>
             </div>
           </div>

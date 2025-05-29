@@ -19,11 +19,11 @@ const getConfig = (key: string, whitelist: string[]) => {
 
 const reducer = combineReducers({
     admin: persistReducer(getConfig('admin', ['admin']), authReducer),
-    config:configReducer,
-    parameter:parameterReducer,
-    citation:citationReducer,
-    appreciation:appreciationReducer,
-    application:applicationReducer,
+    config: configReducer,
+    parameter: parameterReducer,
+    citation: citationReducer,
+    appreciation: appreciationReducer,
+    application: applicationReducer,
 });
 
 export const store = configureStore({

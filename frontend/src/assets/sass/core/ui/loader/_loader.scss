@@ -1,0 +1,49 @@
+.loader-div {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    &.fullpage {
+        position: relative;
+    }
+
+    &.inline {
+        display: inline-flex;
+        position: relative;
+        min-height: auto;
+    }
+
+    .loader-bar {
+        position: relative;
+        background: conic-gradient(transparent, transparent 12%, var(--primary-default));
+        border-radius: 50%;
+        animation: spin 1.1s linear infinite;
+
+        &::before,
+        &::after {
+            content: "";
+            position: absolute;
+            border-radius: inherit;
+        }
+
+        &::before {
+            top: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            background: linear-gradient(to left, var(--primary-default) 50%, transparent 50%);
+            width: 5px;
+            aspect-ratio: 1;
+        }
+
+        &::after {
+            inset: 5px;
+            background: var(--background);
+        }
+    }
+
+    @keyframes spin {
+        to {
+            transform: rotate(1turn);
+        }
+    }
+}

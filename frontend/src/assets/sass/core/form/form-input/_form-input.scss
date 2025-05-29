@@ -23,6 +23,11 @@
   &::placeholder {
     color: var(--gray-400);
   }
+
+  &:read-only,
+  &:disabled {
+    opacity: 0.5;
+  }
 }
 
 .form-control.invalid {
