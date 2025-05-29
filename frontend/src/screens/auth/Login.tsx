@@ -2,12 +2,13 @@ import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom"
 import { useFormik } from "formik";
 import { unwrapResult } from "@reduxjs/toolkit";
-import { LoginSchema } from "../../validations/validations";
-import FormInput from "../../components/form/FormInput";
-import FormSelect from "../../components/form/FormSelect";
 import { roleOptions } from "./options";
+import { LoginSchema } from "../../validations/validations";
 import { useAppDispatch } from "../../reduxToolkit/hooks";
 import { reqToLogin } from "../../reduxToolkit/services/auth/authService";
+import FormInput from "../../components/form/FormInput";
+import FormSelect from "../../components/form/FormSelect";
+
 const roleCredentials: Record<string, { username: string; password: string }> = {
     unit: { username: "testuser1", password: "12345678" },
     brigade: { username: "testbrigade", password: "12345678" },
@@ -15,7 +16,8 @@ const roleCredentials: Record<string, { username: string; password: string }> = 
     corps: { username: "testcorps", password: "12345678" },
     command: { username: "testcommand", password: "12345678" },
     admin: { username: "admin", password: "12345678" },
-  };
+};
+
 const Login = () => {
     const navigate = useNavigate();
     const dispatch = useAppDispatch();
@@ -37,15 +39,15 @@ const Login = () => {
             if (result.success) {
                 resetForm();
                 setTimeout(() => {
-                  if (values.user_role === "admin") {
-                    navigate("/admin-settings");
-                  } else if (values.user_role === "command") {
-                    navigate("/dashboard");
-                  } else {
-                    navigate("/");
-                  }
+                    if (values.user_role === "admin") {
+                        navigate("/admin-settings");
+                    } else if (values.user_role === "command") {
+                        navigate("/dashboard");
+                    } else {
+                        navigate("/");
+                    }
                 }, 400);
-              }
+            }
         },
     });
 
@@ -65,29 +67,27 @@ const Login = () => {
                                 <h2 className="font-lexend fw-6">Login to your Account</h2>
                                 <form onSubmit={formik.handleSubmit}>
                                     <div className="mb-3">
-                                    <FormSelect
-  label="Role"
-  name="user_role"
-  options={roleOptions}
-  value={roleOptions.find((opt) => opt.value === formik.values.user_role) || null}
-  onChange={(selectedOption) => {
-    const role = selectedOption?.value || "";
-    formik.setFieldValue("user_role", role);
+                                        <FormSelect
+                                            label="Role"
+                                            name="user_role"
+                                            options={roleOptions}
+                                            value={roleOptions.find((opt) => opt.value === formik.values.user_role) || null}
+                                            onChange={(selectedOption) => {
+                                                const role = selectedOption?.value || "";
+                                                formik.setFieldValue("user_role", role);
 
-    // Set username and password based on selected role
-    if (role in roleCredentials) {
-      formik.setFieldValue("username", roleCredentials[role].username);
-      formik.setFieldValue("password", roleCredentials[role].password);
-    } else {
-      // clear or keep existing?
-      formik.setFieldValue("username", "");
-      formik.setFieldValue("password", "");
-    }
-  }}
-  placeholder="Select"
-  errors={formik.errors.user_role}
-  touched={formik.touched.user_role}
-/>
+                                                if (role in roleCredentials) {
+                                                    formik.setFieldValue("username", roleCredentials[role].username);
+                                                    formik.setFieldValue("password", roleCredentials[role].password);
+                                                } else {
+                                                    formik.setFieldValue("username", "");
+                                                    formik.setFieldValue("password", "");
+                                                }
+                                            }}
+                                            placeholder="Select"
+                                            errors={formik.errors.user_role}
+                                            touched={formik.touched.user_role}
+                                        />
                                     </div>
                                     <div className="mb-3">
                                         <FormInput
@@ -154,15 +154,15 @@ const Login = () => {
                                         <Link to="/forgot-password" className="nav-link fw-6">Forgot Password?</Link>
                                     </div>
                                     <button type="submit" className="border-0 w-100 submit-btn" disabled={formik.isSubmitting}>
-    {formik.isSubmitting ? (
-        <span>
-            <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
-            Signing in...
-        </span>
-    ) : (
-        "Sign in"
-    )}
-</button>
+                                        {formik.isSubmitting ? (
+                                            <span>
+                                                <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                                                Signing in...
+                                            </span>
+                                        ) : (
+                                            "Sign in"
+                                        )}
+                                    </button>
 
                                     <p className="sign-up-text mt-4">
                                         Don’t have an account? <Link to="/authentication/sign-up" className="fw-6">Sign up</Link>

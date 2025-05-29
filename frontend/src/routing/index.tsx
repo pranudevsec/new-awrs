@@ -3,43 +3,33 @@ import { Navigate } from "react-router-dom";
 import Login from "../screens/auth/Login";
 import SignUp from "../screens/auth/SignUp";
 
-import ApplicationsList from "../screens/applications/modules/ApplicationsList";
-import ApplicationDetails from "../screens/applications/modules/ApplicationDetails";
-import ClarificationList from "../screens/applications/modules/ClarificationList";
-import ClarificationDetails from "../screens/applications/modules/ClarificationDetails";
-import AdminSettings from "../screens/admin-settings/AdminSettings";
-import ParametersList from "../screens/parameters/ParametersList";
-import AddParameters from "../screens/parameters/AddParameters";
-import EditParameters from "../screens/parameters/EditParameters";
-import Dashboard from "../screens/dashboard/Dashboard";
-
 const Applications = lazy(() => import("../screens/applications/Applications"));
-const ApplyCitation = lazy(
-  () => import("../screens/applications/modules/ApplyCitation")
-);
-const ApplyAppreciation = lazy(
-  () => import("../screens/applications/modules/ApplyAppreciation")
-);
+const ApplyCitation = lazy(() => import("../screens/applications/modules/ApplyCitation"));
+const ApplyAppreciation = lazy(() => import("../screens/applications/modules/ApplyAppreciation"));
+const ApplicationsList = lazy(() => import("../screens/applications/modules/ApplicationsList"));
+const ApplicationDetails = lazy(() => import("../screens/applications/modules/ApplicationDetails"));
+const ClarificationList = lazy(() => import("../screens/applications/modules/ClarificationList"));
+const ClarificationDetails = lazy(() => import("../screens/applications/modules/ClarificationDetails"));
 const Thanks = lazy(() => import("../screens/applications/modules/Thanks"));
-const ProfileSettings = lazy(
-  () => import("../screens/profile-settings/ProfileSettings")
-);
-const Clarification = lazy(
-  () => import("../screens/clarification/Clarification")
-);
-const UnitClarificationDetail = lazy(
-  () => import("../screens/clarification/UnitClarificationDetail")
-);
-const ClarificationDetail = lazy(
-  () => import("../screens/clarification/ClarificationDetail")
-);
-const CommandPanel = lazy(
-  () => import("../screens/command-panel/CommandPanel")
-);
-const CommandPanelDetail = lazy(
-  () => import("../screens/command-panel/CommandPanelDetail")
-);
+
+const ProfileSettings = lazy(() => import("../screens/profile-settings/ProfileSettings"));
+
+const Clarification = lazy(() => import("../screens/clarification/Clarification"));
+const UnitClarificationDetail = lazy(() => import("../screens/clarification/UnitClarificationDetail"));
+const ClarificationDetail = lazy(() => import("../screens/clarification/ClarificationDetail"));
+
+const CommandPanel = lazy(() => import("../screens/command-panel/CommandPanel"));
+const CommandPanelDetail = lazy(() => import("../screens/command-panel/CommandPanelDetail"));
+
 const Winners = lazy(() => import("../screens/winners/Winners"));
+
+const AdminSettings = lazy(() => import("../screens/admin-settings/AdminSettings"));
+
+const ParametersList = lazy(() => import("../screens/parameters/ParametersList"));
+const AddParameters = lazy(() => import("../screens/parameters/AddParameters"));
+const EditParameters = lazy(() => import("../screens/parameters/EditParameters"));
+
+const Dashboard = lazy(() => import("../screens/dashboard/Dashboard"));
 
 interface RouteConfig {
   path: string;
@@ -61,7 +51,6 @@ export const authProtectedRoutes: RouteConfig[] = [
   { path: "/applications/list/:id", element: <ApplicationDetails /> },
   { path: "/applications/clarification/list", element: <ClarificationList /> },
   { path: "/applications/clarification/list/:id", element: <ClarificationDetails /> },
-
   { path: "/applications/thanks", element: <Thanks /> },
 
   // Profile
@@ -87,5 +76,4 @@ export const authProtectedRoutes: RouteConfig[] = [
 
   // Dashboard
   { path: "/dashboard", element: <Dashboard /> },
-
 ];

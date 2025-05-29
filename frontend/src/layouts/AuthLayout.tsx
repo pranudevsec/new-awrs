@@ -8,10 +8,6 @@ const AuthLayout = ({ children }: { children: React.ReactNode }) => {
 
     if (!token) return <Navigate to="/authentication/sign-in" />;
 
-    // const token = localStorage.getItem("token");
-
-    // if (!token) return <Navigate to="/authentication/sign-in" />;
-
     return (
         <main className='d-flex vh-100'>
             {/* Sidebar menu */}

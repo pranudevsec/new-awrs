@@ -1,6 +1,5 @@
-// authSlice.tsx
 import { createSlice, type PayloadAction, } from '@reduxjs/toolkit';
-import { getProfile, reqToLogin } from '../../services/auth/authService';
+import { getProfile, reqToLogin, reqToSignUp } from '../../services/auth/authService';
 import type { LoginResponse, LoginResponseData, ProfileResponse } from '../../services/auth/authInterface';
 
 interface AuthState {
@@ -8,7 +7,6 @@ interface AuthState {
   admin: LoginResponseData | null;
   error: string | null;
   profile: ProfileResponse['data'] | null;
-
 }
 
 const initialState: AuthState = {
@@ -44,17 +42,28 @@ const adminSlice = createSlice({
       state.error = action.payload || 'Login failed!';
     });
 
+    // reqToSignUp
+    builder.addCase(reqToSignUp.pending, (state) => {
+      state.loader = true;
+    });
+    builder.addCase(reqToSignUp.fulfilled, (state) => {
+      state.loader = false;
+      state.error = null;
+    });
+    builder.addCase(reqToSignUp.rejected, (state, action: PayloadAction<any>) => {
+      state.loader = false;
+      state.error = action.payload || 'Login failed!';
+    });
+
     // getProfile
     builder.addCase(getProfile.pending, (state) => {
       state.loader = true;
     });
-    
     builder.addCase(getProfile.fulfilled, (state, action: PayloadAction<ProfileResponse>) => {
       state.loader = false;
       state.profile = action.payload.data;
       state.error = null;
     });
-    
     builder.addCase(getProfile.rejected, (state, action: PayloadAction<any>) => {
       state.loader = false;
       state.error = action.payload || 'Failed to fetch profile.';

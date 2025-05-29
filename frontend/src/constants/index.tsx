@@ -1,9 +1,10 @@
 export const apiEndPoints = {
     // Auth
     login: '/api/auth/login',
+    signUp: '/api/auth/register',
     getProfile: '/api/auth/profile',
     updateUnitProfile: '/api/unit/add-unit-profile',
-    
+
     // Config
     config: '/api/config',
 

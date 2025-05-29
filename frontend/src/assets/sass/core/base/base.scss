@@ -181,13 +181,13 @@ a {
   text-decoration: none;
 }
 
-button {
-  transition: transform 0.1s ease;
+// button {
+//   transition: transform 0.1s ease;
 
-  &:enabled:active {
-    transform: translateY(1px);
-  }
-}
+//   &:enabled:active {
+//     transform: translateY(1px);
+//   }
+// }
 
 /* Typography
 -------------------------------------------------------------- */

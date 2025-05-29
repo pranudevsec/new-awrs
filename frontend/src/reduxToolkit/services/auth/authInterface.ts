@@ -1,4 +1,3 @@
-// authInterface.ts
 export interface User {
   name: string;
   username: string;
@@ -19,6 +18,21 @@ export interface LoginResponse {
 }
 
 export interface LoginRequest {
+  user_role: string;
+  username: string;
+  password: string;
+}
+
+export interface SignUpResponse {
+  statusCode: number;
+  message: string;
+  success: boolean;
+  data: LoginResponseData;
+}
+
+export interface SignUpRequest {
+  rank: string;
+  name: string;
   user_role: string;
   username: string;
   password: string;

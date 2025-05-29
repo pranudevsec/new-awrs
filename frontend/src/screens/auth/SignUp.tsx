@@ -1,17 +1,17 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom"
 import { useFormik } from "formik";
-// import { unwrapResult } from "@reduxjs/toolkit";
-import { SignUpSchema } from "../../validations/validations";
+import { unwrapResult } from "@reduxjs/toolkit";
 import { roleOptions } from "./options";
+import { SignUpSchema } from "../../validations/validations";
+import { reqToSignUp } from "../../reduxToolkit/services/auth/authService";
+import { useAppDispatch } from "../../reduxToolkit/hooks";
 import FormInput from "../../components/form/FormInput";
 import FormSelect from "../../components/form/FormSelect";
-// import { useAppDispatch } from "../../reduxToolkit/hooks";
-// import { reqToLogin } from "../../reduxToolkit/services/auth/authService";
 
 const SignUp = () => {
     const navigate = useNavigate();
-    // const dispatch = useAppDispatch();
+    const dispatch = useAppDispatch();
 
     // States 
     const [passwordType, setPasswordType] = useState<string>("password");
@@ -26,18 +26,14 @@ const SignUp = () => {
             password: ""
         },
         validationSchema: SignUpSchema,
-        onSubmit: () => {
-            localStorage.setItem("token", "xzCfMEGhZx7ys90F18mZ8qXcHc7vdbGmat2t5g15ikoWgZCXhKLyrDtWtrzgw7p4")
-            setTimeout(() => navigate("/applications"), 400);
-        }
-        // onSubmit: async (values, { resetForm }) => {
-        //     const resultAction = await dispatch(reqToLogin(values));
-        //     const result = unwrapResult(resultAction);
-        //     if (result.success) {
-        //         resetForm();
-        //         setTimeout(() => navigate("/"), 400);
-        //     }
-        // },
+        onSubmit: async (values, { resetForm }) => {
+            const resultAction = await dispatch(reqToSignUp(values));
+            const result = unwrapResult(resultAction);
+            if (result.success) {
+                resetForm();
+                setTimeout(() => navigate("/"), 400);
+            }
+        },
     });
 
     return (
@@ -147,19 +143,6 @@ const SignUp = () => {
                                             <p className="error-text">{formik.errors.password}</p>
                                         )}
                                     </div>
-                                    {/* <div className="mb-4 d-flex flex-wrap align-items-center justify-content-between gap-2">
-                                        <label className="ios-checkbox text-nowrap">
-                                            <input type="checkbox" hidden defaultChecked />
-                                            <div className="checkbox-wrapper">
-                                                <div className="checkbox-bg" />
-                                                <svg fill="none" viewBox="0 0 24 24" className="checkbox-icon">
-                                                    <path strokeLinejoin="round" strokeLinecap="round" strokeWidth={3} stroke="currentColor" d="M4 12L10 18L20 6" className="check-path" />
-                                                </svg>
-                                            </div>
-                                            Remember Me
-                                        </label>
-                                        <Link to="/forgot-password" className="nav-link fw-6">Forgot Password?</Link>
-                                    </div> */}
                                     <button type="submit" className="border-0 w-100 submit-btn">
                                         Sign Up
                                     </button>

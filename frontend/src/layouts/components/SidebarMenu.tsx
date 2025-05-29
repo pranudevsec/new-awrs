@@ -5,7 +5,7 @@ import { useAppSelector } from "../../reduxToolkit/hooks";
 const SidebarMenu = () => {
   const profile = useAppSelector((state) => state.admin.profile);
   const userRole = profile?.user?.user_role;
-//   const isAdmin = userRole === "admin";
+  //   const isAdmin = userRole === "admin";
 
   const alwaysVisible: string[] = [];
 
@@ -18,7 +18,7 @@ const SidebarMenu = () => {
   const dashboardItem = sidebarStructure.find(item => item.label === "Dashboard");
 
   // Items specifically for command role
-  const commandExtraLabels = ["Scoreboard", "Winners","Home"];
+  const commandExtraLabels = ["Scoreboard", "Winners", "Home"];
 
   // Filter structure items according to role and alwaysVisible
   let filteredStructure = sidebarStructure.filter((item) => {
@@ -75,4 +75,3 @@ const SidebarMenu = () => {
 };
 
 export default SidebarMenu;
-
