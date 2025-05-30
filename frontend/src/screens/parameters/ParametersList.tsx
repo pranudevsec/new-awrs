@@ -165,7 +165,7 @@ const ParametersList = () => {
                         </tbody>
                     </table>
                 </div>
-                {parameters.length < 0 && <EmptyTable />}
+                {!loading && parameters.length <= 0 && <EmptyTable />}
                 {parameters.length > 0 && <Pagination />}
             </div>
             {/* Delete Modal */}

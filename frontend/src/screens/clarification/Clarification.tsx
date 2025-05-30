@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { SVGICON } from "../../constants/iconsList";
 import { awardTypeOptions } from "../../data/options";
@@ -8,20 +8,38 @@ import type { Parameter } from "../../reduxToolkit/services/parameter/parameterI
 import Breadcrumb from "../../components/ui/breadcrumb/Breadcrumb";
 import FormSelect from "../../components/form/FormSelect";
 import Pagination from "../../components/ui/pagination/Pagination";
+import Loader from "../../components/ui/loader/Loader";
+import EmptyTable from "../../components/ui/empty-table/EmptyTable";
 
 const Clarification = () => {
   const navigate = useNavigate()
   const dispatch = useAppDispatch();
+
   const profile = useAppSelector((state) => state.admin.profile);
-  const unitClarifications = useAppSelector((state) => state.clarification.unitClarifications);
+  const { loading, unitClarifications } = useAppSelector((state) => state.clarification);
+
+  // States 
+  const [awardType, setAwardType] = useState<string | null>("");
+  const [searchTerm, setSearchTerm] = useState<string>("");
+  const [debouncedSearch, setDebouncedSearch] = useState<string>("");
 
   useEffect(() => {
-    if (profile?.user?.user_role === "unit") {
-      dispatch(getClarifications());
+    const handler = setTimeout(() => {
+      setDebouncedSearch(searchTerm);
+    }, 500);
+
+    return () => {
+      clearTimeout(handler);
+    };
+  }, [searchTerm]);
+
+  useEffect(() => {
+    if (profile?.user?.user_role?.trim() === "unit") {
+      dispatch(getClarifications({ awardType: awardType || "", search: debouncedSearch }));
     } else {
-      dispatch(getSubordinateClarifications());
+      dispatch(getSubordinateClarifications({ awardType: awardType || "", search: debouncedSearch }));
     }
-  }, [dispatch, profile?.user?.user_role]);
+  }, [dispatch, profile?.user?.user_role, awardType, debouncedSearch]);
 
   return (
     <div className="clarification-section">
@@ -33,12 +51,19 @@ const Clarification = () => {
           <button className="border-0 bg-transparent position-absolute translate-middle-y top-50">
             {SVGICON.app.search}
           </button>
-          <input type="text" placeholder="search..." className="form-control" />
+          <input
+            type="text"
+            placeholder="search..."
+            className="form-control"
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+          />
         </div>
         <FormSelect
           name="awardType"
           options={awardTypeOptions}
-          value={null}
+          value={awardTypeOptions.find((opt) => opt.value === awardType) || null}
+          onChange={(option) => setAwardType(option?.value || null)}
           placeholder="Select Type"
         />
       </div>
@@ -56,8 +81,16 @@ const Clarification = () => {
             </tr>
           </thead>
           <tbody>
-            {unitClarifications.map((app) => {
-              // Count parameters with clarification_id
+            {loading ? (
+              <tr>
+                <td colSpan={7}>
+                  <div className="d-flex justify-content-center py-5">
+                    <Loader inline size={40} />
+                  </div>
+                </td>
+              </tr>
+            ) : unitClarifications.length > 0 &&
+            (unitClarifications.map((app) => {
               const clarificationsCount = app.fds.parameters.filter((p: Parameter) => p.clarification_id).length;
 
               return (
@@ -82,7 +115,7 @@ const Clarification = () => {
                       <Link
                         to={`/clarification/unit/${app.id}?award_type=${app.type}`}
                         className="action-btn bg-transparent d-inline-flex align-items-center justify-content-center"
-                        onClick={e => e.stopPropagation()} // Prevent row click
+                        onClick={e => e.stopPropagation()}
                       >
                         {SVGICON.app.eye}
                       </Link>
@@ -90,11 +123,13 @@ const Clarification = () => {
                   </td>
                 </tr>
               );
-            })}
+            }))
+            }
           </tbody>
         </table>
       </div>
-      <Pagination />
+      {!loading && unitClarifications.length <= 0 && <EmptyTable />}
+      {unitClarifications.length > 0 && <Pagination />}
     </div >
   );
 };

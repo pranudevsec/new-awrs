@@ -1,32 +1,23 @@
 import { useFormik } from "formik";
+import { unwrapResult } from "@reduxjs/toolkit";
 import {
   unitOptions,
   brigadeOptions,
   divisionOptions,
   corpsOptions,
   commandOptions,
+  hierarchicalStructure,
 } from "./options";
+import { useAppSelector, useAppDispatch } from "../../reduxToolkit/hooks";
+import { getProfile, reqToUpdateUnitProfile } from "../../reduxToolkit/services/auth/authService";
 import FormSelect from "../../components/form/FormSelect";
 import Breadcrumb from "../../components/ui/breadcrumb/Breadcrumb";
-import { useAppSelector, useAppDispatch } from "../../reduxToolkit/hooks";
-import { unwrapResult } from "@reduxjs/toolkit";
-import { getProfile, reqToUpdateUnitProfile } from "../../reduxToolkit/services/auth/authService";
-
-export const hierarchicalStructure = [
-  ["mycomd", "mycorps", "mydiv", "mybde", "myunit"],
-  ["command1", "corps1", "divison1", "brigade1", "unit1"],
-  ["command2", "corps2", "divison2", "brigade2", "unit2"],
-  ["command3", "corps3", "divison3", "brigade3", "unit3"],
-  ["command4", "corps4", "divison4", "brigade4", "unit4"],
-  ["command5", "corps5", "divison5", "brigade5", "unit5"],
-];
 
 // Create a lookup for faster access
-export const hierarchyMap: Record<string, string[]> = {};
+const hierarchyMap: Record<string, string[]> = {};
 hierarchicalStructure.forEach(([command, corps, division, brigade, unit]) => {
   hierarchyMap[command] = [corps, division, brigade, unit];
 });
-
 
 const ProfileSettings = () => {
   const dispatch = useAppDispatch();
@@ -49,7 +40,6 @@ const ProfileSettings = () => {
         return [];
     }
   };
-
 
   const visibleFields = getVisibleFields(profile?.user?.user_role ?? "");
 
@@ -134,9 +124,6 @@ const ProfileSettings = () => {
 
       <form onSubmit={formik.handleSubmit}>
         <div className="row">
-
-
-          {/* Conditionally render select fields based on role */}
           {visibleFields.map((field) => {
             const optionsForField =
               field === "unit"
@@ -204,7 +191,7 @@ const ProfileSettings = () => {
           })}
 
           <div className="col-sm-6 mb-3">
-            <label htmlFor="adm_channel" className="form-label">
+            <label htmlFor="adm_channel" className="form-label mb-1">
               Adm Channel
             </label>
             <input
@@ -212,8 +199,8 @@ const ProfileSettings = () => {
               name="adm_channel"
               type="text"
               className={`form-control ${formik.touched.adm_channel && formik.errors.adm_channel
-                  ? "is-invalid"
-                  : ""
+                ? "is-invalid"
+                : ""
                 }`}
               value={formik.values.adm_channel}
               onChange={formik.handleChange}
@@ -225,9 +212,8 @@ const ProfileSettings = () => {
             )}
           </div>
 
-          {/* Always show tech_channel */}
           <div className="col-sm-6 mb-3">
-            <label htmlFor="tech_channel" className="form-label">
+            <label htmlFor="tech_channel" className="form-label mb-1">
               Tech Channel
             </label>
             <input
@@ -235,8 +221,8 @@ const ProfileSettings = () => {
               name="tech_channel"
               type="text"
               className={`form-control ${formik.touched.tech_channel && formik.errors.tech_channel
-                  ? "is-invalid"
-                  : ""
+                ? "is-invalid"
+                : ""
                 }`}
               value={formik.values.tech_channel}
               onChange={formik.handleChange}
@@ -249,8 +235,15 @@ const ProfileSettings = () => {
           </div>
           <div className="col-12 mt-2">
             <div className="d-flex align-items-center">
-              <button type="submit" className="_btn _btn-lg primary">
-                Submit
+              <button type="submit" className="_btn _btn-lg primary" disabled={formik.isSubmitting}>
+                {formik.isSubmitting ? (
+                  <span>
+                    <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                    Submiting...
+                  </span>
+                ) : (
+                  "Submit"
+                )}
               </button>
             </div>
           </div>
