@@ -9,19 +9,18 @@ import { MdClose } from "react-icons/md";
 import { useAppDispatch, useAppSelector } from "../../../reduxToolkit/hooks";
 import { fetchApplicationUnitDetail, updateApplication } from "../../../reduxToolkit/services/application/applicationService";
 import { updateClarification } from "../../../reduxToolkit/services/clarification/clarificationService";
-import Loader from "../../../components/ui/loader/Loader";
 
 const ApplicationDetails = () => {
     const [clarificationShow, setClarificationShow] = useState(false);
-    const [clarificationType, setClarificationType] = React.useState<string>("appreciation");
+    const [clarificationType, setClarificationType] = React.useState<"citation" | "appreciation">("appreciation");
     const [clarificationApplicationId, setClarificationApplicationId] = React.useState<number>(0);
     const [clarificationParameterName, setClarificationParameterName] = React.useState<string>("");
     const [clarificationDocForView, setClarificationDocForView] = useState<string | null>(null);
 const [clarificationClarificationForView, setClarificationClarificationForView] = useState<string | null>(null);
     const [reqClarificationShow, setReqClarificationShow] = useState(false);
     const [isRefreshData, setIsRefreshData] = useState(false);
+    const [unitDetail, setUnitDetail] = useState<any>(null);
     const profile = useAppSelector((state) => state.admin.profile);
-    const { loading, unitDetail } = useAppSelector((state) => state.application);
 const isUnitRole = profile?.user?.user_role === "unit";
 const roleHierarchy = ["unit", "brigade", "division", "corps", "command"];
 const role = profile?.user?.user_role?.toLowerCase() ?? '';
@@ -34,11 +33,18 @@ const lowerRole = roleHierarchy[roleHierarchy.indexOf(role) - 1] ?? null;
     const navigate = useNavigate();
 
     useEffect(() => {
-      if (award_type && numericAppId) dispatch(fetchApplicationUnitDetail({ award_type, numericAppId }))
-    }, [award_type, numericAppId, dispatch, isRefreshData]);
-  
-    if (loading) return <Loader />
-  
+      if (award_type && numericAppId) {
+        dispatch(fetchApplicationUnitDetail({ award_type, numericAppId }))
+          .unwrap()
+          .then((res) => {
+            setUnitDetail(res.data);
+          })
+          .catch((err) => {
+            console.error("Fetch failed:", err);
+          });
+      }
+    }, [award_type, numericAppId, dispatch,isRefreshData]);
+
     return (
         <>
             <div className="apply-citation-section">

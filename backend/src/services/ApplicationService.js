@@ -200,11 +200,15 @@ exports.getSingleApplicationForUnit = async (user, { application_id, award_type 
     if (!application) {
       return ResponseHelper.error(404, "Application not found");
     }
-
+    const roleHierarchy = ["unit", "brigade", "division", "corps", "command"];
+    const userRoleIndex = roleHierarchy.indexOf(user.user_role?.toLowerCase());
+    
     // Parse fds to manipulate parameters array
     const fds = application.fds;
     for (let param of fds.parameters) {
-      if (param.clarification_id) {
+      const clarificationId = param.clarification_id || param.last_clarification_id;
+    
+      if (clarificationId) {
         const clarificationsQuery = `
           SELECT
             clarification_id,
@@ -223,16 +227,33 @@ exports.getSingleApplicationForUnit = async (user, { application_id, award_type 
           FROM Clarification_tab
           WHERE clarification_id = $1
         `;
-
-        const clarRes = await client.query(clarificationsQuery, [param.clarification_id]);
-
+    
+        const clarRes = await client.query(clarificationsQuery, [clarificationId]);
+    
         if (clarRes.rows.length > 0) {
           param.clarification_details = clarRes.rows[0];
         } else {
           param.clarification_details = null;
         }
       }
+    
+      if (param.clarification_details?.clarification_by_role) {
+        const clarificationRoleIndex = roleHierarchy.indexOf(
+          param.clarification_details.clarification_by_role?.toLowerCase()
+        );
+    
+        if (
+          clarificationRoleIndex >= 0 &&
+          userRoleIndex > clarificationRoleIndex
+        ) {
+          // Current user has higher role → remove clarification-related fields
+          delete param.clarification_id;
+          delete param.last_clarification_id;
+          delete param.clarification_details;
+        }
+      }
     }
+    
     application.fds = fds;
 
     return ResponseHelper.success(200, "Fetched single application", application);
@@ -243,7 +264,6 @@ exports.getSingleApplicationForUnit = async (user, { application_id, award_type 
   }
 };
 
-
 exports.getApplicationsOfSubordinates = async (user, query) => {
   const client = await dbService.getClient();
 
@@ -252,7 +272,23 @@ exports.getApplicationsOfSubordinates = async (user, query) => {
     const { award_type, search } = query;
     const profile = await AuthService.getProfile(user);
     const unit = profile?.data?.unit;
+    // Role-based required fields
+    const roleFieldRequirements = {
+      unit: ["bde", "div", "corps", "comd", "name"],
+      brigade: ["div", "corps", "comd", "name"],
+      division: ["corps", "comd", "name"],
+      corps: ["comd", "name"],
+      command: ["name"],
+    };
 
+    // Validate required fields for the user's role
+    const requiredFields = roleFieldRequirements[user_role.toLowerCase()] || [];
+
+    const missingFields = requiredFields.filter(field => !unit?.[field] || unit[field] === "");
+    if (missingFields.length > 0) {
+      throw new Error("Please complete your unit profile before proceeding.");
+    }
+    
     const hierarchy = ["unit", "brigade", "division", "corps", "command"];
     const currentIndex = hierarchy.indexOf(user_role.toLowerCase());
 
@@ -391,11 +427,15 @@ exports.getApplicationsScoreboard = async (user, query) => {
 
   try {
     const { user_role } = user;
-    const { award_type, search } = query;
+    const { award_type, search, page = 1, limit = 10 } = query;
 
     if (!["command", "headquarter"].includes(user_role.toLowerCase())) {
       return ResponseHelper.error(403, "Access denied. Only 'command' and 'headquarter' roles allowed.");
     }
+
+    const pageInt = parseInt(page);
+    const limitInt = parseInt(limit);
+    const offset = (pageInt - 1) * limitInt;
 
     const profile = await AuthService.getProfile(user);
     const unitName = profile?.data?.unit?.name;
@@ -414,7 +454,12 @@ exports.getApplicationsScoreboard = async (user, query) => {
       unitIds = res.rows.map((u) => u.unit_id);
 
       if (unitIds.length === 0) {
-        return ResponseHelper.success(200, "No subordinate units found", []);
+        return ResponseHelper.success(200, "No subordinate units found", [], {
+          totalItems: 0,
+          totalPages: 0,
+          currentPage: pageInt,
+          itemsPerPage: limitInt,
+        });
       }
     }
 
@@ -426,64 +471,110 @@ exports.getApplicationsScoreboard = async (user, query) => {
     const filterForCommand = `unit_id = ANY($1) AND ${baseFilter}`;
     const filterForHQ = baseFilter;
 
-    const citationQuery = `
-      SELECT
-        citation_id AS id,
-        'citation' AS type,
-        unit_id,
-        date_init,
-        citation_fds AS fds,
-        status_flag,
-        last_approved_by_role,
-        last_approved_at,
-        isShortlisted
-      FROM Citation_tab
-      WHERE ${user_role.toLowerCase() === "command" ? filterForCommand : filterForHQ}
+    // We'll dynamically build WHERE clause and params for total count and data fetch
+    const isCommand = user_role.toLowerCase() === "command";
+
+    // First, get total count of all matching applications (citations + appreciations)
+
+    // Combine both queries for counting rows separately
+    const countParams = isCommand ? [unitIds] : [];
+    const countWhereClause = isCommand ? filterForCommand : filterForHQ;
+
+    const countCitationQuery = `
+      SELECT COUNT(*) AS count FROM Citation_tab WHERE ${countWhereClause}
+      ${award_type ? `AND LOWER(citation_fds->>'award_type') = LOWER($${countParams.length + 1})` : ''}
+      ${search ? `AND (CAST(citation_id AS TEXT) ILIKE $${countParams.length + (award_type ? 2 : 1)} OR LOWER(citation_fds->>'cycle_period') ILIKE $${countParams.length + (award_type ? 2 : 1)})` : ''}
     `;
 
-    const appreQuery = `
-      SELECT
-        appreciation_id AS id,
-        'appreciation' AS type,
-        unit_id,
-        date_init,
-        appre_fds AS fds,
-        status_flag,
-        last_approved_by_role,
-        last_approved_at,
-        isShortlisted
-      FROM Appre_tab
-      WHERE ${user_role.toLowerCase() === "command" ? filterForCommand : filterForHQ}
+    const countAppreQuery = `
+      SELECT COUNT(*) AS count FROM Appre_tab WHERE ${countWhereClause}
+      ${award_type ? `AND LOWER(appre_fds->>'award_type') = LOWER($${countParams.length + 1})` : ''}
+      ${search ? `AND (CAST(appreciation_id AS TEXT) ILIKE $${countParams.length + (award_type ? 2 : 1)} OR LOWER(appre_fds->>'cycle_period') ILIKE $${countParams.length + (award_type ? 2 : 1)})` : ''}
     `;
 
-    const queryParams = user_role.toLowerCase() === "command" ? [unitIds] : [];
+    // Build params for count queries
+    const countValues = [...countParams];
+    if (award_type) countValues.push(award_type);
+    if (search) countValues.push(`%${search.toLowerCase()}%`);
 
-    const [citations, appreciations] = await Promise.all([
-      client.query(citationQuery, queryParams),
-      client.query(appreQuery, queryParams),
+    const [citationCountRes, appreCountRes] = await Promise.all([
+      client.query(countCitationQuery, countValues),
+      client.query(countAppreQuery, countValues),
     ]);
 
-    let allApps = [...citations.rows, ...appreciations.rows];
+    const totalItems =
+      parseInt(citationCountRes.rows[0].count) + parseInt(appreCountRes.rows[0].count);
 
-    // Award type filter
-    if (award_type) {
-      allApps = allApps.filter(app =>
-        app.fds?.award_type?.toLowerCase() === award_type.toLowerCase()
-      );
-    }
-
-    // Search filter
-    const normalize = (str) => str?.toString().toLowerCase().replace(/[\s\-]/g, "");
-    if (search) {
-      const searchLower = normalize(search);
-      allApps = allApps.filter(app => {
-        const idMatch = app.id.toString().toLowerCase().includes(searchLower);
-        const cycleMatch = normalize(app.fds?.cycle_period || "").includes(searchLower);
-        return idMatch || cycleMatch;
+    if (totalItems === 0) {
+      return ResponseHelper.success(200, "No applications found", [], {
+        totalItems: 0,
+        totalPages: 0,
+        currentPage: pageInt,
+        itemsPerPage: limitInt,
       });
     }
 
-    // Optional: Add clarifications
+    // Now fetch paginated data with union of citations + appreciations ordered by date_init desc
+    // We'll use OFFSET/LIMIT on the union
+
+    const dataParams = [...countParams];
+    if (award_type) dataParams.push(award_type);
+    if (search) dataParams.push(`%${search.toLowerCase()}%`);
+    dataParams.push(limitInt, offset);
+
+    // Query with UNION ALL to get combined results with pagination
+    const dataQuery = `
+      (
+        SELECT
+          citation_id AS id,
+          'citation' AS type,
+          unit_id,
+          date_init,
+          citation_fds AS fds,
+          status_flag,
+          last_approved_by_role,
+          last_approved_at,
+          isShortlisted
+        FROM Citation_tab
+        WHERE ${filterWhereClause('citation_fds')}
+          ${award_type ? `AND LOWER(citation_fds->>'award_type') = LOWER($${dataParams.length - 1})` : ''}
+          ${search ? `AND (CAST(citation_id AS TEXT) ILIKE $${dataParams.length - 0} OR LOWER(citation_fds->>'cycle_period') ILIKE $${dataParams.length - 0})` : ''}
+      )
+      UNION ALL
+      (
+        SELECT
+          appreciation_id AS id,
+          'appreciation' AS type,
+          unit_id,
+          date_init,
+          appre_fds AS fds,
+          status_flag,
+          last_approved_by_role,
+          last_approved_at,
+          isShortlisted
+        FROM Appre_tab
+        WHERE ${filterWhereClause('appre_fds')}
+          ${award_type ? `AND LOWER(appre_fds->>'award_type') = LOWER($${dataParams.length - 1})` : ''}
+          ${search ? `AND (CAST(appreciation_id AS TEXT) ILIKE $${dataParams.length - 0} OR LOWER(appre_fds->>'cycle_period') ILIKE $${dataParams.length - 0})` : ''}
+      )
+      ORDER BY date_init DESC
+      LIMIT $${dataParams.length - 1} OFFSET $${dataParams.length}
+    `;
+
+    // Helper to build base filter depending on role
+    function filterWhereClause(fdsField) {
+      if (isCommand) {
+        return `unit_id = ANY($1) AND status_flag = 'approved' AND last_approved_by_role = 'command'`;
+      } else {
+        return `status_flag = 'approved' AND last_approved_by_role = 'command'`;
+      }
+    }
+
+    const dataResult = await client.query(dataQuery, dataParams);
+
+    let allApps = dataResult.rows;
+
+    // Add clarifications
     const clarificationIds = [];
     allApps.forEach(app => {
       app.fds?.parameters?.forEach(param => {
@@ -511,9 +602,6 @@ exports.getApplicationsScoreboard = async (user, query) => {
       });
     }
 
-    // Sort by date_init
-    allApps.sort((a, b) => new Date(b.date_init) - new Date(a.date_init));
-
     // Calculate total_marks for each application
     allApps.forEach(app => {
       if (Array.isArray(app.fds?.parameters)) {
@@ -522,8 +610,15 @@ exports.getApplicationsScoreboard = async (user, query) => {
         app.total_marks = 0;
       }
     });
-    
-    return ResponseHelper.success(200, "Fetched approved applications", allApps);
+
+    const pagination = {
+      totalItems,
+      totalPages: Math.ceil(totalItems / limitInt),
+      currentPage: pageInt,
+      itemsPerPage: limitInt,
+    };
+console.log(pagination)
+    return ResponseHelper.success(200, "Fetched approved applications", allApps, pagination);
 
   } catch (err) {
     return ResponseHelper.error(500, "Failed to fetch scoreboard data", err.message);
@@ -531,6 +626,7 @@ exports.getApplicationsScoreboard = async (user, query) => {
     client.release();
   }
 };
+
 
   exports.updateApplicationStatus = async (id, type, status, user) => {
     const client = await dbService.getClient();

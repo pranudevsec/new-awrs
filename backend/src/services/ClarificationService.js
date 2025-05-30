@@ -153,7 +153,7 @@ exports.addClarification = async (user, data) => {
       const updateResult = await client.query(updateQuery, values);
   
       if (
-        clarification_status === "clarified" &&
+        ["clarified", "rejected"].includes(clarification_status) &&
         application_type &&
         application_id
       ) {
@@ -179,49 +179,56 @@ exports.addClarification = async (user, data) => {
       
           if (appResult.rowCount > 0) {
             const fds = appResult.rows[0][jsonField];
-      
+          
             if (fds?.parameters && Array.isArray(fds.parameters)) {
-            
               let wasClarificationRemoved = false;
-            
+          
               fds.parameters = fds.parameters.map(param => {
                 if (param.clarification_id == clarification_id) {
                   wasClarificationRemoved = true;
+          
+                  // Destructure and add two new fields
                   const { clarification_id, ...rest } = param;
-                  return rest;
+          
+                  return {
+                    ...rest,
+                    last_clarification_handled_by: 'brigade',
+                    last_clarification_status: 'clarified',
+                    last_clarification_id: clarification_id
+                  };
                 }
                 return param;
               });
-            
+          
               if (wasClarificationRemoved) {
                 const updateJSONQuery = `
                   UPDATE ${tableName}
                   SET ${jsonField} = $1
                   WHERE ${application_type === "citation" ? "citation_id" : "appreciation_id"} = $2
                 `;
-            
+          
                 await client.query(updateJSONQuery, [fds, application_id]);
-            
+          
                 const clarifiedEntry = {
                   clarification_id,
                   removed_at: new Date().toISOString(),
                   action: 'clarification_id_clarified',
                 };
-            
+          
                 const updateHistoryQuery = `
                   UPDATE Clarification_tab
                   SET clarified_history = COALESCE(clarified_history, '[]'::jsonb) || $1::jsonb
                   WHERE clarification_id = $2
                 `;
-            
+          
                 await client.query(updateHistoryQuery, [JSON.stringify([clarifiedEntry]), clarification_id]);
               }
             }
-            
+          
             const updatedFdsRes = await client.query(appQuery, [application_id]);
             const updatedFds = updatedFdsRes.rows[0][jsonField];
-      
           }
+          
         }
       }
       
@@ -347,10 +354,11 @@ exports.addClarification = async (user, data) => {
   
       // Sort by date_init descending
       allApps.sort((a, b) => new Date(b.date_init) - new Date(a.date_init));
-      const filteredApplications = allApps.filter(app => 
-        app.fds?.parameters?.some(param => param.clarification_id)
+      const filteredApplications = allApps.filter(app =>
+        app.fds?.parameters?.some(param =>
+          param.clarification?.clarification_by_role?.toLowerCase() === "brigade"
+        )
       );
-      
       
       return ResponseHelper.success(200, "Fetched applications with clarifications", filteredApplications);
     } catch (err) {
@@ -359,10 +367,11 @@ exports.addClarification = async (user, data) => {
       client.release();
     }
   };
+
   exports.getAllApplicationsWithClarificationsForSubordinates = async (user, query) => {
     const client = await dbService.getClient();
     try {
-      const { user_role, user_id, unit_id } = user;
+      const { user_role, unit_id } = user;
       const roleHierarchy = ['unit', 'brigade', 'division', 'corps', 'command'];
       const currentRoleIndex = roleHierarchy.indexOf(user_role.toLowerCase());
   
@@ -378,64 +387,74 @@ exports.addClarification = async (user, data) => {
         command: 'comd',
       }[user_role.toLowerCase()];
   
-  
-      const ownUnitQuery = `SELECT * FROM Unit_tab WHERE unit_id = $1`;
-      const ownUnitRes = await client.query(ownUnitQuery, [unit_id]);
+      const ownUnitRes = await client.query(`SELECT * FROM Unit_tab WHERE unit_id = $1`, [unit_id]);
       const ownUnitData = ownUnitRes.rows[0];
-  
-      if (!ownUnitData) {
-        return ResponseHelper.error(404, 'Unit not found for current user');
-      }
+      if (!ownUnitData) return ResponseHelper.error(404, 'Unit not found');
   
       const ownUnitName = ownUnitData.name;
   
       const clarificationQuery = `
         SELECT * FROM Clarification_tab 
-        WHERE clarification_by_role = $1
-        AND clarification_status = 'pending'
+        WHERE clarification_by_role = $1 AND clarification_status = 'pending'
       `;
-      const clarificationsResult = await client.query(clarificationQuery, [seniorRole]);
-      const clarifications = clarificationsResult.rows;
+      const clarifications = (await client.query(clarificationQuery, [seniorRole])).rows;
   
-  
-      const enrichedClarifications = [];
+      const responseData = [];
   
       for (const clarification of clarifications) {
-        let applicationData = null;
-        let unitData = null;
-  
+        let appQuery, appTable, appIdField, fdsField;
         if (clarification.application_type === 'citation') {
-          const citationQuery = `SELECT * FROM Citation_tab WHERE citation_id = $1`;
-          const res = await client.query(citationQuery, [clarification.application_id]);
-          applicationData = res.rows[0] || null;
-        } else if (clarification.application_type === 'appreciation') {
-          const appreQuery = `SELECT * FROM Appre_tab WHERE appreciation_id = $1`;
-          const res = await client.query(appreQuery, [clarification.application_id]);
-          applicationData = res.rows[0] || null;
+          appTable = 'Citation_tab';
+          appIdField = 'citation_id';
+          fdsField = 'citation_fds';
+        } else {
+          appTable = 'Appre_tab';
+          appIdField = 'appreciation_id';
+          fdsField = 'appre_fds';
         }
   
-        if (applicationData?.unit_id) {
-          const unitQuery = `SELECT * FROM Unit_tab WHERE unit_id = $1`;
-          const res = await client.query(unitQuery, [applicationData.unit_id]);
-          unitData = res.rows[0] || null;
-        }
+        const appRes = await client.query(
+          `SELECT * FROM ${appTable} WHERE ${appIdField} = $1`, [clarification.application_id]
+        );
+        const application = appRes.rows[0];
+        if (!application) continue;
   
-        if (
-          unitData &&
-          matchingField &&
-          unitData[matchingField] === ownUnitName
-        ) {
-          enrichedClarifications.push({
-            ...clarification,
+        const unitRes = await client.query(`SELECT * FROM Unit_tab WHERE unit_id = $1`, [application.unit_id]);
+        const unit = unitRes.rows[0];
+        if (!unit || unit[matchingField] !== ownUnitName) continue;
+  
+        // Decrypt if necessary, or use directly
+        const fds = typeof application[fdsField] === 'string'
+          ? JSON.parse(application[fdsField])
+          : application[fdsField];
+  
+        // Inject clarification into the right parameter
+        if (Array.isArray(fds.parameters)) {
+          fds.parameters = fds.parameters.map(param => {
+            if (param.name === clarification.parameter_name) {
+              return {
+                ...param,
+                clarification_id: clarification.clarification_id,
+                last_clarification_id: clarification.clarification_id,
+                last_clarification_status: clarification.clarification_status,
+                last_clarification_handled_by: clarification.clarification_by_role,
+                clarification
+              };
+            }
+            return param;
           });
         }
+  
+        responseData.push({
+          id: application[appIdField],
+          type: clarification.application_type,
+          unit_id: application.unit_id,
+          date_init: application.date_init,
+          fds
+        });
       }
   
-      return ResponseHelper.success(
-        200,
-        'Fetched pending clarifications',
-        enrichedClarifications
-      );
+      return ResponseHelper.success(200, 'Fetched pending clarifications', responseData);
     } catch (err) {
       console.error(`[Clarification API] Error: ${err.message}`);
       return ResponseHelper.error(500, 'Failed to fetch clarifications', err.message);
@@ -443,4 +462,3 @@ exports.addClarification = async (user, data) => {
       client.release();
     }
   };
-  

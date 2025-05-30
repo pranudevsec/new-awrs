@@ -22,6 +22,11 @@ export const sidebarStructure = [
     to: "/clarification",
   },
   {
+    label: "Clarifications I Raised",
+    icon: SVGICON.sidebar.clarification,
+    to: "/clarifications/raised-list",
+  },
+  {
     label: "Scoreboard",
     icon: SVGICON.sidebar.commandPanel,
     to: "/command-panel",
