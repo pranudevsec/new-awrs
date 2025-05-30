@@ -31,7 +31,8 @@ export interface CreateClarificationPayload {
 
   export interface UpdateClarificationPayload {
     id: number;
-    clarification: string;
+    clarification?: string;
+    clarification_status?: string;
   }
   
   export interface UpdateClarificationResponse {

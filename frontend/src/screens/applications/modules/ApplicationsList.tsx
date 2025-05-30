@@ -152,7 +152,7 @@ const ApplicationsList = () => {
                   </td> */}
                   <td style={{ width: 100, minWidth: 100, maxWidth: 100 }}>
                     <Link
-                      to={`/applications/list/${unit.id}`}
+                      to={`/applications/list/${unit.id}?award_type=${unit.type}`}
                       className="action-btn bg-transparent d-inline-flex align-items-center justify-content-center"
                       onClick={(e) => e.stopPropagation()} // prevent triggering row click navigation
                     >

@@ -46,7 +46,9 @@ const Applications = () => {
               <div className="card-icon">
                 <img src="/media/icons/applications.png" alt="Applications" width={100} />
               </div>
-              <h5 className="fw-6 mt-4">Applications</h5>
+              <h5 className="fw-6 mt-4">
+  {userRole === "unit" ? "Created Applications" : "Applications To Review"}
+</h5>
             </div>
           </Link>
         </div>

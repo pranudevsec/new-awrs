@@ -358,9 +358,13 @@ const ApplyCitation = () => {
             >
               Save as Draft
             </button>
-            <button type="submit" className="_btn primary">
-              Submit
-            </button>
+            <button
+type="button"
+className="_btn primary"
+onClick={() => navigate('/applications/citation-review')}
+>
+Preview
+</button>
             <button
               type="button"
               className="_btn danger"
