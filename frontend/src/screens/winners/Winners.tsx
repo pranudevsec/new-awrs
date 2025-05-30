@@ -8,44 +8,6 @@ const Winners = () => {
         <div className="d-flex flex-sm-row flex-column justify-content-between mb-4">
           <Breadcrumb title="Last Year Winners" />
         </div>
-        {/* <div className="table-filter-area mb-4">
-          <div className="row">
-            <div className="col-lg-3 col-sm-4 mb-sm-0 mb-2">
-              <FormSelect
-                label="Award Type"
-                name="awardType"
-                options={awardTypeOptions}
-                value={
-                  awardTypeOptions.find((opt) => opt.value === "citation") ||
-                  null
-                }
-                placeholder="Select"
-                isDisabled={true}
-              />
-            </div>
-            <div className="col-lg-3 col-sm-4 mb-sm-0 mb-2">
-              <FormSelect
-                label="Cycle Period"
-                name="cyclePeriod"
-                options={cyclePeriodOptions}
-                value={
-                  cyclePeriodOptions.find((opt) => opt.value === "citation") ||
-                  null
-                }
-                placeholder="Select"
-              />
-            </div>
-            <div className="col-lg-3 col-sm-4">
-              <FormInput
-                label="Unit"
-                name="lastDate"
-                placeholder="Search by unit"
-                value=""
-                readOnly={true}
-              />
-            </div>
-          </div>
-        </div> */}
         <div className="table-responsive">
           <table className="table-style-2 w-100">
             <thead>

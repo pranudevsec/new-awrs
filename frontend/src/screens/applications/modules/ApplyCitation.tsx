@@ -3,7 +3,7 @@ import Breadcrumb from "../../../components/ui/breadcrumb/Breadcrumb";
 import FormSelect from "../../../components/form/FormSelect";
 import FormInput from "../../../components/form/FormInput";
 import { useAppDispatch, useAppSelector } from "../../../reduxToolkit/hooks";
-import React, {  useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { getConfig } from "../../../reduxToolkit/services/config/configService";
 import type { Parameter } from "../../../reduxToolkit/services/parameter/parameterInterface";
 import { fetchParameters } from "../../../reduxToolkit/services/parameter/parameterService";
@@ -12,17 +12,8 @@ import toast from "react-hot-toast";
 import { resetCitationState } from "../../../reduxToolkit/slices/citation/citationSlice";
 import { createCitation } from "../../../reduxToolkit/services/citation/citationService";
 import { unwrapResult } from "@reduxjs/toolkit";
-import {  Tabs,Tab } from "react-bootstrap";
-
-interface OptionType {
-  label: string;
-  value: string;
-}
-
-const awardTypeOptions: OptionType[] = [
-  { value: "citation", label: "Citations" },
-  { value: "appreciation", label: "Appreciations" },
-];
+import { Tabs, Tab } from "react-bootstrap";
+import { awardTypeOptions } from "../../../data/options";
 
 const DRAFT_STORAGE_KEY = "applyCitationDraft";
 
@@ -57,29 +48,29 @@ const ApplyCitation = () => {
       }
     }
   }, [groupedParams]);
-  
-const scrollContainerRef = React.useRef<HTMLDivElement>(null);
-const categoryRefs = React.useRef<{ [key: string]: HTMLDivElement | null }>({});
 
-const handleTabSelect = (key: string | null) => {
-  if (!key) return;
-  setActiveTab(key);
+  const scrollContainerRef = React.useRef<HTMLDivElement>(null);
+  const categoryRefs = React.useRef<{ [key: string]: HTMLDivElement | null }>({});
 
-  const categoryElement = categoryRefs.current[key];
-  const container = scrollContainerRef.current;
+  const handleTabSelect = (key: string | null) => {
+    if (!key) return;
+    setActiveTab(key);
 
-  if (categoryElement && container) {
-    // Scroll relative to the container top
-    const containerTop = container.getBoundingClientRect().top;
-    const categoryTop = categoryElement.getBoundingClientRect().top;
-    const scrollOffset = categoryTop - containerTop + container.scrollTop;
+    const categoryElement = categoryRefs.current[key];
+    const container = scrollContainerRef.current;
 
-    container.scrollTo({
-      top: scrollOffset,
-      behavior: 'smooth',
-    });
-  }
-};
+    if (categoryElement && container) {
+      // Scroll relative to the container top
+      const containerTop = container.getBoundingClientRect().top;
+      const categoryTop = categoryElement.getBoundingClientRect().top;
+      const scrollOffset = categoryTop - containerTop + container.scrollTop;
+
+      container.scrollTo({
+        top: scrollOffset,
+        behavior: 'smooth',
+      });
+    }
+  };
 
   useEffect(() => {
     const savedDraft = localStorage.getItem(DRAFT_STORAGE_KEY);
@@ -114,15 +105,15 @@ const handleTabSelect = (key: string | null) => {
           const uploadPath = param.proof_reqd
             ? `uploads/${trimmedName.toLowerCase().replace(/\s+/g, "_")}_file.pdf`
             : "";
-        
+
           return {
             name: trimmedName,
             count,
             marks: calculatedMarks,
             upload: uploadPath,
           };
-        });        
-  
+        });
+
         const payload = {
           date_init: "2024-04-01", // can also be a dynamic value
           citation_fds: {
@@ -133,10 +124,10 @@ const handleTabSelect = (key: string | null) => {
             parameters: formattedParameters,
           },
         };
-  
+
         const resultAction = await dispatch(createCitation(payload));
         const result = unwrapResult(resultAction);
-  
+
         if (result.success) {
           toast.success("Citation created successfully!");
           formik.resetForm();
@@ -145,7 +136,7 @@ const handleTabSelect = (key: string | null) => {
         } else {
           toast.error("Failed to create citation.");
         }
-      }catch (err) {
+      } catch (err) {
         console.error("create failed", err);
       }
     },
@@ -156,14 +147,14 @@ const handleTabSelect = (key: string | null) => {
       try {
         const [configRes, paramsRes] = await Promise.all([
           dispatch(getConfig()).unwrap(),
-          dispatch(fetchParameters({ awardType: "citation",search:"" })).unwrap(),
+          dispatch(fetchParameters({ awardType: "citation", search: "" })).unwrap(),
         ]);
 
         if (configRes?.success && configRes.data) {
           setCyclePerios(configRes.data.current_cycle_period);
           const formattedDate = configRes.data.deadline?.split("T")[0] || "";
           setLastDate(formattedDate);
-          if(profile){
+          if (profile) {
             setCommand(profile?.unit?.comd)
           }
         }
@@ -228,7 +219,7 @@ const handleTabSelect = (key: string | null) => {
               />
             </div>
             <div className="col-lg-3 col-sm-4 mb-sm-0 mb-2">
-            <FormInput
+              <FormInput
                 label="Cycle Period"
                 name="cyclePeriod"
                 value={formik.values.cyclePeriod}
@@ -259,136 +250,136 @@ const handleTabSelect = (key: string | null) => {
         </div>
 
         <div style={{ position: 'sticky', top: 0, backgroundColor: 'white', zIndex: 10, paddingBottom: '1rem' }}>
-  <Tabs
-    activeKey={activeTab}
-    onSelect={handleTabSelect}
-    id="category-tabs"
-    className="mb-3 custom-tabs"
-  >
-    {Object.keys(groupedParams).map((category) => (
-      <Tab
-        eventKey={category}
-        title={<span className="form-label mb-1">{category.toUpperCase()}</span>}
-        key={category}
-      />
-    ))}
-  </Tabs>
-</div>
+          <Tabs
+            activeKey={activeTab}
+            onSelect={handleTabSelect}
+            id="category-tabs"
+            className="mb-3 custom-tabs"
+          >
+            {Object.keys(groupedParams).map((category) => (
+              <Tab
+                eventKey={category}
+                title={<span className="form-label mb-1">{category.toUpperCase()}</span>}
+                key={category}
+              />
+            ))}
+          </Tabs>
+        </div>
 
-<div
-  ref={scrollContainerRef}
-  style={{
-    height: '60vh', // adjust height as needed
-    overflowY: 'auto',
-    paddingRight: '1rem',
-    scrollbarWidth: 'none', /* Firefox */
-    msOverflowStyle: 'none',
-  }}
->
-  {Object.entries(groupedParams).map(([category, params]) => (
-    <div
-      key={category}
-      id={`category-${category}`}
-      ref={(el) => {
-        categoryRefs.current[category] = el;
-      }}
-      style={{ marginBottom: "2rem" }}
-    >
-      <h5
-        className="mb-4 p-2"
-        style={{ color: "#333", fontWeight: "600" }}
-      >
-        {category.charAt(0).toUpperCase() + category.slice(1)}
-      </h5>
-      <table className="table-style-1 w-100">
-        <thead>
-          <tr>
-            <th>Parameter</th>
-            <th>Count</th>
-            <th>Marks</th>
-            <th>Upload</th>
-          </tr>
-        </thead>
-        <tbody>
-          {params.map((param:any) => (
-            <tr key={param.param_id}>
-              <td><p className="fw-5">{param.name}</p></td>
-              <td>
-                <input
-                  type="text"
-                  className="form-control"
-                  placeholder="Enter count"
-                  autoComplete="off"
-                  value={counts[param.param_id] ?? ""}
-                  onChange={(e) => handleCountChange(param.param_id, e.target.value)}
-                  inputMode="numeric"
-                  pattern="[0-9]*"
-                />
-              </td>
-              <td>
-                <div className="input-with-tooltip">
-                  <input
-                    type="number"
-                    className="form-control"
-                    placeholder="Marks"
-                    value={marks[param.param_id] ?? 0}
-                    readOnly
-                  />
-                  <div className="tooltip-icon">
-                    <i className="info-circle">i</i>
-                    <span className="tooltip-text">
-                      {`1 unit = ${param.per_unit_mark} marks, max ${param.max_marks} marks`}
-                    </span>
-                  </div>
-                </div>
-              </td>
-              <td>
-                {param.proof_reqd ? (
-                  <input type="file" className="form-control" autoComplete="off" />
-                ) : (
-                  <span>Not required</span>
-                )}
-              </td>
-            </tr>
+        <div
+          ref={scrollContainerRef}
+          style={{
+            height: '60vh', // adjust height as needed
+            overflowY: 'auto',
+            paddingRight: '1rem',
+            scrollbarWidth: 'none', /* Firefox */
+            msOverflowStyle: 'none',
+          }}
+        >
+          {Object.entries(groupedParams).map(([category, params]) => (
+            <div
+              key={category}
+              id={`category-${category}`}
+              ref={(el) => {
+                categoryRefs.current[category] = el;
+              }}
+              style={{ marginBottom: "2rem" }}
+            >
+              <h5
+                className="mb-4 p-2"
+                style={{ color: "#333", fontWeight: "600" }}
+              >
+                {category.charAt(0).toUpperCase() + category.slice(1)}
+              </h5>
+              <table className="table-style-1 w-100">
+                <thead>
+                  <tr>
+                    <th>Parameter</th>
+                    <th>Count</th>
+                    <th>Marks</th>
+                    <th>Upload</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {params.map((param: any) => (
+                    <tr key={param.param_id}>
+                      <td><p className="fw-5">{param.name}</p></td>
+                      <td>
+                        <input
+                          type="text"
+                          className="form-control"
+                          placeholder="Enter count"
+                          autoComplete="off"
+                          value={counts[param.param_id] ?? ""}
+                          onChange={(e) => handleCountChange(param.param_id, e.target.value)}
+                          inputMode="numeric"
+                          pattern="[0-9]*"
+                        />
+                      </td>
+                      <td>
+                        <div className="input-with-tooltip">
+                          <input
+                            type="number"
+                            className="form-control"
+                            placeholder="Marks"
+                            value={marks[param.param_id] ?? 0}
+                            readOnly
+                          />
+                          <div className="tooltip-icon">
+                            <i className="info-circle">i</i>
+                            <span className="tooltip-text">
+                              {`1 unit = ${param.per_unit_mark} marks, max ${param.max_marks} marks`}
+                            </span>
+                          </div>
+                        </div>
+                      </td>
+                      <td>
+                        {param.proof_reqd ? (
+                          <input type="file" className="form-control" autoComplete="off" />
+                        ) : (
+                          <span>Not required</span>
+                        )}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           ))}
-        </tbody>
-      </table>
-    </div>
-  ))}
-</div>
+        </div>
 
 
-<div
-  className="submit-button-wrapper"
-  style={{
-    position: 'sticky',
-    bottom: 0,
-    backgroundColor: 'white',
-    padding: '1rem 0',
-    borderTop: '1px solid #ddd',
-    zIndex: 10,
-  }}
->
-  <div className="d-flex flex-sm-row flex-column gap-sm-3 gap-1 justify-content-end">
-    <button
-      type="button"
-      className="_btn outline"
-      onClick={() => alert("Draft saved!")}
-    >
-      Save as Draft
-    </button>
-    <button type="submit" className="_btn primary">
-      Submit
-    </button>
-    <button
-      type="button"
-      className="_btn danger"
-      onClick={handleDeleteDraft}
-    >
-      Delete
-    </button>
-  </div>
-</div>
+        <div
+          className="submit-button-wrapper"
+          style={{
+            position: 'sticky',
+            bottom: 0,
+            backgroundColor: 'white',
+            padding: '1rem 0',
+            borderTop: '1px solid #ddd',
+            zIndex: 10,
+          }}
+        >
+          <div className="d-flex flex-sm-row flex-column gap-sm-3 gap-1 justify-content-end">
+            <button
+              type="button"
+              className="_btn outline"
+              onClick={() => alert("Draft saved!")}
+            >
+              Save as Draft
+            </button>
+            <button type="submit" className="_btn primary">
+              Submit
+            </button>
+            <button
+              type="button"
+              className="_btn danger"
+              onClick={handleDeleteDraft}
+            >
+              Delete
+            </button>
+          </div>
+        </div>
 
       </form>
     </div>

@@ -1,13 +1,9 @@
 import { Link, } from "react-router-dom";
 import { SVGICON } from "../../constants/iconsList";
+import { awardTypeOptions } from "../../data/options";
 import Pagination from "../../components/ui/pagination/Pagination";
 import Breadcrumb from "../../components/ui/breadcrumb/Breadcrumb";
 import FormSelect from "../../components/form/FormSelect";
-
-const awardTypeOptions: OptionType[] = [
-  { value: "citation", label: "Citation" },
-  { value: "clarification", label: "Clarification" },
-];
 
 const cyclePeriodOptions: OptionType[] = [
   { value: "2024 - H1", label: "2024 - H1" },

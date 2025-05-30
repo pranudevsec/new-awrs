@@ -1,13 +1,9 @@
 import { Link, useNavigate } from "react-router-dom";
 import { SVGICON } from "../../../constants/iconsList";
+import { awardTypeOptions } from "../../../data/options";
 import Breadcrumb from "../../../components/ui/breadcrumb/Breadcrumb";
 import FormSelect from "../../../components/form/FormSelect";
 import Pagination from "../../../components/ui/pagination/Pagination";
-
-const awardTypeOptions: OptionType[] = [
-    { value: "citation", label: "Citation" },
-    { value: "clarification", label: "Clarification" },
-];
 
 const ClarificationList = () => {
     const navigate = useNavigate()

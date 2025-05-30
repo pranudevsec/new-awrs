@@ -1,15 +1,11 @@
 import { useEffect, useState } from "react";
+import { useParams, useSearchParams } from "react-router-dom";
 import { SVGICON } from "../../constants/iconsList";
+import { useAppDispatch } from "../../reduxToolkit/hooks";
+import { awardTypeOptions } from "../../data/options";
+import { fetchApplicationUnitDetail } from "../../reduxToolkit/services/application/applicationService";
 import Breadcrumb from "../../components/ui/breadcrumb/Breadcrumb";
 import FormSelect from "../../components/form/FormSelect";
-import { useAppDispatch } from "../../reduxToolkit/hooks";
-import { useParams, useSearchParams } from "react-router-dom";
-import { fetchApplicationUnitDetail } from "../../reduxToolkit/services/application/applicationService";
-
-const awardTypeOptions: OptionType[] = [
-  { value: "citation", label: "Citation" },
-  { value: "clarification", label: "Clarification" },
-];
 
 const cyclePeriodOptions: OptionType[] = [
   { value: "2024 - H1", label: "2024 - H1" },
@@ -25,7 +21,7 @@ const ClarificationDetail = () => {
   const [clarificationShow, setClarificationShow] = useState(false);
   console.log(clarificationShow)
   const [searchParams] = useSearchParams();
-  const { application_id } = useParams(); 
+  const { application_id } = useParams();
   const award_type = searchParams.get("award_type") || "";
   const numericAppId = Number(application_id);
   useEffect(() => {

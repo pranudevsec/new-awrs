@@ -1,14 +1,10 @@
 import { useState } from "react";
 import { SVGICON } from "../../constants/iconsList";
+import { awardTypeOptions } from "../../data/options";
 import Breadcrumb from "../../components/ui/breadcrumb/Breadcrumb";
 import ClarificationModal from "../../modals/ClarificationModal";
 import FormSelect from "../../components/form/FormSelect";
 import FormInput from "../../components/form/FormInput";
-
-const awardTypeOptions: OptionType[] = [
-  { value: "citation", label: "Citation" },
-  { value: "clarification", label: "Clarification" },
-];
 
 const cyclePeriodOptions: OptionType[] = [
   { value: "2024 - H1", label: "2024 - H1" },

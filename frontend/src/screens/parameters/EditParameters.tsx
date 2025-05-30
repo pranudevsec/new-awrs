@@ -5,15 +5,11 @@ import { unwrapResult } from "@reduxjs/toolkit";
 import { ParametersSchema } from "../../validations/validations";
 import { useAppDispatch } from "../../reduxToolkit/hooks";
 import { updateParameter } from "../../reduxToolkit/services/parameter/parameterService";
+import { awardTypeOptions } from "../../data/options";
 import Breadcrumb from "../../components/ui/breadcrumb/Breadcrumb";
 import FormInput from "../../components/form/FormInput";
 import FormSelect from "../../components/form/FormSelect";
 import FormRadioButton from "../../components/form/FormRadioButton";
-
-const awardTypeOptions: OptionType[] = [
-    { value: "citation", label: "Citation" },
-    { value: "appreciation", label: "Appreciation" },
-];
 
 export const roleOptions: OptionType[] = [
     { value: "all", label: "All" },

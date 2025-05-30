@@ -4,16 +4,12 @@ import { unwrapResult } from "@reduxjs/toolkit";
 import { SVGICON } from "../../constants/iconsList";
 import { useAppDispatch, useAppSelector } from "../../reduxToolkit/hooks";
 import { deleteParameter, fetchParameters } from "../../reduxToolkit/services/parameter/parameterService";
+import { awardTypeOptions } from "../../data/options";
 import Breadcrumb from "../../components/ui/breadcrumb/Breadcrumb";
 import FormSelect from "../../components/form/FormSelect";
 import Pagination from "../../components/ui/pagination/Pagination";
 import DeleteModal from "../../modals/DeleteModal";
 import Loader from "../../components/ui/loader/Loader";
-
-const awardTypeOptions: OptionType[] = [
-    { value: "citation", label: "Citation" },
-    { value: "clarification", label: "Clarification" },
-];
 
 const ParametersList = () => {
     const dispatch = useAppDispatch();

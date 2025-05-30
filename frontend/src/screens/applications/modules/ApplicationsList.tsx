@@ -6,41 +6,38 @@ import Breadcrumb from "../../../components/ui/breadcrumb/Breadcrumb";
 import FormSelect from "../../../components/form/FormSelect";
 import Pagination from "../../../components/ui/pagination/Pagination";
 import { fetchApplicationUnits, fetchSubordinates } from "../../../reduxToolkit/services/application/applicationService";
+import { awardTypeOptions } from "../../../data/options";
 
 interface OptionType {
-    label: string;
-    value: string;
-  }
-  
-  const awardTypeOptions: OptionType[] = [
-    { value: "citation", label: "Citations" },
-    { value: "appreciation", label: "Appreciations" },
-  ];
-  
+  label: string;
+  value: string;
+}
+
+
 const ApplicationsList = () => {
-    const navigate = useNavigate();
-    const dispatch = useAppDispatch();
-    const profile = useAppSelector((state) => state.admin.profile);
+  const navigate = useNavigate();
+  const dispatch = useAppDispatch();
+  const profile = useAppSelector((state) => state.admin.profile);
 
-    const { units, loading, error } = useAppSelector((state) => state.application);
-  
-    const [awardType, setAwardType] = useState<string | null>(null);
-    const [search, setSearch] = useState<string>('');
+  const { units, loading, error } = useAppSelector((state) => state.application);
 
-    useEffect(() => {
-      if (!profile?.user?.user_role) return;
-    
-      const fetchData = () => {
-        const params = { award_type: awardType || '', search };
-        if (profile.user.user_role !== 'unit') {
-          dispatch(fetchSubordinates(params));
-        } else {
-          dispatch(fetchApplicationUnits(params));
-        }
-      };
-    
-      fetchData();
-    }, [dispatch, awardType, search, profile]);
+  const [awardType, setAwardType] = useState<string | null>(null);
+  const [search, setSearch] = useState<string>('');
+
+  useEffect(() => {
+    if (!profile?.user?.user_role) return;
+
+    const fetchData = () => {
+      const params = { award_type: awardType || '', search };
+      if (profile.user.user_role !== 'unit') {
+        dispatch(fetchSubordinates(params));
+      } else {
+        dispatch(fetchApplicationUnits(params));
+      }
+    };
+
+    fetchData();
+  }, [dispatch, awardType, search, profile]);
   return (
     <div className="clarification-section">
       <div className="d-flex flex-sm-row flex-column align-items-sm-center justify-content-between mb-4">
@@ -59,12 +56,12 @@ const ApplicationsList = () => {
             {SVGICON.app.search}
           </button>
           <input
-  type="text"
-  placeholder="search..."
-  className="form-control"
-  value={search}
-  onChange={(e) => setSearch(e.target.value)}
-/>
+            type="text"
+            placeholder="search..."
+            className="form-control"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+          />
         </div>
         <FormSelect
           name="awardType"
@@ -120,7 +117,7 @@ const ApplicationsList = () => {
 
             {!loading &&
               !error &&
-              units.map((unit:any) => (
+              units.map((unit: any) => (
                 <tr
                   key={unit.id}
                   onClick={() => navigate(`/applications/list/${unit.id}?award_type=${unit.type}`)}

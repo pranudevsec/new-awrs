@@ -4,11 +4,7 @@ import Breadcrumb from "../../../components/ui/breadcrumb/Breadcrumb";
 import ClarificationModal from "../../../modals/ClarificationModal";
 import FormSelect from "../../../components/form/FormSelect";
 import FormInput from "../../../components/form/FormInput";
-
-const awardTypeOptions: OptionType[] = [
-    { value: "citation", label: "Citation" },
-    { value: "clarification", label: "Clarification" },
-];
+import { awardTypeOptions } from "../../../data/options";
 
 const cyclePeriodOptions: OptionType[] = [
     { value: "2024 - H1", label: "2024 - H1" },

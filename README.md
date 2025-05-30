@@ -50,23 +50,3 @@ To create optimized builds for deployment:
 ```bash
 npm run build
 ```
-
----
-
-## 📘 API Documentation (Swagger)
-
-The backend includes full API documentation via **Swagger UI**.
-
-### How to Access:
-
-1. Ensure the backend server is running:
-
-   ```bash
-   npm run dev
-   ```
-
-2. Open your browser and navigate to:
-
-   ```
-   http://localhost:<backend-port>/api-docs
-   ```

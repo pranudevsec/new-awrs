@@ -12,16 +12,12 @@ import toast from "react-hot-toast";
 import { resetCitationState } from "../../../reduxToolkit/slices/citation/citationSlice";
 import { unwrapResult } from "@reduxjs/toolkit";
 import { createAppreciation } from "../../../reduxToolkit/services/appreciation/appreciationService";
+import { awardTypeOptions } from "../../../data/options";
 
 interface OptionType {
   label: string;
   value: string;
 }
-
-const awardTypeOptions: OptionType[] = [
-  { value: "citation", label: "Citation" },
-  { value: "appreciation", label: "Appreciation" },
-];
 
 const DRAFT_STORAGE_KEY = "applyAppreciationDraft";
 
