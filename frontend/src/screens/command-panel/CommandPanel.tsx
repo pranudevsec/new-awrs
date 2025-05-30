@@ -1,5 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate, } from "react-router-dom";
+import * as XLSX from "xlsx";
+import { saveAs } from "file-saver";
 import { SVGICON } from "../../constants/iconsList";
 import { awardTypeOptions } from "../../data/options";
 import { useAppDispatch, useAppSelector } from "../../reduxToolkit/hooks";
@@ -17,6 +19,20 @@ import Loader from "../../components/ui/loader/Loader";
 //   { value: "2025 - H2", label: "2025 - H2" },
 // ];
 
+const mockCandidateData = [
+  {
+    unit_name: 'Unit 1',
+    brigade: 'Brigade A',
+    div: 'Div 1',
+    corps: 'Corps X',
+    application_id: 'APP1001',
+    total_score: 89,
+    parameter_1: 30,
+    parameter_2: 29,
+    parameter_3: 30,
+  }
+];
+
 const CommandPanel = () => {
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
@@ -29,6 +45,27 @@ const CommandPanel = () => {
   const [debouncedSearch, setDebouncedSearch] = useState<string>("");
   const [page, setPage] = useState<number>(1);
   const [limit, setLimit] = useState<number>(10);
+
+  const handleDownload = () => {
+    const topN = 5;
+
+    // Sort and get top N candidates
+    const topCandidates = mockCandidateData
+      .sort((a, b) => b.total_score - a.total_score)
+      .slice(0, topN);
+
+    const worksheet = XLSX.utils.json_to_sheet(topCandidates);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, 'Top Candidates');
+
+    const excelBuffer = XLSX.write(workbook, {
+      bookType: 'xlsx',
+      type: 'array',
+    });
+
+    const data = new Blob([excelBuffer], { type: 'application/octet-stream' });
+    saveAs(data, `scoreboard.xlsx`);
+  };
 
   useEffect(() => {
     const handler = setTimeout(() => {
@@ -55,9 +92,13 @@ const CommandPanel = () => {
         <div className="d-flex flex-sm-row flex-column justify-content-between mb-4">
           <Breadcrumb title="Scoreboard Listing" />
           <div className="d-flex align-items-center justify-content-end gap-3 mt-sm-0 mt-3">
-            <button className="_btn outline d-flex align-items-center justify-content-center gap-2">
+            <button
+              className="_btn outline d-flex align-items-center justify-content-center gap-2"
+              onClick={handleDownload}
+            >
               <span>{SVGICON.app.export}</span>Export
             </button>
+
             <button className="_btn primary">Publish Winner</button>
           </div>
         </div>
@@ -159,7 +200,7 @@ const CommandPanel = () => {
                       <p className="fw-4">{item.total_marks || 0}</p>
                     </td>
                     <td style={{ width: 150, minWidth: 150, maxWidth: 150 }}>
-                      <p className="fw-4">{item.total_marks || 0}</p>
+                      <p className="fw-4">2</p>
                     </td>
                     <td style={{ width: 200, minWidth: 200, maxWidth: 200 }}>
                       <p className="fw-4">{item.type || "-"}</p>
