@@ -295,41 +295,40 @@ p {
   color: var(--red-default);
 }
 
-
 .bg-pending {
-  background-color: #ff75480a !important;
-  border: 1px solid rgba(255, 117, 72, .1215686275) !important;
+  background-color: #FFF4E6 !important;
+  border: 1px solid #FFD59E !important;
 }
 
 .bg-request {
-  background-color: #4256c61f !important;
-  border: 1px solid rgba(66, 86, 198, .1215686275) !important;
+  background-color: #F0F4FF !important;
+  border: 1px solid #B0C4FF !important;
 }
 
 .bg-raised {
-  background-color: #ffc01f1f !important;
-  border: 1px solid rgba(255, 192, 31, .1215686275) !important;
+  background-color: #FFF0E6 !important;
+  border: 1px solid #FFC2A1 !important;
 }
 
 .bg-rejected {
-  background-color: #43d0ff1f !important;
-  border: 1px solid rgba(67, 208, 255, .1215686275) !important;
+  background-color: #FDEBEC !important;
+  border: 1px solid #FFB3B3 !important;
 }
 
 .color-pending {
-  color: rgba(192, 98, 67, 0.918) !important;
+  color: #C27000 !important;
 }
 
 .color-request {
-  color: rgba(70, 87, 189, 0.776) !important;
+  color: #3355AA !important;
 }
 
 .color-raised {
-  color: rgb(255, 192, 31) !important;
+  color: #D95E1A !important;
 }
 
 .color-rejected {
-  color: rgba(70, 190, 230, 0.811) !important;
+  color: #C00000 !important;
 }
 
 .accordion-button:focus,

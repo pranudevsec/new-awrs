@@ -22,28 +22,45 @@
   min-width: 120px;
   border: 1px solid transparent;
   cursor: pointer;
-  transition: background-color 0.3s ease, border-color 0.3s ease;
+  transition: all 0.3s ease;
   color: var(--gray-0);
 
   &.primary {
     background-color: var(--secondary-default);
     border: 1px solid var(--secondary-default);
+
+    &:hover {
+      background-color: var(--blue-primary-dark);
+    }
   }
 
   &.outline {
     background-color: transparent;
-    color: var(--gray-700) !important;
+    color: var(--gray-700);
     border: 1px solid var(--muted);
+
+    &:hover {
+      border: 1px solid var(--secondary-default);
+      color: var(--secondary-default);
+    }
   }
 
   &.success {
     border: 1px solid var(--green-default);
     background-color: var(--green-default);
+
+    &:hover {
+      background-color: var(--green-dark);
+    }
   }
 
   &.danger {
     border: 1px solid var(--red-default);
     background-color: var(--red-default);
+
+    &:hover {
+      background-color: var(--red-dark);
+    }
   }
 }
 

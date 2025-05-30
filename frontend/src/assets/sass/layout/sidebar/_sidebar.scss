@@ -27,7 +27,7 @@
   transition: all 0.3s ease;
 
   &:hover:not(.active) {
-    background-color: var(--gray-100);
+    background-color: var(--gray-200);
     color: var(--gray-900);
   }
 

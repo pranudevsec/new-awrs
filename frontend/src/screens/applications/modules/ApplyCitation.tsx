@@ -349,17 +349,7 @@ const ApplyCitation = () => {
         </div>
 
 
-        <div
-          className="submit-button-wrapper"
-          style={{
-            position: 'sticky',
-            bottom: 0,
-            backgroundColor: 'white',
-            padding: '1rem 0',
-            borderTop: '1px solid #ddd',
-            zIndex: 10,
-          }}
-        >
+        <div className="submit-button-wrapper">
           <div className="d-flex flex-sm-row flex-column gap-sm-3 gap-1 justify-content-end">
             <button
               type="button"

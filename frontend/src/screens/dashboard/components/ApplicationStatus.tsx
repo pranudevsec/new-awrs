@@ -54,7 +54,7 @@ const ApplicationStatus = () => {
 
     return (
         <div className="application-status-chart h-100">
-            <div className="d-flex flex-wrap gap-2 justify-content-between align-items-center mb-3">
+            <div className="d-flex flex-wrap gap-2 justify-content-between mb-3">
                 <h2 className="fw-6">Top Units by Total Score</h2>
                 <FormSelect
                     name="cyclePeriod"

@@ -10,6 +10,7 @@ import FormSelect from "../../components/form/FormSelect";
 import Pagination from "../../components/ui/pagination/Pagination";
 import DeleteModal from "../../modals/DeleteModal";
 import Loader from "../../components/ui/loader/Loader";
+import EmptyTable from "../../components/ui/empty-table/EmptyTable";
 
 const ParametersList = () => {
     const dispatch = useAppDispatch();
@@ -50,8 +51,6 @@ const ParametersList = () => {
     useEffect(() => {
         fetchParametersList();
     }, [awardType, debouncedSearch])
-
-    // if (true) return <Loader inline size={40} />
 
     return (
         <>
@@ -119,7 +118,7 @@ const ParametersList = () => {
                                         </div>
                                     </td>
                                 </tr>
-                            ) : parameters.length > 0 ? (
+                            ) : parameters.length > 0 && (
                                 parameters.map((item, idx) => (
                                     <tr key={idx}>
                                         <td style={{ width: 150, minWidth: 150, maxWidth: 150 }}>
@@ -162,17 +161,12 @@ const ParametersList = () => {
                                         </td>
                                     </tr>
                                 ))
-                            ) : (
-                                <tr>
-                                    <td colSpan={7}>
-                                        <div className="text-center py-5 fw-5">No data found.</div>
-                                    </td>
-                                </tr>
                             )}
                         </tbody>
                     </table>
                 </div>
-                <Pagination />
+                {parameters.length < 0 && <EmptyTable />}
+                {parameters.length > 0 && <Pagination />}
             </div>
             {/* Delete Modal */}
             <DeleteModal

@@ -18,8 +18,8 @@ const Applications = () => {
         {isUnitRole && (
           <>
             <div className="col-lg-3 col-sm-6">
-              <Link to="/applications/citation">
-                <div className="card border-0 d-flex align-items-center justify-content-center">
+              <Link to="/applications/citation" className="h-100 d-block">
+                <div className="card border-0 h-100 d-flex align-items-center justify-content-center">
                   <div className="card-icon">
                     <img src="/media/icons/medal.png" alt="Medal" width={100} />
                   </div>
@@ -28,8 +28,8 @@ const Applications = () => {
               </Link>
             </div>
             <div className="col-lg-3 col-sm-6">
-              <Link to="/applications/appreciation">
-                <div className="card border-0 d-flex align-items-center justify-content-center">
+              <Link to="/applications/appreciation" className="h-100 d-block">
+                <div className="card border-0 h-100 d-flex align-items-center justify-content-center">
                   <div className="card-icon">
                     <img src="/media/icons/thumb.png" alt="Thumb" width={100} />
                   </div>
@@ -37,25 +37,24 @@ const Applications = () => {
                 </div>
               </Link>
             </div>
-           
           </>
         )}
-<div className="col-lg-3 col-sm-6">
-              <Link to="/applications/list">
-                <div className="card border-0 d-flex align-items-center justify-content-center position-relative">
-                  <span className="count-badge">5</span>
-                  <div className="card-icon">
-                    <img src="/media/icons/applications.png" alt="Applications" width={100} />
-                  </div>
-                  <h5 className="fw-6 mt-4">Applications</h5>
-                </div>
-              </Link>
+        <div className="col-lg-3 col-sm-6">
+          <Link to="/applications/list" className="h-100 d-block">
+            <div className="card border-0 h-100 d-flex align-items-center justify-content-center position-relative">
+              <span className="count-badge">5</span>
+              <div className="card-icon">
+                <img src="/media/icons/applications.png" alt="Applications" width={100} />
+              </div>
+              <h5 className="fw-6 mt-4">Applications</h5>
             </div>
+          </Link>
+        </div>
         {isHigherRole && (
           <>
             <div className="col-lg-3 col-sm-6">
-              <Link to="/applications/list">
-                <div className="card border-0 d-flex align-items-center justify-content-center position-relative">
+              <Link to="/applications/list" className="h-100 d-block">
+                <div className="card border-0 h-100 d-flex align-items-center justify-content-center position-relative">
                   <span className="count-badge">5</span>
                   <div className="card-icon">
                     <img src="/media/icons/clarifications.png" alt="Applications" width={100} />
@@ -65,8 +64,8 @@ const Applications = () => {
               </Link>
             </div>
             <div className="col-lg-3 col-sm-6">
-              <Link to="/applications/clarification/list">
-                <div className="card border-0 d-flex align-items-center justify-content-center">
+              <Link to="/applications/clarification/list" className="h-100 d-block">
+                <div className="card border-0 h-100 d-flex align-items-center justify-content-center">
                   <span className="count-badge">9</span>
                   <div className="card-icon">
                     <img src="/media/icons/raised-clarification.png" alt="Clarifications" width={100} />
