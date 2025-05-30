@@ -54,13 +54,15 @@ const AdminSettings = () => {
     };
     fetchData();
   }, []);
-    // Show loader
-    if (firstLoad) return <Loader />;
 
   const cyclePeriodOptions = formik.values.cycle_period.map((item) => ({
     label: item,
     value: item,
   }));
+
+  // Show loader
+  if (firstLoad) return <Loader />;
+  
   return (
     <div className="profile-settings-section">
       <div className="d-flex flex-sm-row flex-column align-items-sm-center justify-content-between mb-4">
@@ -104,24 +106,24 @@ const AdminSettings = () => {
             />
           </div>
           <div className="col-sm-6 mb-3">
-          <FormSelect
-    label="Current Cycle Period"
-    name="current_cycle_period"
-    options={cyclePeriodOptions}
-    value={
-      cyclePeriodOptions.find(
-        (opt) => opt.value === formik.values.current_cycle_period
-      ) || null
-    }
-    onChange={(selected) =>
-      formik.setFieldValue("current_cycle_period", selected?.value)
-    }
-    placeholder="Select current cycle"
-  />
+            <FormSelect
+              label="Current Cycle Period"
+              name="current_cycle_period"
+              options={cyclePeriodOptions}
+              value={
+                cyclePeriodOptions.find(
+                  (opt) => opt.value === formik.values.current_cycle_period
+                ) || null
+              }
+              onChange={(selected) =>
+                formik.setFieldValue("current_cycle_period", selected?.value)
+              }
+              placeholder="Select current cycle"
+            />
           </div>
 
           <div className="col-12">
-          <div className="d-flex align-items-center">
+            <div className="d-flex align-items-center">
               <button type="submit" className="_btn _btn-lg primary" disabled={formik.isSubmitting}>
                 {formik.isSubmitting ? (
                   <span>

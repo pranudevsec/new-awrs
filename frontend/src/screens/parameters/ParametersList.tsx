@@ -15,15 +15,17 @@ import EmptyTable from "../../components/ui/empty-table/EmptyTable";
 const ParametersList = () => {
     const dispatch = useAppDispatch();
 
-    const { loading, parameters } = useAppSelector((state) => state.parameter);
+    const { loading, parameters, meta } = useAppSelector((state) => state.parameter);
 
-    // States 
+    // States
     const [id, setId] = useState<string>("");
     const [awardType, setAwardType] = useState<string | null>("");
     const [deleteShow, setDeleteShow] = useState<boolean>(false);
     const [selectedParam, setSelectedParam] = useState<string | null>(null);
     const [searchTerm, setSearchTerm] = useState<string>("");
     const [debouncedSearch, setDebouncedSearch] = useState<string>("");
+    const [page, setPage] = useState<number>(1);
+    const [limit, setLimit] = useState<number>(10);
 
     useEffect(() => {
         const handler = setTimeout(() => {
@@ -37,7 +39,7 @@ const ParametersList = () => {
 
     // Get parametes function
     const fetchParametersList = async () => {
-        await dispatch(fetchParameters({ awardType: awardType || "", search: debouncedSearch }));
+        await dispatch(fetchParameters({ awardType: awardType || "", search: debouncedSearch, page, limit }));
     };
 
     // Delete paramete function
@@ -50,7 +52,7 @@ const ParametersList = () => {
 
     useEffect(() => {
         fetchParametersList();
-    }, [awardType, debouncedSearch])
+    }, [awardType, debouncedSearch, page, limit])
 
     return (
         <>
@@ -165,9 +167,22 @@ const ParametersList = () => {
                         </tbody>
                     </table>
                 </div>
-                {!loading && parameters.length <= 0 && <EmptyTable />}
-                {parameters.length > 0 && <Pagination />}
+
+                {/* Empty Data */}
+                {!loading && parameters.length === 0 && <EmptyTable />}
+
+                {/* Pagination */}
+                {parameters.length > 0 && (
+                    <Pagination
+                        meta={meta}
+                        page={page}
+                        limit={limit}
+                        setPage={setPage}
+                        setLimit={setLimit}
+                    />
+                )}
             </div>
+
             {/* Delete Modal */}
             <DeleteModal
                 titleName={`“${selectedParam}” Parameter`}

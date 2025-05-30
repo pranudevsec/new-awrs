@@ -12,12 +12,19 @@ interface ParameterState {
   loading: boolean;
   parameters: Parameter[];
   error: string | null;
+  meta: Meta;
 }
 
 const initialState: ParameterState = {
   loading: false,
   parameters: [],
   error: null,
+  meta: {
+    totalItems: 1,
+    totalPages: 1,
+    currentPage: 1,
+    itemsPerPage: 10,
+  },
 };
 
 const parameterSlice = createSlice({
@@ -41,6 +48,7 @@ const parameterSlice = createSlice({
       (state, action: PayloadAction<ParameterResponse>) => {
         state.loading = false;
         state.parameters = action.payload.data;
+        state.meta = action.payload.meta;
         state.error = null;
       }
     );

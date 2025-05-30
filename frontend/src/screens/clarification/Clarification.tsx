@@ -7,7 +7,7 @@ import { getClarifications, getSubordinateClarifications } from "../../reduxTool
 import type { Parameter } from "../../reduxToolkit/services/parameter/parameterInterface";
 import Breadcrumb from "../../components/ui/breadcrumb/Breadcrumb";
 import FormSelect from "../../components/form/FormSelect";
-import Pagination from "../../components/ui/pagination/Pagination";
+// import Pagination from "../../components/ui/pagination/Pagination";
 import Loader from "../../components/ui/loader/Loader";
 import EmptyTable from "../../components/ui/empty-table/EmptyTable";
 
@@ -128,8 +128,8 @@ const Clarification = () => {
           </tbody>
         </table>
       </div>
-      {!loading && unitClarifications.length <= 0 && <EmptyTable />}
-      {unitClarifications.length > 0 && <Pagination />}
+      {!loading && unitClarifications.length === 0 && <EmptyTable />}
+      {/* {unitClarifications.length > 0 && <Pagination />} */}
     </div >
   );
 };

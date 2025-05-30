@@ -18,8 +18,8 @@ const SidebarMenu = () => {
   const dashboardItem = sidebarStructure.find(item => item.label === "Dashboard");
 
   // Items specifically for command role
-  const commandExtraLabels = ["Scoreboard", "Winners","Home","Profile Settings"];
-  
+  const commandExtraLabels = ["Scoreboard", "Winners", "Home", "Profile Settings"];
+
   // Filter structure items according to role and alwaysVisible
   let filteredStructure = sidebarStructure.filter((item) => {
     if (item.label === "Dashboard") return false; // exclude Dashboard here for now

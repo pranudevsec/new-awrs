@@ -8,11 +8,11 @@ import { useAppDispatch } from "../reduxToolkit/hooks";
 interface ClarificationModalProps {
   show: boolean;
   handleClose: () => void;
-  type: 'appreciation' | 'citation';
+  type: string;
   application_id: number;
   parameter_name: string;
   isRefreshData: boolean;
-  setIsRefreshData: React.Dispatch<React.SetStateAction<boolean>>; 
+  setIsRefreshData: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
 const UnitClarificationModal: React.FC<ClarificationModalProps> = ({
@@ -29,24 +29,24 @@ const UnitClarificationModal: React.FC<ClarificationModalProps> = ({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-  
+
     const payload = {
       type,
       application_id,
       parameter_name,
       reviewer_comment: comment,
     };
-  
+
     try {
       await dispatch(createClarification(payload)).unwrap();
-      setIsRefreshData(!isRefreshData); 
+      setIsRefreshData(!isRefreshData);
       handleClose(); // Close modal after submission
       setComment(""); // Reset comment
     } catch (err) {
       console.error("Clarification creation failed", err);
     }
   };
-  
+
 
   return (
     <Modal

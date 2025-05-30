@@ -1,18 +1,53 @@
-import { Link, } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { Link, useNavigate, } from "react-router-dom";
 import { SVGICON } from "../../constants/iconsList";
 import { awardTypeOptions } from "../../data/options";
-import Pagination from "../../components/ui/pagination/Pagination";
+import { useAppDispatch, useAppSelector } from "../../reduxToolkit/hooks";
+import { getScoreBoards } from "../../reduxToolkit/services/command-panel/commandPanelService";
 import Breadcrumb from "../../components/ui/breadcrumb/Breadcrumb";
 import FormSelect from "../../components/form/FormSelect";
+import Pagination from "../../components/ui/pagination/Pagination";
+import EmptyTable from "../../components/ui/empty-table/EmptyTable";
+import Loader from "../../components/ui/loader/Loader";
 
-const cyclePeriodOptions: OptionType[] = [
-  { value: "2024 - H1", label: "2024 - H1" },
-  { value: "2024 - H2", label: "2024 - H2" },
-  { value: "2025 - H1", label: "2025 - H1" },
-  { value: "2025 - H2", label: "2025 - H2" },
-];
+// const cyclePeriodOptions: OptionType[] = [
+//   { value: "2024 - H1", label: "2024 - H1" },
+//   { value: "2024 - H2", label: "2024 - H2" },
+//   { value: "2025 - H1", label: "2025 - H1" },
+//   { value: "2025 - H2", label: "2025 - H2" },
+// ];
 
 const CommandPanel = () => {
+  const navigate = useNavigate();
+  const dispatch = useAppDispatch();
+
+  const { loading, scoreboard, meta } = useAppSelector((state) => state.commandPanel);
+
+  // States
+  const [awardType, setAwardType] = useState<string | null>("");
+  const [searchTerm, setSearchTerm] = useState<string>("");
+  const [debouncedSearch, setDebouncedSearch] = useState<string>("");
+  const [page, setPage] = useState<number>(1);
+  const [limit, setLimit] = useState<number>(10);
+
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setDebouncedSearch(searchTerm);
+    }, 500);
+
+    return () => {
+      clearTimeout(handler);
+    };
+  }, [searchTerm]);
+
+  // Get Scoreboard list function
+  const fetchScoreboardList = async () => {
+    await dispatch(getScoreBoards({ awardType: awardType || "", search: debouncedSearch, page, limit }));
+  };
+
+  useEffect(() => {
+    fetchScoreboardList();
+  }, [awardType, debouncedSearch, page, limit])
 
   return (
     <>
@@ -43,7 +78,13 @@ const CommandPanel = () => {
             <button className="border-0 bg-transparent position-absolute translate-middle-y top-50">
               {SVGICON.app.search}
             </button>
-            <input type="text" placeholder="search..." className="form-control" />
+            <input
+              type="text"
+              placeholder="search..."
+              className="form-control"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
           </div>
           <div className="d-flex flex-wrap align-items-center gap-2">
             {/* <FormInput
@@ -55,20 +96,20 @@ const CommandPanel = () => {
             <FormSelect
               name="awardType"
               options={awardTypeOptions}
-              value={null}
-              placeholder="award type"
+              value={awardTypeOptions.find((opt) => opt.value === awardType) || null}
+              onChange={(option) => setAwardType(option?.value || null)}
+              placeholder="Award Type"
             />
-            <FormSelect
+            {/* <FormSelect
               name="cyclePeriod"
               options={cyclePeriodOptions}
               value={
                 cyclePeriodOptions.find((opt) => opt.value === "citation") ||
                 null
               }
-              placeholder="cycle period"
-            />
+              placeholder="Cycle period"
+            /> */}
           </div>
-
         </div>
         <div className="table-responsive">
           <table className="table-style-2 w-100">
@@ -98,256 +139,74 @@ const CommandPanel = () => {
               </tr>
             </thead>
             <tbody>
-              <tr>
-                <td style={{ width: 200, minWidth: 200, maxWidth: 200 }}>
-                  <p className="fw-4">#123456</p>
-                </td>
-                <td style={{ width: 150, minWidth: 150, maxWidth: 150 }}>
-                  <p className="fw-4">#123456</p>
-                </td>
-                <td style={{ width: 150, minWidth: 150, maxWidth: 150 }}>
-                  <p className="fw-4">97</p>
-                </td>
-                <td style={{ width: 150, minWidth: 150, maxWidth: 150 }}>
-                  <p className="fw-4">1</p>
-                </td>
-                <td style={{ width: 200, minWidth: 200, maxWidth: 200 }}>
-                  <p className="fw-4">Citation</p>
-                </td>
-                <td>
-                  <div className="d-flex align-items-center flex-grow-1 gap-2">
-                    <input
-                      type="checkbox"
-                      id={`switch-1`}
-                      className="custom-switch"
-                      hidden
-                    />
-                    <label
-                      htmlFor={`switch-1`}
-                      className="switch-label"
-                    ></label>
-                  </div>
-                </td>
-                <td style={{ width: 100, minWidth: 100, maxWidth: 100 }}>
-                  <div>
-                    <Link
-                      to="/command-panel/1"
-                      className="action-btn bg-transparent d-inline-flex align-items-center justify-content-center"
-                    >
-                      {SVGICON.app.eye}
-                    </Link>
-                  </div>
-                </td>
-              </tr>
-              <tr>
-                <td style={{ width: 200, minWidth: 200, maxWidth: 200 }}>
-                  <p className="fw-4">#123456</p>
-                </td>
-                <td style={{ width: 150, minWidth: 150, maxWidth: 150 }}>
-                  <p className="fw-4">#123456</p>
-                </td>
-                <td style={{ width: 150, minWidth: 150, maxWidth: 150 }}>
-                  <p className="fw-4">97</p>
-                </td>
-                <td style={{ width: 150, minWidth: 150, maxWidth: 150 }}>
-                  <p className="fw-4">1</p>
-                </td>
-                <td style={{ width: 200, minWidth: 200, maxWidth: 200 }}>
-                  <p className="fw-4">Citation</p>
-                </td>
-                <td>
-                  <div className="d-flex align-items-center flex-grow-1 gap-2">
-                    <input
-                      type="checkbox"
-                      id={`switch-2`}
-                      className="custom-switch"
-                      hidden
-                    />
-                    <label
-                      htmlFor={`switch-2`}
-                      className="switch-label"
-                    ></label>
-                  </div>
-                </td>
-                <td style={{ width: 100, minWidth: 100, maxWidth: 100 }}>
-                  <div>
-                    <Link
-                      to="/command-panel/1"
-                      className="action-btn bg-transparent d-inline-flex align-items-center justify-content-center"
-                    >
-                      {SVGICON.app.eye}
-                    </Link>
-                  </div>
-                </td>
-              </tr>
-              <tr>
-                <td style={{ width: 200, minWidth: 200, maxWidth: 200 }}>
-                  <p className="fw-4">#123456</p>
-                </td>
-                <td style={{ width: 150, minWidth: 150, maxWidth: 150 }}>
-                  <p className="fw-4">#123456</p>
-                </td>
-                <td style={{ width: 150, minWidth: 150, maxWidth: 150 }}>
-                  <p className="fw-4">97</p>
-                </td>
-                <td style={{ width: 150, minWidth: 150, maxWidth: 150 }}>
-                  <p className="fw-4">1</p>
-                </td>
-                <td style={{ width: 200, minWidth: 200, maxWidth: 200 }}>
-                  <p className="fw-4">Citation</p>
-                </td>
-                <td>
-                  <div className="d-flex align-items-center flex-grow-1 gap-2">
-                    <input
-                      type="checkbox"
-                      id={`switch-3`}
-                      className="custom-switch"
-                      hidden
-                    />
-                    <label
-                      htmlFor={`switch-3`}
-                      className="switch-label"
-                    ></label>
-                  </div>
-                </td>
-                <td style={{ width: 100, minWidth: 100, maxWidth: 100 }}>
-                  <div>
-                    <Link
-                      to="/command-panel/1"
-                      className="action-btn bg-transparent d-inline-flex align-items-center justify-content-center"
-                    >
-                      {SVGICON.app.eye}
-                    </Link>
-                  </div>
-                </td>
-              </tr>
-              <tr>
-                <td style={{ width: 200, minWidth: 200, maxWidth: 200 }}>
-                  <p className="fw-4">#123456</p>
-                </td>
-                <td style={{ width: 150, minWidth: 150, maxWidth: 150 }}>
-                  <p className="fw-4">#123456</p>
-                </td>
-                <td style={{ width: 150, minWidth: 150, maxWidth: 150 }}>
-                  <p className="fw-4">97</p>
-                </td>
-                <td style={{ width: 150, minWidth: 150, maxWidth: 150 }}>
-                  <p className="fw-4">1</p>
-                </td>
-                <td style={{ width: 200, minWidth: 200, maxWidth: 200 }}>
-                  <p className="fw-4">Citation</p>
-                </td>
-                <td>
-                  <div className="d-flex align-items-center flex-grow-1 gap-2">
-                    <input
-                      type="checkbox"
-                      id={`switch-4`}
-                      className="custom-switch"
-                      hidden
-                    />
-                    <label
-                      htmlFor={`switch-4`}
-                      className="switch-label"
-                    ></label>
-                  </div>
-                </td>
-                <td style={{ width: 100, minWidth: 100, maxWidth: 100 }}>
-                  <div>
-                    <Link
-                      to="/command-panel/1"
-                      className="action-btn bg-transparent d-inline-flex align-items-center justify-content-center"
-                    >
-                      {SVGICON.app.eye}
-                    </Link>
-                  </div>
-                </td>
-              </tr>
-              <tr>
-                <td style={{ width: 200, minWidth: 200, maxWidth: 200 }}>
-                  <p className="fw-4">#123456</p>
-                </td>
-                <td style={{ width: 150, minWidth: 150, maxWidth: 150 }}>
-                  <p className="fw-4">#123456</p>
-                </td>
-                <td style={{ width: 150, minWidth: 150, maxWidth: 150 }}>
-                  <p className="fw-4">97</p>
-                </td>
-                <td style={{ width: 150, minWidth: 150, maxWidth: 150 }}>
-                  <p className="fw-4">1</p>
-                </td>
-                <td style={{ width: 200, minWidth: 200, maxWidth: 200 }}>
-                  <p className="fw-4">Citation</p>
-                </td>
-                <td>
-                  <div className="d-flex align-items-center flex-grow-1 gap-2">
-                    <input
-                      type="checkbox"
-                      id={`switch-5`}
-                      className="custom-switch"
-                      hidden
-                    />
-                    <label
-                      htmlFor={`switch-5`}
-                      className="switch-label"
-                    ></label>
-                  </div>
-                </td>
-                <td style={{ width: 100, minWidth: 100, maxWidth: 100 }}>
-                  <div>
-                    <Link
-                      to="/command-panel/1"
-                      className="action-btn bg-transparent d-inline-flex align-items-center justify-content-center"
-                    >
-                      {SVGICON.app.eye}
-                    </Link>
-                  </div>
-                </td>
-              </tr>
-              <tr>
-                <td style={{ width: 200, minWidth: 200, maxWidth: 200 }}>
-                  <p className="fw-4">#123456</p>
-                </td>
-                <td style={{ width: 150, minWidth: 150, maxWidth: 150 }}>
-                  <p className="fw-4">#123456</p>
-                </td>
-                <td style={{ width: 150, minWidth: 150, maxWidth: 150 }}>
-                  <p className="fw-4">97</p>
-                </td>
-                <td style={{ width: 150, minWidth: 150, maxWidth: 150 }}>
-                  <p className="fw-4">1</p>
-                </td>
-                <td style={{ width: 200, minWidth: 200, maxWidth: 200 }}>
-                  <p className="fw-4">Citation</p>
-                </td>
-                <td>
-                  <div className="d-flex align-items-center flex-grow-1 gap-2">
-                    <input
-                      type="checkbox"
-                      id={`switch-6`}
-                      className="custom-switch"
-                      hidden
-                    />
-                    <label
-                      htmlFor={`switch-6`}
-                      className="switch-label"
-                    ></label>
-                  </div>
-                </td>
-                <td style={{ width: 100, minWidth: 100, maxWidth: 100 }}>
-                  <div>
-                    <Link
-                      to="/command-panel/1"
-                      className="action-btn bg-transparent d-inline-flex align-items-center justify-content-center"
-                    >
-                      {SVGICON.app.eye}
-                    </Link>
-                  </div>
-                </td>
-              </tr>
+              {loading ?
+                <tr>
+                  <td colSpan={7}>
+                    <div className="d-flex justify-content-center py-5">
+                      <Loader inline size={40} />
+                    </div>
+                  </td>
+                </tr> :
+                scoreboard.map((item, idx) => (
+                  <tr onClick={() => navigate(`/command-panel/${item.id}`)} key={idx}>
+                    <td style={{ width: 200, minWidth: 200, maxWidth: 200 }}>
+                      <p className="fw-4">#{item.id || "-"}</p>
+                    </td>
+                    <td style={{ width: 150, minWidth: 150, maxWidth: 150 }}>
+                      <p className="fw-4">#{item.unit_id || "-"}</p>
+                    </td>
+                    <td style={{ width: 150, minWidth: 150, maxWidth: 150 }}>
+                      <p className="fw-4">{item.total_marks || 0}</p>
+                    </td>
+                    <td style={{ width: 150, minWidth: 150, maxWidth: 150 }}>
+                      <p className="fw-4">{item.total_marks || 0}</p>
+                    </td>
+                    <td style={{ width: 200, minWidth: 200, maxWidth: 200 }}>
+                      <p className="fw-4">{item.type || "-"}</p>
+                    </td>
+                    <td onClick={(e) => e.stopPropagation()}>
+                      <div className="d-flex align-items-center flex-grow-1 gap-2">
+                        <input
+                          type="checkbox"
+                          id={`switch-1`}
+                          className="custom-switch"
+                          hidden
+                        />
+                        <label
+                          htmlFor={`switch-1`}
+                          className="switch-label"
+                        ></label>
+                      </div>
+                    </td>
+                    <td style={{ width: 100, minWidth: 100, maxWidth: 100 }} >
+                      <div>
+                        <Link
+                          to="/command-panel/1"
+                          className="action-btn bg-transparent d-inline-flex align-items-center justify-content-center"
+                        >
+                          {SVGICON.app.eye}
+                        </Link>
+                      </div>
+                    </td>
+                  </tr>
+                ))
+              }
             </tbody>
           </table>
         </div>
-        <Pagination />
+        {/* Empty Data */}
+        {!loading && scoreboard.length === 0 && <EmptyTable />}
+
+        {/* Pagination */}
+        {scoreboard.length > 0 && (
+          <Pagination
+            meta={meta}
+            page={page}
+            limit={limit}
+            setPage={setPage}
+            setLimit={setLimit}
+          />
+        )}
       </div>
     </>
   );

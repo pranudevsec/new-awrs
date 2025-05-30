@@ -9,6 +9,7 @@ import citationReducer from './slices/citation/citationSlice';
 import appreciationReducer from './slices/appreciation/appreciationSlice';
 import applicationReducer from './slices/application/applicationSlice';
 import clarificationReducer from './slices/clarification/clarificationSlice';
+import commandPanelReducer from './slices/command-panel/commandPanelSlice';
 
 const getConfig = (key: string, whitelist: string[]) => {
     return {
@@ -25,7 +26,8 @@ const reducer = combineReducers({
     citation: citationReducer,
     appreciation: appreciationReducer,
     application: applicationReducer,
-    clarification:clarificationReducer,
+    clarification: clarificationReducer,
+    commandPanel: commandPanelReducer
 });
 
 export const store = configureStore({

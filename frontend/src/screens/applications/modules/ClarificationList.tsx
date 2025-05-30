@@ -3,7 +3,7 @@ import { SVGICON } from "../../../constants/iconsList";
 import { awardTypeOptions } from "../../../data/options";
 import Breadcrumb from "../../../components/ui/breadcrumb/Breadcrumb";
 import FormSelect from "../../../components/form/FormSelect";
-import Pagination from "../../../components/ui/pagination/Pagination";
+// import Pagination from "../../../components/ui/pagination/Pagination";
 
 const ClarificationList = () => {
     const navigate = useNavigate()
@@ -129,7 +129,7 @@ const ClarificationList = () => {
                     </tbody>
                 </table>
             </div>
-            <Pagination />
+            {/* <Pagination /> */}
         </div >
     );
 };

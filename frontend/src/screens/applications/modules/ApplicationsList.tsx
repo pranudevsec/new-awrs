@@ -1,34 +1,42 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { useAppDispatch, useAppSelector } from "../../../reduxToolkit/hooks";
+import { awardTypeOptions } from "../../../data/options";
 import { SVGICON } from "../../../constants/iconsList";
+import { useAppDispatch, useAppSelector } from "../../../reduxToolkit/hooks";
+import { fetchApplicationUnits, fetchSubordinates } from "../../../reduxToolkit/services/application/applicationService";
 import Breadcrumb from "../../../components/ui/breadcrumb/Breadcrumb";
 import FormSelect from "../../../components/form/FormSelect";
-import Pagination from "../../../components/ui/pagination/Pagination";
-import { fetchApplicationUnits, fetchSubordinates } from "../../../reduxToolkit/services/application/applicationService";
-import { awardTypeOptions } from "../../../data/options";
-
-interface OptionType {
-  label: string;
-  value: string;
-}
-
+// import Pagination from "../../../components/ui/pagination/Pagination";
+import EmptyTable from "../../../components/ui/empty-table/EmptyTable";
+import Loader from "../../../components/ui/loader/Loader";
 
 const ApplicationsList = () => {
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
+
   const profile = useAppSelector((state) => state.admin.profile);
+  const { units, loading } = useAppSelector((state) => state.application);
 
-  const { units, loading, error } = useAppSelector((state) => state.application);
-
+  // States
   const [awardType, setAwardType] = useState<string | null>(null);
-  const [search, setSearch] = useState<string>('');
+  const [searchTerm, setSearchTerm] = useState<string>("");
+  const [debouncedSearch, setDebouncedSearch] = useState<string>("");
+
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setDebouncedSearch(searchTerm);
+    }, 500);
+
+    return () => {
+      clearTimeout(handler);
+    };
+  }, [searchTerm]);
 
   useEffect(() => {
     if (!profile?.user?.user_role) return;
 
     const fetchData = () => {
-      const params = { award_type: awardType || '', search };
+      const params = { award_type: awardType || '', search: debouncedSearch };
       if (profile.user.user_role !== 'unit') {
         dispatch(fetchSubordinates(params));
       } else {
@@ -37,7 +45,8 @@ const ApplicationsList = () => {
     };
 
     fetchData();
-  }, [dispatch, awardType, search, profile]);
+  }, [dispatch, awardType, debouncedSearch, profile]);
+
   return (
     <div className="clarification-section">
       <div className="d-flex flex-sm-row flex-column align-items-sm-center justify-content-between mb-4">
@@ -59,8 +68,8 @@ const ApplicationsList = () => {
             type="text"
             placeholder="search..."
             className="form-control"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
           />
         </div>
         <FormSelect
@@ -85,39 +94,20 @@ const ApplicationsList = () => {
               </th>
               <th style={{ width: 200, minWidth: 200, maxWidth: 200 }}>Dead Line</th>
               <th style={{ width: 150, minWidth: 150, maxWidth: 150 }}>Type</th>
-              {/* <th style={{ width: 200, minWidth: 200, maxWidth: 200 }}>Status</th> */}
               <th style={{ width: 100, minWidth: 100, maxWidth: 100 }}></th>
             </tr>
           </thead>
 
           <tbody>
-            {loading && (
+            {loading ?
               <tr>
-                <td colSpan={7} className="text-center">
-                  Loading...
+                <td colSpan={6}>
+                  <div className="d-flex justify-content-center py-5">
+                    <Loader inline size={40} />
+                  </div>
                 </td>
               </tr>
-            )}
-
-            {error && (
-              <tr>
-                <td colSpan={7} className="text-center text-danger">
-                  {error}
-                </td>
-              </tr>
-            )}
-
-            {!loading && !error && units.length === 0 && (
-              <tr>
-                <td colSpan={7} className="text-center">
-                  No applications found.
-                </td>
-              </tr>
-            )}
-
-            {!loading &&
-              !error &&
-              units.map((unit: any) => (
+              : units.length > 0 && units.map((unit: any) => (
                 <tr
                   key={unit.id}
                   onClick={() => navigate(`/applications/list/${unit.id}?award_type=${unit.type}`)}
@@ -154,7 +144,7 @@ const ApplicationsList = () => {
                     <Link
                       to={`/applications/list/${unit.id}?award_type=${unit.type}`}
                       className="action-btn bg-transparent d-inline-flex align-items-center justify-content-center"
-                      onClick={(e) => e.stopPropagation()} // prevent triggering row click navigation
+                      onClick={(e) => e.stopPropagation()}
                     >
                       {SVGICON.app.eye}
                     </Link>
@@ -164,7 +154,9 @@ const ApplicationsList = () => {
           </tbody>
         </table>
       </div>
-      <Pagination />
+
+      {!loading && units.length === 0 && <EmptyTable />}
+      {/* {units.length > 0 && <Pagination />} */}
     </div>
   );
 };

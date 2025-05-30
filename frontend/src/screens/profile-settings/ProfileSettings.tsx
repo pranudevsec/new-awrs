@@ -12,8 +12,11 @@ import { useAppSelector, useAppDispatch } from "../../reduxToolkit/hooks";
 import { getProfile, reqToUpdateUnitProfile } from "../../reduxToolkit/services/auth/authService";
 import FormSelect from "../../components/form/FormSelect";
 import Breadcrumb from "../../components/ui/breadcrumb/Breadcrumb";
+import { useEffect, useState } from "react";
+import Loader from "../../components/ui/loader/Loader";
 
-// Create a lookup for faster access
+type UserRole = "unit" | "brigade" | "division" | "corps" | "command" | string;
+
 const hierarchyMap: Record<string, string[]> = {};
 hierarchicalStructure.forEach(([command, corps, division, brigade, unit]) => {
   hierarchyMap[command] = [corps, division, brigade, unit];
@@ -21,8 +24,15 @@ hierarchicalStructure.forEach(([command, corps, division, brigade, unit]) => {
 
 const ProfileSettings = () => {
   const dispatch = useAppDispatch();
-  const profile = useAppSelector((state) => state.admin.profile);
-  type UserRole = "unit" | "brigade" | "division" | "corps" | "command" | string;
+  const { profile } = useAppSelector((state) => state.admin);
+
+  const [firstLoad, setFirstLoad] = useState(true);
+
+  useEffect(() => {
+    if (profile) {
+      setFirstLoad(false);
+    }
+  }, [profile]);
 
   const getVisibleFields = (role: UserRole): string[] => {
     switch (role) {
@@ -115,6 +125,10 @@ const ProfileSettings = () => {
       }
     },
   });
+
+  // Show loader
+  if (firstLoad) return <Loader />;
+
 
   return (
     <div className="profile-settings-section">

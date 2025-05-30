@@ -23,6 +23,7 @@ export interface ParameterResponse {
   message: string;
   success: boolean;
   data: Parameter[];
+  meta: Meta;
 }
 
 export interface ParameterRequest {

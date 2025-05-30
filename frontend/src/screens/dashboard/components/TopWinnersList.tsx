@@ -1,4 +1,4 @@
-import Pagination from "../../../components/ui/pagination/Pagination"
+// import Pagination from "../../../components/ui/pagination/Pagination"
 
 const TopWinnersList = () => {
     return (
@@ -131,7 +131,7 @@ const TopWinnersList = () => {
                     </tbody>
                 </table>
             </div>
-            <Pagination />
+            {/* <Pagination /> */}
         </div>
     )
 }

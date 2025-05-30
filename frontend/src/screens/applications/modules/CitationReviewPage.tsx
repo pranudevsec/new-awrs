@@ -5,13 +5,14 @@ import { unwrapResult } from "@reduxjs/toolkit";
 import toast from "react-hot-toast";
 import Breadcrumb from "../../../components/ui/breadcrumb/Breadcrumb";
 import EmptyTable from "../../../components/ui/empty-table/EmptyTable";
-import type { Parameter } from "../../../reduxToolkit/services/parameter/parameterInterface";
+import Loader from "../../../components/ui/loader/Loader";
 import { SVGICON } from "../../../constants/iconsList";
 import { useAppDispatch, useAppSelector } from "../../../reduxToolkit/hooks";
 import { getConfig } from "../../../reduxToolkit/services/config/configService";
 import { fetchParameters } from "../../../reduxToolkit/services/parameter/parameterService";
 import { resetCitationState } from "../../../reduxToolkit/slices/citation/citationSlice";
 import { createCitation } from "../../../reduxToolkit/services/citation/citationService";
+import type { Parameter } from "../../../reduxToolkit/services/parameter/parameterInterface";
 
 const DRAFT_STORAGE_KEY = "applyCitationDraft";
 
@@ -28,6 +29,7 @@ const CitationReviewPage = () => {
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
   const profile = useAppSelector((state) => state.admin.profile);
+  const { loading } = useAppSelector((state) => state.parameter);
 
   const [parameters, setParameters] = useState<Parameter[]>([]);
   const [counts, setCounts] = useState<Record<number, string>>({});
@@ -161,6 +163,8 @@ const CitationReviewPage = () => {
 
   // Total Parameters
   const totalParams = parameters.length;
+
+  if (loading) return <Loader />
 
   return (
     <div className="apply-citation-section">

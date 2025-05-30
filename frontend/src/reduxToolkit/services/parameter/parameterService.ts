@@ -1,28 +1,33 @@
 import { createAsyncThunk } from "@reduxjs/toolkit";
-import { apiEndPoints } from "../../../constants";
-import type { ParameterRequest, ParameterResponse } from "./parameterInterface";
 import toast from "react-hot-toast";
 import Axios from "../../helper/axios";
+import { apiEndPoints } from "../../../constants";
+import type { ParameterRequest, ParameterResponse } from "./parameterInterface";
 
 export const fetchParameters = createAsyncThunk<
   ParameterResponse,
-  { awardType: string; search: string }
->("parameters/fetch", async ({ awardType, search }, { rejectWithValue }) => {
-  try {
-    const response = await Axios.get(
-      `${apiEndPoints.parameter}?awardType=${awardType || ""}&search=${search}`
-    );
-    if (response.data.success) {
-      return response.data;
-    } else {
-      toast.error("Failed to fetch parameters");
-      return rejectWithValue(response.data.message);
+  { awardType: string; search: string; page?: number; limit?: number }
+>(
+  "parameters/fetch",
+  async ({ awardType, search, page, limit }, { rejectWithValue }) => {
+    try {
+      const response = await Axios.get(
+        `${apiEndPoints.parameter}?awardType=${
+          awardType || ""
+        }&search=${search}&page=${page || 1}&limit=${limit || 10}`
+      );
+      if (response.data.success) {
+        return response.data;
+      } else {
+        toast.error("Failed to fetch parameters");
+        return rejectWithValue(response.data.message);
+      }
+    } catch (error: any) {
+      toast.error(error.response?.data?.message || "Error fetching parameters");
+      return rejectWithValue("Failed to fetch parameters");
     }
-  } catch (error: any) {
-    toast.error(error.response?.data?.message || "Error fetching parameters");
-    return rejectWithValue("Failed to fetch parameters");
   }
-});
+);
 
 export const createParameter = createAsyncThunk<
   ParameterResponse,

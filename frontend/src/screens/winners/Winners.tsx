@@ -1,5 +1,5 @@
 import Breadcrumb from "../../components/ui/breadcrumb/Breadcrumb";
-import Pagination from "../../components/ui/pagination/Pagination";
+// import Pagination from "../../components/ui/pagination/Pagination";
 
 const Winners = () => {
   return (
@@ -135,7 +135,7 @@ const Winners = () => {
             </tbody>
           </table>
         </div>
-        <Pagination />
+        {/* <Pagination /> */}
       </div>
     </>
   );
