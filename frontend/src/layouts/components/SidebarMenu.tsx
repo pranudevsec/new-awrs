@@ -9,10 +9,15 @@ const SidebarMenu = () => {
 
   const alwaysVisible: string[] = [];
 
-  // Clarification is visible only to users who are NOT admin AND NOT command
-  if (userRole !== "admin" && userRole !== "command") {
-    alwaysVisible.push("Clarifications to Resolve", "Home", "Profile Settings");
-  }
+     // Clarification is visible only to users who are NOT admin AND NOT command
+     if (userRole !== "admin" && userRole !== "command") {
+      alwaysVisible.push("Clarifications to Resolve", "Home", "Profile Settings");
+    
+      if (userRole !== "unit") {
+        alwaysVisible.push("Clarifications I Raised");
+      }
+    }
+   
 
   // Find dashboard item from structure
   const dashboardItem = sidebarStructure.find(item => item.label === "Dashboard");

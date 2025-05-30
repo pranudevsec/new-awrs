@@ -55,7 +55,7 @@ const Applications = () => {
         {isHigherRole && (
           <>
             <div className="col-lg-3 col-sm-6">
-              <Link to="/applications/list" className="h-100 d-block">
+              <Link to="/clarifications/raised-list" className="h-100 d-block">
                 <div className="card border-0 h-100 d-flex align-items-center justify-content-center position-relative">
                   <span className="count-badge">5</span>
                   <div className="card-icon">
@@ -66,7 +66,7 @@ const Applications = () => {
               </Link>
             </div>
             <div className="col-lg-3 col-sm-6">
-              <Link to="/applications/clarification/list" className="h-100 d-block">
+              <Link to="/clarification" className="h-100 d-block">
                 <div className="card border-0 h-100 d-flex align-items-center justify-content-center">
                   <span className="count-badge">9</span>
                   <div className="card-icon">

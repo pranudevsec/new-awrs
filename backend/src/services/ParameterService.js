@@ -49,26 +49,62 @@ exports.createParameter = async (data) => {
 };
 
 // Get All Parameters
-exports.getAllParameters = async (awardType) => {
-    const client = await dbService.getClient();
-    try {
-      let result;
-      if (awardType) {
-        result = await client.query(
-          "SELECT * FROM Parameter_Master WHERE award_type = $1 ORDER BY param_id DESC",
-          [awardType]
-        );
-      } else {
-        result = await client.query(
-          "SELECT * FROM Parameter_Master ORDER BY param_id DESC"
-        );
-      }
-  
-      return ResponseHelper.success(200, "Fetched parameters", result.rows);
-    } finally {
-      client.release();
+exports.getAllParameters = async (query) => {
+  const client = await dbService.getClient();
+  try {
+    const { awardType, search, page = 1, limit = 10 } = query;
+let award_type = awardType;
+    const pageInt = parseInt(page);
+    const limitInt = parseInt(limit);
+    const offset = (pageInt - 1) * limitInt;
+
+    // Build dynamic query
+    const filters = [];
+    const values = [];
+
+    if (award_type) {
+      values.push(award_type);
+      filters.push(`award_type = $${values.length}`);
     }
-  };  
+console.log(search)
+    if (search) {
+      values.push(`%${search.toLowerCase()}%`);
+      filters.push(`LOWER(name) LIKE $${values.length}`);
+    }
+
+    const whereClause = filters.length ? `WHERE ${filters.join(" AND ")}` : "";
+
+    // Count total
+    const countQuery = `SELECT COUNT(*) FROM Parameter_Master ${whereClause}`;
+    const countResult = await client.query(countQuery, values);
+    const totalItems = parseInt(countResult.rows[0].count);
+
+    // Fetch paginated data
+    const dataQuery = `
+      SELECT * FROM Parameter_Master 
+      ${whereClause}
+      ORDER BY param_id DESC 
+      LIMIT $${values.length + 1} OFFSET $${values.length + 2}
+    `;
+    values.push(limitInt, offset);
+    const dataResult = await client.query(dataQuery, values);
+
+    const pagination = {
+      totalItems,
+      totalPages: Math.ceil(totalItems / limitInt),
+      currentPage: pageInt,
+      itemsPerPage: limitInt,
+    };
+
+    return ResponseHelper.success(200, "Fetched parameters", dataResult.rows,pagination);
+  } catch (err) {
+    console.error("Error in getAllParameters:", err.message);
+    return ResponseHelper.error(500, "Failed to fetch parameters", err.message);
+  } finally {
+    client.release();
+  }
+};
+
 
 // Get Parameter by ID
 exports.getParameterById = async (id) => {

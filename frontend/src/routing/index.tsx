@@ -8,6 +8,7 @@ const ApplyCitation = lazy(() => import("../screens/applications/modules/ApplyCi
 const CitationReviewPage = lazy(() => import("../screens/applications/modules/CitationReviewPage"));
 const ApplyAppreciation = lazy(() => import("../screens/applications/modules/ApplyAppreciation"));
 const ApplicationsList = lazy(() => import("../screens/applications/modules/ApplicationsList"));
+const ClarificationRaisedList = lazy(() => import("../screens/applications/modules/ClarificationRaisedList"));
 const ApplicationDetails = lazy(() => import("../screens/applications/modules/ApplicationDetails"));
 const ClarificationList = lazy(() => import("../screens/applications/modules/ClarificationList"));
 const ClarificationDetails = lazy(() => import("../screens/applications/modules/ClarificationDetails"));
@@ -62,6 +63,7 @@ export const authProtectedRoutes: RouteConfig[] = [
   { path: "/clarification", element: <Clarification /> },
   { path: "/clarification/unit/:application_id", element: <UnitClarificationDetail /> },
   { path: "/clarification/:id", element: <ClarificationDetail /> },
+  { path: "/clarifications/raised-list", element: <ClarificationRaisedList /> },
 
   // Command Panel
   { path: "/command-panel", element: <CommandPanel /> },

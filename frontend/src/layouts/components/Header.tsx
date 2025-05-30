@@ -24,6 +24,7 @@ const Header = () => {
         dispatch(signOut());
         localStorage.removeItem("persist:admin");
         navigate("/authentication/sign-in");
+        window.location.reload();
     }
 
     useEffect(() => {

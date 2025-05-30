@@ -42,3 +42,14 @@ export interface FetchSubordinatesResponse {
   message: string;
   data: Subordinate[];
 }
+
+export interface UpdateApplicationParams {
+  id?: number;  // now it can be 'number' or 'undefined'
+  type?: string;
+  status: string;
+}
+  export interface UpdateApplicationResponse {
+    success: boolean;
+    message: string;
+    data?: any;
+  }

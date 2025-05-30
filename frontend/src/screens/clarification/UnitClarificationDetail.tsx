@@ -4,7 +4,6 @@ import { SVGICON } from "../../constants/iconsList";
 import { useAppDispatch } from "../../reduxToolkit/hooks";
 import { fetchApplicationUnitDetail } from "../../reduxToolkit/services/application/applicationService";
 import Breadcrumb from "../../components/ui/breadcrumb/Breadcrumb";
-import FormInput from "../../components/form/FormInput";
 import GiveClarificationModal from "../../modals/GiveClarificationModal";
 
 
@@ -48,43 +47,37 @@ const UnitClarificationDetail = () => {
           />
         </div>
         <div className="table-filter-area mb-4">
-          <div className="row">
-            <div className="col-lg-3 col-sm-4 mb-sm-0 mb-2">
-              <FormInput
-                label="Award Type"
-                name="awardType"
-                value={unitDetail?.type || "--"}
-                readOnly={true}
-              />
-            </div>
-            <div className="col-lg-3 col-sm-4 mb-sm-0 mb-2">
-
-              <FormInput
-                label="Cycle Period"
-                name="cyclePeriod"
-                value={unitDetail?.fds?.cycle_period || "--"}
-                readOnly={true}
-              />
-            </div>
-            <div className="col-lg-3 col-sm-4">
-              <FormInput
-                label="Last Date"
-                name="lastDate"
-                type="date"
-                value={unitDetail?.fds?.last_date || "--"}
-                readOnly={true}
-              />
-            </div>
-            <div className="col-lg-3 col-sm-4">
-              <FormInput
-                label="Command"
-                name="command"
-                value={unitDetail?.fds?.command || "--"}
-                readOnly={true}
-              />
-            </div>
-          </div>
+      <div className="d-flex flex-wrap justify-content-between align-items-center gap-3">
+        <div className="text-center flex-grow-1 flex-sm-grow-0 flex-basis-100 flex-sm-basis-auto" style={{ minWidth: '150px' }}>
+          <label className="form-label fw-semibold">Award Type</label>
+          <p className="fw-5 mb-0">
+      {unitDetail?.type
+        ? unitDetail.type.charAt(0).toUpperCase() + unitDetail.type.slice(1)
+        : "--"}
+    </p>
         </div>
+    
+        <div className="text-center flex-grow-1 flex-sm-grow-0 flex-basis-100 flex-sm-basis-auto" style={{ minWidth: '150px' }}>
+          <label className="form-label fw-semibold">Cycle Period</label>
+          <p className="fw-5 mb-0">{unitDetail?.fds?.cycle_period || "--"}</p>
+        </div>
+    
+        <div className="text-center flex-grow-1 flex-sm-grow-0 flex-basis-100 flex-sm-basis-auto" style={{ minWidth: '150px' }}>
+          <label className="form-label fw-semibold">Last Date</label>
+          <p className="fw-5 mb-0">{unitDetail?.fds?.last_date || "--"}</p>
+        </div>
+    
+        <div className="text-center flex-grow-1 flex-sm-grow-0 flex-basis-100 flex-sm-basis-auto" style={{ minWidth: '150px' }}>
+          <label className="form-label fw-semibold">Command</label>
+          <p className="fw-5 mb-0">{unitDetail?.fds?.command || "--"}</p>
+        </div>
+    
+        <div className="text-center flex-grow-1 flex-sm-grow-0 flex-basis-100 flex-sm-basis-auto" style={{ minWidth: '150px' }}>
+          <label className="form-label fw-semibold">Unit Name</label>
+          <p className="fw-5 mb-0">{unitDetail?.unit_name || "--"}</p>
+        </div>
+      </div>
+    </div>
         <div className="table-responsive">
           <table className="table-style-1 w-100">
             <thead>
@@ -149,19 +142,19 @@ const UnitClarificationDetail = () => {
                       </p>
                     </td>
                     <td style={{ width: 200 }}>
-                      {param?.clarification_details?.clarification_doc ? (
-                        <a
-                          href={param?.clarification_details?.clarification_doc}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="text-primary"
-                        >
-                          View Document
-                        </a>
-                      ) : (
-                        <input type="file" className="form-control" autoComplete="off" />
-                      )}
-                    </td>
+    {param?.clarification_details?.clarification_doc ? (
+      <a
+        href={param?.clarification_details?.clarification_doc}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="text-primary"
+      >
+        View Document
+      </a>
+    ) : (
+      !param?.clarification_details?.clarification_doc && param?.clarification_details?.clarification ?"--": <input type="file" className="form-control" autoComplete="off" />
+    )}
+  </td>
 
                     <td style={{ width: 200 }}>
                       {param?.clarification_details?.clarification ? (

@@ -15,8 +15,7 @@ exports.createParameter = async (req, res) => {
 
 exports.getAllParameters = async (req, res) => {
     try {
-      const { awardType } = req.query;
-      const result = await ParameterService.getAllParameters(awardType);
+      const result = await ParameterService.getAllParameters(req.query);
       res.status(StatusCodes.OK).send(result);
     } catch (error) {
       res.status(StatusCodes.INTERNAL_SERVER_ERROR).send(

@@ -28,7 +28,7 @@ const groupParametersByCategory = (params: Parameter[]) => {
 const CitationReviewPage = () => {
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
-  const profile = useAppSelector((state) => state.admin.profile);
+  const profile :any= useAppSelector((state) => state.admin.profile);
   const { loading } = useAppSelector((state) => state.parameter);
 
   const [parameters, setParameters] = useState<Parameter[]>([]);
@@ -76,6 +76,25 @@ const CitationReviewPage = () => {
     },
     onSubmit: async (values) => {
       try {
+        const requiredFields = [
+          { key: "bde", name: "Brigade" },
+          { key: "div", name: "Division" },
+          { key: "corps", name: "Corps" },
+          { key: "comd", name: "Command" },
+          { key: "name", name: "Unit Name" },
+        ];
+    
+        const missingFields = requiredFields.filter(
+          (field) => !profile?.unit?.[field.key]
+        );
+    
+        if (missingFields.length > 0) {
+          const missingNames = missingFields.map((f) => f.name).join(", ");
+          toast.error(`Please fill the following unit fields: ${missingNames}`);
+            navigate("/profile-settings");
+          return;
+        }
+   
         const formattedParameters = parameters.map((param: any) => {
           const trimmedName = param.name.trim();
           const count = Number(counts[param.param_id] ?? 0);

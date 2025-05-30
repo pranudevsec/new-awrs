@@ -1,0 +1,172 @@
+import { useEffect, useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import { useAppDispatch, useAppSelector } from "../../../reduxToolkit/hooks";
+import { SVGICON } from "../../../constants/iconsList";
+import Breadcrumb from "../../../components/ui/breadcrumb/Breadcrumb";
+import FormSelect from "../../../components/form/FormSelect";
+// import Pagination from "../../../components/ui/pagination/Pagination";
+import { fetchApplicationUnits, fetchSubordinates } from "../../../reduxToolkit/services/application/applicationService";
+import { awardTypeOptions } from "../../../data/options";
+
+interface OptionType {
+  label: string;
+  value: string;
+}
+
+
+const ClarificationRaisedList = () => {
+  const navigate = useNavigate();
+  const dispatch = useAppDispatch();
+  const profile = useAppSelector((state) => state.admin.profile);
+
+  const { units, loading, error } = useAppSelector((state) => state.application);
+
+  const [awardType, setAwardType] = useState<string | null>(null);
+  const [search, setSearch] = useState<string>('');
+
+  useEffect(() => {
+    if (!profile?.user?.user_role) return;
+
+    const fetchData = () => {
+      const params = { award_type: awardType || '', search };
+      if (profile.user.user_role !== 'unit') {
+        dispatch(fetchSubordinates(params));
+      } else {
+        dispatch(fetchApplicationUnits(params));
+      }
+    };
+
+    fetchData();
+  }, [dispatch, awardType, search, profile]);
+  return (
+    <div className="clarification-section">
+      <div className="d-flex flex-sm-row flex-column align-items-sm-center justify-content-between mb-4">
+        <Breadcrumb
+          title="Clarifications I Raised"
+          paths={[
+            { label: "Home", href: "/applications" },
+            { label: "Clarifications I Raised", href: "/applications/raised-list" },
+          ]}
+        />
+      </div>
+
+      <div className="filter-wrapper d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
+        <div className="search-wrapper position-relative">
+          <button className="border-0 bg-transparent position-absolute translate-middle-y top-50">
+            {SVGICON.app.search}
+          </button>
+          <input
+            type="text"
+            placeholder="search..."
+            className="form-control"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+          />
+        </div>
+        <FormSelect
+          name="awardType"
+          options={awardTypeOptions}
+          value={awardType}
+          placeholder="Select Type"
+          onChange={(option: OptionType | null) => setAwardType(option ? option.value : null)}
+        />
+      </div>
+
+      <div className="table-responsive">
+        <table className="table-style-2 w-100">
+          <thead>
+            <tr>
+              <th style={{ width: 150, minWidth: 150, maxWidth: 150 }}>
+                Application Id
+              </th>
+              <th style={{ width: 150, minWidth: 150, maxWidth: 150 }}>Unit ID</th>
+              <th style={{ width: 200, minWidth: 200, maxWidth: 200 }}>
+                Submission Date
+              </th>
+              <th style={{ width: 200, minWidth: 200, maxWidth: 200 }}>Dead Line</th>
+              <th style={{ width: 150, minWidth: 150, maxWidth: 150 }}>Type</th>
+              {/* <th style={{ width: 200, minWidth: 200, maxWidth: 200 }}>Status</th> */}
+              <th style={{ width: 100, minWidth: 100, maxWidth: 100 }}></th>
+            </tr>
+          </thead>
+
+          <tbody>
+            {loading && (
+              <tr>
+                <td colSpan={7} className="text-center">
+                  Loading...
+                </td>
+              </tr>
+            )}
+
+            {error && (
+              <tr>
+                <td colSpan={7} className="text-center text-danger">
+                  {error}
+                </td>
+              </tr>
+            )}
+
+            {!loading && !error && units.length === 0 && (
+              <tr>
+                <td colSpan={7} className="text-center">
+                  No applications found.
+                </td>
+              </tr>
+            )}
+
+            {!loading &&
+              !error &&
+              units.map((unit: any) => (
+                <tr
+                  key={unit.id}
+                  onClick={() => navigate(`/applications/list/${unit.id}?award_type=${unit.type}`)}
+                  style={{ cursor: "pointer" }}
+                >
+                  <td style={{ width: 150, minWidth: 150, maxWidth: 150 }}>
+                    <p className="fw-4">#{unit.id}</p>
+                  </td>
+                  <td style={{ width: 150, minWidth: 150, maxWidth: 150 }}>
+                    <p className="fw-4">#{unit.unit_id}</p>
+                  </td>
+                  <td style={{ width: 200, minWidth: 200, maxWidth: 200 }}>
+                    <p className="fw-4">
+                      {new Date(unit.date_init).toLocaleDateString()}
+                    </p>
+                  </td>
+                  <td style={{ width: 200, minWidth: 200, maxWidth: 200 }}>
+                    <p className="fw-4">
+                      {unit.fds?.last_date
+                        ? new Date(unit.fds.last_date).toLocaleDateString()
+                        : "-"}
+                    </p>
+                  </td>
+                  <td style={{ width: 150, minWidth: 150, maxWidth: 150 }}>
+                    <p className="fw-4">{unit.type}</p>
+                  </td>
+                  {/* <td style={{ width: 200, minWidth: 200, maxWidth: 200 }}>
+                    <div className="status-content approved pending d-flex align-items-center gap-3">
+                      <span></span>
+                      <p className="text-capitalize fw-5">Accepted</p>
+                    </div>
+                  </td> */}
+                  <td style={{ width: 100, minWidth: 100, maxWidth: 100 }}>
+                    <Link
+                      to={`/applications/list/${unit.id}?award_type=${unit.type}`}
+                      className="action-btn bg-transparent d-inline-flex align-items-center justify-content-center"
+                      onClick={(e) => e.stopPropagation()} // prevent triggering row click navigation
+                    >
+                      {SVGICON.app.eye}
+                    </Link>
+                  </td>
+                </tr>
+              ))}
+          </tbody>
+        </table>
+      </div>
+      {/* <Pagination /> */}
+    </div>
+  );
+};
+
+export default ClarificationRaisedList;
