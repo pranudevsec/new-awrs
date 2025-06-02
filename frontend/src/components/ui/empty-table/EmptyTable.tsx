@@ -6,7 +6,7 @@ const EmptyTable = () => {
             <div className="d-flex align-items-center justify-content-center">
                 {SVGICON.app.noData}
             </div>
-            <p className="fw-5 mt-4">No Data</p>
+            <p className="fw-5 mt-4">No Data Found</p>
         </div>
     )
 }

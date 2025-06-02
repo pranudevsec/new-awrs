@@ -6,6 +6,7 @@ import type {
   CommandPanelResponse,
   DashboardResponse,
   DashboardUnitScoreResponse,
+  HomeCountResponse,
 } from "./commandPanelInterface";
 
 // ✅ Get ScoreBoards
@@ -81,3 +82,22 @@ export const getDashboardUnitScores =
       }
     }
   );
+
+  // ✅ Get Home Count Stats
+export const getHomeCountStats = createAsyncThunk<HomeCountResponse>(
+  "commandPanel/getHomeCounts",
+  async (_, { rejectWithValue }) => {
+    try {
+      const response = await Axios.get(`${apiEndPoints.dashboard}/home-counts`);
+      if (response.data.success) {
+        return response.data;
+      } else {
+        toast.error(response.data.message || "Failed to fetch home counts");
+        return rejectWithValue(response.data.message);
+      }
+    } catch (error: any) {
+      toast.error(error.response?.data?.message || "Error fetching home counts");
+      return rejectWithValue(error.response?.data?.message);
+    }
+  }
+);

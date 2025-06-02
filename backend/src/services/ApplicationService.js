@@ -269,10 +269,11 @@ exports.getApplicationsOfSubordinates = async (user, query) => {
 
   try {
     const { user_role } = user;
-    const { award_type, search } = query;
+    const { award_type, search, page = 1, limit = 10 } = query;
+
     const profile = await AuthService.getProfile(user);
     const unit = profile?.data?.unit;
-    // Role-based required fields
+
     const roleFieldRequirements = {
       unit: ["bde", "div", "corps", "comd", "name"],
       brigade: ["div", "corps", "comd", "name"],
@@ -281,14 +282,12 @@ exports.getApplicationsOfSubordinates = async (user, query) => {
       command: ["name"],
     };
 
-    // Validate required fields for the user's role
     const requiredFields = roleFieldRequirements[user_role.toLowerCase()] || [];
-
     const missingFields = requiredFields.filter(field => !unit?.[field] || unit[field] === "");
     if (missingFields.length > 0) {
       throw new Error("Please complete your unit profile before proceeding.");
     }
-    
+
     const hierarchy = ["unit", "brigade", "division", "corps", "command"];
     const currentIndex = hierarchy.indexOf(user_role.toLowerCase());
 
@@ -296,7 +295,7 @@ exports.getApplicationsOfSubordinates = async (user, query) => {
       throw new Error("Invalid or lowest level user role");
     }
 
-    let lowerRole = hierarchy[currentIndex - 1];
+    const lowerRole = hierarchy[currentIndex - 1];
     const subordinateFieldMap = {
       brigade: 'bde',
       division: 'div',
@@ -313,22 +312,22 @@ exports.getApplicationsOfSubordinates = async (user, query) => {
       `SELECT unit_id FROM Unit_tab WHERE ${matchField} = $1`,
       [unit.name]
     );
-    const unitIds = subUnitsRes.rows.map((u) => u.unit_id);
 
+    const unitIds = subUnitsRes.rows.map(u => u.unit_id);
     if (unitIds.length === 0) {
-      return ResponseHelper.success(200, "No subordinate units found", []);
+      return ResponseHelper.success(200, "No subordinate units found", [], { totalItems: 0 });
     }
 
     let baseFilters = '';
     const queryParams = [unitIds];
-    
+
     if (user_role.toLowerCase() === 'brigade') {
       baseFilters = `unit_id = ANY($1) AND status_flag != 'approved' AND (last_approved_by_role IS NULL OR last_approved_at IS NULL)`;
     } else {
       baseFilters = `unit_id = ANY($1) AND status_flag = 'approved' AND last_approved_by_role = $2`;
       queryParams.push(lowerRole);
     }
-    
+
     const citationQuery = `
       SELECT 
         citation_id AS id,
@@ -342,7 +341,7 @@ exports.getApplicationsOfSubordinates = async (user, query) => {
       FROM Citation_tab
       WHERE ${baseFilters}
     `;
-    
+
     const appreQuery = `
       SELECT 
         appreciation_id AS id,
@@ -356,22 +355,23 @@ exports.getApplicationsOfSubordinates = async (user, query) => {
       FROM Appre_tab
       WHERE ${baseFilters}
     `;
-    
+
     const [citations, appreciations] = await Promise.all([
       client.query(citationQuery, queryParams),
       client.query(appreQuery, queryParams)
     ]);
-    
 
     let allApps = [...citations.rows, ...appreciations.rows];
 
+    // Filter by award_type
     if (award_type) {
       allApps = allApps.filter(app =>
         app.fds?.award_type?.toLowerCase() === award_type.toLowerCase()
       );
     }
 
-    const normalize = (str) => str?.toString().toLowerCase().replace(/[\s\-]/g, "");
+    // Search filter
+    const normalize = str => str?.toString().toLowerCase().replace(/[\s\-]/g, "");
     if (search) {
       const searchLower = normalize(search);
       allApps = allApps.filter(app => {
@@ -381,10 +381,10 @@ exports.getApplicationsOfSubordinates = async (user, query) => {
       });
     }
 
+    // Clarification linking
     const clarificationIds = [];
     allApps.forEach(app => {
-      const parameters = app.fds?.parameters || [];
-      parameters.forEach(param => {
+      app.fds?.parameters?.forEach(param => {
         if (param.clarification_id) {
           clarificationIds.push(param.clarification_id);
         }
@@ -403,18 +403,72 @@ exports.getApplicationsOfSubordinates = async (user, query) => {
       }, {});
     }
 
-    allApps.forEach(app => {
-      app.fds?.parameters?.forEach(param => {
-        if (param.clarification_id && clarificationMap[param.clarification_id]) {
-          param.clarification_details = clarificationMap[param.clarification_id];
+    // Map clarification data to parameters
+    allApps = allApps.map(app => {
+      const updatedParams = app.fds?.parameters?.map(param => {
+        if (param.clarification_id) {
+          return {
+            ...param,
+            clarification: clarificationMap[param.clarification_id] || null,
+          };
         }
+        return param;
       });
+
+      return {
+        ...app,
+        fds: {
+          ...app.fds,
+          parameters: updatedParams,
+        }
+      };
     });
 
+    // Add clarification count per application
+    let total_pending_clarifications = 0;
+    allApps = allApps.map(app => {
+      let clarifications_count = 0;
+      const cleanedParameters = app.fds.parameters.map(param => {
+        const newParam = { ...param };
+        if (newParam.clarification?.clarification_status === "pending") {
+          clarifications_count++;
+          total_pending_clarifications++;
+        }
+        delete newParam.clarification;
+        delete newParam.clarification_id;
+        return newParam;
+      });
+
+      return {
+        ...app,
+        clarifications_count,
+        total_pending_clarifications,
+        fds: {
+          ...app.fds,
+          parameters: cleanedParameters,
+        },
+      };
+    });
+
+    // Sort by date
     allApps.sort((a, b) => new Date(b.date_init) - new Date(a.date_init));
 
-    return ResponseHelper.success(200, "Fetched subordinate applications", allApps);
+    // ✅ Pagination
+    const pageInt = parseInt(page);
+    const limitInt = parseInt(limit);
+    const startIndex = (pageInt - 1) * limitInt;
+    const endIndex = pageInt * limitInt;
 
+    const paginatedData = allApps.slice(startIndex, endIndex);
+
+    const pagination = {
+      totalItems: allApps.length,
+      totalPages: Math.ceil(allApps.length / limitInt),
+      currentPage: pageInt,
+      itemsPerPage: limitInt,
+    };
+
+    return ResponseHelper.success(200, "Fetched subordinate applications", paginatedData, pagination);
   } catch (err) {
     return ResponseHelper.error(500, "Failed to fetch subordinate applications", err.message);
   } finally {
@@ -617,7 +671,7 @@ exports.getApplicationsScoreboard = async (user, query) => {
       currentPage: pageInt,
       itemsPerPage: limitInt,
     };
-console.log(pagination)
+    
     return ResponseHelper.success(200, "Fetched approved applications", allApps, pagination);
 
   } catch (err) {
@@ -682,6 +736,67 @@ console.log(pagination)
     } catch (err) {
       console.error("Error updating status:", err);
       throw new Error(err.message);
+    } finally {
+      client.release();
+    }
+  };
+  
+  exports.approveApplicationMarks = async (user, body) => {
+    const client = await dbService.getClient();
+    try {
+      const { type, application_id, parameters } = body;
+  
+      if (!["citation", "appreciation"].includes(type)) {
+        return ResponseHelper.error(400, "Invalid type provided");
+      }
+  
+      const tableName = type === "citation" ? "Citation_tab" : "Appre_tab";
+      const idColumn = type === "citation" ? "citation_id" : "appreciation_id";
+  
+      // 1. Get existing application
+      const res = await client.query(
+        `SELECT ${idColumn}, ${type === "citation" ? "citation_fds" : "appre_fds"} AS fds FROM ${tableName} WHERE ${idColumn} = $1`,
+        [application_id]
+      );
+  
+      if (res.rowCount === 0) {
+        return ResponseHelper.error(404, "Application not found");
+      }
+  
+      let fds = res.rows[0].fds;
+  
+      // 2. Add approved_marks, approved_by_user, approved_by_role, approved_marks_at
+      const now = new Date();
+      const updatedParams = fds.parameters.map(param => {
+        const approvedParam = parameters.find(p => p.name === param.name);
+        if (approvedParam) {
+          return {
+            ...param,
+            approved_marks: approvedParam.approved_marks,
+            approved_by_user: user.user_id,
+            approved_by_role: user.user_role,
+            approved_marks_at: now,
+          };
+        }
+        return param;
+      });
+  
+      // 3. Update fds object
+      fds.parameters = updatedParams;
+  
+      // 4. Update in DB
+      await client.query(
+        `UPDATE ${tableName}
+         SET ${type === "citation" ? "citation_fds" : "appre_fds"} = $1,
+             last_approved_by_role = $2,
+             last_approved_at = $3
+         WHERE ${idColumn} = $4`,
+        [fds, user.user_role, now, application_id]
+      );
+  
+      return ResponseHelper.success(200, "Marks approved successfully");
+    } catch (error) {
+      return ResponseHelper.error(500, "Failed to approve marks", error.message);
     } finally {
       client.release();
     }

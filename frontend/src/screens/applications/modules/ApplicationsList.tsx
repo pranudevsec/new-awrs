@@ -134,7 +134,7 @@ const ApplicationsList = () => {
                     </p>
                   </td>
                   <td style={{ width: 150, minWidth: 150, maxWidth: 150 }}>
-                    <p className="fw-4">{unit.type}</p>
+                    <p className="fw-4">{unit.type.charAt(0).toUpperCase() + unit.type.slice(1)}</p>
                   </td>
                   {/* <td style={{ width: 200, minWidth: 200, maxWidth: 200 }}>
                     <div className="status-content approved pending d-flex align-items-center gap-3">

@@ -2,6 +2,8 @@ import { createAsyncThunk } from "@reduxjs/toolkit";
 import toast from "react-hot-toast";
 import Axios from "../../helper/axios";
 import type {
+  ApproveMarksParam,
+  ApproveMarksResponse,
   FetchApplicationUnitDetailResponse,
   FetchApplicationUnitsResponse,
   UpdateApplicationParams,
@@ -152,3 +154,31 @@ export const updateApplication = createAsyncThunk<
     );
   }
 });
+
+export const approveMarks = createAsyncThunk<
+  ApproveMarksResponse,
+  ApproveMarksParam
+>("applications/approveMarks", async (body, { rejectWithValue }) => {
+  try {
+    const response = await Axios.post(
+      `${apiEndPoints.application}/approve-marks`,
+      body
+    );
+
+    if (response.data.success) {
+      toast.success(response.data.message || "Marks approved successfully");
+      return response.data;
+    } else {
+      toast.error(response.data.message || "Failed to approve marks");
+      return rejectWithValue(response.data.message);
+    }
+  } catch (error: any) {
+    toast.error(
+      error.response?.data?.message || "Error approving marks"
+    );
+    return rejectWithValue(
+      error.response?.data?.message || "Failed to approve marks"
+    );
+  }
+});
+

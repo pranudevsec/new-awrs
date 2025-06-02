@@ -68,4 +68,34 @@ exports.getApplicationsScoreboard = async (req, res) => {
     }
   };
   
+  exports.approveApplicationMarks = async (req, res) => {
+    try {
+      const result = await ApplicationService.approveApplicationMarks(req.user, req.body);
+      res.status(StatusCodes.OK).send(result);
+    } catch (error) {
+      res.status(StatusCodes.INTERNAL_SERVER_ERROR).send(
+        ResponseHelper.error(StatusCodes.INTERNAL_SERVER_ERROR, "Internal Server Error", error.message)
+      );
+    }
+  };
+  exports.uploadDoc = async (req, res) => {
+    try {
+      if (req.files && Array.isArray(req.files)) {
+        const fileUrls = req.files.map((file) => ({
+          field: file.fieldname,
+          urlPath: `/uploads/${file.filename}`
+        }));
+        
+        return res.status(StatusCodes.OK).send(fileUrls);
+      }
+  
+      res.status(StatusCodes.BAD_REQUEST).send(
+        ResponseHelper.error(StatusCodes.BAD_REQUEST, "No files uploaded")
+      );
+    } catch (error) {
+      res.status(StatusCodes.INTERNAL_SERVER_ERROR).send(
+        ResponseHelper.error(StatusCodes.INTERNAL_SERVER_ERROR, "Internal Server Error", error.message)
+      );
+    }
+  };
   

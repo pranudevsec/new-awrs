@@ -249,7 +249,7 @@ exports.addClarification = async (user, data) => {
     const client = await dbService.getClient();
     try {
       const unitId = user.unit_id;
-      const { award_type, search } = query;
+      const { award_type, search, page = 1, limit = 10 } = query;
   
       // Fetch citations
       const citationQuery = `
@@ -263,6 +263,7 @@ exports.addClarification = async (user, data) => {
         FROM Citation_tab
         WHERE unit_id = $1
       `;
+      // Fetch appreciations
       const appreQuery = `
         SELECT 
           appreciation_id AS id,
@@ -280,7 +281,7 @@ exports.addClarification = async (user, data) => {
   
       let allApps = [...citations.rows, ...appreciations.rows];
   
-      // Filter by award type
+      // Filter by award_type if given
       if (award_type) {
         allApps = allApps.filter((app) =>
           app.fds?.award_type?.toLowerCase() === award_type.toLowerCase()
@@ -300,9 +301,8 @@ exports.addClarification = async (user, data) => {
         });
       }
   
-      // Fetch clarifications for all clarification_ids in parameters
+      // Gather all clarification_ids from parameters
       const clarificationIdSet = new Set();
-  
       allApps.forEach((app) => {
         app.fds?.parameters?.forEach((param) => {
           if (param.clarification_id) {
@@ -310,23 +310,21 @@ exports.addClarification = async (user, data) => {
           }
         });
       });
-  
       const clarificationIds = Array.from(clarificationIdSet);
-      let clarificationsMap = {};
   
+      let clarificationsMap = {};
       if (clarificationIds.length > 0) {
         const clarRes = await client.query(
           `SELECT * FROM Clarification_tab WHERE clarification_id = ANY($1)`,
           [clarificationIds]
         );
-  
         clarificationsMap = clarRes.rows.reduce((acc, row) => {
           acc[row.clarification_id] = row;
           return acc;
         }, {});
       }
   
-      // Inject clarification into matching parameter
+      // Inject clarification data into parameters
       allApps = allApps.map((app) => {
         const updatedParams = app.fds?.parameters?.map((param) => {
           if (param.clarification_id) {
@@ -354,24 +352,51 @@ exports.addClarification = async (user, data) => {
   
       // Sort by date_init descending
       allApps.sort((a, b) => new Date(b.date_init) - new Date(a.date_init));
-      const filteredApplications = allApps.filter(app =>
-        app.fds?.parameters?.some(param =>
-          param.clarification?.clarification_by_role?.toLowerCase() === "brigade"
+  
+      // Filter to only apps where any parameter's clarification is by role 'brigade'
+      const filteredApplications = allApps.filter((app) =>
+        app.fds?.parameters?.some(
+          (param) => param.clarification?.clarification_by_role?.toLowerCase() === "brigade"
         )
       );
-      
-      return ResponseHelper.success(200, "Fetched applications with clarifications", filteredApplications);
+  
+      // --- Pagination Logic ---
+      const pageInt = parseInt(page, 10);
+      const limitInt = parseInt(limit, 10);
+      const totalItems = filteredApplications.length;
+      const totalPages = Math.ceil(totalItems / limitInt);
+      const startIndex = (pageInt - 1) * limitInt;
+      const endIndex = startIndex + limitInt;
+  
+      const paginatedData = filteredApplications.slice(startIndex, endIndex);
+  
+      const pagination = {
+        totalItems,
+        totalPages,
+        currentPage: pageInt,
+        itemsPerPage: limitInt,
+      };
+  
+      return ResponseHelper.success(
+        200,
+        "Fetched applications with clarifications",
+        paginatedData,
+        pagination
+      );
     } catch (err) {
       return ResponseHelper.error(500, "Failed to fetch data", err.message);
     } finally {
       client.release();
     }
   };
+  
 
   exports.getAllApplicationsWithClarificationsForSubordinates = async (user, query) => {
     const client = await dbService.getClient();
     try {
       const { user_role, unit_id } = user;
+      const { award_type, search, page = 1, limit = 10 } = query;
+  
       const roleHierarchy = ['unit', 'brigade', 'division', 'corps', 'command'];
       const currentRoleIndex = roleHierarchy.indexOf(user_role.toLowerCase());
   
@@ -423,19 +448,19 @@ exports.addClarification = async (user, data) => {
         const unit = unitRes.rows[0];
         if (!unit || unit[matchingField] !== ownUnitName) continue;
   
-        // Decrypt if necessary, or use directly
         const fds = typeof application[fdsField] === 'string'
           ? JSON.parse(application[fdsField])
           : application[fdsField];
   
-        // Inject clarification into the right parameter
+        let clarifications_count = 0;
+  
         if (Array.isArray(fds.parameters)) {
           fds.parameters = fds.parameters.map(param => {
             if (param.name === clarification.parameter_name) {
+              clarifications_count++;
               return {
                 ...param,
                 clarification_id: clarification.clarification_id,
-                last_clarification_id: clarification.clarification_id,
                 last_clarification_status: clarification.clarification_status,
                 last_clarification_handled_by: clarification.clarification_by_role,
                 clarification
@@ -450,11 +475,48 @@ exports.addClarification = async (user, data) => {
           type: clarification.application_type,
           unit_id: application.unit_id,
           date_init: application.date_init,
+          clarifications_count,
           fds
         });
       }
   
-      return ResponseHelper.success(200, 'Fetched pending clarifications', responseData);
+      // 🔍 Filter by award_type if present
+      if (award_type) {
+        responseData = responseData.filter(app =>
+          app.fds?.award_type?.toLowerCase() === award_type.toLowerCase()
+        );
+      }
+  
+      // 🔍 Search filter (by id or cycle_period)
+      const normalize = str => str?.toString().toLowerCase().replace(/[\s\-]/g, "");
+      if (search) {
+        const searchLower = normalize(search);
+        responseData = responseData.filter(app => {
+          const idMatch = app.id.toString().toLowerCase().includes(searchLower);
+          const cycleMatch = normalize(app.fds?.cycle_period || "").includes(searchLower);
+          return idMatch || cycleMatch;
+        });
+      }
+  
+      // ⏳ Sort by date_init descending
+      responseData.sort((a, b) => new Date(b.date_init) - new Date(a.date_init));
+  
+      // 📄 Pagination logic
+      const pageInt = parseInt(page);
+      const limitInt = parseInt(limit);
+      const startIndex = (pageInt - 1) * limitInt;
+      const endIndex = pageInt * limitInt;
+  
+      const paginatedData = responseData.slice(startIndex, endIndex);
+      const pagination = {
+        totalItems: responseData.length,
+        totalPages: Math.ceil(responseData.length / limitInt),
+        currentPage: pageInt,
+        itemsPerPage: limitInt,
+      };
+      console.log(pagination)
+  
+      return ResponseHelper.success(200, 'Fetched pending clarifications', paginatedData, pagination);
     } catch (err) {
       console.error(`[Clarification API] Error: ${err.message}`);
       return ResponseHelper.error(500, 'Failed to fetch clarifications', err.message);
@@ -462,3 +524,4 @@ exports.addClarification = async (user, data) => {
       client.release();
     }
   };
+  

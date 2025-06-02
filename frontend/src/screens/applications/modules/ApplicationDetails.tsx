@@ -4,13 +4,14 @@ import { IoMdCheckmark } from "react-icons/io";
 import { SVGICON } from "../../../constants/iconsList";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { useAppDispatch, useAppSelector } from "../../../reduxToolkit/hooks";
-import { fetchApplicationUnitDetail, updateApplication } from "../../../reduxToolkit/services/application/applicationService";
+import { approveMarks, fetchApplicationUnitDetail, updateApplication } from "../../../reduxToolkit/services/application/applicationService";
 import { updateClarification } from "../../../reduxToolkit/services/clarification/clarificationService";
 import Breadcrumb from "../../../components/ui/breadcrumb/Breadcrumb";
 import UnitClarificationModal from "../../../modals/UnitClarificationModal";
 import ReqClarificationModal from "../../../modals/ReqClarificationModal";
 import Loader from "../../../components/ui/loader/Loader";
 import { baseURL } from "../../../reduxToolkit/helper/axios";
+import { useDebounce } from "../../../hooks/useDebounce";
 
 const ApplicationDetails = () => {
   const navigate = useNavigate();
@@ -30,7 +31,9 @@ const ApplicationDetails = () => {
   const [clarificationClarificationForView, setClarificationClarificationForView] = useState<string | null>(null);
   const [reqClarificationShow, setReqClarificationShow] = useState(false);
   const [isRefreshData, setIsRefreshData] = useState(false);
-
+  const [approvedMarksState, setApprovedMarksState] = useState<
+  Record<string, string>
+>({});
   const isUnitRole = profile?.user?.user_role === "unit";
   const roleHierarchy = ["unit", "brigade", "division", "corps", "command"];
   const role = profile?.user?.user_role?.toLowerCase() ?? '';
@@ -49,6 +52,39 @@ const ApplicationDetails = () => {
     return (param.marks ?? 0) < 0 ? acc + (param.marks ?? 0) : acc;
   }, 0);
   const totalMarks = parameters.reduce((acc: any, param: any) => acc + (param.marks ?? 0), 0);
+
+  useEffect(() => {
+    console.log(unitDetail?.fds?.parameters)
+    if (unitDetail?.fds?.parameters) {
+      const initialMarks: Record<string, string> = {};
+      unitDetail?.fds?.parameters.forEach((param: any) => {
+        initialMarks[param.name] = param.approved_marks ?? "";
+      });
+      setApprovedMarksState(initialMarks);
+    }
+  }, [unitDetail]);
+
+  const handleSave = (paramName: string, marks: string) => {
+    if (marks === undefined) return;
+  
+    const body = {
+      type: unitDetail?.type || "citation",
+      application_id: unitDetail?.id || 0,
+      parameters: [{ name: paramName, approved_marks: marks }],
+    };
+  
+    dispatch(approveMarks(body))
+      .unwrap();
+  };
+  
+  
+  // Create debounced version of handleSave
+  const debouncedHandleSave = useDebounce(handleSave, 600);
+
+  const handleInputChange = (paramName: string, value: string) => {
+    setApprovedMarksState((prev) => ({ ...prev, [paramName]: value }));
+    debouncedHandleSave(paramName, value);  // <-- pass value here directly
+  };
 
   // Show loader
   if (loading) return <Loader />;
@@ -106,9 +142,9 @@ const ApplicationDetails = () => {
                 <th style={{ width: 100 }}>Count</th>
                 <th style={{ width: 100 }}>Marks</th>
                 <th style={{ width: 100 }}>Document</th>
-                {/* <th style={{ width: 200 }}>Approved Marks</th> */}
                 {!isUnitRole && (
                   <>
+                                  <th style={{ width: 200 }}>Approved Marks</th>
                     <th style={{ width: 150 }}>Add Clarification</th>
                     <th style={{ width: 200 }}>Requested Clarification</th>
                     <th style={{ width: 150 }}>Action</th>
@@ -152,6 +188,17 @@ const ApplicationDetails = () => {
                     </td> */}
                   {!isUnitRole && (
                     <>
+                     <td style={{ width: 200 }}>
+                      <input
+  type="text"
+  className="form-control"
+  placeholder="Enter approved marks"
+  autoComplete="off"
+  value={approvedMarksState[param.name] ?? ""}
+  onChange={(e) => handleInputChange(param.name, e.target.value)}
+/>
+              </td>      
+           
                       <td style={{ width: 120 }}>
                         {(param?.clarification_id || (param?.last_clarification_id && [role, lowerRole].includes(param?.last_clarification_handled_by))) ? (
                           <p className="fw-5">Already Asked</p>

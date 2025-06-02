@@ -244,3 +244,5 @@ VALUES (
 
 INSERT INTO User_tab (pers_no, rank, name, user_role, username, password)
 VALUES ('12345678', 'some', 'Reviewer Alpha', 'bridge', 'testuser2', '$2b$10$FCHwKvPqS2IrJY2OZtJ2OemtfeFiz1Cj/ez8bv6NwTk5.Se.YaFwq');
+
+

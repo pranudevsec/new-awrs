@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAppDispatch, useAppSelector } from "../../../reduxToolkit/hooks";
 import { SVGICON } from "../../../constants/iconsList";
@@ -37,6 +37,13 @@ const ClarificationRaisedList = () => {
 
     fetchData();
   }, [awardType, search, profile, page, limit]);
+
+  const filteredUnits = useMemo(() => {
+    return Array.isArray(units)
+      ? units.filter((unit:any) => unit.clarifications_count > 0)
+      : [];
+  }, [units]);
+
 
   return (
     <div className="clarification-section">
@@ -99,8 +106,8 @@ const ClarificationRaisedList = () => {
                   </div>
                 </td>
               </tr>
-              ) : units.length > 0 && (
-                units.map((unit: any) => (
+              ) : filteredUnits.length > 0 && (
+                filteredUnits.map((unit: any) => (
                   <tr
                     key={unit.id}
                     onClick={() => navigate(`/applications/list/${unit.id}?award_type=${unit.type}`)}
@@ -125,7 +132,7 @@ const ClarificationRaisedList = () => {
                       </p>
                     </td>
                     <td style={{ width: 150, minWidth: 150, maxWidth: 150 }}>
-                      <p className="fw-4">{unit.type}</p>
+                      <p className="fw-4">  {unit.type.charAt(0).toUpperCase() + unit.type.slice(1)}</p>
                     </td>
                     {/* <td style={{ width: 200, minWidth: 200, maxWidth: 200 }}>
                     <div className="status-content approved pending d-flex align-items-center gap-3">
@@ -149,10 +156,10 @@ const ClarificationRaisedList = () => {
         </table>
       </div>
       {/* Empty Data */}
-      {!loading && units.length === 0 && <EmptyTable />}
+      {!loading && filteredUnits.length === 0 && <EmptyTable />}
 
       {/* Pagination */}
-      {units.length > 0 && (
+      {filteredUnits.length > 0 && (
         <Pagination
           meta={meta}
           page={page}

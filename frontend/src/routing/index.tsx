@@ -73,7 +73,7 @@ export const authProtectedRoutes: RouteConfig[] = [
 
   // Command Panel
   { path: "/command-panel", element: <CommandPanel /> },
-  { path: "/command-panel/:id", element: <CommandPanelDetail /> },
+  { path: "/command-panel/:application_id", element: <CommandPanelDetail /> },
   { path: "/winners", element: <Winners /> },
 
   // Admin setting

@@ -36,10 +36,12 @@ const Clarification = () => {
   }, [searchTerm]);
 
   useEffect(() => {
-    if (profile?.user?.user_role?.trim() === "unit") {
-      dispatch(getClarifications({ awardType: awardType || "", search: debouncedSearch, page, limit }));
-    } else {
-      dispatch(getSubordinateClarifications({ awardType: awardType || "", search: debouncedSearch, page, limit }));
+    if(profile?.user?.user_role){
+      if (profile?.user?.user_role?.trim() === "unit") {
+        dispatch(getClarifications({ awardType: awardType || "", search: debouncedSearch, page, limit }));
+      } else {
+        dispatch(getSubordinateClarifications({ awardType: awardType || "", search: debouncedSearch, page, limit }));
+      }
     }
   }, [profile?.user?.user_role, awardType, debouncedSearch, page, limit]);
 
@@ -101,7 +103,7 @@ const Clarification = () => {
                   <td style={{ width: 150 }}><p className="fw-4">#{app.unit_id}</p></td>
                   <td style={{ width: 200 }}><p className="fw-4">{new Date(app.date_init).toLocaleDateString()}</p></td>
                   <td style={{ width: 200 }}><p className="fw-4">{new Date(app.fds.last_date).toLocaleDateString()}</p></td>
-                  <td style={{ width: 150 }}><p className="fw-4">{app.type}</p></td>
+                  <td style={{ width: 150 }}><p className="fw-4">  {app.type.charAt(0).toUpperCase() + app.type.slice(1)}</p></td>
                   <td style={{ width: 200 }}>
                     <div
                       className={`status-content approved ${clarificationsCount > 0 ? 'reject' : 'pending'} d-flex align-items-center gap-3`}

@@ -2,6 +2,7 @@ import { createSlice, type PayloadAction } from "@reduxjs/toolkit";
 import {
   getDashboardStats,
   getDashboardUnitScores,
+  getHomeCountStats,
   getScoreBoards,
 } from "../../services/command-panel/commandPanelService";
 import type {
@@ -10,6 +11,8 @@ import type {
   DashboardResponse,
   DashboardStats,
   DashboardUnitScoreResponse,
+  HomeCountData,
+  HomeCountResponse,
 } from "../../services/command-panel/commandPanelInterface";
 
 interface CommandPanelState {
@@ -17,6 +20,7 @@ interface CommandPanelState {
   success: boolean;
   error: string | null;
   dashboardStats: DashboardStats | null;
+  homeCounts: HomeCountData | null; 
   unitScores: {
     name: string;
     score: number;
@@ -30,6 +34,7 @@ const initialState: CommandPanelState = {
   success: false,
   error: null,
   dashboardStats: null,
+  homeCounts: null,
   unitScores: [],
   scoreboard: [],
   meta: {
@@ -102,6 +107,25 @@ const commandPanelSlice = createSlice({
       (state, action: PayloadAction<any>) => {
         state.loading = false;
         state.error = action.payload || "Something went wrong!";
+      }
+    );
+
+    builder.addCase(getHomeCountStats.pending, (state) => {
+      state.loading = true;
+    });
+    builder.addCase(
+      getHomeCountStats.fulfilled,
+      (state, action: PayloadAction<HomeCountResponse>) => {
+        state.loading = false;
+        state.homeCounts = action.payload.data;
+        state.error = null;
+      }
+    );
+    builder.addCase(
+      getHomeCountStats.rejected,
+      (state, action: PayloadAction<any>) => {
+        state.loading = false;
+        state.error = action.payload || "Failed to fetch home count data.";
       }
     );
   },

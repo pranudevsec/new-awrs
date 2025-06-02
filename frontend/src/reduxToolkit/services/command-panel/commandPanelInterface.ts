@@ -71,3 +71,14 @@ export interface DashboardUnitScoreResponse {
     score: number;
   }[];
 }
+export interface HomeCountData {
+  applicationsToReview: any;
+  clarificationsIRaised: any;
+  clarificationsToResolve: any;
+}
+
+export interface HomeCountResponse {
+  success: boolean;
+  message?: string;
+  data: HomeCountData;
+}

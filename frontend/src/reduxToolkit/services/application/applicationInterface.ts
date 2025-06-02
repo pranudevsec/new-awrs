@@ -51,3 +51,17 @@ export interface UpdateApplicationResponse {
   message: string;
   data?: any;
 }
+
+export interface ApproveMarksParam {
+  type: string;
+  application_id: number;
+  parameters: {
+    name: string;
+    approved_marks: string | number;
+  }[];
+}
+
+export interface ApproveMarksResponse {
+  success: boolean;
+  message: string;
+}

@@ -182,7 +182,7 @@ const CommandPanel = () => {
                   </td>
                 </tr> :
                 scoreboard.map((item, idx) => (
-                  <tr onClick={() => navigate(`/command-panel/${item.id}`)} key={idx}>
+                  <tr onClick={() => navigate(`/command-panel/${item.id}?award_type=${item.type}`)} key={idx}>
                     <td style={{ width: 200, minWidth: 200, maxWidth: 200 }}>
                       <p className="fw-4">#{item.id || "-"}</p>
                     </td>

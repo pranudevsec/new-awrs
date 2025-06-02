@@ -1,13 +1,21 @@
 import { Link } from "react-router-dom";
-import { useAppSelector } from "../../reduxToolkit/hooks";
+import { useAppDispatch, useAppSelector } from "../../reduxToolkit/hooks";
 import Breadcrumb from "../../components/ui/breadcrumb/Breadcrumb";
+import { useEffect } from "react";
+import { getHomeCountStats } from "../../reduxToolkit/services/command-panel/commandPanelService";
 
 const Applications = () => {
+  const dispatch = useAppDispatch();
   const profile = useAppSelector((state) => state.admin.profile);
+  const { homeCounts } = useAppSelector((state) => state.commandPanel);
   const userRole = profile?.user?.user_role;
 
   const isUnitRole = userRole === "unit";
   const isHigherRole = ["brigade", "division", "corps", "command"].includes(userRole ?? "");
+
+  useEffect(() => {
+    dispatch(getHomeCountStats());
+  }, [dispatch]);
 
   return (
     <div className="application-section">
@@ -43,13 +51,13 @@ const Applications = () => {
           <div className="col-lg-3 col-sm-6">
             <Link to="/applications/list" className="h-100 d-block">
               <div className="card border-0 h-100 d-flex align-items-center justify-content-center position-relative">
-                <span className="count-badge">5</span>
+                {homeCounts?.applicationsToReview > 0 && (
+                  <span className="count-badge">{homeCounts?.applicationsToReview}</span>
+                )}
                 <div className="card-icon">
                   <img src="/media/icons/applications.png" alt="Applications" width={100} />
                 </div>
-                <h5 className="fw-6 mt-4">
-                  Applications To Review
-                </h5>
+                <h5 className="fw-6 mt-4">Applications To Review</h5>
               </div>
             </Link>
           </div>
@@ -59,9 +67,11 @@ const Applications = () => {
             <div className="col-lg-3 col-sm-6">
               <Link to="/clarifications/raised-list" className="h-100 d-block">
                 <div className="card border-0 h-100 d-flex align-items-center justify-content-center position-relative">
-                  <span className="count-badge">5</span>
+                  {homeCounts?.clarificationsIRaised > 0 && (
+                    <span className="count-badge">{homeCounts?.clarificationsIRaised}</span>
+                  )}
                   <div className="card-icon">
-                    <img src="/media/icons/clarifications.png" alt="Applications" width={100} />
+                    <img src="/media/icons/clarifications.png" alt="Clarifications I Raised" width={100} />
                   </div>
                   <h5 className="fw-6 mt-4">Clarifications I Raised</h5>
                 </div>
@@ -69,10 +79,12 @@ const Applications = () => {
             </div>
             <div className="col-lg-3 col-sm-6">
               <Link to="/clarification" className="h-100 d-block">
-                <div className="card border-0 h-100 d-flex align-items-center justify-content-center">
-                  <span className="count-badge">9</span>
+                <div className="card border-0 h-100 d-flex align-items-center justify-content-center position-relative">
+                  {homeCounts?.clarificationsToResolve > 0 && (
+                    <span className="count-badge">{homeCounts?.clarificationsToResolve}</span>
+                  )}
                   <div className="card-icon">
-                    <img src="/media/icons/raised-clarification.png" alt="Clarifications" width={100} />
+                    <img src="/media/icons/raised-clarification.png" alt="Clarifications to Resolve" width={100} />
                   </div>
                   <h5 className="fw-6 mt-4">Clarifications to Resolve</h5>
                 </div>
