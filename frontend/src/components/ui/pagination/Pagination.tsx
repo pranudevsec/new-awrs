@@ -7,6 +7,11 @@ interface PaginationProps {
 }
 
 const Pagination: React.FC<PaginationProps> = ({ meta, page, limit, setPage, setLimit }) => {
+
+    if (!meta || typeof meta.totalPages !== 'number' || typeof meta.currentPage !== 'number') {
+        return null;
+    }
+
     const { totalPages, currentPage } = meta;
 
     const handleLimitChange = (e: React.ChangeEvent<HTMLSelectElement>) => {

@@ -1,7 +1,7 @@
+import { useState } from "react";
 import Modal from "react-bootstrap/Modal";
 import FormInput from "../components/form/FormInput";
 import { SVGICON } from "../constants/iconsList";
-import { useState } from "react";
 
 interface ClarificationModalProps {
   show: boolean;

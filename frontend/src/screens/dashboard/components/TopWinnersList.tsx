@@ -1,8 +1,6 @@
-// import Pagination from "../../../components/ui/pagination/Pagination"
-
 const TopWinnersList = () => {
     return (
-        <div className="top-winners-list">
+        <div className="top-winners-list mb-4">
             <h3 className="fw-6 mb-3">Winners</h3>
             <div className="table-responsive">
                 <table className="table-style-2 w-100">

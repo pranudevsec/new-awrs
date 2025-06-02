@@ -51,6 +51,7 @@ export const authProtectedRoutes: RouteConfig[] = [
   { path: "/applications/citation-review", element: <CitationReviewPage /> },
   { path: "/applications/appreciation", element: <ApplyAppreciation /> },
   { path: "/applications/list", element: <ApplicationsList /> },
+  { path: "/submitted-forms/list", element: <ApplicationsList /> },
   { path: "/applications/list/:application_id", element: <ApplicationDetails /> },
   { path: "/applications/clarification/list", element: <ClarificationList /> },
   { path: "/applications/clarification/list/:id", element: <ClarificationDetails /> },

@@ -4,20 +4,11 @@ import { unwrapResult } from "@reduxjs/toolkit";
 import { useAppDispatch } from "../../reduxToolkit/hooks";
 import { ParametersSchema } from "../../validations/validations";
 import { createParameter } from "../../reduxToolkit/services/parameter/parameterService";
-import { awardTypeOptions } from "../../data/options";
+import { awardTypeOptions, roleOptions2 } from "../../data/options";
 import Breadcrumb from "../../components/ui/breadcrumb/Breadcrumb";
 import FormInput from "../../components/form/FormInput";
 import FormSelect from "../../components/form/FormSelect";
 import FormRadioButton from "../../components/form/FormRadioButton";
-
-export const roleOptions: OptionType[] = [
-    { value: "all", label: "All" },
-    { value: "unit", label: "Unit" },
-    { value: "brigade", label: "Brigade" },
-    { value: "division", label: "Division" },
-    { value: "corps", label: "Corps" },
-    { value: "command", label: "Command" },
-];
 
 const AddParameters = () => {
     const navigate = useNavigate();
@@ -79,8 +70,8 @@ const AddParameters = () => {
                         <FormSelect
                             label="Applicability"
                             name="applicability"
-                            options={roleOptions}
-                            value={roleOptions.find((opt) => opt.value === formik.values.applicability) || null}
+                            options={roleOptions2}
+                            value={roleOptions2.find((opt) => opt.value === formik.values.applicability) || null}
                             onChange={(selectedOption) =>
                                 formik.setFieldValue(
                                     "applicability",

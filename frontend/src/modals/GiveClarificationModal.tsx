@@ -1,17 +1,17 @@
-import Modal from "react-bootstrap/Modal";
-import FormInput from "../components/form/FormInput";
-import { SVGICON } from "../constants/iconsList";
 import { useState } from "react";
 import { useDispatch } from "react-redux";
+import Modal from "react-bootstrap/Modal";
+import FormInput from "../components/form/FormInput";
 import type { AppDispatch } from "../reduxToolkit";
+import { SVGICON } from "../constants/iconsList";
 import { updateClarification } from "../reduxToolkit/services/clarification/clarificationService";
 
 interface ClarificationModalProps {
   show: boolean;
   handleClose: () => void;
-  clarificationId: number; // ✅ Accept ID as a prop
+  clarificationId: number;
   isRefreshData: boolean;
-  setIsRefreshData: React.Dispatch<React.SetStateAction<boolean>>; 
+  setIsRefreshData: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
 const GiveClarificationModal: React.FC<ClarificationModalProps> = ({
@@ -32,7 +32,7 @@ const GiveClarificationModal: React.FC<ClarificationModalProps> = ({
     await dispatch(
       updateClarification({
         id: clarificationId,
-        clarification: clarification, // Assuming you're sending status here. Adjust field name if needed.
+        clarification: clarification,
       })
     );
     setIsRefreshData(!isRefreshData)

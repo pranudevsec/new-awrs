@@ -19,6 +19,7 @@ interface ApplicationState {
   units: ApplicationUnit[];
   unitDetail: ApplicationDetail | null;
   subordinates: Subordinate[];
+  meta: Meta;
 }
 
 const initialState: ApplicationState = {
@@ -28,6 +29,12 @@ const initialState: ApplicationState = {
   units: [],
   unitDetail: null,
   subordinates: [],
+  meta: {
+    totalItems: 1,
+    totalPages: 1,
+    currentPage: 1,
+    itemsPerPage: 10,
+  },
 };
 
 const applicationSlice = createSlice({
@@ -54,6 +61,7 @@ const applicationSlice = createSlice({
         state.loading = false;
         state.success = action.payload.success;
         state.units = action.payload.data;
+        state.meta = action.payload.meta;
       }
     );
     builder.addCase(
@@ -97,6 +105,7 @@ const applicationSlice = createSlice({
         state.loading = false;
         state.success = action.payload.success;
         state.units = action.payload.data;
+        state.meta = action.payload.meta;
       }
     );
     builder.addCase(

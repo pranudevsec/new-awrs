@@ -1,8 +1,6 @@
-// appreciationSlice.ts
-
-import { createSlice, type PayloadAction } from '@reduxjs/toolkit';
-import { createAppreciation } from '../../services/appreciation/appreciationService';
-import type { CreateAppreciationResponse } from '../../services/appreciation/appreciationInterface';
+import { createSlice, type PayloadAction } from "@reduxjs/toolkit";
+import { createAppreciation } from "../../services/appreciation/appreciationService";
+import type { CreateAppreciationResponse } from "../../services/appreciation/appreciationInterface";
 
 interface AppreciationState {
   loading: boolean;
@@ -19,7 +17,7 @@ const initialState: AppreciationState = {
 };
 
 const appreciationSlice = createSlice({
-  name: 'appreciations',
+  name: "appreciations",
   initialState,
   reducers: {
     resetAppreciationState: (state) => {
@@ -35,16 +33,22 @@ const appreciationSlice = createSlice({
       state.success = false;
       state.error = null;
     });
-    builder.addCase(createAppreciation.fulfilled, (state, action: PayloadAction<CreateAppreciationResponse>) => {
-      state.loading = false;
-      state.success = action.payload.success;
-      state.data = action.payload.data || null;
-    });
-    builder.addCase(createAppreciation.rejected, (state, action: PayloadAction<any>) => {
-      state.loading = false;
-      state.success = false;
-      state.error = action.payload || 'Failed to create appreciation';
-    });
+    builder.addCase(
+      createAppreciation.fulfilled,
+      (state, action: PayloadAction<CreateAppreciationResponse>) => {
+        state.loading = false;
+        state.success = action.payload.success;
+        state.data = action.payload.data || null;
+      }
+    );
+    builder.addCase(
+      createAppreciation.rejected,
+      (state, action: PayloadAction<any>) => {
+        state.loading = false;
+        state.success = false;
+        state.error = action.payload || "Failed to create appreciation";
+      }
+    );
   },
 });
 

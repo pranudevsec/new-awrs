@@ -1,16 +1,15 @@
 import { useEffect, useState } from "react";
 import { useFormik } from "formik";
 import { unwrapResult } from "@reduxjs/toolkit";
-import Breadcrumb from "../../components/ui/breadcrumb/Breadcrumb";
-import FormInput from "../../components/form/FormInput";
-import TagInput from "../../components/form/TagInput";
-
 import { useAppDispatch, useAppSelector } from "../../reduxToolkit/hooks";
 import {
   getConfig,
   updateConfig,
 } from "../../reduxToolkit/services/config/configService";
 import { AdminSettingSchema } from "../../validations/validations";
+import Breadcrumb from "../../components/ui/breadcrumb/Breadcrumb";
+import FormInput from "../../components/form/FormInput";
+import TagInput from "../../components/form/TagInput";
 import FormSelect from "../../components/form/FormSelect";
 import Loader from "../../components/ui/loader/Loader";
 
@@ -18,8 +17,11 @@ const AdminSettings = () => {
   const dispatch = useAppDispatch();
 
   const { config } = useAppSelector((state) => state.config);
+
+  // States
   const [firstLoad, setFirstLoad] = useState(true);
 
+  // Formik form
   const formik = useFormik({
     enableReinitialize: true,
     initialValues: {
@@ -62,7 +64,7 @@ const AdminSettings = () => {
 
   // Show loader
   if (firstLoad) return <Loader />;
-  
+
   return (
     <div className="profile-settings-section">
       <div className="d-flex flex-sm-row flex-column align-items-sm-center justify-content-between mb-4">

@@ -1,6 +1,7 @@
 import { Link, NavLink } from "react-router-dom";
 import { sidebarStructure } from "./structure";
 import { useAppSelector } from "../../reduxToolkit/hooks";
+import { SVGICON } from "../../constants/iconsList";
 
 const SidebarMenu = () => {
   const profile = useAppSelector((state) => state.admin.profile);
@@ -9,15 +10,14 @@ const SidebarMenu = () => {
 
   const alwaysVisible: string[] = [];
 
-     // Clarification is visible only to users who are NOT admin AND NOT command
-     if (userRole !== "admin" && userRole !== "command") {
-      alwaysVisible.push("Clarifications to Resolve", "Home", "Profile Settings");
-    
-      if (userRole !== "unit") {
-        alwaysVisible.push("Clarifications I Raised");
-      }
+  // Clarification is visible only to users who are NOT admin AND NOT command
+  if (userRole !== "admin" && userRole !== "command") {
+    alwaysVisible.push("Clarifications to Resolve", "Home", "Profile Settings");
+
+    if (userRole !== "unit") {
+      alwaysVisible.push("Clarifications I Raised");
     }
-   
+  }
 
   // Find dashboard item from structure
   const dashboardItem = sidebarStructure.find(item => item.label === "Dashboard");
@@ -48,6 +48,14 @@ const SidebarMenu = () => {
   // If command user, show Dashboard on top
   if (userRole === "command" && dashboardItem) {
     filteredStructure = [dashboardItem, ...filteredStructure];
+  }
+
+  if (userRole === "unit") {
+    filteredStructure.push({
+      label: "Submitted Forms",
+      icon: SVGICON.sidebar.raisedClarification,
+      to: "/submitted-forms/list",
+    });
   }
 
   return (

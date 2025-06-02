@@ -1,28 +1,30 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, type ChangeEvent } from "react";
 import { useNavigate } from "react-router-dom";
+import { useFormik } from "formik";
+import { unwrapResult } from "@reduxjs/toolkit";
 import toast from "react-hot-toast";
 import Breadcrumb from "../../../components/ui/breadcrumb/Breadcrumb";
 import FormSelect from "../../../components/form/FormSelect";
 import FormInput from "../../../components/form/FormInput";
+import EmptyTable from "../../../components/ui/empty-table/EmptyTable";
+import Loader from "../../../components/ui/loader/Loader";
 import { useAppDispatch, useAppSelector } from "../../../reduxToolkit/hooks";
 import { getConfig } from "../../../reduxToolkit/services/config/configService";
 import { fetchParameters } from "../../../reduxToolkit/services/parameter/parameterService";
-import { useFormik } from "formik";
 import { resetCitationState } from "../../../reduxToolkit/slices/citation/citationSlice";
-import { unwrapResult } from "@reduxjs/toolkit";
 import { createAppreciation } from "../../../reduxToolkit/services/appreciation/appreciationService";
 import { awardTypeOptions } from "../../../data/options";
 import type { Parameter } from "../../../reduxToolkit/services/parameter/parameterInterface";
-import Loader from "../../../components/ui/loader/Loader";
-import EmptyTable from "../../../components/ui/empty-table/EmptyTable";
 
 const DRAFT_STORAGE_KEY = "applyAppreciationDraft";
 
 const ApplyAppreciation = () => {
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
+
   const { loading } = useAppSelector((state) => state.parameter);
 
+  // States
   const [cyclePeriodOptions, setCyclePeriodOptions] = useState<OptionType[]>([]);
   const [parameters, setParameters] = useState<Parameter[]>([]);
   const [counts, setCounts] = useState<Record<number, string>>({});
@@ -42,6 +44,7 @@ const ApplyAppreciation = () => {
     }
   }, []);
 
+  // Formik form
   const formik = useFormik({
     enableReinitialize: true,
     initialValues: {
@@ -119,7 +122,7 @@ const ApplyAppreciation = () => {
     };
 
     fetchAllData();
-  }, [dispatch]);
+  }, []);
 
   useEffect(() => {
     const draft = { counts, marks };
@@ -139,12 +142,24 @@ const ApplyAppreciation = () => {
     }
   };
 
+  const handleFileChange = (e: ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+
+    if (file && file.size > 5 * 1024 * 1024) {
+      toast.error("File size should be less than 5MB");
+      e.target.value = "";
+    } else if (file) {
+      console.log("File selected:", file);
+    }
+  };
+
   const handleDeleteDraft = () => {
     localStorage.removeItem(DRAFT_STORAGE_KEY);
     setCounts({});
     setMarks({});
   };
 
+  // Show loader
   if (loading) return <Loader />
 
   return (
@@ -241,7 +256,7 @@ const ApplyAppreciation = () => {
                     </td>
                     <td>
                       {param.proof_reqd ? (
-                        <input type="file" className="form-control" autoComplete="off" />
+                        <input type="file" className="form-control" autoComplete="off" onChange={handleFileChange} />
                       ) : (
                         <span>Not required</span>
                       )}

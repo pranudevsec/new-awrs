@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, type ChangeEvent } from "react";
 import { useNavigate } from "react-router-dom";
 import { useFormik } from "formik";
 import { Tabs, Tab } from "react-bootstrap";
@@ -7,6 +7,8 @@ import toast from "react-hot-toast";
 import Breadcrumb from "../../../components/ui/breadcrumb/Breadcrumb";
 import FormSelect from "../../../components/form/FormSelect";
 import FormInput from "../../../components/form/FormInput";
+import Loader from "../../../components/ui/loader/Loader";
+import EmptyTable from "../../../components/ui/empty-table/EmptyTable";
 import { awardTypeOptions } from "../../../data/options";
 import { useAppDispatch, useAppSelector } from "../../../reduxToolkit/hooks";
 import { getConfig } from "../../../reduxToolkit/services/config/configService";
@@ -14,8 +16,6 @@ import { fetchParameters } from "../../../reduxToolkit/services/parameter/parame
 import { resetCitationState } from "../../../reduxToolkit/slices/citation/citationSlice";
 import { createCitation } from "../../../reduxToolkit/services/citation/citationService";
 import type { Parameter } from "../../../reduxToolkit/services/parameter/parameterInterface";
-import Loader from "../../../components/ui/loader/Loader";
-import EmptyTable from "../../../components/ui/empty-table/EmptyTable";
 
 const DRAFT_STORAGE_KEY = "applyCitationDraft";
 
@@ -31,20 +31,21 @@ const groupParametersByCategory = (params: Parameter[]) => {
 const ApplyCitation = () => {
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
-  const profile = useAppSelector((state) => state.admin.profile);
+
+  const { profile } = useAppSelector((state) => state.admin);
   const { loading } = useAppSelector((state) => state.parameter);
 
+  const initializedRef = useRef(false);
+
+  // States
   const [parameters, setParameters] = useState<Parameter[]>([]);
   const [counts, setCounts] = useState<Record<number, string>>({});
   const [marks, setMarks] = useState<Record<number, number>>({});
   const [lastDate, setLastDate] = useState("");
   const [cyclePerios, setCyclePerios] = useState("");
   const [command, setCommand] = useState("");
-
   const groupedParams = groupParametersByCategory(parameters);
   const [activeTab, setActiveTab] = useState(Object.keys(groupedParams)[0] || "");
-
-  const initializedRef = useRef(false);
 
   useEffect(() => {
     if (!initializedRef.current) {
@@ -56,8 +57,8 @@ const ApplyCitation = () => {
     }
   }, [groupedParams]);
 
-  const scrollContainerRef = React.useRef<HTMLDivElement>(null);
-  const categoryRefs = React.useRef<{ [key: string]: HTMLDivElement | null }>({});
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const categoryRefs = useRef<{ [key: string]: HTMLDivElement | null }>({});
 
   const handleTabSelect = (key: string | null) => {
     if (!key) return;
@@ -67,7 +68,6 @@ const ApplyCitation = () => {
     const container = scrollContainerRef.current;
 
     if (categoryElement && container) {
-      // Scroll relative to the container top
       const containerTop = container.getBoundingClientRect().top;
       const categoryTop = categoryElement.getBoundingClientRect().top;
       const scrollOffset = categoryTop - containerTop + container.scrollTop;
@@ -76,6 +76,17 @@ const ApplyCitation = () => {
         top: scrollOffset,
         behavior: 'smooth',
       });
+    }
+  };
+
+  const handleFileChange = (e: ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+
+    if (file && file.size > 5 * 1024 * 1024) {
+      toast.error("File size should be less than 5MB");
+      e.target.value = "";
+    } else if (file) {
+      console.log("File selected:", file);
     }
   };
 
@@ -92,6 +103,7 @@ const ApplyCitation = () => {
     }
   }, []);
 
+  // Formik form
   const formik = useFormik({
     enableReinitialize: true,
     initialValues: {
@@ -171,7 +183,7 @@ const ApplyCitation = () => {
     };
 
     fetchAllData();
-  }, [dispatch]);
+  }, []);
 
   useEffect(() => {
     const draft = { counts, marks };
@@ -197,6 +209,7 @@ const ApplyCitation = () => {
     setMarks({});
   };
 
+  // Show loader
   if (loading) return <Loader />
 
   return (
@@ -343,7 +356,7 @@ const ApplyCitation = () => {
                         </td>
                         <td>
                           {param.proof_reqd ? (
-                            <input type="file" className="form-control" autoComplete="off" />
+                            <input type="file" className="form-control" autoComplete="off" onChange={handleFileChange} />
                           ) : (
                             <span>Not required</span>
                           )}

@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom"
 import { useFormik } from "formik";
 import { unwrapResult } from "@reduxjs/toolkit";
-import { roleOptions } from "./options";
+import { roleOptions } from "../../data/options";
 import { LoginSchema } from "../../validations/validations";
 import { useAppDispatch } from "../../reduxToolkit/hooks";
 import { reqToLogin } from "../../reduxToolkit/services/auth/authService";

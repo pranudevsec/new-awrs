@@ -39,19 +39,21 @@ const Applications = () => {
             </div>
           </>
         )}
-        <div className="col-lg-3 col-sm-6">
-          <Link to="/applications/list" className="h-100 d-block">
-            <div className="card border-0 h-100 d-flex align-items-center justify-content-center position-relative">
-              <span className="count-badge">5</span>
-              <div className="card-icon">
-                <img src="/media/icons/applications.png" alt="Applications" width={100} />
+        {userRole !== "unit" && (
+          <div className="col-lg-3 col-sm-6">
+            <Link to="/applications/list" className="h-100 d-block">
+              <div className="card border-0 h-100 d-flex align-items-center justify-content-center position-relative">
+                <span className="count-badge">5</span>
+                <div className="card-icon">
+                  <img src="/media/icons/applications.png" alt="Applications" width={100} />
+                </div>
+                <h5 className="fw-6 mt-4">
+                  Applications To Review
+                </h5>
               </div>
-              <h5 className="fw-6 mt-4">
-  {userRole === "unit" ? "Created Applications" : "Applications To Review"}
-</h5>
-            </div>
-          </Link>
-        </div>
+            </Link>
+          </div>
+        )}
         {isHigherRole && (
           <>
             <div className="col-lg-3 col-sm-6">

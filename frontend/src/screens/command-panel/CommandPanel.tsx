@@ -12,13 +12,6 @@ import Pagination from "../../components/ui/pagination/Pagination";
 import EmptyTable from "../../components/ui/empty-table/EmptyTable";
 import Loader from "../../components/ui/loader/Loader";
 
-// const cyclePeriodOptions: OptionType[] = [
-//   { value: "2024 - H1", label: "2024 - H1" },
-//   { value: "2024 - H2", label: "2024 - H2" },
-//   { value: "2025 - H1", label: "2025 - H1" },
-//   { value: "2025 - H2", label: "2025 - H2" },
-// ];
-
 const mockCandidateData = [
   {
     unit_name: 'Unit 1',

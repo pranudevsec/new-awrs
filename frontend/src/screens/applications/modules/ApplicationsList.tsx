@@ -6,21 +6,23 @@ import { useAppDispatch, useAppSelector } from "../../../reduxToolkit/hooks";
 import { fetchApplicationUnits, fetchSubordinates } from "../../../reduxToolkit/services/application/applicationService";
 import Breadcrumb from "../../../components/ui/breadcrumb/Breadcrumb";
 import FormSelect from "../../../components/form/FormSelect";
-// import Pagination from "../../../components/ui/pagination/Pagination";
 import EmptyTable from "../../../components/ui/empty-table/EmptyTable";
 import Loader from "../../../components/ui/loader/Loader";
+import Pagination from "../../../components/ui/pagination/Pagination";
 
 const ApplicationsList = () => {
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
 
   const profile = useAppSelector((state) => state.admin.profile);
-  const { units, loading } = useAppSelector((state) => state.application);
+  const { units, loading, meta } = useAppSelector((state) => state.application);
 
   // States
   const [awardType, setAwardType] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState<string>("");
   const [debouncedSearch, setDebouncedSearch] = useState<string>("");
+  const [page, setPage] = useState<number>(1);
+  const [limit, setLimit] = useState<number>(10);
 
   useEffect(() => {
     const handler = setTimeout(() => {
@@ -36,7 +38,7 @@ const ApplicationsList = () => {
     if (!profile?.user?.user_role) return;
 
     const fetchData = () => {
-      const params = { award_type: awardType || '', search: debouncedSearch };
+      const params = { award_type: awardType || '', search: debouncedSearch, page, limit };
       if (profile.user.user_role !== 'unit') {
         dispatch(fetchSubordinates(params));
       } else {
@@ -45,7 +47,7 @@ const ApplicationsList = () => {
     };
 
     fetchData();
-  }, [dispatch, awardType, debouncedSearch, profile]);
+  }, [awardType, debouncedSearch, profile, page, limit]);
 
   return (
     <div className="clarification-section">
@@ -107,9 +109,9 @@ const ApplicationsList = () => {
                   </div>
                 </td>
               </tr>
-              : units.length > 0 && units.map((unit: any) => (
+              : units.length > 0 && units.map((unit: any, idx) => (
                 <tr
-                  key={unit.id}
+                  key={idx}
                   onClick={() => navigate(`/applications/list/${unit.id}?award_type=${unit.type}`)}
                   style={{ cursor: "pointer" }}
                 >
@@ -154,9 +156,19 @@ const ApplicationsList = () => {
           </tbody>
         </table>
       </div>
-
+      {/* Empty Data */}
       {!loading && units.length === 0 && <EmptyTable />}
-      {/* {units.length > 0 && <Pagination />} */}
+
+      {/* Pagination */}
+      {units.length > 0 && (
+        <Pagination
+          meta={meta}
+          page={page}
+          limit={limit}
+          setPage={setPage}
+          setLimit={setLimit}
+        />
+      )}
     </div>
   );
 };

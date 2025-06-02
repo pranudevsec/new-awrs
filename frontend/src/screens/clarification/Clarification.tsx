@@ -7,7 +7,6 @@ import { getClarifications, getSubordinateClarifications } from "../../reduxTool
 import type { Parameter } from "../../reduxToolkit/services/parameter/parameterInterface";
 import Breadcrumb from "../../components/ui/breadcrumb/Breadcrumb";
 import FormSelect from "../../components/form/FormSelect";
-// import Pagination from "../../components/ui/pagination/Pagination";
 import Loader from "../../components/ui/loader/Loader";
 import EmptyTable from "../../components/ui/empty-table/EmptyTable";
 
@@ -15,7 +14,7 @@ const Clarification = () => {
   const navigate = useNavigate()
   const dispatch = useAppDispatch();
 
-  const profile = useAppSelector((state) => state.admin.profile);
+  const { profile } = useAppSelector((state) => state.admin);
   const { loading, unitClarifications } = useAppSelector((state) => state.clarification);
 
   // States 
@@ -39,7 +38,7 @@ const Clarification = () => {
     } else {
       dispatch(getSubordinateClarifications({ awardType: awardType || "", search: debouncedSearch }));
     }
-  }, [dispatch, profile?.user?.user_role, awardType, debouncedSearch]);
+  }, [profile?.user?.user_role, awardType, debouncedSearch]);
 
   return (
     <div className="clarification-section">

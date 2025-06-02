@@ -16,14 +16,15 @@ const cyclePeriodOptions: OptionType[] = [
 
 const ClarificationDetail = () => {
   const dispatch = useAppDispatch();
+  const [searchParams] = useSearchParams();
+  const { application_id } = useParams();
 
   // States
   const [clarificationShow, setClarificationShow] = useState(false);
   console.log(clarificationShow)
-  const [searchParams] = useSearchParams();
-  const { application_id } = useParams();
   const award_type = searchParams.get("award_type") || "";
   const numericAppId = Number(application_id);
+
   useEffect(() => {
     if (award_type && numericAppId) {
       dispatch(fetchApplicationUnitDetail({ award_type, numericAppId }))
@@ -34,7 +35,7 @@ const ClarificationDetail = () => {
           console.error("Fetch failed:", err);
         });
     }
-  }, [award_type, numericAppId, dispatch]);
+  }, [award_type, numericAppId]);
 
   return (
     <>

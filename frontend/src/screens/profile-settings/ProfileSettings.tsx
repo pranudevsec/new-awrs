@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 import { useFormik } from "formik";
 import { unwrapResult } from "@reduxjs/toolkit";
 import {
@@ -7,12 +8,11 @@ import {
   corpsOptions,
   commandOptions,
   hierarchicalStructure,
-} from "./options";
+} from "../../data/options";
 import { useAppSelector, useAppDispatch } from "../../reduxToolkit/hooks";
 import { getProfile, reqToUpdateUnitProfile } from "../../reduxToolkit/services/auth/authService";
 import FormSelect from "../../components/form/FormSelect";
 import Breadcrumb from "../../components/ui/breadcrumb/Breadcrumb";
-import { useEffect, useState } from "react";
 import Loader from "../../components/ui/loader/Loader";
 
 type UserRole = "unit" | "brigade" | "division" | "corps" | "command" | string;
@@ -26,12 +26,11 @@ const ProfileSettings = () => {
   const dispatch = useAppDispatch();
   const { profile } = useAppSelector((state) => state.admin);
 
+  // States
   const [firstLoad, setFirstLoad] = useState(true);
 
   useEffect(() => {
-    if (profile) {
-      setFirstLoad(false);
-    }
+    if (profile) setFirstLoad(false);
   }, [profile]);
 
   const getVisibleFields = (role: UserRole): string[] => {
@@ -72,6 +71,7 @@ const ProfileSettings = () => {
     }
   };
 
+  // Formik form
   const formik: any = useFormik({
     initialValues: {
       unit: profile?.unit?.name || "",
@@ -128,7 +128,6 @@ const ProfileSettings = () => {
 
   // Show loader
   if (firstLoad) return <Loader />;
-
 
   return (
     <div className="profile-settings-section">

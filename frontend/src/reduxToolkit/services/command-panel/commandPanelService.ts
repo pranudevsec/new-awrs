@@ -1,5 +1,3 @@
-// clarificationService.ts
-
 import { createAsyncThunk } from "@reduxjs/toolkit";
 import toast from "react-hot-toast";
 import Axios from "../../helper/axios";

@@ -1,5 +1,4 @@
 import Breadcrumb from "../../components/ui/breadcrumb/Breadcrumb";
-// import Pagination from "../../components/ui/pagination/Pagination";
 
 const Winners = () => {
   return (

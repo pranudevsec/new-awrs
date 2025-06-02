@@ -1,5 +1,3 @@
-// clarificationInterface.ts
-
 export interface CreateClarificationPayload {
   type: string;
   application_id: number;

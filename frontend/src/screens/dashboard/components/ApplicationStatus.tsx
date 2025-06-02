@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import {
     PieChart,
     Pie,
@@ -7,7 +8,6 @@ import {
     Legend
 } from 'recharts';
 import FormSelect from '../../../components/form/FormSelect';
-import { useState } from 'react';
 
 const data = [
     { name: 'Pending', value: 58 },
@@ -49,7 +49,6 @@ const CustomTooltip = ({ active, payload }: any) => {
 
 
 const ApplicationStatus = () => {
-
     const [applicationDate, setApplicationDate] = useState("Jan - Jun 2025")
 
     return (

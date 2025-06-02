@@ -1,5 +1,3 @@
-// clarificationSlice.ts
-
 import { createSlice, type PayloadAction } from "@reduxjs/toolkit";
 import {
   createClarification,
@@ -86,10 +84,13 @@ const clarificationSlice = createSlice({
     builder.addCase(getSubordinateClarifications.pending, (state) => {
       state.loading = true;
     });
-    builder.addCase(getSubordinateClarifications.fulfilled, (state, action: PayloadAction<GetClarificationListResponse>) => {
-      state.loading = false;
-      state.unitClarifications = action.payload.data || [];
-    });
+    builder.addCase(
+      getSubordinateClarifications.fulfilled,
+      (state, action: PayloadAction<GetClarificationListResponse>) => {
+        state.loading = false;
+        state.unitClarifications = action.payload.data || [];
+      }
+    );
     builder.addCase(
       getSubordinateClarifications.rejected,
       (state, action: PayloadAction<any>) => {

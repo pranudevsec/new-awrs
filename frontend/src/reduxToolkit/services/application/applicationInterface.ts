@@ -1,5 +1,3 @@
-// applicationInterface.ts
-
 export interface ApplicationUnit {
   id: number;
   name: string;
@@ -10,6 +8,7 @@ export interface FetchApplicationUnitsResponse {
   success: boolean;
   message: string;
   data: ApplicationUnit[];
+  meta: Meta;
 }
 
 export interface ApplicationDetail {
@@ -34,7 +33,6 @@ export interface Subordinate {
   name: string;
   username: string;
   email?: string;
-  // Add more fields as returned by your API
 }
 
 export interface FetchSubordinatesResponse {
@@ -44,12 +42,12 @@ export interface FetchSubordinatesResponse {
 }
 
 export interface UpdateApplicationParams {
-  id?: number;  // now it can be 'number' or 'undefined'
+  id?: number;
   type?: string;
   status: string;
 }
-  export interface UpdateApplicationResponse {
-    success: boolean;
-    message: string;
-    data?: any;
-  }
+export interface UpdateApplicationResponse {
+  success: boolean;
+  message: string;
+  data?: any;
+}

@@ -3,10 +3,10 @@ import { SVGICON } from "../../../constants/iconsList";
 import { awardTypeOptions } from "../../../data/options";
 import Breadcrumb from "../../../components/ui/breadcrumb/Breadcrumb";
 import FormSelect from "../../../components/form/FormSelect";
-// import Pagination from "../../../components/ui/pagination/Pagination";
 
 const ClarificationList = () => {
-    const navigate = useNavigate()
+    const navigate = useNavigate();
+
     return (
         <div className="clarification-section">
             <div className="d-flex flex-sm-row flex-column align-items-sm-center justify-content-between mb-4">

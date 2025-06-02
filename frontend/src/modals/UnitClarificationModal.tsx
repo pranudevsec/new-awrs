@@ -1,7 +1,7 @@
+import { useState } from "react";
 import Modal from "react-bootstrap/Modal";
 import FormInput from "../components/form/FormInput";
 import { SVGICON } from "../constants/iconsList";
-import { useState } from "react";
 import { createClarification } from "../reduxToolkit/services/clarification/clarificationService";
 import { useAppDispatch } from "../reduxToolkit/hooks";
 
@@ -40,8 +40,8 @@ const UnitClarificationModal: React.FC<ClarificationModalProps> = ({
     try {
       await dispatch(createClarification(payload)).unwrap();
       setIsRefreshData(!isRefreshData);
-      handleClose(); // Close modal after submission
-      setComment(""); // Reset comment
+      handleClose();
+      setComment("");
     } catch (err) {
       console.error("Clarification creation failed", err);
     }

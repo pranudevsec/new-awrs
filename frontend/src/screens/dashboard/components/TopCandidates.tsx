@@ -36,7 +36,7 @@ const mockCandidateData = [
 ];
 
 const TopCandidates = () => {
-  const [selectedTop, setSelectedTop] = useState(topCandidateOptions[1]); // Default to Top 5
+  const [selectedTop, setSelectedTop] = useState(topCandidateOptions[1]);
 
   const handleDownload = () => {
     const topN = selectedTop?.value || 5;

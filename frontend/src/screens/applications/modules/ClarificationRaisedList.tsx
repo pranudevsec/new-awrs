@@ -2,25 +2,19 @@ import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAppDispatch, useAppSelector } from "../../../reduxToolkit/hooks";
 import { SVGICON } from "../../../constants/iconsList";
-import Breadcrumb from "../../../components/ui/breadcrumb/Breadcrumb";
-import FormSelect from "../../../components/form/FormSelect";
-// import Pagination from "../../../components/ui/pagination/Pagination";
 import { fetchApplicationUnits, fetchSubordinates } from "../../../reduxToolkit/services/application/applicationService";
 import { awardTypeOptions } from "../../../data/options";
-
-interface OptionType {
-  label: string;
-  value: string;
-}
-
+import Breadcrumb from "../../../components/ui/breadcrumb/Breadcrumb";
+import FormSelect from "../../../components/form/FormSelect";
 
 const ClarificationRaisedList = () => {
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
-  const profile = useAppSelector((state) => state.admin.profile);
 
+  const { profile } = useAppSelector((state) => state.admin);
   const { units, loading, error } = useAppSelector((state) => state.application);
 
+  // States
   const [awardType, setAwardType] = useState<string | null>(null);
   const [search, setSearch] = useState<string>('');
 
@@ -37,7 +31,8 @@ const ClarificationRaisedList = () => {
     };
 
     fetchData();
-  }, [dispatch, awardType, search, profile]);
+  }, [awardType, search, profile]);
+
   return (
     <div className="clarification-section">
       <div className="d-flex flex-sm-row flex-column align-items-sm-center justify-content-between mb-4">

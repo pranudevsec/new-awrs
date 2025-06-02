@@ -1,9 +1,10 @@
-import { useState } from "react";
-import { SVGICON } from "../../../constants/iconsList";
+import { useState, type ChangeEvent } from "react";
+import toast from "react-hot-toast";
 import Breadcrumb from "../../../components/ui/breadcrumb/Breadcrumb";
 import ClarificationModal from "../../../modals/ClarificationModal";
 import FormSelect from "../../../components/form/FormSelect";
 import FormInput from "../../../components/form/FormInput";
+import { SVGICON } from "../../../constants/iconsList";
 import { awardTypeOptions } from "../../../data/options";
 
 const cyclePeriodOptions: OptionType[] = [
@@ -16,6 +17,17 @@ const cyclePeriodOptions: OptionType[] = [
 const ClarificationDetails = () => {
     // States
     const [clarificationShow, setClarificationShow] = useState(false);
+
+    const handleFileChange = (e: ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+
+        if (file && file.size > 5 * 1024 * 1024) {
+            toast.error("File size should be less than 5MB");
+            e.target.value = "";
+        } else if (file) {
+            console.log("File selected:", file);
+        }
+    };
 
     return (
         <>
@@ -126,6 +138,7 @@ const ClarificationDetails = () => {
                                         type="file"
                                         className="form-control"
                                         autoComplete="off"
+                                        onChange={handleFileChange}
                                     />
                                 </td>
                                 <td style={{ width: 200, minWidth: 200, maxWidth: 200 }}>
@@ -163,6 +176,7 @@ const ClarificationDetails = () => {
                                         type="file"
                                         className="form-control"
                                         autoComplete="off"
+                                        onChange={handleFileChange}
                                     />
                                 </td>
                                 <td style={{ width: 200, minWidth: 200, maxWidth: 200 }}>
@@ -200,6 +214,7 @@ const ClarificationDetails = () => {
                                         type="file"
                                         className="form-control"
                                         autoComplete="off"
+                                        onChange={handleFileChange}
                                     />
                                 </td>
                                 <td style={{ width: 200, minWidth: 200, maxWidth: 200 }}>

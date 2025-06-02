@@ -1,10 +1,11 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, type ChangeEvent } from "react";
 import { useParams, useSearchParams } from "react-router-dom";
+import toast from "react-hot-toast";
+import Breadcrumb from "../../components/ui/breadcrumb/Breadcrumb";
+import GiveClarificationModal from "../../modals/GiveClarificationModal";
 import { SVGICON } from "../../constants/iconsList";
 import { useAppDispatch } from "../../reduxToolkit/hooks";
 import { fetchApplicationUnitDetail } from "../../reduxToolkit/services/application/applicationService";
-import Breadcrumb from "../../components/ui/breadcrumb/Breadcrumb";
-import GiveClarificationModal from "../../modals/GiveClarificationModal";
 
 
 const UnitClarificationDetail = () => {
@@ -21,6 +22,17 @@ const UnitClarificationDetail = () => {
   const award_type = searchParams.get("award_type") || "";
   const numericAppId = Number(application_id);
 
+  const handleFileChange = (e: ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+
+    if (file && file.size > 5 * 1024 * 1024) {
+      toast.error("File size should be less than 5MB");
+      e.target.value = "";
+    } else if (file) {
+      console.log("File selected:", file);
+    }
+  };
+
   useEffect(() => {
     if (award_type && numericAppId) {
       dispatch(fetchApplicationUnitDetail({ award_type, numericAppId }))
@@ -32,7 +44,7 @@ const UnitClarificationDetail = () => {
           console.error("Fetch failed:", err);
         });
     }
-  }, [award_type, numericAppId, dispatch, isRefreshData]);
+  }, [award_type, numericAppId, isRefreshData]);
 
   return (
     <>
@@ -47,37 +59,37 @@ const UnitClarificationDetail = () => {
           />
         </div>
         <div className="table-filter-area mb-4">
-      <div className="d-flex flex-wrap justify-content-between align-items-center gap-3">
-        <div className="text-center flex-grow-1 flex-sm-grow-0 flex-basis-100 flex-sm-basis-auto" style={{ minWidth: '150px' }}>
-          <label className="form-label fw-semibold">Award Type</label>
-          <p className="fw-5 mb-0">
-      {unitDetail?.type
-        ? unitDetail.type.charAt(0).toUpperCase() + unitDetail.type.slice(1)
-        : "--"}
-    </p>
+          <div className="d-flex flex-wrap justify-content-between align-items-center gap-3">
+            <div className="text-center flex-grow-1 flex-sm-grow-0 flex-basis-100 flex-sm-basis-auto" style={{ minWidth: '150px' }}>
+              <label className="form-label fw-semibold">Award Type</label>
+              <p className="fw-5 mb-0">
+                {unitDetail?.type
+                  ? unitDetail.type.charAt(0).toUpperCase() + unitDetail.type.slice(1)
+                  : "--"}
+              </p>
+            </div>
+
+            <div className="text-center flex-grow-1 flex-sm-grow-0 flex-basis-100 flex-sm-basis-auto" style={{ minWidth: '150px' }}>
+              <label className="form-label fw-semibold">Cycle Period</label>
+              <p className="fw-5 mb-0">{unitDetail?.fds?.cycle_period || "--"}</p>
+            </div>
+
+            <div className="text-center flex-grow-1 flex-sm-grow-0 flex-basis-100 flex-sm-basis-auto" style={{ minWidth: '150px' }}>
+              <label className="form-label fw-semibold">Last Date</label>
+              <p className="fw-5 mb-0">{unitDetail?.fds?.last_date || "--"}</p>
+            </div>
+
+            <div className="text-center flex-grow-1 flex-sm-grow-0 flex-basis-100 flex-sm-basis-auto" style={{ minWidth: '150px' }}>
+              <label className="form-label fw-semibold">Command</label>
+              <p className="fw-5 mb-0">{unitDetail?.fds?.command || "--"}</p>
+            </div>
+
+            <div className="text-center flex-grow-1 flex-sm-grow-0 flex-basis-100 flex-sm-basis-auto" style={{ minWidth: '150px' }}>
+              <label className="form-label fw-semibold">Unit Name</label>
+              <p className="fw-5 mb-0">{unitDetail?.unit_name || "--"}</p>
+            </div>
+          </div>
         </div>
-    
-        <div className="text-center flex-grow-1 flex-sm-grow-0 flex-basis-100 flex-sm-basis-auto" style={{ minWidth: '150px' }}>
-          <label className="form-label fw-semibold">Cycle Period</label>
-          <p className="fw-5 mb-0">{unitDetail?.fds?.cycle_period || "--"}</p>
-        </div>
-    
-        <div className="text-center flex-grow-1 flex-sm-grow-0 flex-basis-100 flex-sm-basis-auto" style={{ minWidth: '150px' }}>
-          <label className="form-label fw-semibold">Last Date</label>
-          <p className="fw-5 mb-0">{unitDetail?.fds?.last_date || "--"}</p>
-        </div>
-    
-        <div className="text-center flex-grow-1 flex-sm-grow-0 flex-basis-100 flex-sm-basis-auto" style={{ minWidth: '150px' }}>
-          <label className="form-label fw-semibold">Command</label>
-          <p className="fw-5 mb-0">{unitDetail?.fds?.command || "--"}</p>
-        </div>
-    
-        <div className="text-center flex-grow-1 flex-sm-grow-0 flex-basis-100 flex-sm-basis-auto" style={{ minWidth: '150px' }}>
-          <label className="form-label fw-semibold">Unit Name</label>
-          <p className="fw-5 mb-0">{unitDetail?.unit_name || "--"}</p>
-        </div>
-      </div>
-    </div>
         <div className="table-responsive">
           <table className="table-style-1 w-100">
             <thead>
@@ -142,19 +154,21 @@ const UnitClarificationDetail = () => {
                       </p>
                     </td>
                     <td style={{ width: 200 }}>
-    {param?.clarification_details?.clarification_doc ? (
-      <a
-        href={param?.clarification_details?.clarification_doc}
-        target="_blank"
-        rel="noopener noreferrer"
-        className="text-primary"
-      >
-        View Document
-      </a>
-    ) : (
-      !param?.clarification_details?.clarification_doc && param?.clarification_details?.clarification ?"--": <input type="file" className="form-control" autoComplete="off" />
-    )}
-  </td>
+                      {param?.clarification_details?.clarification_doc ? (
+                        <a
+                          href={param?.clarification_details?.clarification_doc}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-primary"
+                        >
+                          View Document
+                        </a>
+                      ) : (
+                        !param?.clarification_details?.clarification_doc && param?.clarification_details?.clarification ?
+                          "--" :
+                          <input type="file" className="form-control" autoComplete="off" onChange={handleFileChange} />
+                      )}
+                    </td>
 
                     <td style={{ width: 200 }}>
                       {param?.clarification_details?.clarification ? (

@@ -6,6 +6,8 @@ import toast from "react-hot-toast";
 import Breadcrumb from "../../../components/ui/breadcrumb/Breadcrumb";
 import EmptyTable from "../../../components/ui/empty-table/EmptyTable";
 import Loader from "../../../components/ui/loader/Loader";
+import FormInput from "../../../components/form/FormInput";
+import FormSelect from "../../../components/form/FormSelect";
 import { SVGICON } from "../../../constants/iconsList";
 import { useAppDispatch, useAppSelector } from "../../../reduxToolkit/hooks";
 import { getConfig } from "../../../reduxToolkit/services/config/configService";
@@ -13,6 +15,7 @@ import { fetchParameters } from "../../../reduxToolkit/services/parameter/parame
 import { resetCitationState } from "../../../reduxToolkit/slices/citation/citationSlice";
 import { createCitation } from "../../../reduxToolkit/services/citation/citationService";
 import type { Parameter } from "../../../reduxToolkit/services/parameter/parameterInterface";
+import { awardTypeOptions } from "../../../data/options";
 
 const DRAFT_STORAGE_KEY = "applyCitationDraft";
 
@@ -28,15 +31,23 @@ const groupParametersByCategory = (params: Parameter[]) => {
 const CitationReviewPage = () => {
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
-  const profile :any= useAppSelector((state) => state.admin.profile);
+
+  const profile: any = useAppSelector((state) => state.admin.profile);
   const { loading } = useAppSelector((state) => state.parameter);
 
+  const initializedRef = useRef(false);
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const categoryRefs = useRef<{ [key: string]: HTMLDivElement | null }>({});
+
+  // States
   const [parameters, setParameters] = useState<Parameter[]>([]);
   const [counts, setCounts] = useState<Record<number, string>>({});
   const [marks, setMarks] = useState<Record<number, number>>({});
+  const [lastDate, setLastDate] = useState("");
+  const [cyclePerios, setCyclePerios] = useState("");
+  const [command, setCommand] = useState("");
   const filteredParameters = parameters.filter((param: any) => counts[param.param_id] !== undefined && counts[param.param_id] !== "");
   const groupedParams = groupParametersByCategory(filteredParameters);
-  const initializedRef = useRef(false);
 
   useEffect(() => {
     if (!initializedRef.current) {
@@ -46,9 +57,6 @@ const CitationReviewPage = () => {
       }
     }
   }, [groupedParams]);
-
-  const scrollContainerRef = useRef<HTMLDivElement>(null);
-  const categoryRefs = useRef<{ [key: string]: HTMLDivElement | null }>({});
 
   useEffect(() => {
     const savedDraft = localStorage.getItem(DRAFT_STORAGE_KEY);
@@ -63,10 +71,7 @@ const CitationReviewPage = () => {
     }
   }, []);
 
-  const [lastDate, setLastDate] = useState("");
-  const [cyclePerios, setCyclePerios] = useState("");
-  const [command, setCommand] = useState("");
-
+  // Formik form
   const formik = useFormik({
     enableReinitialize: true,
     initialValues: {
@@ -83,18 +88,18 @@ const CitationReviewPage = () => {
           { key: "comd", name: "Command" },
           { key: "name", name: "Unit Name" },
         ];
-    
+
         const missingFields = requiredFields.filter(
           (field) => !profile?.unit?.[field.key]
         );
-    
+
         if (missingFields.length > 0) {
           const missingNames = missingFields.map((f) => f.name).join(", ");
           toast.error(`Please fill the following unit fields: ${missingNames}`);
-            navigate("/profile-settings");
+          navigate("/profile-settings");
           return;
         }
-   
+
         const formattedParameters = parameters.map((param: any) => {
           const trimmedName = param.name.trim();
           const count = Number(counts[param.param_id] ?? 0);
@@ -165,7 +170,7 @@ const CitationReviewPage = () => {
     };
 
     fetchAllData();
-  }, [dispatch]);
+  }, []);
 
   useEffect(() => {
     const draft = { counts, marks };
@@ -183,6 +188,7 @@ const CitationReviewPage = () => {
   // Total Parameters
   const totalParams = parameters.length;
 
+  // Show loader
   if (loading) return <Loader />
 
   return (
@@ -201,6 +207,48 @@ const CitationReviewPage = () => {
         <EmptyTable />
         :
         <form onSubmit={formik.handleSubmit}>
+          <div className="table-filter-area mb-4">
+            <div className="row">
+              <div className="col-lg-3 col-sm-4 mb-sm-0 mb-2">
+                <FormSelect
+                  label="Award Type"
+                  name="awardType"
+                  options={awardTypeOptions}
+                  value={awardTypeOptions.find((opt) => opt.value === "citation") || null}
+                  placeholder="Select"
+                  isDisabled
+                />
+              </div>
+              <div className="col-lg-3 col-sm-4 mb-sm-0 mb-2">
+                <FormInput
+                  label="Cycle Period"
+                  name="cyclePeriod"
+                  value={formik.values.cyclePeriod}
+                  onChange={formik.handleChange}
+                  readOnly
+                />
+              </div>
+              <div className="col-lg-3 col-sm-4">
+                <FormInput
+                  label="Last Date"
+                  name="lastDate"
+                  type="date"
+                  value={formik.values.lastDate}
+                  onChange={formik.handleChange}
+                  readOnly
+                />
+              </div>
+              <div className="col-lg-3 col-sm-4">
+                <FormInput
+                  label="Command"
+                  name="command"
+                  value={profile?.unit?.comd || "--"}
+                  onChange={formik.handleChange}
+                  readOnly
+                />
+              </div>
+            </div>
+          </div>
           <div
             ref={scrollContainerRef}
             style={{
@@ -276,7 +324,7 @@ const CitationReviewPage = () => {
               </div>
             ))}
           </div>
-          <div className="submit-button-wrapper border-top pt-3 mt-3">
+          <div className="submit-button-wrapper">
             <div className="row text-center text-sm-start mb-3">
               <div className="col-6 col-sm-3">
                 <span className="fw-medium text-muted">Total Params:</span>

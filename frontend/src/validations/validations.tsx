@@ -70,15 +70,5 @@ export const CreateCitationSchema = Yup.object().shape({
     last_date: Yup.string()
       .required('Last date is required')
       .matches(/^\d{4}-\d{2}-\d{2}$/, 'Date must be in YYYY-MM-DD format'),
-
-    // Optionally validate `parameters` if needed
-    // parameters: Yup.array().of(
-    //   Yup.object().shape({
-    //     name: Yup.string().required('Parameter name is required'),
-    //     count: Yup.number().min(0).required('Count is required'),
-    //     marks: Yup.number().min(0).required('Marks are required'),
-    //     upload: Yup.string().required('Upload path is required'),
-    //   })
-    // ),
   }),
 });
