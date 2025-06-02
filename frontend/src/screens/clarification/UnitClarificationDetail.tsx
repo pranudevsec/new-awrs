@@ -1,12 +1,11 @@
-import { useEffect, useState, type ChangeEvent } from "react";
+import { useEffect, useState } from "react";
 import { useParams, useSearchParams } from "react-router-dom";
-import toast from "react-hot-toast";
 import Breadcrumb from "../../components/ui/breadcrumb/Breadcrumb";
 import GiveClarificationModal from "../../modals/GiveClarificationModal";
 import { SVGICON } from "../../constants/iconsList";
 import { useAppDispatch } from "../../reduxToolkit/hooks";
 import { fetchApplicationUnitDetail } from "../../reduxToolkit/services/application/applicationService";
-
+import { baseURL } from "../../reduxToolkit/helper/axios";
 
 const UnitClarificationDetail = () => {
   const dispatch = useAppDispatch();
@@ -21,17 +20,6 @@ const UnitClarificationDetail = () => {
 
   const award_type = searchParams.get("award_type") || "";
   const numericAppId = Number(application_id);
-
-  const handleFileChange = (e: ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-
-    if (file && file.size > 5 * 1024 * 1024) {
-      toast.error("File size should be less than 5MB");
-      e.target.value = "";
-    } else if (file) {
-      console.log("File selected:", file);
-    }
-  };
 
   useEffect(() => {
     if (award_type && numericAppId) {
@@ -115,9 +103,6 @@ const UnitClarificationDetail = () => {
                   </div>
                 </th>
                 <th style={{ width: 200, minWidth: 200, maxWidth: 200 }}>
-                  <div className="d-flex align-items-start">Upload Doc</div>
-                </th>
-                <th style={{ width: 200, minWidth: 200, maxWidth: 200 }}>
                   <div className="d-flex align-items-start">Clarification</div>
                 </th>
               </tr>
@@ -139,37 +124,22 @@ const UnitClarificationDetail = () => {
                       <p className="fw-5">{param.marks}</p>
                     </td>
                     <td style={{ width: 100 }}>
-                      <a
-                        href={param.upload}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        style={{ fontSize: 18 }}
-                      >
-                        {SVGICON.app.pdf}
-                      </a>
+                      {
+                        param.upload ? <a
+                          href={`${baseURL}${param.upload}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          style={{ fontSize: 18 }}
+                        >
+                          {SVGICON.app.pdf}
+                        </a> : "--"
+                      }
                     </td>
                     <td style={{ width: 200 }}>
                       <p className="fw-4">
                         {param.clarification_details?.reviewer_comment || '—'}
                       </p>
                     </td>
-                    <td style={{ width: 200 }}>
-                      {param?.clarification_details?.clarification_doc ? (
-                        <a
-                          href={param?.clarification_details?.clarification_doc}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="text-primary"
-                        >
-                          View Document
-                        </a>
-                      ) : (
-                        !param?.clarification_details?.clarification_doc && param?.clarification_details?.clarification ?
-                          "--" :
-                          <input type="file" className="form-control" autoComplete="off" onChange={handleFileChange} />
-                      )}
-                    </td>
-
                     <td style={{ width: 200 }}>
                       {param?.clarification_details?.clarification ? (
                         <div>

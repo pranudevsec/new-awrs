@@ -84,7 +84,10 @@ export const updateClarification = createAsyncThunk<
   UpdateClarificationPayload
 >(
   "clarifications/update",
-  async ({ id, clarification, clarification_status }, { rejectWithValue }) => {
+  async (
+    { id, clarification, clarification_status, clarification_doc },
+    { rejectWithValue }
+  ) => {
     try {
       const formData = new FormData();
 
@@ -96,9 +99,18 @@ export const updateClarification = createAsyncThunk<
         formData.append("clarification_status", clarification_status);
       }
 
+      if (clarification_doc) {
+        formData.append("clarification_doc", clarification_doc);
+      }
+
       const response = await Axios.put(
         `${apiEndPoints.clarification}/${id}`,
-        formData
+        formData,
+        {
+          headers: {
+            "Content-Type": "multipart/form-data",
+          },
+        }
       );
 
       if (response.data.success) {

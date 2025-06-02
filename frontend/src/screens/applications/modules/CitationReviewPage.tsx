@@ -16,8 +16,10 @@ import { resetCitationState } from "../../../reduxToolkit/slices/citation/citati
 import { createCitation } from "../../../reduxToolkit/services/citation/citationService";
 import type { Parameter } from "../../../reduxToolkit/services/parameter/parameterInterface";
 import { awardTypeOptions } from "../../../data/options";
+import Axios, { baseURL } from "../../../reduxToolkit/helper/axios";
 
 const DRAFT_STORAGE_KEY = "applyCitationDraft";
+const DRAFT_FILE_UPLOAD_KEY = "applyCitationuploadedDocsDraft";
 
 const groupParametersByCategory = (params: Parameter[]) => {
   return params.reduce((acc: Record<string, Parameter[]>, param) => {
@@ -46,6 +48,13 @@ const CitationReviewPage = () => {
   const [lastDate, setLastDate] = useState("");
   const [cyclePerios, setCyclePerios] = useState("");
   const [command, setCommand] = useState("");
+  const [uploadedFiles, setUploadedFiles] = useState<Record<number, string>>(() => {
+    try {
+      return JSON.parse(localStorage.getItem(DRAFT_FILE_UPLOAD_KEY) || "{}");
+    } catch {
+      return {};
+    }
+  });
   const filteredParameters = parameters.filter((param: any) => counts[param.param_id] !== undefined && counts[param.param_id] !== "");
   const groupedParams = groupParametersByCategory(filteredParameters);
 
@@ -70,6 +79,61 @@ const CitationReviewPage = () => {
       }
     }
   }, []);
+
+  const makeFieldName = (name: string) => {
+    return name.toLowerCase().replace(/\s+/g, "_") + "_" + Date.now();
+  };
+
+  const uploadFileToServer = async (
+    file: File,
+    paramName: string
+  ): Promise<string | null> => {
+    const fieldName = makeFieldName(paramName);
+    const formData = new FormData();
+    formData.append(fieldName, file);
+
+    try {
+      const response = await Axios.post("/api/applications/upload-doc", formData, {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+      });
+
+      const uploadedData = response.data;
+      if (Array.isArray(uploadedData) && uploadedData.length > 0) {
+        return uploadedData[0].urlPath;
+      } else {
+        throw new Error("Invalid upload response");
+      }
+    } catch (error) {
+      console.error("Upload failed:", error);
+      return null;
+    }
+  };
+
+  const handleFileChange = async (
+    e: React.ChangeEvent<HTMLInputElement>,
+    paramId: number,
+    paramName: string
+  ) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (file.size > 5 * 1024 * 1024) {
+      alert("File size must be less than 5MB");
+      return;
+    }
+
+    const uploadedUrl = await uploadFileToServer(file, paramName);
+    if (uploadedUrl) {
+      const newUploads = { ...uploadedFiles, [paramId]: uploadedUrl };
+      setUploadedFiles(newUploads);
+      localStorage.setItem(DRAFT_FILE_UPLOAD_KEY, JSON.stringify(newUploads));
+      alert("Upload successful");
+    } else {
+      alert("Upload failed");
+    }
+  };
 
   // Formik form
   const formik = useFormik({
@@ -104,9 +168,10 @@ const CitationReviewPage = () => {
           const trimmedName = param.name.trim();
           const count = Number(counts[param.param_id] ?? 0);
           const calculatedMarks = marks[param.param_id] ?? 0;
-          const uploadPath = param.proof_reqd
-            ? `uploads/${trimmedName.toLowerCase().replace(/\s+/g, "_")}_file.pdf`
-            : "";
+          // const uploadPath = param.proof_reqd
+          //   ? `uploads/${trimmedName.toLowerCase().replace(/\s+/g, "_")}_file.pdf`
+          //   : "";
+          const uploadPath = uploadedFiles[param.param_id] || "";
 
           return {
             name: trimmedName,
@@ -303,14 +368,23 @@ const CitationReviewPage = () => {
                           </td>
                           <td style={{ width: 200, minWidth: 200, maxWidth: 200 }}>
                             {param.proof_reqd ? (
-                              <a
-                                href="https://file-examples.com/storage/fefdd7ab126835e7993bb1a/2017/10/file-sample_150kB.pdf"
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                style={{ fontSize: 18 }}
-                              >
-                                {SVGICON.app.pdf}
-                              </a>
+                              uploadedFiles[param.param_id] ? (
+                                <a
+                                  href={`${baseURL}${uploadedFiles[param.param_id]}`}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  style={{ fontSize: 18 }}
+                                >
+                                  {SVGICON.app.pdf}
+                                </a>
+                              ) : (
+                                <input
+                                  type="file"
+                                  className="form-control"
+                                  autoComplete="off"
+                                  onChange={(e) => handleFileChange(e, param.param_id, param.name)}
+                                />
+                              )
                             ) : (
                               <span>Not required</span>
                             )}

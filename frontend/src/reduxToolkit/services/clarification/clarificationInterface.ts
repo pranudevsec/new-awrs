@@ -32,6 +32,7 @@ export interface UpdateClarificationPayload {
   id: number;
   clarification?: string;
   clarification_status?: string;
+  clarification_doc?: File;
 }
 
 export interface UpdateClarificationResponse {

@@ -7,17 +7,21 @@ import AssetsDetail from "./components/AssetsDetail"
 import TopCandidates from "./components/TopCandidates"
 import TopWinnersList from "./components/TopWinnersList"
 import UnitScoreChart from "./components/UnitScoreChart"
+import Loader from "../../components/ui/loader/Loader"
 
 const Dashboard = () => {
     const dispatch = useAppDispatch();
 
-    const { dashboardStats, unitScores } = useAppSelector((state) => state.commandPanel);
+    const { loading, dashboardStats, unitScores } = useAppSelector((state) => state.commandPanel);
 
     // Fetch dashboard details API
     useEffect(() => {
         dispatch(getDashboardStats());
         dispatch(getDashboardUnitScores());
     }, []);
+
+    // Show loader
+    if (loading) return <Loader />
 
     return (
         <div className="dashboard-section">

@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, type ChangeEvent } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { useFormik } from "formik";
 import { Tabs, Tab } from "react-bootstrap";
@@ -16,8 +16,11 @@ import { fetchParameters } from "../../../reduxToolkit/services/parameter/parame
 import { resetCitationState } from "../../../reduxToolkit/slices/citation/citationSlice";
 import { createAppreciation } from "../../../reduxToolkit/services/appreciation/appreciationService";
 import type { Parameter } from "../../../reduxToolkit/services/parameter/parameterInterface";
+import Axios, { baseURL } from "../../../reduxToolkit/helper/axios";
+import { SVGICON } from "../../../constants/iconsList";
 
 const DRAFT_STORAGE_KEY = "applyAppreciationDraft";
+const DRAFT_FILE_UPLOAD_KEY = "applyAppreciationUploadedDocsDraft";
 
 const groupParametersByCategory = (params: Parameter[]) => {
   return params.reduce((acc: Record<string, Parameter[]>, param) => {
@@ -46,6 +49,13 @@ const ApplyAppreciation = () => {
   const [command, setCommand] = useState("");
   const groupedParams = groupParametersByCategory(parameters);
   const [activeTab, setActiveTab] = useState(Object.keys(groupedParams)[0] || "");
+  const [uploadedFiles, setUploadedFiles] = useState<Record<number, string>>(() => {
+    try {
+      return JSON.parse(localStorage.getItem(DRAFT_FILE_UPLOAD_KEY) || "{}");
+    } catch {
+      return {};
+    }
+  });
 
   useEffect(() => {
     if (!initializedRef.current) {
@@ -79,14 +89,58 @@ const ApplyAppreciation = () => {
     }
   };
 
-  const handleFileChange = (e: ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
+  const makeFieldName = (name: string) => {
+    return name.toLowerCase().replace(/\s+/g, "_") + "_" + Date.now();
+  };
 
-    if (file && file.size > 5 * 1024 * 1024) {
-      toast.error("File size should be less than 5MB");
-      e.target.value = "";
-    } else if (file) {
-      console.log("File selected:", file);
+  const uploadFileToServer = async (
+    file: File,
+    paramName: string
+  ): Promise<string | null> => {
+    const fieldName = makeFieldName(paramName);
+    const formData = new FormData();
+    formData.append(fieldName, file);
+
+    try {
+      const response = await Axios.post("/api/applications/upload-doc", formData, {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+      });
+
+      const uploadedData = response.data;
+      if (Array.isArray(uploadedData) && uploadedData.length > 0) {
+        return uploadedData[0].urlPath;
+      } else {
+        throw new Error("Invalid upload response");
+      }
+    } catch (error) {
+      console.error("Upload failed:", error);
+      return null;
+    }
+  };
+
+  const handleFileChange = async (
+    e: React.ChangeEvent<HTMLInputElement>,
+    paramId: number,
+    paramName: string
+  ) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (file.size > 5 * 1024 * 1024) {
+      alert("File size must be less than 5MB");
+      return;
+    }
+
+    const uploadedUrl = await uploadFileToServer(file, paramName);
+    if (uploadedUrl) {
+      const newUploads = { ...uploadedFiles, [paramId]: uploadedUrl };
+      setUploadedFiles(newUploads);
+      localStorage.setItem(DRAFT_FILE_UPLOAD_KEY, JSON.stringify(newUploads));
+      alert("Upload successful");
+    } else {
+      alert("Upload failed");
     }
   };
 
@@ -113,13 +167,14 @@ const ApplyAppreciation = () => {
     },
     onSubmit: async (values) => {
       try {
+        const uploadedDocs = JSON.parse(localStorage.getItem(DRAFT_FILE_UPLOAD_KEY) || "{}");
+
+
         const formattedParameters = parameters.map((param: any) => {
           const trimmedName = param.name.trim();
           const count = Number(counts[param.param_id] ?? 0);
           const calculatedMarks = marks[param.param_id] ?? 0;
-          const uploadPath = param.proof_reqd
-            ? `uploads/${trimmedName.toLowerCase().replace(/\s+/g, "_")}_file.pdf`
-            : "";
+          const uploadPath = uploadedDocs[param.param_id] || "";
 
           return {
             name: trimmedName,
@@ -204,8 +259,10 @@ const ApplyAppreciation = () => {
 
   const handleDeleteDraft = () => {
     localStorage.removeItem(DRAFT_STORAGE_KEY);
+    localStorage.removeItem(DRAFT_FILE_UPLOAD_KEY);
     setCounts({});
     setMarks({});
+    setUploadedFiles({});
   };
 
   // Show loader
@@ -354,8 +411,33 @@ const ApplyAppreciation = () => {
                           </div>
                         </td>
                         <td style={{ width: 300, minWidth: 300, maxWidth: 300 }}>
+                          {/* {param.proof_reqd ? (
+                                                    <input
+                                                      type="file"
+                                                      className="form-control"
+                                                      autoComplete="off"
+                                                      onChange={(e) => handleFileChange(e, param.param_id, param.name)} />
+                                                  ) : (
+                                                    <span>Not required</span>
+                                                  )} */}
                           {param.proof_reqd ? (
-                            <input type="file" className="form-control" autoComplete="off" onChange={handleFileChange} />
+                            uploadedFiles[param.param_id] ? (
+                              <a
+                                href={`${baseURL}${uploadedFiles[param.param_id]}`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                style={{ fontSize: 18 }}
+                              >
+                                {SVGICON.app.pdf}
+                              </a>
+                            ) : (
+                              <input
+                                type="file"
+                                className="form-control"
+                                autoComplete="off"
+                                onChange={(e) => handleFileChange(e, param.param_id, param.name)}
+                              />
+                            )
                           ) : (
                             <span>Not required</span>
                           )}

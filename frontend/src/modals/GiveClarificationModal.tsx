@@ -1,6 +1,7 @@
-import { useState } from "react";
+import { useState, type ChangeEvent } from "react";
 import { useDispatch } from "react-redux";
 import Modal from "react-bootstrap/Modal";
+import toast from "react-hot-toast";
 import FormInput from "../components/form/FormInput";
 import type { AppDispatch } from "../reduxToolkit";
 import { SVGICON } from "../constants/iconsList";
@@ -23,21 +24,38 @@ const GiveClarificationModal: React.FC<ClarificationModalProps> = ({
 }) => {
   const dispatch = useDispatch<AppDispatch>();
   const [clarification, setClarification] = useState("");
+  const [file, setFile] = useState<File | null>(null);
+
+  const handleFileChange = (e: ChangeEvent<HTMLInputElement>) => {
+    const selectedFile = e.target.files?.[0];
+    if (selectedFile && selectedFile.size > 5 * 1024 * 1024) {
+      toast.error("File size should be less than 5MB");
+      e.target.value = "";
+    } else {
+      setFile(selectedFile || null);
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!clarification.trim()) return;
+    if (!clarification.trim()) {
+      toast.error("Please enter clarification");
+      return;
+    }
 
     await dispatch(
       updateClarification({
         id: clarificationId,
-        clarification: clarification,
+        clarification,
+        clarification_doc: file || undefined,
       })
     );
-    setIsRefreshData(!isRefreshData)
+
+    setIsRefreshData(!isRefreshData);
     handleClose();
     setClarification("");
+    setFile(null);
   };
 
   return (
@@ -55,6 +73,15 @@ const GiveClarificationModal: React.FC<ClarificationModalProps> = ({
       </div>
       <div className="modal-body bg-white rounded-3 pt-0">
         <form onSubmit={handleSubmit}>
+          <div className="mb-4">
+            <input
+              type="file"
+              className="form-control"
+              name="clarification_doc"
+              autoComplete="off"
+              onChange={handleFileChange}
+            />
+          </div>
           <div className="mb-4">
             <FormInput
               name="clarification"

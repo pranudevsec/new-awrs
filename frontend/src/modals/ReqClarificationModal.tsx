@@ -1,6 +1,6 @@
-import { Link } from "react-router-dom";
 import Modal from "react-bootstrap/Modal";
 import { SVGICON } from "../constants/iconsList";
+import { baseURL } from "../reduxToolkit/helper/axios";
 
 interface ClarificationModalProps {
   show: boolean;
@@ -35,13 +35,13 @@ const ReqClarificationModal: React.FC<ClarificationModalProps> = ({
         {clarification_doc && (
           <p className="sign-up-text mt-4">
             Clarification document:-{" "}
-            <Link
+            <a
               target="_blank"
-              to={clarification_doc}
+              href={`${baseURL}/${clarification_doc}`}
               className="fw-6"
             >
-              {clarification_doc}
-            </Link>
+              {`${baseURL}/${clarification_doc}`}
+            </a>
           </p>
         )}
         {clarification && (

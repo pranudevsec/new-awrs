@@ -47,7 +47,6 @@ interface ProductDetailProps {
 const ApplicationStatus: React.FC<ProductDetailProps> = ({ dashboardStats }) => {
     const data = [
         { name: 'Pending', value: dashboardStats?.totalPendingApplications || 0 },
-        { name: 'Clarification', value: dashboardStats?.clarificationRaised || 0 },
         { name: 'Approved', value: dashboardStats?.approved || 0 },
         { name: 'Rejected', value: dashboardStats?.rejected || 0 },
     ];

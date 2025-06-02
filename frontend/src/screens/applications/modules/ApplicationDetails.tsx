@@ -10,6 +10,7 @@ import Breadcrumb from "../../../components/ui/breadcrumb/Breadcrumb";
 import UnitClarificationModal from "../../../modals/UnitClarificationModal";
 import ReqClarificationModal from "../../../modals/ReqClarificationModal";
 import Loader from "../../../components/ui/loader/Loader";
+import { baseURL } from "../../../reduxToolkit/helper/axios";
 
 const ApplicationDetails = () => {
   const navigate = useNavigate();
@@ -128,9 +129,16 @@ const ApplicationDetails = () => {
                     <p className="fw-5">{param.marks}</p>
                   </td>
                   <td style={{ width: 100 }}>
-                    <a href={param.upload} target="_blank" rel="noopener noreferrer" style={{ fontSize: 18 }}>
-                      {SVGICON.app.pdf}
-                    </a>
+                    {
+                      param.upload ? <a
+                        href={`${baseURL}${param.upload}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        style={{ fontSize: 18 }}
+                      >
+                        {SVGICON.app.pdf}
+                      </a> : "--"
+                    }
                   </td>
                   {/* <td style={{ width: 200 }}>
                         <input
@@ -229,7 +237,6 @@ const ApplicationDetails = () => {
                           "--"
                         )}
                       </td>
-
                     </>
                   )}
                 </tr>
