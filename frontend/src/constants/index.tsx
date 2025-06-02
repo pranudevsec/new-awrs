@@ -18,17 +18,18 @@ export const apiEndPoints = {
     // Appreciation
     appreciation: '/api/appreciation',
 
-   // Applications
-   application: '/api/applications',
-   applicationUnits: '/api/applications/units',
-   applicationUnitDetail:'/api/applications/unit-detail',
-   applicationSubordinates:'/api/applications/subordinates',
+    // Applications
+    application: '/api/applications',
+    applicationUnits: '/api/applications/units',
+    applicationUnitDetail: '/api/applications/unit-detail',
+    applicationSubordinates: '/api/applications/subordinates',
 
     // Clarification
     clarification: '/api/clarification',
 
     // Dashboard
     dashboardStats: '/api/dashboard/stats',
+    dashboardUnitScores: '/api/dashboard/unit-scores',
 
     // Command Panel
     scoreBoard: '/api/applications/scoreboard'

@@ -131,7 +131,6 @@ const CitationReviewPage = () => {
         const result = unwrapResult(resultAction);
 
         if (result.success) {
-          toast.success("Citation created successfully!");
           formik.resetForm();
           dispatch(resetCitationState());
           navigate("/applications/thanks");

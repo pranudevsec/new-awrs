@@ -40,3 +40,34 @@ export interface CommandPanelResponse {
   data: Application[];
   meta: Meta;
 }
+
+export interface DashboardStats {
+  totalPendingApplications: number;
+  clarificationRaised: number;
+  approved: number;
+  rejected: number;
+}
+
+export interface DashboardResponse {
+  statusCode: number;
+  message: string;
+  success: boolean;
+  data: DashboardStats;
+}
+
+export interface DashboardResponse {
+  statusCode: number;
+  message: string;
+  success: boolean;
+  data: DashboardStats;
+}
+
+export interface DashboardUnitScoreResponse {
+  statusCode: number;
+  message: string;
+  success: boolean;
+  data: {
+    name: string;
+    score: number;
+  }[];
+}

@@ -25,6 +25,7 @@ export interface GetClarificationListResponse {
   success: boolean;
   message: string;
   data: ClarificationData[];
+  meta: Meta;
 }
 
 export interface UpdateClarificationPayload {

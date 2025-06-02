@@ -144,7 +144,6 @@ const ApplyCitation = () => {
         const result = unwrapResult(resultAction);
 
         if (result.success) {
-          toast.success("Citation created successfully!");
           formik.resetForm();
           dispatch(resetCitationState());
           navigate("/applications/thanks");
@@ -315,17 +314,17 @@ const ApplyCitation = () => {
                 <table className="table-style-1 w-100">
                   <thead>
                     <tr>
-                      <th>Parameter</th>
-                      <th>Count</th>
-                      <th>Marks</th>
-                      <th>Upload</th>
+                      <th style={{ width: 250, minWidth: 250, maxWidth: 250 }}>Parameter</th>
+                      <th style={{ width: 300, minWidth: 300, maxWidth: 300 }}>Count</th>
+                      <th style={{ width: 300, minWidth: 300, maxWidth: 300 }}>Marks</th>
+                      <th style={{ width: 300, minWidth: 300, maxWidth: 300 }}>Upload</th>
                     </tr>
                   </thead>
                   <tbody>
                     {params.map((param: any) => (
                       <tr key={param.param_id}>
-                        <td><p className="fw-5">{param.name}</p></td>
-                        <td>
+                        <td style={{ width: 250, minWidth: 250, maxWidth: 250 }}><p className="fw-5">{param.name}</p></td>
+                        <td style={{ width: 300, minWidth: 300, maxWidth: 300 }}>
                           <input
                             type="text"
                             className="form-control"
@@ -337,7 +336,7 @@ const ApplyCitation = () => {
                             pattern="[0-9]*"
                           />
                         </td>
-                        <td>
+                        <td style={{ width: 300, minWidth: 300, maxWidth: 300 }}>
                           <div className="input-with-tooltip">
                             <input
                               type="number"
@@ -354,7 +353,7 @@ const ApplyCitation = () => {
                             </div>
                           </div>
                         </td>
-                        <td>
+                        <td style={{ width: 300, minWidth: 300, maxWidth: 300 }}>
                           {param.proof_reqd ? (
                             <input type="file" className="form-control" autoComplete="off" onChange={handleFileChange} />
                           ) : (

@@ -1,4 +1,3 @@
-import { useState } from 'react';
 import {
     PieChart,
     Pie,
@@ -7,20 +6,14 @@ import {
     Tooltip,
     Legend
 } from 'recharts';
-import FormSelect from '../../../components/form/FormSelect';
+import type { DashboardStats } from '../../../reduxToolkit/services/command-panel/commandPanelInterface';
 
-const data = [
-    { name: 'Pending', value: 58 },
-    { name: 'Clarification', value: 45 },
-    { name: 'Rejected', value: 32 },
-];
-
-const cyclePeriodOptions: OptionType[] = [
-    { value: "Jan - Jun 2024", label: "Jan - Jun 2024" },
-    { value: "July - Dec 2024", label: "July - Dec 2024" },
-    { value: "Jan - Jun 2025", label: "Jan - Jun 2025" },
-    { value: "July - Dec 2025", label: "July - Dec 2025" },
-];
+// const cyclePeriodOptions: OptionType[] = [
+//     { value: "Jan - Jun 2024", label: "Jan - Jun 2024" },
+//     { value: "July - Dec 2024", label: "July - Dec 2024" },
+//     { value: "Jan - Jun 2025", label: "Jan - Jun 2025" },
+//     { value: "July - Dec 2025", label: "July - Dec 2025" },
+// ];
 
 const COLORS = ['#FFE089', '#1A7262', '#7AD9D2', '#21438D'];
 
@@ -47,21 +40,32 @@ const CustomTooltip = ({ active, payload }: any) => {
     );
 };
 
+interface ProductDetailProps {
+    dashboardStats: DashboardStats | null;
+}
 
-const ApplicationStatus = () => {
-    const [applicationDate, setApplicationDate] = useState("Jan - Jun 2025")
+const ApplicationStatus: React.FC<ProductDetailProps> = ({ dashboardStats }) => {
+    const data = [
+        { name: 'Pending', value: dashboardStats?.totalPendingApplications || 0 },
+        { name: 'Clarification', value: dashboardStats?.clarificationRaised || 0 },
+        { name: 'Approved', value: dashboardStats?.approved || 0 },
+        { name: 'Rejected', value: dashboardStats?.rejected || 0 },
+    ];
+
+    // States
+    // const [applicationDate, setApplicationDate] = useState("Jan - Jun 2025")
 
     return (
         <div className="application-status-chart h-100">
             <div className="d-flex flex-wrap gap-2 justify-content-between mb-3">
                 <h2 className="fw-6">Top Units by Total Score</h2>
-                <FormSelect
+                {/* <FormSelect
                     name="cyclePeriod"
                     options={cyclePeriodOptions}
                     value={cyclePeriodOptions.find((opt) => opt.value === applicationDate) || null}
                     onChange={(e: any) => setApplicationDate(e?.value)}
                     placeholder="Select"
-                />
+                /> */}
             </div>
             <div style={{ height: 250, overflowX: "auto" }}>
                 <ResponsiveContainer width="100%" height="100%" minWidth={400}>

@@ -6,23 +6,28 @@ import { fetchApplicationUnits, fetchSubordinates } from "../../../reduxToolkit/
 import { awardTypeOptions } from "../../../data/options";
 import Breadcrumb from "../../../components/ui/breadcrumb/Breadcrumb";
 import FormSelect from "../../../components/form/FormSelect";
+import Loader from "../../../components/ui/loader/Loader";
+import EmptyTable from "../../../components/ui/empty-table/EmptyTable";
+import Pagination from "../../../components/ui/pagination/Pagination";
 
 const ClarificationRaisedList = () => {
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
 
   const { profile } = useAppSelector((state) => state.admin);
-  const { units, loading, error } = useAppSelector((state) => state.application);
+  const { units, loading, meta } = useAppSelector((state) => state.application);
 
   // States
   const [awardType, setAwardType] = useState<string | null>(null);
   const [search, setSearch] = useState<string>('');
+  const [page, setPage] = useState<number>(1);
+  const [limit, setLimit] = useState<number>(10);
 
   useEffect(() => {
     if (!profile?.user?.user_role) return;
 
     const fetchData = () => {
-      const params = { award_type: awardType || '', search };
+      const params = { award_type: awardType || '', search, page, limit };
       if (profile.user.user_role !== 'unit') {
         dispatch(fetchSubordinates(params));
       } else {
@@ -31,7 +36,7 @@ const ClarificationRaisedList = () => {
     };
 
     fetchData();
-  }, [awardType, search, profile]);
+  }, [awardType, search, profile, page, limit]);
 
   return (
     <div className="clarification-section">
@@ -86,80 +91,76 @@ const ClarificationRaisedList = () => {
           </thead>
 
           <tbody>
-            {loading && (
-              <tr>
-                <td colSpan={7} className="text-center">
-                  Loading...
+            {loading ?
+              (<tr>
+                <td colSpan={7}>
+                  <div className="d-flex justify-content-center py-5">
+                    <Loader inline size={40} />
+                  </div>
                 </td>
               </tr>
-            )}
-
-            {error && (
-              <tr>
-                <td colSpan={7} className="text-center text-danger">
-                  {error}
-                </td>
-              </tr>
-            )}
-
-            {!loading && !error && units.length === 0 && (
-              <tr>
-                <td colSpan={7} className="text-center">
-                  No applications found.
-                </td>
-              </tr>
-            )}
-
-            {!loading &&
-              !error &&
-              units.map((unit: any) => (
-                <tr
-                  key={unit.id}
-                  onClick={() => navigate(`/applications/list/${unit.id}?award_type=${unit.type}`)}
-                  style={{ cursor: "pointer" }}
-                >
-                  <td style={{ width: 150, minWidth: 150, maxWidth: 150 }}>
-                    <p className="fw-4">#{unit.id}</p>
-                  </td>
-                  <td style={{ width: 150, minWidth: 150, maxWidth: 150 }}>
-                    <p className="fw-4">#{unit.unit_id}</p>
-                  </td>
-                  <td style={{ width: 200, minWidth: 200, maxWidth: 200 }}>
-                    <p className="fw-4">
-                      {new Date(unit.date_init).toLocaleDateString()}
-                    </p>
-                  </td>
-                  <td style={{ width: 200, minWidth: 200, maxWidth: 200 }}>
-                    <p className="fw-4">
-                      {unit.fds?.last_date
-                        ? new Date(unit.fds.last_date).toLocaleDateString()
-                        : "-"}
-                    </p>
-                  </td>
-                  <td style={{ width: 150, minWidth: 150, maxWidth: 150 }}>
-                    <p className="fw-4">{unit.type}</p>
-                  </td>
-                  {/* <td style={{ width: 200, minWidth: 200, maxWidth: 200 }}>
+              ) : units.length > 0 && (
+                units.map((unit: any) => (
+                  <tr
+                    key={unit.id}
+                    onClick={() => navigate(`/applications/list/${unit.id}?award_type=${unit.type}`)}
+                    style={{ cursor: "pointer" }}
+                  >
+                    <td style={{ width: 150, minWidth: 150, maxWidth: 150 }}>
+                      <p className="fw-4">#{unit.id}</p>
+                    </td>
+                    <td style={{ width: 150, minWidth: 150, maxWidth: 150 }}>
+                      <p className="fw-4">#{unit.unit_id}</p>
+                    </td>
+                    <td style={{ width: 200, minWidth: 200, maxWidth: 200 }}>
+                      <p className="fw-4">
+                        {new Date(unit.date_init).toLocaleDateString()}
+                      </p>
+                    </td>
+                    <td style={{ width: 200, minWidth: 200, maxWidth: 200 }}>
+                      <p className="fw-4">
+                        {unit.fds?.last_date
+                          ? new Date(unit.fds.last_date).toLocaleDateString()
+                          : "-"}
+                      </p>
+                    </td>
+                    <td style={{ width: 150, minWidth: 150, maxWidth: 150 }}>
+                      <p className="fw-4">{unit.type}</p>
+                    </td>
+                    {/* <td style={{ width: 200, minWidth: 200, maxWidth: 200 }}>
                     <div className="status-content approved pending d-flex align-items-center gap-3">
                       <span></span>
                       <p className="text-capitalize fw-5">Accepted</p>
                     </div>
                   </td> */}
-                  <td style={{ width: 100, minWidth: 100, maxWidth: 100 }}>
-                    <Link
-                      to={`/applications/list/${unit.id}?award_type=${unit.type}`}
-                      className="action-btn bg-transparent d-inline-flex align-items-center justify-content-center"
-                      onClick={(e) => e.stopPropagation()} // prevent triggering row click navigation
-                    >
-                      {SVGICON.app.eye}
-                    </Link>
-                  </td>
-                </tr>
-              ))}
+                    <td style={{ width: 100, minWidth: 100, maxWidth: 100 }}>
+                      <Link
+                        to={`/applications/list/${unit.id}?award_type=${unit.type}`}
+                        className="action-btn bg-transparent d-inline-flex align-items-center justify-content-center"
+                        onClick={(e) => e.stopPropagation()} // prevent triggering row click navigation
+                      >
+                        {SVGICON.app.eye}
+                      </Link>
+                    </td>
+                  </tr>
+                ))
+              )}
           </tbody>
         </table>
       </div>
-      {/* <Pagination /> */}
+      {/* Empty Data */}
+      {!loading && units.length === 0 && <EmptyTable />}
+
+      {/* Pagination */}
+      {units.length > 0 && (
+        <Pagination
+          meta={meta}
+          page={page}
+          limit={limit}
+          setPage={setPage}
+          setLimit={setLimit}
+        />
+      )}
     </div>
   );
 };

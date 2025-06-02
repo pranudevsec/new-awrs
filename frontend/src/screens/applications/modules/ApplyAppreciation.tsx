@@ -1,35 +1,94 @@
-import { useEffect, useState, type ChangeEvent } from "react";
+import { useState, useEffect, useRef, type ChangeEvent } from "react";
 import { useNavigate } from "react-router-dom";
 import { useFormik } from "formik";
+import { Tabs, Tab } from "react-bootstrap";
 import { unwrapResult } from "@reduxjs/toolkit";
 import toast from "react-hot-toast";
 import Breadcrumb from "../../../components/ui/breadcrumb/Breadcrumb";
 import FormSelect from "../../../components/form/FormSelect";
 import FormInput from "../../../components/form/FormInput";
-import EmptyTable from "../../../components/ui/empty-table/EmptyTable";
 import Loader from "../../../components/ui/loader/Loader";
+import EmptyTable from "../../../components/ui/empty-table/EmptyTable";
+import { awardTypeOptions } from "../../../data/options";
 import { useAppDispatch, useAppSelector } from "../../../reduxToolkit/hooks";
 import { getConfig } from "../../../reduxToolkit/services/config/configService";
 import { fetchParameters } from "../../../reduxToolkit/services/parameter/parameterService";
 import { resetCitationState } from "../../../reduxToolkit/slices/citation/citationSlice";
 import { createAppreciation } from "../../../reduxToolkit/services/appreciation/appreciationService";
-import { awardTypeOptions } from "../../../data/options";
 import type { Parameter } from "../../../reduxToolkit/services/parameter/parameterInterface";
 
 const DRAFT_STORAGE_KEY = "applyAppreciationDraft";
+
+const groupParametersByCategory = (params: Parameter[]) => {
+  return params.reduce((acc: Record<string, Parameter[]>, param) => {
+    const category = param.category || "Uncategorized";
+    if (!acc[category]) acc[category] = [];
+    acc[category].push(param);
+    return acc;
+  }, {});
+};
 
 const ApplyAppreciation = () => {
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
 
+  const { profile } = useAppSelector((state) => state.admin);
   const { loading } = useAppSelector((state) => state.parameter);
 
+  const initializedRef = useRef(false);
+
   // States
-  const [cyclePeriodOptions, setCyclePeriodOptions] = useState<OptionType[]>([]);
   const [parameters, setParameters] = useState<Parameter[]>([]);
   const [counts, setCounts] = useState<Record<number, string>>({});
   const [marks, setMarks] = useState<Record<number, number>>({});
   const [lastDate, setLastDate] = useState("");
+  const [cyclePerios, setCyclePerios] = useState("");
+  const [command, setCommand] = useState("");
+  const groupedParams = groupParametersByCategory(parameters);
+  const [activeTab, setActiveTab] = useState(Object.keys(groupedParams)[0] || "");
+
+  useEffect(() => {
+    if (!initializedRef.current) {
+      const firstCategory = Object.keys(groupedParams)[0];
+      if (firstCategory) {
+        setActiveTab(firstCategory);
+        initializedRef.current = true;
+      }
+    }
+  }, [groupedParams]);
+
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const categoryRefs = useRef<{ [key: string]: HTMLDivElement | null }>({});
+
+  const handleTabSelect = (key: string | null) => {
+    if (!key) return;
+    setActiveTab(key);
+
+    const categoryElement = categoryRefs.current[key];
+    const container = scrollContainerRef.current;
+
+    if (categoryElement && container) {
+      const containerTop = container.getBoundingClientRect().top;
+      const categoryTop = categoryElement.getBoundingClientRect().top;
+      const scrollOffset = categoryTop - containerTop + container.scrollTop;
+
+      container.scrollTo({
+        top: scrollOffset,
+        behavior: 'smooth',
+      });
+    }
+  };
+
+  const handleFileChange = (e: ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+
+    if (file && file.size > 5 * 1024 * 1024) {
+      toast.error("File size should be less than 5MB");
+      e.target.value = "";
+    } else if (file) {
+      console.log("File selected:", file);
+    }
+  };
 
   useEffect(() => {
     const savedDraft = localStorage.getItem(DRAFT_STORAGE_KEY);
@@ -48,8 +107,9 @@ const ApplyAppreciation = () => {
   const formik = useFormik({
     enableReinitialize: true,
     initialValues: {
-      cyclePeriod: "",
+      cyclePeriod: cyclePerios || "",
       lastDate: lastDate || "",
+      command: command || "",
     },
     onSubmit: async (values) => {
       try {
@@ -69,12 +129,13 @@ const ApplyAppreciation = () => {
           };
         });
 
-        const payload: any = {
+        const payload = {
           date_init: "2024-04-01",
           appre_fds: {
             award_type: "appreciation",
             cycle_period: values.cyclePeriod,
             last_date: values.lastDate,
+            command: values.command,
             parameters: formattedParameters,
           },
         };
@@ -104,13 +165,12 @@ const ApplyAppreciation = () => {
         ]);
 
         if (configRes?.success && configRes.data) {
-          const options = configRes.data.cycle_period.map((val: string) => ({
-            label: val,
-            value: val,
-          }));
-          setCyclePeriodOptions(options);
+          setCyclePerios(configRes.data.current_cycle_period);
           const formattedDate = configRes.data.deadline?.split("T")[0] || "";
           setLastDate(formattedDate);
+          if (profile) {
+            setCommand(profile?.unit?.comd)
+          }
         }
 
         if (paramsRes.success && paramsRes.data) {
@@ -142,17 +202,6 @@ const ApplyAppreciation = () => {
     }
   };
 
-  const handleFileChange = (e: ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-
-    if (file && file.size > 5 * 1024 * 1024) {
-      toast.error("File size should be less than 5MB");
-      e.target.value = "";
-    } else if (file) {
-      console.log("File selected:", file);
-    }
-  };
-
   const handleDeleteDraft = () => {
     localStorage.removeItem(DRAFT_STORAGE_KEY);
     setCounts({});
@@ -173,7 +222,9 @@ const ApplyAppreciation = () => {
           ]}
         />
       </div>
-      {parameters.length === 0 ? <EmptyTable /> :
+
+      {Object.keys(groupedParams).length === 0 ?
+        <EmptyTable /> :
         <form onSubmit={formik.handleSubmit}>
           <div className="table-filter-area mb-4">
             <div className="row">
@@ -188,13 +239,12 @@ const ApplyAppreciation = () => {
                 />
               </div>
               <div className="col-lg-3 col-sm-4 mb-sm-0 mb-2">
-                <FormSelect
+                <FormInput
                   label="Cycle Period"
                   name="cyclePeriod"
-                  options={cyclePeriodOptions}
-                  value={cyclePeriodOptions.find((opt) => opt.value === formik.values.cyclePeriod) || null}
-                  onChange={(selected) => formik.setFieldValue("cyclePeriod", selected?.value)}
-                  placeholder="Select"
+                  value={formik.values.cyclePeriod}
+                  onChange={formik.handleChange}
+                  readOnly
                 />
               </div>
               <div className="col-lg-3 col-sm-4">
@@ -207,64 +257,115 @@ const ApplyAppreciation = () => {
                   readOnly
                 />
               </div>
+              <div className="col-lg-3 col-sm-4">
+                <FormInput
+                  label="Command"
+                  name="command"
+                  value={profile?.unit?.comd || "--"}
+                  onChange={formik.handleChange}
+                  readOnly
+                />
+              </div>
             </div>
           </div>
-          <div className="table-responsive">
-            <table className="table-style-1 w-100">
-              <thead>
-                <tr>
-                  <th>Parameter</th>
-                  <th>Count</th>
-                  <th>Marks</th>
-                  <th>Upload</th>
-                </tr>
-              </thead>
-              <tbody>
-                {parameters.map((param: any) => (
-                  <tr key={param.param_id}>
-                    <td>
-                      <p className="fw-5">{param.name}</p>
-                    </td>
-                    <td>
-                      <input
-                        type="text"
-                        className="form-control"
-                        placeholder="Enter count"
-                        autoComplete="off"
-                        value={counts[param.param_id] ?? ""}
-                        onChange={(e) => handleCountChange(param.param_id, e.target.value)}
-                        inputMode="numeric"
-                        pattern="[0-9]*"
-                      />
-                    </td>
-                    <td>
-                      <div className="input-with-tooltip">
-                        <input
-                          type="number"
-                          className="form-control"
-                          placeholder="Marks"
-                          value={marks[param.param_id] ?? 0}
-                          readOnly
-                        />
-                        <div className="tooltip-icon">
-                          <i className="info-circle">i</i>
-                          <span className="tooltip-text">
-                            {`1 unit = ${param.per_unit_mark} marks, max ${param.max_marks} marks`}
-                          </span>
-                        </div>
-                      </div>
-                    </td>
-                    <td>
-                      {param.proof_reqd ? (
-                        <input type="file" className="form-control" autoComplete="off" onChange={handleFileChange} />
-                      ) : (
-                        <span>Not required</span>
-                      )}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+
+          <div style={{ position: 'sticky', top: 0, backgroundColor: 'white', zIndex: 10, paddingBottom: '1rem' }}>
+            <Tabs
+              activeKey={activeTab}
+              onSelect={handleTabSelect}
+              id="category-tabs"
+              className="mb-3 custom-tabs"
+            >
+              {Object.keys(groupedParams).map((category) => (
+                <Tab
+                  eventKey={category}
+                  title={<span className="form-label mb-1">{category.toUpperCase()}</span>}
+                  key={category}
+                />
+              ))}
+            </Tabs>
+          </div>
+
+          <div
+            ref={scrollContainerRef}
+            style={{
+              height: '60vh',
+              overflowY: 'auto',
+              paddingRight: '1rem',
+              scrollbarWidth: 'none',
+              msOverflowStyle: 'none',
+            }}
+          >
+            {Object.entries(groupedParams).map(([category, params]) => (
+              <div
+                key={category}
+                id={`category-${category}`}
+                ref={(el) => {
+                  categoryRefs.current[category] = el;
+                }}
+                style={{ marginBottom: "2rem" }}
+              >
+                <h5
+                  className="mb-4 p-2"
+                  style={{ color: "#333", fontWeight: "600" }}
+                >
+                  {category.charAt(0).toUpperCase() + category.slice(1)}
+                </h5>
+                <table className="table-style-1 w-100">
+                  <thead>
+                    <tr>
+                      <th style={{ width: 250, minWidth: 250, maxWidth: 250 }}>Parameter</th>
+                      <th style={{ width: 300, minWidth: 300, maxWidth: 300 }}>Count</th>
+                      <th style={{ width: 300, minWidth: 300, maxWidth: 300 }}>Marks</th>
+                      <th style={{ width: 300, minWidth: 300, maxWidth: 300 }}>Upload</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {params.map((param: any) => (
+                      <tr key={param.param_id}>
+                        <td style={{ width: 250, minWidth: 250, maxWidth: 250 }}><p className="fw-5">{param.name}</p></td>
+                        <td style={{ width: 300, minWidth: 300, maxWidth: 300 }}>
+                          <input
+                            type="text"
+                            className="form-control"
+                            placeholder="Enter count"
+                            autoComplete="off"
+                            value={counts[param.param_id] ?? ""}
+                            onChange={(e) => handleCountChange(param.param_id, e.target.value)}
+                            inputMode="numeric"
+                            pattern="[0-9]*"
+                          />
+                        </td>
+                        <td style={{ width: 300, minWidth: 300, maxWidth: 300 }}>
+                          <div className="input-with-tooltip">
+                            <input
+                              type="number"
+                              className="form-control"
+                              placeholder="Marks"
+                              value={marks[param.param_id] ?? 0}
+                              readOnly
+                            />
+                            <div className="tooltip-icon">
+                              <i className="info-circle">i</i>
+                              <span className="tooltip-text">
+                                {`1 unit = ${param.per_unit_mark} marks, max ${param.max_marks} marks`}
+                              </span>
+                            </div>
+                          </div>
+                        </td>
+                        <td style={{ width: 300, minWidth: 300, maxWidth: 300 }}>
+                          {param.proof_reqd ? (
+                            <input type="file" className="form-control" autoComplete="off" onChange={handleFileChange} />
+                          ) : (
+                            <span>Not required</span>
+                          )}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            ))}
           </div>
           <div className="submit-button-wrapper">
             <div className="d-flex flex-sm-row flex-column gap-sm-3 gap-1 justify-content-end">
@@ -275,8 +376,12 @@ const ApplyAppreciation = () => {
               >
                 Save as Draft
               </button>
-              <button type="submit" className="_btn primary">
-                Submit
+              <button
+                type="button"
+                className="_btn primary"
+                onClick={() => navigate('/applications/appreciation-review')}
+              >
+                Preview
               </button>
               <button
                 type="button"

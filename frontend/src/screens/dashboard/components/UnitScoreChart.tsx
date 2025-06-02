@@ -8,14 +8,6 @@ import {
     ResponsiveContainer,
 } from 'recharts';
 
-const data = [
-    { name: 'Artillery', score: 95 },
-    { name: 'Engineers', score: 82 },
-    { name: 'Signa', score: 74 },
-    { name: 'Infairy', score: 65 },
-    { name: 'Army', score: 40 },
-];
-
 const CustomTooltip = ({ active, payload, label }: any) => {
     if (!active || !payload || payload.length === 0) return null;
 
@@ -37,13 +29,20 @@ const CustomTooltip = ({ active, payload, label }: any) => {
     );
 };
 
-const UnitScoreChart = () => {
+interface UnitScoreChartProps {
+    unitScores: {
+        name: string;
+        score: number;
+    }[];
+}
+
+const UnitScoreChart: React.FC<UnitScoreChartProps> = ({ unitScores }) => {
     return (
         <div className="unit-score-chart h-100">
             <h2 className="fw-6 mb-4">Top Units by Total Score</h2>
             <div style={{ height: 250, overflowX: "auto" }}>
                 <ResponsiveContainer width="100%" height="100%" minWidth={400}>
-                    <BarChart data={data} margin={{ top: 20, right: 0, left: -25, bottom: 0 }} >
+                    <BarChart data={unitScores} margin={{ top: 20, right: 0, left: -25, bottom: 0 }} >
                         <CartesianGrid strokeDasharray="8" vertical={false} stroke='var(--gray-100)' />
                         <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 12 }} />
                         <YAxis domain={[0, 100]} axisLine={false} tickLine={false} tick={{ fontSize: 12 }} />

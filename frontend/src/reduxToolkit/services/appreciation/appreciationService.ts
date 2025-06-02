@@ -14,7 +14,7 @@ export const createAppreciation = createAsyncThunk<
   try {
     const response = await Axios.post(apiEndPoints.appreciation, payload);
     if (response.data.success) {
-      toast.success(response.data.message || "Appreciation submitted");
+      toast.success("Appreciation created successfully!");
       return response.data;
     } else {
       toast.error(response.data.message || "Failed to submit appreciation");

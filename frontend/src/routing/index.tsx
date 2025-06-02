@@ -1,5 +1,6 @@
 import { lazy, type ReactElement } from "react";
 import { Navigate } from "react-router-dom";
+
 import Login from "../screens/auth/Login";
 import SignUp from "../screens/auth/SignUp";
 
@@ -7,6 +8,7 @@ const Applications = lazy(() => import("../screens/applications/Applications"));
 const ApplyCitation = lazy(() => import("../screens/applications/modules/ApplyCitation"));
 const CitationReviewPage = lazy(() => import("../screens/applications/modules/CitationReviewPage"));
 const ApplyAppreciation = lazy(() => import("../screens/applications/modules/ApplyAppreciation"));
+const AppreciationReviewPage = lazy(() => import("../screens/applications/modules/AppreciationReviewPage"));
 const ApplicationsList = lazy(() => import("../screens/applications/modules/ApplicationsList"));
 const ClarificationRaisedList = lazy(() => import("../screens/applications/modules/ClarificationRaisedList"));
 const ApplicationDetails = lazy(() => import("../screens/applications/modules/ApplicationDetails"));
@@ -49,7 +51,10 @@ export const authProtectedRoutes: RouteConfig[] = [
   { path: "/applications", element: <Applications /> },
   { path: "/applications/citation", element: <ApplyCitation /> },
   { path: "/applications/citation-review", element: <CitationReviewPage /> },
+
   { path: "/applications/appreciation", element: <ApplyAppreciation /> },
+  { path: "/applications/appreciation-review", element: <AppreciationReviewPage /> },
+
   { path: "/applications/list", element: <ApplicationsList /> },
   { path: "/submitted-forms/list", element: <ApplicationsList /> },
   { path: "/applications/list/:application_id", element: <ApplicationDetails /> },

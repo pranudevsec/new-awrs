@@ -16,6 +16,7 @@ interface ClarificationState {
   data: any;
   unitClarifications: any[];
   subordinateClarifications: any[];
+  meta: Meta;
 }
 
 const initialState: ClarificationState = {
@@ -25,6 +26,12 @@ const initialState: ClarificationState = {
   data: null,
   unitClarifications: [],
   subordinateClarifications: [],
+  meta: {
+    totalItems: 1,
+    totalPages: 1,
+    currentPage: 1,
+    itemsPerPage: 10,
+  },
 };
 
 const clarificationSlice = createSlice({
@@ -70,6 +77,7 @@ const clarificationSlice = createSlice({
       (state, action: PayloadAction<GetClarificationListResponse>) => {
         state.loading = false;
         state.unitClarifications = action.payload.data || [];
+        state.meta = action.payload.meta;
       }
     );
     builder.addCase(
@@ -89,6 +97,7 @@ const clarificationSlice = createSlice({
       (state, action: PayloadAction<GetClarificationListResponse>) => {
         state.loading = false;
         state.unitClarifications = action.payload.data || [];
+        state.meta = action.payload.meta;
       }
     );
     builder.addCase(

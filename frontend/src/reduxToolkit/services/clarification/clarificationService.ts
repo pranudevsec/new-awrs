@@ -34,35 +34,38 @@ export const createClarification = createAsyncThunk<
 // ✅ Get Clarification for Units
 export const getClarifications = createAsyncThunk<
   GetClarificationListResponse,
-  { awardType: string; search: string }
->("clarifications/get", async ({ awardType, search }, { rejectWithValue }) => {
-  try {
-    const response = await Axios.get(
-      `${apiEndPoints.clarification}?awardType=${
-        awardType || ""
-      }&search=${search}`
-    );
-    return response.data;
-  } catch (error: any) {
-    toast.error(
-      error.response?.data?.message || "Failed to fetch clarifications"
-    );
-    return rejectWithValue(error.response?.data?.message);
+  { awardType: string; search: string; page?: number; limit?: number }
+>(
+  "clarifications/get",
+  async ({ awardType, search, page, limit }, { rejectWithValue }) => {
+    try {
+      const response = await Axios.get(
+        `${apiEndPoints.clarification}?awardType=${
+          awardType || ""
+        }&search=${search}&page=${page || 1}&limit=${limit || 10}`
+      );
+      return response.data;
+    } catch (error: any) {
+      toast.error(
+        error.response?.data?.message || "Failed to fetch clarifications"
+      );
+      return rejectWithValue(error.response?.data?.message);
+    }
   }
-});
+);
 
 // ✅ Get Clarification for Subordinates
 export const getSubordinateClarifications = createAsyncThunk<
   GetClarificationListResponse,
-  { awardType: string; search: string }
+  { awardType: string; search: string; page?: number; limit?: number }
 >(
   "clarifications/getSubordinates",
-  async ({ awardType, search }, { rejectWithValue }) => {
+  async ({ awardType, search, page, limit }, { rejectWithValue }) => {
     try {
       const response = await Axios.get(
         `${apiEndPoints.clarification}/for-subordinates?awardType=${
           awardType || ""
-        }&search=${search}`
+        }&search=${search}&page=${page || 1}&limit=${limit || 10}`
       );
       return response.data;
     } catch (error: any) {

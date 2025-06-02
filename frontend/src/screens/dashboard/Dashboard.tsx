@@ -1,3 +1,6 @@
+import { useEffect } from "react"
+import { useAppDispatch, useAppSelector } from "../../reduxToolkit/hooks"
+import { getDashboardStats, getDashboardUnitScores } from "../../reduxToolkit/services/command-panel/commandPanelService"
 import Breadcrumb from "../../components/ui/breadcrumb/Breadcrumb"
 import ApplicationStatus from "./components/ApplicationStatus"
 import AssetsDetail from "./components/AssetsDetail"
@@ -6,18 +9,28 @@ import TopWinnersList from "./components/TopWinnersList"
 import UnitScoreChart from "./components/UnitScoreChart"
 
 const Dashboard = () => {
+    const dispatch = useAppDispatch();
+
+    const { dashboardStats, unitScores } = useAppSelector((state) => state.commandPanel);
+
+    // Fetch dashboard details API
+    useEffect(() => {
+        dispatch(getDashboardStats());
+        dispatch(getDashboardUnitScores());
+    }, []);
+
     return (
         <div className="dashboard-section">
             <div className="d-flex flex-sm-row flex-column align-items-sm-center justify-content-between mb-4">
                 <Breadcrumb title="Dashboard" />
             </div>
-            <AssetsDetail />
+            <AssetsDetail dashboardStats={dashboardStats} />
             <div className="row mb-4 row-gap-4">
                 <div className="col-lg-4">
-                    <UnitScoreChart />
+                    <UnitScoreChart unitScores={unitScores} />
                 </div>
                 <div className="col-lg-5">
-                    <ApplicationStatus />
+                    <ApplicationStatus dashboardStats={dashboardStats} />
                 </div>
                 <div className="col-lg-3">
                     <TopCandidates />

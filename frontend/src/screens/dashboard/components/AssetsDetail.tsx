@@ -1,4 +1,10 @@
-const AssetsDetail = () => {
+import type { DashboardStats } from "../../../reduxToolkit/services/command-panel/commandPanelInterface";
+
+interface ProductDetailProps {
+    dashboardStats: DashboardStats | null;
+}
+
+const AssetsDetail: React.FC<ProductDetailProps> = ({ dashboardStats }) => {
     return (
         <div className="assets-details-cards mb-4">
             <div className="row">
@@ -7,7 +13,7 @@ const AssetsDetail = () => {
                         <div className="left-content d-flex flex-wrap flex-xxl-row flex-xl-column flex-md-row flex-sm-column align-items-center gap-2">
                             <div className="text ">
                                 <h6 className="fw-4 mb-2">Application Pending</h6>
-                                <h4 className="fw-6 font-lexend color-pending">12</h4>
+                                <h4 className="fw-6 font-lexend color-pending">{dashboardStats?.totalPendingApplications || 0}</h4>
                             </div>
                         </div>
                     </div>
@@ -16,8 +22,8 @@ const AssetsDetail = () => {
                     <div className="card bg-request d-flex flex-row align-items-center justify-content-between h-100">
                         <div className="left-content d-flex flex-wrap flex-xxl-row flex-xl-column flex-md-row flex-sm-column align-items-center gap-2">
                             <div className="text">
-                                <h6 className="fw-4 mb-2">Clarification Requests</h6>
-                                <h4 className="fw-6 font-lexend color-request">5</h4>
+                                <h6 className="fw-4 mb-2">Clarification Raised</h6>
+                                <h4 className="fw-6 font-lexend color-request">{dashboardStats?.clarificationRaised || 0}</h4>
                             </div>
                         </div>
                     </div>
@@ -26,8 +32,8 @@ const AssetsDetail = () => {
                     <div className="card bg-raised d-flex flex-row align-items-center justify-content-between h-100">
                         <div className="left-content d-flex flex-wrap flex-xxl-row flex-xl-column flex-md-row flex-sm-column align-items-center gap-2">
                             <div className="text">
-                                <h6 className="fw-4 mb-2">Clarification Raised</h6>
-                                <h4 className="fw-6 font-lexend color-raised">3</h4>
+                                <h6 className="fw-4 mb-2">Approved</h6>
+                                <h4 className="fw-6 font-lexend color-raised">{dashboardStats?.approved || 0}</h4>
                             </div>
                         </div>
                     </div>
@@ -37,7 +43,7 @@ const AssetsDetail = () => {
                         <div className="left-content d-flex flex-wrap flex-xxl-row flex-xl-column flex-md-row flex-sm-column align-items-center gap-2">
                             <div className="text">
                                 <h6 className="fw-4 mb-2">Rejected</h6>
-                                <h4 className="fw-6 font-lexend color-rejected">2</h4>
+                                <h4 className="fw-6 font-lexend color-rejected">{dashboardStats?.rejected || 0}</h4>
                             </div>
                         </div>
                     </div>

@@ -14,6 +14,7 @@ export const createCitation = createAsyncThunk<
   try {
     const response = await Axios.post(apiEndPoints.citation, payload);
     if (response.data.success) {
+      toast.success("Citation created successfully!");
       return response.data;
     } else {
       toast.error("Failed to create citation");

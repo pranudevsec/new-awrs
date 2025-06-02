@@ -9,18 +9,21 @@ import Breadcrumb from "../../components/ui/breadcrumb/Breadcrumb";
 import FormSelect from "../../components/form/FormSelect";
 import Loader from "../../components/ui/loader/Loader";
 import EmptyTable from "../../components/ui/empty-table/EmptyTable";
+import Pagination from "../../components/ui/pagination/Pagination";
 
 const Clarification = () => {
   const navigate = useNavigate()
   const dispatch = useAppDispatch();
 
   const { profile } = useAppSelector((state) => state.admin);
-  const { loading, unitClarifications } = useAppSelector((state) => state.clarification);
+  const { loading, unitClarifications, meta } = useAppSelector((state) => state.clarification);
 
   // States 
   const [awardType, setAwardType] = useState<string | null>("");
   const [searchTerm, setSearchTerm] = useState<string>("");
   const [debouncedSearch, setDebouncedSearch] = useState<string>("");
+  const [page, setPage] = useState<number>(1);
+  const [limit, setLimit] = useState<number>(10);
 
   useEffect(() => {
     const handler = setTimeout(() => {
@@ -34,11 +37,11 @@ const Clarification = () => {
 
   useEffect(() => {
     if (profile?.user?.user_role?.trim() === "unit") {
-      dispatch(getClarifications({ awardType: awardType || "", search: debouncedSearch }));
+      dispatch(getClarifications({ awardType: awardType || "", search: debouncedSearch, page, limit }));
     } else {
-      dispatch(getSubordinateClarifications({ awardType: awardType || "", search: debouncedSearch }));
+      dispatch(getSubordinateClarifications({ awardType: awardType || "", search: debouncedSearch, page, limit }));
     }
-  }, [profile?.user?.user_role, awardType, debouncedSearch]);
+  }, [profile?.user?.user_role, awardType, debouncedSearch, page, limit]);
 
   return (
     <div className="clarification-section">
@@ -127,8 +130,18 @@ const Clarification = () => {
           </tbody>
         </table>
       </div>
+      {/* Empty Data */}
       {!loading && unitClarifications.length === 0 && <EmptyTable />}
-      {/* {unitClarifications.length > 0 && <Pagination />} */}
+      {/* Pagination */}
+      {unitClarifications.length > 0 && (
+        <Pagination
+          meta={meta}
+          page={page}
+          limit={limit}
+          setPage={setPage}
+          setLimit={setLimit}
+        />
+      )}
     </div >
   );
 };
