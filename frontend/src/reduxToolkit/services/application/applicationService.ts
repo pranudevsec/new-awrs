@@ -2,6 +2,8 @@ import { createAsyncThunk } from "@reduxjs/toolkit";
 import toast from "react-hot-toast";
 import Axios from "../../helper/axios";
 import type {
+  AddCommentParam,
+  AddCommentResponse,
   ApproveMarksParam,
   ApproveMarksResponse,
   FetchApplicationUnitDetailResponse,
@@ -12,6 +14,13 @@ import type {
 import { apiEndPoints } from "../../../constants";
 
 interface FetchUnitsParams {
+  award_type?: string;
+  search?: string;
+  page?: number;
+  limit?: number;
+}
+
+interface FetchHQApplicationsParams {
   award_type?: string;
   search?: string;
   page?: number;
@@ -53,6 +62,46 @@ export const fetchApplicationUnits = createAsyncThunk<
     );
     return rejectWithValue(
       error.response?.data?.message || "Failed to fetch application units"
+    );
+  }
+});
+
+export const fetchApplicationsForHQ = createAsyncThunk<
+  FetchApplicationUnitsResponse, 
+  FetchHQApplicationsParams | undefined
+>("applications/fetchApplicationsForHQ", async (params, { rejectWithValue }) => {
+  try {
+    const queryParams = new URLSearchParams();
+
+    if (params?.award_type) {
+      queryParams.append("award_type", params.award_type);
+    }
+    if (params?.search) {
+      queryParams.append("search", params.search);
+    }
+    if (params?.page) {
+      queryParams.append("page", String(params.page));
+    }
+    if (params?.limit) {
+      queryParams.append("limit", String(params.limit));
+    }
+
+    const response = await Axios.get(
+      `${apiEndPoints.application}/headquarter?${queryParams.toString()}`
+    );
+
+    if (response.data.success) {
+      return response.data;
+    } else {
+      toast.error(response.data.message || "Failed to fetch HQ applications");
+      return rejectWithValue(response.data.message);
+    }
+  } catch (error: any) {
+    toast.error(
+      error.response?.data?.message || "Error fetching HQ applications"
+    );
+    return rejectWithValue(
+      error.response?.data?.message || "Failed to fetch HQ applications"
     );
   }
 });
@@ -182,3 +231,32 @@ export const approveMarks = createAsyncThunk<
   }
 });
 
+export const addApplicationComment = createAsyncThunk<
+  AddCommentResponse,
+  AddCommentParam
+>(
+  "applications/addApplicationComment",
+  async (body, { rejectWithValue }) => {
+    try {
+      const response = await Axios.post(
+        `${apiEndPoints.application}/add-comment`,
+        body
+      );
+
+      if (response.data.success) {
+        toast.success(response.data.message || "Comment(s) added successfully");
+        return response.data;
+      } else {
+        toast.error(response.data.message || "Failed to add comment(s)");
+        return rejectWithValue(response.data.message);
+      }
+    } catch (error: any) {
+      toast.error(
+        error.response?.data?.message || "Error adding comment(s)"
+      );
+      return rejectWithValue(
+        error.response?.data?.message || "Failed to add comment(s)"
+      );
+    }
+  }
+);

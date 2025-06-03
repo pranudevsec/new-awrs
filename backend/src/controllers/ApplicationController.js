@@ -13,6 +13,17 @@ exports.getAllApplicationsForUnit = async (req, res) => {
   }
 };
 
+exports.getAllApplicationsForHQ = async (req, res) => {
+  try {
+    const result = await ApplicationService.getAllApplicationsForHQ(req.user, req.query);
+    res.status(StatusCodes.OK).send(result);
+  } catch (error) {
+    res.status(StatusCodes.INTERNAL_SERVER_ERROR).send(
+      ResponseHelper.error(StatusCodes.INTERNAL_SERVER_ERROR, "Internal Server Error", error.message)
+    );
+  }
+};
+
 exports.getSingleApplicationForUnit = async (req, res) => {
   try {
     const result = await ApplicationService.getSingleApplicationForUnit(req.user, req.query);
@@ -71,6 +82,17 @@ exports.getApplicationsScoreboard = async (req, res) => {
   exports.approveApplicationMarks = async (req, res) => {
     try {
       const result = await ApplicationService.approveApplicationMarks(req.user, req.body);
+      res.status(StatusCodes.OK).send(result);
+    } catch (error) {
+      res.status(StatusCodes.INTERNAL_SERVER_ERROR).send(
+        ResponseHelper.error(StatusCodes.INTERNAL_SERVER_ERROR, "Internal Server Error", error.message)
+      );
+    }
+  };
+  
+  exports.addApplicationComment = async (req, res) => {
+    try {
+      const result = await ApplicationService.addApplicationComment(req.user, req.body);
       res.status(StatusCodes.OK).send(result);
     } catch (error) {
       res.status(StatusCodes.INTERNAL_SERVER_ERROR).send(

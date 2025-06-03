@@ -41,7 +41,7 @@ export const getDashboardStats = createAsyncThunk<DashboardResponse>(
       if (response.data.success) {
         return response.data;
       } else {
-        toast.error(response.data.message || "Something went wrong");
+        // toast.error(response.data.message || "Something went wrong");
         return rejectWithValue(response.data.message || "Something went wrong");
       }
     } catch (error: any) {
@@ -72,10 +72,10 @@ export const getDashboardUnitScores =
           );
         }
       } catch (error: any) {
-        toast.error(
-          error.response.data.message ||
-            "An error occurred while fetching dashboard unit score chart."
-        );
+        // toast.error(
+        //   error.response.data.message ||
+        //     "An error occurred while fetching dashboard unit score chart."
+        // );
         return rejectWithValue(
           "Failed to fetch dashboard unit score chart due to an error."
         );

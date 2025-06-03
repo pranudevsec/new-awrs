@@ -9,12 +9,17 @@ CREATE TABLE User_tab (
     name VARCHAR NOT NULL,
     user_role VARCHAR NOT NULL,
     username VARCHAR UNIQUE NOT NULL,
-    password TEXT NOT NULL, -- Assume it's encrypted with AES-256
+    password TEXT NOT NULL,
     unit_id INTEGER,
+    cw2_type VARCHAR(2), -- new column
 
     is_active BOOLEAN DEFAULT TRUE,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT cw2_type_check CHECK (
+      cw2_type IS NULL OR cw2_type IN ('mo', 'ol', 'hr', 'dv', 'mp')
+    )
 );
 
 -- Trigger function to update 'updated_at' column
@@ -40,7 +45,16 @@ VALUES
   ('56781234', 'some', 'Alex Johnson', 'division', 'testdivision', '$2b$10$FCHwKvPqS2IrJY2OZtJ2OemtfeFiz1Cj/ez8bv6NwTk5.Se.YaFwq'),
   ('43218765', 'some', 'Maria Lee', 'corps', 'testcorps', '$2b$10$FCHwKvPqS2IrJY2OZtJ2OemtfeFiz1Cj/ez8bv6NwTk5.Se.YaFwq'),
   ('34567812', 'some', 'David Brown', 'command', 'testcommand', '$2b$10$FCHwKvPqS2IrJY2OZtJ2OemtfeFiz1Cj/ez8bv6NwTk5.Se.YaFwq'),
-  ('34567812', 'some', 'Test Admin', 'admin', 'admin', '$2b$10$FCHwKvPqS2IrJY2OZtJ2OemtfeFiz1Cj/ez8bv6NwTk5.Se.YaFwq');
+  ('34567812', 'some', 'Test Admin', 'admin', 'admin', '$2b$10$FCHwKvPqS2IrJY2OZtJ2OemtfeFiz1Cj/ez8bv6NwTk5.Se.YaFwq'),
+  ('34567813', 'some', 'Test Headquarter', 'headquarter', 'testheadquarter', '$2b$10$FCHwKvPqS2IrJY2OZtJ2OemtfeFiz1Cj/ez8bv6NwTk5.Se.YaFwq');
+
+INSERT INTO User_tab (pers_no, rank, name, user_role, username, password, cw2_type)
+VALUES
+  ('11111111', 'some', 'CW2 MO User', 'cw2', 'testcw2_mo', '$2b$10$FCHwKvPqS2IrJY2OZtJ2OemtfeFiz1Cj/ez8bv6NwTk5.Se.YaFwq', 'mo'),
+  ('22222222', 'some', 'CW2 OL User', 'cw2', 'testcw2_ol', '$2b$10$FCHwKvPqS2IrJY2OZtJ2OemtfeFiz1Cj/ez8bv6NwTk5.Se.YaFwq', 'ol'),
+  ('33333333', 'some', 'CW2 HR User', 'cw2', 'testcw2_hr', '$2b$10$FCHwKvPqS2IrJY2OZtJ2OemtfeFiz1Cj/ez8bv6NwTk5.Se.YaFwq', 'hr'),
+  ('44444444', 'some', 'CW2 DV User', 'cw2', 'testcw2_dv', '$2b$10$FCHwKvPqS2IrJY2OZtJ2OemtfeFiz1Cj/ez8bv6NwTk5.Se.YaFwq', 'dv'),
+  ('55555555', 'some', 'CW2 MP User', 'cw2', 'testcw2_mp', '$2b$10$FCHwKvPqS2IrJY2OZtJ2OemtfeFiz1Cj/ez8bv6NwTk5.Se.YaFwq', 'mp');
 
 --------------------------------------------------------------------------------------------Parameter_Master----------------------------------------------------------------------------------------------------------------------
 -- Drop if exists

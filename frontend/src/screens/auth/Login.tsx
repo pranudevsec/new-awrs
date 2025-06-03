@@ -1,13 +1,22 @@
 import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom"
+import { Link, useNavigate } from "react-router-dom";
 import { useFormik } from "formik";
 import { unwrapResult } from "@reduxjs/toolkit";
-import { roleOptions } from "../../data/options";
+import { roleOptions } from "../../data/options"; // Make sure this includes cw2 option
 import { LoginSchema } from "../../validations/validations";
 import { useAppDispatch } from "../../reduxToolkit/hooks";
 import { reqToLogin } from "../../reduxToolkit/services/auth/authService";
 import FormInput from "../../components/form/FormInput";
 import FormSelect from "../../components/form/FormSelect";
+
+// cw2_type options
+const cw2TypeOptions = [
+    { label: "MO", value: "mo" },
+    { label: "OL", value: "ol" },
+    { label: "HR", value: "hr" },
+    { label: "DV", value: "dv" },
+    { label: "MP", value: "mp" },
+];
 
 const roleCredentials: Record<string, { username: string; password: string }> = {
     unit: { username: "testuser1", password: "12345678" },
@@ -16,21 +25,27 @@ const roleCredentials: Record<string, { username: string; password: string }> = 
     corps: { username: "testcorps", password: "12345678" },
     command: { username: "testcommand", password: "12345678" },
     admin: { username: "admin", password: "12345678" },
+    headquarter: { username: "testheadquarter", password: "12345678" },
+    // cw2_type with username or same password
+    "cw2_mo": { username: "testcw2_mo", password: "12345678" },
+    "cw2_ol": { username: "testcw2_ol", password: "12345678" },
+    "cw2_hr": { username: "testcw2_hr", password: "12345678" },
+    "cw2_dv": { username: "testcw2_dv", password: "12345678" },
+    "cw2_mp": { username: "testcw2_mp", password: "12345678" },
 };
 
 const Login = () => {
     const navigate = useNavigate();
     const dispatch = useAppDispatch();
 
-    // States 
     const [passwordType, setPasswordType] = useState<string>("password");
 
-    // Formik
     const formik = useFormik({
         initialValues: {
             user_role: "unit",
+            cw2_type: "", // new field for cw2 subtype
             username: "testuser1",
-            password: "12345678"
+            password: "12345678",
         },
         validationSchema: LoginSchema,
         onSubmit: async (values, { resetForm }) => {
@@ -51,6 +66,40 @@ const Login = () => {
         },
     });
 
+    const handleRoleChange = (selectedOption: any) => {
+        const role = selectedOption?.value || "";
+        formik.setFieldValue("user_role", role);
+
+        if (role !== "cw2") {
+            formik.setFieldValue("cw2_type", "");
+        }
+
+        if (role === "cw2") {
+            formik.setFieldValue("username", "");
+            formik.setFieldValue("password", "");
+        } else if (role in roleCredentials) {
+            formik.setFieldValue("username", roleCredentials[role].username);
+            formik.setFieldValue("password", roleCredentials[role].password);
+        } else {
+            formik.setFieldValue("username", "");
+            formik.setFieldValue("password", "");
+        }
+    };
+
+    const handleCw2TypeChange = (selectedOption: any) => {
+        const cw2_type = selectedOption?.value || "";
+        formik.setFieldValue("cw2_type", cw2_type);
+
+        const key = `cw2_${cw2_type}`;
+        if (key in roleCredentials) {
+            formik.setFieldValue("username", roleCredentials[key].username);
+            formik.setFieldValue("password", roleCredentials[key].password);
+        } else {
+            formik.setFieldValue("username", "");
+            formik.setFieldValue("password", "");
+        }
+    };
+
     return (
         <div className="auth-section">
             <div className="container-fluid">
@@ -66,29 +115,33 @@ const Login = () => {
                             <div className="auth-form-area w-100">
                                 <h2 className="font-lexend fw-6">Login to your Account</h2>
                                 <form onSubmit={formik.handleSubmit}>
-                                    <div className="mb-3">
-                                        <FormSelect
-                                            label="Role"
-                                            name="user_role"
-                                            options={roleOptions}
-                                            value={roleOptions.find((opt) => opt.value === formik.values.user_role) || null}
-                                            onChange={(selectedOption) => {
-                                                const role = selectedOption?.value || "";
-                                                formik.setFieldValue("user_role", role);
-
-                                                if (role in roleCredentials) {
-                                                    formik.setFieldValue("username", roleCredentials[role].username);
-                                                    formik.setFieldValue("password", roleCredentials[role].password);
-                                                } else {
-                                                    formik.setFieldValue("username", "");
-                                                    formik.setFieldValue("password", "");
-                                                }
-                                            }}
-                                            placeholder="Select"
-                                            errors={formik.errors.user_role}
-                                            touched={formik.touched.user_role}
-                                        />
-                                    </div>
+                                <div className="mb-3">
+                                <FormSelect
+                                    label="Role"
+                                    name="user_role"
+                                    options={roleOptions}
+                                    value={roleOptions.find((opt) => opt.value === formik.values.user_role) || null}
+                                    onChange={handleRoleChange}
+                                    placeholder="Select"
+                                    errors={formik.errors.user_role}
+                                    touched={formik.touched.user_role}
+                                />
+                            </div>
+                            {formik.values.user_role === "cw2" && (
+                                <div className="mb-3">
+                                    <FormSelect
+                                        label="CW2 Type"
+                                        name="cw2_type"
+                                        options={cw2TypeOptions}
+                                        value={cw2TypeOptions.find((opt) => opt.value === formik.values.cw2_type) || null}
+                                        onChange={handleCw2TypeChange}
+                                        placeholder="Select CW2 Type"
+                                        errors={formik.errors.cw2_type}
+                                        touched={formik.touched.cw2_type}
+                                    />
+                                </div>
+                            )}
+                            
                                     <div className="mb-3">
                                         <FormInput
                                             label="User Name"

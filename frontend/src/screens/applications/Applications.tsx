@@ -12,7 +12,9 @@ const Applications = () => {
   const userRole = profile?.user?.user_role;
 
   const isUnitRole = userRole === "unit";
-  const isHigherRole = ["brigade", "division", "corps", "command"].includes(userRole ?? "");
+  const isHigherRole = ["brigade", "division", "corps", "command"].includes(
+    userRole ?? ""
+  );
 
   useEffect(() => {
     dispatch(getHomeCountStats());
@@ -53,10 +55,16 @@ const Applications = () => {
             <Link to="/applications/list" className="h-100 d-block">
               <div className="card border-0 h-100 d-flex align-items-center justify-content-center position-relative">
                 {homeCounts?.applicationsToReview > 0 && (
-                  <span className="count-badge">{homeCounts?.applicationsToReview}</span>
+                  <span className="count-badge">
+                    {homeCounts?.applicationsToReview}
+                  </span>
                 )}
                 <div className="card-icon">
-                  <img src="/media/icons/applications.png" alt="Applications" width={100} />
+                  <img
+                    src="/media/icons/applications.png"
+                    alt="Applications"
+                    width={100}
+                  />
                 </div>
                 <h5 className="fw-6 mt-4">Applications To Review</h5>
               </div>
@@ -69,28 +77,42 @@ const Applications = () => {
               <Link to="/clarifications/raised-list" className="h-100 d-block">
                 <div className="card border-0 h-100 d-flex align-items-center justify-content-center position-relative">
                   {homeCounts?.clarificationsIRaised > 0 && (
-                    <span className="count-badge">{homeCounts?.clarificationsIRaised}</span>
+                    <span className="count-badge">
+                      {homeCounts?.clarificationsIRaised}
+                    </span>
                   )}
                   <div className="card-icon">
-                    <img src="/media/icons/clarifications.png" alt="Clarifications I Raised" width={100} />
+                    <img
+                      src="/media/icons/clarifications.png"
+                      alt="Clarifications I Raised"
+                      width={100}
+                    />
                   </div>
                   <h5 className="fw-6 mt-4">Clarifications I Raised</h5>
                 </div>
               </Link>
             </div>
-            <div className="col-lg-3 col-sm-6">
-              <Link to="/clarification" className="h-100 d-block">
-                <div className="card border-0 h-100 d-flex align-items-center justify-content-center position-relative">
-                  {homeCounts?.clarificationsToResolve > 0 && (
-                    <span className="count-badge">{homeCounts?.clarificationsToResolve}</span>
-                  )}
-                  <div className="card-icon">
-                    <img src="/media/icons/raised-clarification.png" alt="Clarifications to Resolve" width={100} />
+            {userRole !== "command" && (
+              <div className="col-lg-3 col-sm-6">
+                <Link to="/clarification" className="h-100 d-block">
+                  <div className="card border-0 h-100 d-flex align-items-center justify-content-center position-relative">
+                    {homeCounts?.clarificationsToResolve > 0 && (
+                      <span className="count-badge">
+                        {homeCounts?.clarificationsToResolve}
+                      </span>
+                    )}
+                    <div className="card-icon">
+                      <img
+                        src="/media/icons/raised-clarification.png"
+                        alt="Clarifications to Resolve"
+                        width={100}
+                      />
+                    </div>
+                    <h5 className="fw-6 mt-4">Clarifications to Resolve</h5>
                   </div>
-                  <h5 className="fw-6 mt-4">Clarifications to Resolve</h5>
-                </div>
-              </Link>
-            </div>
+                </Link>
+              </div>
+            )}
           </>
         )}
       </div>

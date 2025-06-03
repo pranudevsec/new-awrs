@@ -6,12 +6,15 @@ import { SVGICON } from "../../constants/iconsList";
 const SidebarMenu = () => {
   const profile = useAppSelector((state) => state.admin.profile);
   const userRole = profile?.user?.user_role;
-  //   const isAdmin = userRole === "admin";
 
   const alwaysVisible: string[] = [];
 
-  // Clarification is visible only to users who are NOT admin AND NOT command
-  if (userRole !== "admin" && userRole !== "command") {
+  if (
+    userRole !== "admin" &&
+    userRole !== "command" &&
+    userRole !== "cw2" &&
+    userRole !== "headquarter"
+  ) {
     alwaysVisible.push("Clarifications to Resolve", "Home", "Profile Settings");
 
     if (userRole !== "unit") {
@@ -19,23 +22,24 @@ const SidebarMenu = () => {
     }
   }
 
-  // Find dashboard item from structure
   const dashboardItem = sidebarStructure.find(item => item.label === "Dashboard");
 
-  // Items specifically for command role
   const commandExtraLabels = ["Scoreboard", "Winners", "Home", "Profile Settings"];
+  const headquarterExtraLabels = ["Dashboard", "Home", "Awards", "Scoreboard", "Profile Settings"];
 
-  // Filter structure items according to role and alwaysVisible
   let filteredStructure = sidebarStructure.filter((item) => {
-    if (item.label === "Dashboard") return false; // exclude Dashboard here for now
+    if (item.label === "Dashboard") return false; // Dashboard added manually
 
     if (alwaysVisible.includes(item.label)) {
       return true;
     }
 
-    if (userRole === "command") {
-      // Show only Scoreboard and Winners for command role (besides Dashboard added later)
+    if (userRole === "command" || userRole === "cw2") {
       return commandExtraLabels.includes(item.label);
+    }
+
+    if (userRole === "headquarter") {
+      return headquarterExtraLabels.includes(item.label);
     }
 
     if (userRole === "admin") {
@@ -45,8 +49,7 @@ const SidebarMenu = () => {
     return false;
   });
 
-  // If command user, show Dashboard on top
-  if (userRole === "command" && dashboardItem) {
+  if ((userRole === "command" || userRole === "headquarter") && dashboardItem) {
     filteredStructure = [dashboardItem, ...filteredStructure];
   }
 

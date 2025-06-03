@@ -65,3 +65,17 @@ export interface ApproveMarksResponse {
   success: boolean;
   message: string;
 }
+
+export interface AddCommentParam {
+  type: "citation" | "appreciation";
+  application_id: number;
+  parameters: {
+    name: string;
+    comment: string;
+  }[];
+}
+
+export interface AddCommentResponse {
+  success: boolean;
+  message: string;
+}

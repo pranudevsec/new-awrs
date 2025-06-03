@@ -453,7 +453,7 @@ const ApplyCitation = () => {
               <button
                 type="button"
                 className="_btn outline"
-                onClick={() => alert("Draft saved!")}
+                onClick={() => toast.success("Draft saved!")}
               >
                 Save as Draft
               </button>

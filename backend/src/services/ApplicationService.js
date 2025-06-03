@@ -148,6 +148,154 @@ exports.getAllApplicationsForUnit = async (user, query) => {
   }
 };
 
+exports.getAllApplicationsForHQ = async (query) => {
+  const client = await dbService.getClient();
+  try {
+    const { award_type, search, page = 1, limit = 10 } = query;
+
+    const citations = await client.query(`
+      SELECT 
+        citation_id AS id,
+        'citation' AS type,
+        unit_id,
+        date_init,
+        citation_fds AS fds,
+        status_flag,
+        last_approved_by_role
+      FROM Citation_tab
+      WHERE status_flag = 'approved' AND last_approved_by_role = 'command'
+    `);
+
+    const appreciations = await client.query(`
+      SELECT 
+        appreciation_id AS id,
+        'appreciation' AS type,
+        unit_id,
+        date_init,
+        appre_fds AS fds,
+        status_flag,
+        last_approved_by_role
+      FROM Appre_tab
+      WHERE status_flag = 'approved' AND last_approved_by_role = 'command'
+    `);
+
+    let allApps = [...citations.rows, ...appreciations.rows];
+
+    if (award_type) {
+      allApps = allApps.filter(app =>
+        app.fds?.award_type?.toLowerCase() === award_type.toLowerCase()
+      );
+    }
+
+    const normalize = str => str?.toString().toLowerCase().replace(/[\s\-]/g, "");
+    if (search) {
+      const searchLower = normalize(search);
+      allApps = allApps.filter(app => {
+        const idMatch = app.id.toString().toLowerCase().includes(searchLower);
+        const cycleMatch = normalize(app.fds?.cycle_period || "").includes(searchLower);
+        return idMatch || cycleMatch;
+      });
+    }
+
+    const clarificationIdSet = new Set();
+    allApps.forEach(app => {
+      app.fds?.parameters?.forEach(param => {
+        if (param.clarification_id) {
+          clarificationIdSet.add(param.clarification_id);
+        }
+      });
+    });
+
+    const clarificationIds = Array.from(clarificationIdSet);
+    let clarificationsMap = {};
+
+    // Fetch all related clarifications
+    if (clarificationIds.length > 0) {
+      const clarRes = await client.query(
+        `SELECT * FROM Clarification_tab WHERE clarification_id = ANY($1)`,
+        [clarificationIds]
+      );
+
+      clarificationsMap = clarRes.rows.reduce((acc, row) => {
+        acc[row.clarification_id] = row;
+        return acc;
+      }, {});
+    }
+
+    allApps = allApps.map(app => {
+      const updatedParams = app.fds?.parameters?.map(param => {
+        if (param.clarification_id) {
+          return {
+            ...param,
+            clarification: clarificationsMap[param.clarification_id] || null,
+          };
+        }
+        return param;
+      });
+
+      return {
+        ...app,
+        fds: {
+          ...app.fds,
+          parameters: updatedParams,
+        },
+      };
+    });
+
+    let total_pending_clarifications = 0;
+    allApps = allApps.map(app => {
+      let clarifications_count = 0;
+      const cleanedParameters = app.fds.parameters.map(param => {
+        const newParam = { ...param };
+        if (newParam.clarification?.clarification_status === "pending") {
+          clarifications_count++;
+          total_pending_clarifications++;
+        }
+        delete newParam.clarification;
+        delete newParam.clarification_id;
+        return newParam;
+      });
+
+      return {
+        ...app,
+        clarifications_count,
+        total_pending_clarifications,
+        fds: {
+          ...app.fds,
+          parameters: cleanedParameters
+        }
+      };
+    });
+
+    allApps.sort((a, b) => new Date(b.date_init) - new Date(a.date_init));
+
+    const pageInt = parseInt(page);
+    const limitInt = parseInt(limit);
+    const startIndex = (pageInt - 1) * limitInt;
+    const endIndex = pageInt * limitInt;
+
+    const paginatedData = allApps.slice(startIndex, endIndex);
+    const pagination = {
+      totalItems: allApps.length,
+      totalPages: Math.ceil(allApps.length / limitInt),
+      currentPage: pageInt,
+      itemsPerPage: limitInt,
+    };
+
+    return ResponseHelper.success(
+      200,
+      "Fetched HQ applications approved by command",
+      paginatedData,
+      pagination
+    );
+  } catch (err) {
+    return ResponseHelper.error(500, "Failed to fetch HQ applications", err.message);
+  } finally {
+    client.release();
+  }
+};
+
+
 exports.getSingleApplicationForUnit = async (user, { application_id, award_type }) => {
   const client = await dbService.getClient();
 
@@ -740,11 +888,10 @@ exports.getApplicationsScoreboard = async (user, query) => {
       client.release();
     }
   };
-  
   exports.approveApplicationMarks = async (user, body) => {
     const client = await dbService.getClient();
     try {
-      const { type, application_id, parameters } = body;
+      const { type, application_id, parameters, applicationGraceMarks } = body;
   
       if (!["citation", "appreciation"].includes(type)) {
         return ResponseHelper.error(400, "Invalid type provided");
@@ -764,25 +911,48 @@ exports.getApplicationsScoreboard = async (user, query) => {
       }
   
       let fds = res.rows[0].fds;
-  
-      // 2. Add approved_marks, approved_by_user, approved_by_role, approved_marks_at
       const now = new Date();
-      const updatedParams = fds.parameters.map(param => {
-        const approvedParam = parameters.find(p => p.name === param.name);
-        if (approvedParam) {
-          return {
-            ...param,
-            approved_marks: approvedParam.approved_marks,
-            approved_by_user: user.user_id,
-            approved_by_role: user.user_role,
-            approved_marks_at: now,
-          };
-        }
-        return param;
-      });
+  console.log(parameters)
+      if (Array.isArray(parameters) && parameters.length > 0) {
+        const updatedParams = fds.parameters.map((param) => {
+          const approvedParam = parameters.find((p) => p.name === param.name);
+          if (approvedParam) {
+            return {
+              ...param,
+              approved_marks: approvedParam.approved_marks,
+              approved_by_user: user.user_id,
+              approved_by_role: user.user_role,
+              approved_marks_at: now,
+            };
+          }
+          return param;
+        });
   
-      // 3. Update fds object
-      fds.parameters = updatedParams;
+        fds.parameters = updatedParams;
+      }
+  
+      if (applicationGraceMarks !== undefined) {
+        if (!Array.isArray(fds.applicationGraceMarks)) {
+          fds.applicationGraceMarks = [];
+        }
+  
+        const existingIndex = fds.applicationGraceMarks.findIndex(
+          (entry) => entry.role === user.user_role
+        );
+  
+        const graceEntry = {
+          role: user.user_role,
+          marksBy: user.user_id,
+          marksAddedAt: now,
+          marks: applicationGraceMarks,
+        };
+  
+        if (existingIndex !== -1) {
+          fds.applicationGraceMarks[existingIndex] = graceEntry;
+        } else {
+          fds.applicationGraceMarks.push(graceEntry);
+        }
+      }
   
       // 4. Update in DB
       await client.query(
@@ -797,6 +967,77 @@ exports.getApplicationsScoreboard = async (user, query) => {
       return ResponseHelper.success(200, "Marks approved successfully");
     } catch (error) {
       return ResponseHelper.error(500, "Failed to approve marks", error.message);
+    } finally {
+      client.release();
+    }
+  };
+  exports.addApplicationComment = async (user, body) => {
+    const client = await dbService.getClient();
+    try {
+      const { type, application_id, parameters } = body;
+  
+      if (!["citation", "appreciation"].includes(type)) {
+        return ResponseHelper.error(400, "Invalid type provided");
+      }
+  
+      const tableName = type === "citation" ? "Citation_tab" : "Appre_tab";
+      const idColumn = type === "citation" ? "citation_id" : "appreciation_id";
+      const fdsColumn = type === "citation" ? "citation_fds" : "appre_fds";
+  
+      const res = await client.query(
+        `SELECT ${idColumn}, ${fdsColumn} AS fds FROM ${tableName} WHERE ${idColumn} = $1`,
+        [application_id]
+      );
+  
+      if (res.rowCount === 0) {
+        return ResponseHelper.error(404, "Application not found");
+      }
+  
+      let fds = res.rows[0].fds;
+      const now = new Date();
+  
+      if (!Array.isArray(parameters) || parameters.length === 0) {
+        return ResponseHelper.error(400, "Parameters array is required");
+      }
+  
+      fds.parameters = fds.parameters.map((param) => {
+        const incomingParam = parameters.find((p) => p.name === param.name);
+        if (incomingParam) {
+          if (!Array.isArray(param.comments)) {
+            param.comments = [];
+          }
+  
+          const existingCommentIndex = param.comments.findIndex(
+            (c) => c.commented_by === user.user_id
+          );
+  
+          const newComment = {
+            comment: incomingParam.comment || "",
+            commented_by_role_type: user.cw2_type || null,
+            commented_by_role: user.user_role || null,
+            commented_at: now,
+            commented_by: user.user_id,
+          };
+  
+          if (existingCommentIndex >= 0) {
+            param.comments[existingCommentIndex] = newComment;
+          } else {
+            param.comments.push(newComment);
+          }
+        }
+        return param;
+      });
+  
+      await client.query(
+        `UPDATE ${tableName}
+         SET ${fdsColumn} = $1
+         WHERE ${idColumn} = $2`,
+        [fds, application_id]
+      );
+  
+      return ResponseHelper.success(200, "Comment added successfully");
+    } catch (error) {
+      return ResponseHelper.error(500, "Failed to add comments", error.message);
     } finally {
       client.release();
     }

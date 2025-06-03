@@ -1,5 +1,6 @@
 import { createSlice, type PayloadAction } from "@reduxjs/toolkit";
 import {
+  fetchApplicationsForHQ,
   fetchApplicationUnitDetail,
   fetchApplicationUnits,
   fetchSubordinates,
@@ -115,6 +116,30 @@ const applicationSlice = createSlice({
         state.success = false;
         state.error =
           action.payload || "Failed to fetch subordinate applications";
+      }
+    );
+
+    builder.addCase(fetchApplicationsForHQ.pending, (state) => {
+      state.loading = true;
+      state.success = false;
+      state.error = null;
+    });
+    builder.addCase(
+      fetchApplicationsForHQ.fulfilled,
+      (state, action: PayloadAction<FetchApplicationUnitsResponse>) => {
+        state.loading = false;
+        state.success = action.payload.success;
+        state.units = action.payload.data;
+        state.meta = action.payload.meta;
+      }
+    );
+    builder.addCase(
+      fetchApplicationsForHQ.rejected,
+      (state, action: PayloadAction<any>) => {
+        state.loading = false;
+        state.success = false;
+        state.error =
+          action.payload || "Failed to fetch HQ applications";
       }
     );
   },

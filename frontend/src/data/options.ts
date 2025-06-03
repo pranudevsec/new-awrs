@@ -78,7 +78,10 @@ export const roleOptions: OptionType[] = [
   { value: "division", label: "Division" },
   { value: "corps", label: "Corps" },
   { value: "command", label: "Command" },
+  { value: "headquarter", label: "Headquarter" },
+  { value: "cw2", label: "CW2" },
   { value: "admin", label: "Admin" },
+
 ];
 
 export const roleOptions2: OptionType[] = [

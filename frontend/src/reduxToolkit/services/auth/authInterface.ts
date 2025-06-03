@@ -45,6 +45,7 @@ export interface ProfileUser {
   pers_no: string;
   rank: string;
   user_role: string;
+  cw2_type: string;
 }
 
 export interface ProfileUnit {

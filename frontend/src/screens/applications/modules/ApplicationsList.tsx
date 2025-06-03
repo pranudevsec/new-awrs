@@ -3,7 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { awardTypeOptions } from "../../../data/options";
 import { SVGICON } from "../../../constants/iconsList";
 import { useAppDispatch, useAppSelector } from "../../../reduxToolkit/hooks";
-import { fetchApplicationUnits, fetchSubordinates } from "../../../reduxToolkit/services/application/applicationService";
+import { fetchApplicationsForHQ, fetchApplicationUnits, fetchSubordinates } from "../../../reduxToolkit/services/application/applicationService";
 import Breadcrumb from "../../../components/ui/breadcrumb/Breadcrumb";
 import FormSelect from "../../../components/form/FormSelect";
 import EmptyTable from "../../../components/ui/empty-table/EmptyTable";
@@ -36,19 +36,29 @@ const ApplicationsList = () => {
 
   useEffect(() => {
     if (!profile?.user?.user_role) return;
-
+  
     const fetchData = () => {
-      const params = { award_type: awardType || '', search: debouncedSearch, page, limit };
-      if (profile.user.user_role !== 'unit') {
+      const params = {
+        award_type: awardType || '',
+        search: debouncedSearch,
+        page,
+        limit,
+      };
+  
+      const role = profile.user.user_role;
+  
+      if (role === 'cw2' || role === 'headquarter') {
+        dispatch(fetchApplicationsForHQ(params));
+      } else if (role !== 'unit') {
         dispatch(fetchSubordinates(params));
       } else {
         dispatch(fetchApplicationUnits(params));
       }
     };
-
+  
     fetchData();
   }, [awardType, debouncedSearch, profile, page, limit]);
-
+  
   return (
     <div className="clarification-section">
       <div className="d-flex flex-sm-row flex-column align-items-sm-center justify-content-between mb-4">
