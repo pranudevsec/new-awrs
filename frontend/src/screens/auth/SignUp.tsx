@@ -42,7 +42,7 @@ const SignUp = () => {
                 <div className="row min-vh-100 align-items-stretch justify-content-center">
                     <div className="col-xxl-6 col-xl-6 d-xl-block d-none">
                         <div className="auth-image-area d-flex align-items-end h-100">
-                            <img src="/media/auth/military.png" alt="Military" className="img-fluid object-fit-contain" />
+                            {/* <img src="/media/auth/military.png" alt="Military" className="img-fluid object-fit-contain" /> */}
                         </div>
                     </div>
                     <div className="col-xxl-4 col-xl-5 col-md-10 d-flex align-items-center justify-content-center">

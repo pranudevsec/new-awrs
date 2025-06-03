@@ -346,7 +346,11 @@ p {
 }
 
 .custom-tabs .nav-link.active {
-  border-bottom: 2px solid black !important;
-  color: inherit;
+  border-bottom: 2px solid var(--blue-primary-clr) !important;
+  color: var(--blue-primary-clr);
   font-weight: 600;
+
+  .form-label{
+    color: var(--blue-primary-clr);  
+  }
 }

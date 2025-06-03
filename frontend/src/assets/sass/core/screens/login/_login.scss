@@ -1,5 +1,5 @@
 .auth-section {
-  background: url("/media/auth/auth-bg.png") center/cover no-repeat;
+  background: url("/media/auth/auth-bg2.jpg") center/cover no-repeat;
 
   .auth-image-area {
     padding: 30px 30px 0;
@@ -10,25 +10,25 @@
   }
 
   .auth-form-area {
-    padding: 35px;
+    padding: 30px;
     background-color: var(--background);
     border-radius: 20px;
     max-width: 600px;
     min-width: 500px;
 
     h2 {
-      font-size: 36px;
+      font-size: 30px;
     }
 
     form {
-      margin-top: 30px;
+      margin-top: 10px;
     }
 
     .sign-up-text {
-      color: var(--gray-500);
+      color: var(--gray-400);
 
       a {
-        color: var(--secondary-default);
+        color: var(--red-default);
       }
     }
 
@@ -42,14 +42,19 @@
       font-size: 16px;
       font-weight: 500;
       color: var(--gray-0);
-      background-color: var(--primary-default);
+      // background-color: var(--primary-default);
+      background: var(--blue-primary-clr);
       border-radius: 5px;
       padding: 10px 20px;
       transition: all 0.3s ease;
 
       &:hover {
-        background-color: var(--primary-dark);
+        background-color: var(--red-default);
       }
+    }
+
+    .mt-4 {
+      margin-top: 10px !important;
     }
   }
 }
@@ -65,7 +70,7 @@
       min-width: auto;
 
       h2 {
-        font-size: 32px;
+        font-size: 28px;
       }
     }
   }
@@ -79,7 +84,7 @@
       padding: 20px;
 
       h2 {
-        font-size: 28px;
+        font-size: 25px;
       }
 
       form {

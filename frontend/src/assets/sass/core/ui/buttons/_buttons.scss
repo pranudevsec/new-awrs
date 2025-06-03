@@ -26,11 +26,11 @@
   color: var(--gray-0);
 
   &.primary {
-    background-color: var(--secondary-default);
-    border: 1px solid var(--secondary-default);
+    background-color: var(--blue-primary-clr);
+    border: 1px solid var(--blue-primary-clr);
 
     &:hover {
-      background-color: var(--blue-primary-dark);
+      background-color: var(--blue-primary-dark-clr);
     }
   }
 
@@ -40,8 +40,8 @@
     border: 1px solid var(--muted);
 
     &:hover {
-      border: 1px solid var(--secondary-default);
-      color: var(--secondary-default);
+      border: 1px solid var(--blue-primary-clr);
+      color: var(--blue-primary-clr);
     }
   }
 
