@@ -15,10 +15,10 @@ const SidebarMenu = () => {
     userRole !== "cw2" &&
     userRole !== "headquarter"
   ) {
-    alwaysVisible.push("Clarifications to Resolve", "Home", "Profile Settings");
+    alwaysVisible.push("Clarification Received", "Home", "Profile Settings");
 
     if (userRole !== "unit") {
-      alwaysVisible.push("Clarifications I Raised");
+      alwaysVisible.push("Clarification Raised");
     }
   }
 

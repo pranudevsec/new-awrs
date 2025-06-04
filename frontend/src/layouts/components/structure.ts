@@ -17,12 +17,12 @@ export const sidebarStructure = [
     to: "/profile-settings",
   },
   {
-    label: "Clarifications to Resolve",
+    label: "Clarification Received",
     icon: SVGICON.sidebar.clarification,
     to: "/clarification",
   },
   {
-    label: "Clarifications I Raised",
+    label: "Clarification Raised",
     icon: SVGICON.sidebar.clarification,
     to: "/clarifications/raised-list",
   },

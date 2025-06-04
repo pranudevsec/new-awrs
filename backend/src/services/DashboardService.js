@@ -143,17 +143,14 @@ exports.getDashboardStats = async (user) => {
       try {
         const query = { page: 1, limit: 10000 };
   
-        // 1. Get Applications of Subordinates
         const applicationsResult = await ApplicationService.getApplicationsOfSubordinates(user, query);
   
         const applicationsToReview = applicationsResult?.meta?.totalItems || 0;
   
-        // Clarifications I Raised: count how many applications have clarifications_count > 0
         const clarificationsIRaised = Array.isArray(applicationsResult?.data)
           ? applicationsResult.data.filter(app => app.clarifications_count > 0).length
           : 0;
   
-        // 2. Get Clarifications to Resolve
         const clarificationsResult = await ClarificationService.getAllApplicationsWithClarificationsForSubordinates(user, query);
   
         const clarificationsToResolve = clarificationsResult?.meta?.totalItems || 0;

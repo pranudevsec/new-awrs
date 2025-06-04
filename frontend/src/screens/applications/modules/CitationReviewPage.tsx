@@ -120,7 +120,7 @@ const CitationReviewPage = () => {
     if (!file) return;
 
     if (file.size > 5 * 1024 * 1024) {
-      alert("File size must be less than 5MB");
+      toast.error("File size must be less than 5MB");
       return;
     }
 
@@ -129,9 +129,9 @@ const CitationReviewPage = () => {
       const newUploads = { ...uploadedFiles, [paramId]: uploadedUrl };
       setUploadedFiles(newUploads);
       localStorage.setItem(DRAFT_FILE_UPLOAD_KEY, JSON.stringify(newUploads));
-      alert("Upload successful");
+      toast.success("Upload successful");
     } else {
-      alert("Upload failed");
+      toast.error("Upload failed");
     }
   };
 
@@ -182,7 +182,7 @@ const CitationReviewPage = () => {
         });
 
         const payload = {
-          date_init: "2024-04-01",
+          date_init: new Date().toISOString().split("T")[0],
           citation_fds: {
             award_type: "citation",
             cycle_period: values.cyclePeriod,
@@ -418,6 +418,13 @@ const CitationReviewPage = () => {
             </div>
 
             <div className="d-flex flex-sm-row flex-column gap-sm-3 gap-2 justify-content-end">
+            <button
+  type="button"
+  className="_btn outline"
+  onClick={() => navigate(-1)} 
+>
+  Back
+</button>
               <button type="submit" className="_btn primary">
                 Submit
               </button>

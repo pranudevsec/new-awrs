@@ -66,7 +66,35 @@ const ApplyCitation = () => {
       }
     }
   }, [groupedParams]);
-
+  useEffect(() => {
+    const container = scrollContainerRef.current;
+    if (!container) return;
+  
+    const handleScroll = () => {
+      const containerTop = container.getBoundingClientRect().top;
+  
+      let closestCategory = "";
+      let minOffset = Infinity;
+  
+      Object.entries(categoryRefs.current).forEach(([category, el]) => {
+        if (el) {
+          const offset = Math.abs(el.getBoundingClientRect().top - containerTop);
+          if (offset < minOffset) {
+            closestCategory = category;
+            minOffset = offset;
+          }
+        }
+      });
+  
+      if (closestCategory && closestCategory !== activeTab) {
+        setActiveTab(closestCategory);
+      }
+    };
+  
+    container.addEventListener("scroll", handleScroll);
+    return () => container.removeEventListener("scroll", handleScroll);
+  }, [activeTab]);
+  
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const categoryRefs = useRef<{ [key: string]: HTMLDivElement | null }>({});
 
@@ -129,7 +157,7 @@ const ApplyCitation = () => {
     if (!file) return;
 
     if (file.size > 5 * 1024 * 1024) {
-      alert("File size must be less than 5MB");
+      toast.error("File size must be less than 5MB");
       return;
     }
 
@@ -138,9 +166,9 @@ const ApplyCitation = () => {
       const newUploads = { ...uploadedFiles, [paramId]: uploadedUrl };
       setUploadedFiles(newUploads);
       localStorage.setItem(DRAFT_FILE_UPLOAD_KEY, JSON.stringify(newUploads));
-      alert("Upload successful");
+      toast.success("Upload successful");
     } else {
-      alert("Upload failed");
+      toast.error("Upload failed");
     }
   };
 
@@ -184,7 +212,7 @@ const ApplyCitation = () => {
         });
 
         const payload = {
-          date_init: "2024-04-01",
+          date_init: new Date().toISOString().split("T")[0],
           citation_fds: {
             award_type: "citation",
             cycle_period: values.cyclePeriod,
@@ -262,6 +290,23 @@ const ApplyCitation = () => {
     setCounts({});
     setMarks({});
     setUploadedFiles({});
+  };
+
+  const handlePreviewClick = () => {
+    const uploadedDocs = JSON.parse(localStorage.getItem(DRAFT_FILE_UPLOAD_KEY) || "{}");
+  
+    // Check for required uploads
+    const missingUploads = parameters.filter(
+      (param: any) => param.proof_reqd && !uploadedDocs[param.param_id]
+    );
+  
+    if (missingUploads.length > 0) {
+      toast.error("Please upload all necessary files before previewing.");
+      return;
+    }
+  
+    // If all good, navigate
+    navigate('/applications/citation-review');
   };
 
   // Show loader
@@ -460,7 +505,7 @@ const ApplyCitation = () => {
               <button
                 type="button"
                 className="_btn primary"
-                onClick={() => navigate('/applications/citation-review')}
+                onClick={handlePreviewClick}
               >
                 Preview
               </button>

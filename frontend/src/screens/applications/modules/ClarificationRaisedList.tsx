@@ -49,10 +49,10 @@ const ClarificationRaisedList = () => {
     <div className="clarification-section">
       <div className="d-flex flex-sm-row flex-column align-items-sm-center justify-content-between mb-4">
         <Breadcrumb
-          title="Clarifications I Raised"
+          title="Clarification Raised"
           paths={[
             { label: "Home", href: "/applications" },
-            { label: "Clarifications I Raised", href: "/applications/raised-list" },
+            { label: "Clarification Raised", href: "/applications/raised-list" },
           ]}
         />
       </div>

@@ -66,7 +66,35 @@ const ApplyAppreciation = () => {
       }
     }
   }, [groupedParams]);
-
+  useEffect(() => {
+    const container = scrollContainerRef.current;
+    if (!container) return;
+  
+    const handleScroll = () => {
+      const containerTop = container.getBoundingClientRect().top;
+  
+      let closestCategory = "";
+      let minOffset = Infinity;
+  
+      Object.entries(categoryRefs.current).forEach(([category, el]) => {
+        if (el) {
+          const offset = Math.abs(el.getBoundingClientRect().top - containerTop);
+          if (offset < minOffset) {
+            closestCategory = category;
+            minOffset = offset;
+          }
+        }
+      });
+  
+      if (closestCategory && closestCategory !== activeTab) {
+        setActiveTab(closestCategory);
+      }
+    };
+  
+    container.addEventListener("scroll", handleScroll);
+    return () => container.removeEventListener("scroll", handleScroll);
+  }, [activeTab]);
+  
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const categoryRefs = useRef<{ [key: string]: HTMLDivElement | null }>({});
 
@@ -129,7 +157,7 @@ const ApplyAppreciation = () => {
     if (!file) return;
 
     if (file.size > 5 * 1024 * 1024) {
-      alert("File size must be less than 5MB");
+      toast.error("File size must be less than 5MB");
       return;
     }
 
@@ -138,9 +166,9 @@ const ApplyAppreciation = () => {
       const newUploads = { ...uploadedFiles, [paramId]: uploadedUrl };
       setUploadedFiles(newUploads);
       localStorage.setItem(DRAFT_FILE_UPLOAD_KEY, JSON.stringify(newUploads));
-      alert("Upload successful");
+      toast.success("Upload successful");
     } else {
-      alert("Upload failed");
+      toast.error("Upload failed");
     }
   };
 
@@ -185,7 +213,7 @@ const ApplyAppreciation = () => {
         });
 
         const payload = {
-          date_init: "2024-04-01",
+          date_init: new Date().toISOString().split("T")[0],
           appre_fds: {
             award_type: "appreciation",
             cycle_period: values.cyclePeriod,
@@ -264,7 +292,22 @@ const ApplyAppreciation = () => {
     setMarks({});
     setUploadedFiles({});
   };
-
+  const handlePreviewClick = () => {
+    const uploadedDocs = JSON.parse(localStorage.getItem(DRAFT_FILE_UPLOAD_KEY) || "{}");
+  
+    // Check for required uploads
+    const missingUploads = parameters.filter(
+      (param: any) => param.proof_reqd && !uploadedDocs[param.param_id]
+    );
+  
+    if (missingUploads.length > 0) {
+      toast.error("Please upload all necessary files before previewing.");
+      return;
+    }
+  
+    // If all good, navigate
+    navigate('/applications/appreciation-review');
+  };
   // Show loader
   if (loading) return <Loader />
 
@@ -459,12 +502,12 @@ const ApplyAppreciation = () => {
                 Save as Draft
               </button>
               <button
-                type="button"
-                className="_btn primary"
-                onClick={() => navigate('/applications/appreciation-review')}
-              >
-                Preview
-              </button>
+  type="button"
+  className="_btn primary"
+  onClick={handlePreviewClick}
+>
+  Preview
+</button>
               <button
                 type="button"
                 className="_btn danger"

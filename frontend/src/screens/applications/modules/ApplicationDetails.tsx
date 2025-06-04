@@ -546,13 +546,13 @@ const ApplicationDetails = () => {
                       className="fw-medium text-muted mb-0"
                       style={{ whiteSpace: "nowrap" }}
                     >
-                      Approve Grace Marks
+                      Discretionary Points:
                     </label>
                     <input
                       type="number"
                       className="form-control"
-                      placeholder="Enter grace marks"
-                      style={{ maxWidth: "150px" }}
+                      placeholder="Enter discretionary points"
+                      style={{ maxWidth: "190px" }}
                       value={graceMarks}
                       onChange={handleGraceMarksChange}
                     />

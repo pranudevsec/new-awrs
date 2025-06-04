@@ -84,11 +84,11 @@ const Applications = () => {
                   <div className="card-icon">
                     <img
                       src="/media/icons/clarifications.png"
-                      alt="Clarifications I Raised"
+                      alt="Clarification Raised"
                       width={100}
                     />
                   </div>
-                  <h5 className="fw-6 mt-4">Clarifications I Raised</h5>
+                  <h5 className="fw-6 mt-4">Clarification Raised</h5>
                 </div>
               </Link>
             </div>
@@ -104,11 +104,11 @@ const Applications = () => {
                     <div className="card-icon">
                       <img
                         src="/media/icons/raised-clarification.png"
-                        alt="Clarifications to Resolve"
+                        alt="Clarification Received"
                         width={100}
                       />
                     </div>
-                    <h5 className="fw-6 mt-4">Clarifications to Resolve</h5>
+                    <h5 className="fw-6 mt-4">Clarification Received</h5>
                   </div>
                 </Link>
               </div>
