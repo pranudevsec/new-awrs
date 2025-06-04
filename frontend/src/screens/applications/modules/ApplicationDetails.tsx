@@ -291,15 +291,15 @@ const ApplicationDetails = () => {
                 <th style={{ width: 100 }}>Marks</th>
                 <th style={{ width: 100 }}>Document</th>
                 {/* {isCW2Role && <th style={{ width: 100 }}>Drop comment</th>} */}
-                {!isUnitRole ||
-                  (isHeadquarter && (
-                    <>
-                      <th style={{ width: 200 }}>Approved Marks</th>
-                      <th style={{ width: 150 }}>Add Clarification</th>
-                      <th style={{ width: 200 }}>Requested Clarification</th>
-                      <th style={{ width: 150 }}>Action</th>
-                    </>
-                  ))}
+                {!isUnitRole && !isHeadquarter && (
+  <>
+    <th style={{ width: 200 }}>Approved Marks</th>
+    <th style={{ width: 150 }}>Add Clarification</th>
+    <th style={{ width: 200 }}>Requested Clarification</th>
+    <th style={{ width: 150 }}>Action</th>
+  </>
+)}
+
                 {/* {isHeadquarter && (
                   <th style={{ width: 150 }}>Review comments</th>
                 )} */}
@@ -355,8 +355,7 @@ const ApplicationDetails = () => {
                       />
                     </td>
                   )} */}
-                  {!isUnitRole ||
-                    (isHeadquarter && (
+                  {!isUnitRole && !isHeadquarter && (
                       <>
                         <td style={{ width: 200 }}>
                           <input
@@ -481,7 +480,7 @@ const ApplicationDetails = () => {
                           )}
                         </td>
                       </>
-                    ))}
+                    )}
                   {/* {isHeadquarter && (
                     <td style={{ width: 150 }}>
                       {Array.isArray(param?.comments) &&
