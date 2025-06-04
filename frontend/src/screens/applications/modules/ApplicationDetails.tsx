@@ -55,6 +55,7 @@ const ApplicationDetails = () => {
   const isHeadquarter = profile?.user?.user_role === "headquarter";
   const roleHierarchy = ["unit", "brigade", "division", "corps", "command"];
   const role = profile?.user?.user_role?.toLowerCase() ?? "";
+  const cw2_type = profile?.user?.cw2_type?.toLowerCase() ?? "";
   const lowerRole = roleHierarchy[roleHierarchy.indexOf(role) - 1] ?? null;
   const award_type = searchParams.get("award_type") || "";
   const numericAppId = Number(application_id);
@@ -177,26 +178,45 @@ const ApplicationDetails = () => {
     })
     .filter(Boolean);
 
-  const handleSaveComment = (paramName: string, comment: string) => {
-    if (!comment) return;
-
-    const body: any = {
-      type: unitDetail?.type || "citation",
-      application_id: unitDetail?.id || 0,
-      parameters: [{ name: paramName, comment }],
+    const handleSaveComment = (paramName: string, comment: string) => {
+      if (!comment) return;
+    
+      const body: any = {
+        type: unitDetail?.type || "citation",
+        application_id: unitDetail?.id || 0,
+      };
+    
+      // If paramName is "__application__", treat it as an application-level comment
+      if (paramName === "__application__") {
+        body.comment = comment;
+      } else {
+        body.parameters = [{ name: paramName, comment }];
+      }
+    
+      dispatch(addApplicationComment(body)).unwrap().catch(() => {});
     };
+    
+    const debouncedHandleSaveComment = useDebounce(handleSaveComment, 600);
+    
+    const handleCommentChange = (paramName: string, value: string) => {
+      setCommentsState((prev) => ({ ...prev, [paramName]: value }));
+      debouncedHandleSaveComment(paramName, value);
+    };
+    
+    useEffect(() => {
+      if (unitDetail?.fds?.comments && Array.isArray(unitDetail.fds.comments)) {
+        const existingComment = unitDetail.fds.comments.find(
+          (c:any) => c.commented_by_role_type?.toLowerCase() === cw2_type
+        );
+        if (existingComment) {
+          setCommentsState((prev) => ({
+            ...prev,
+            __application__: existingComment.comment,
+          }));
+        }
+      }
+    }, [unitDetail?.fds?.comments, role]);
 
-    dispatch(addApplicationComment(body))
-      .unwrap()
-      .catch(() => {});
-  };
-
-  const debouncedHandleSaveComment = useDebounce(handleSaveComment, 600);
-
-  const handleCommentChange = (paramName: string, value: string) => {
-    setCommentsState((prev) => ({ ...prev, [paramName]: value }));
-    debouncedHandleSaveComment(paramName, value);
-  };
   // Show loader
   if (loading) return <Loader />;
   return (
@@ -270,7 +290,7 @@ const ApplicationDetails = () => {
                 <th style={{ width: 100 }}>Count</th>
                 <th style={{ width: 100 }}>Marks</th>
                 <th style={{ width: 100 }}>Document</th>
-                {isCW2Role && <th style={{ width: 100 }}>Drop comment</th>}
+                {/* {isCW2Role && <th style={{ width: 100 }}>Drop comment</th>} */}
                 {!isUnitRole ||
                   (isHeadquarter && (
                     <>
@@ -280,9 +300,9 @@ const ApplicationDetails = () => {
                       <th style={{ width: 150 }}>Action</th>
                     </>
                   ))}
-                {isHeadquarter && (
+                {/* {isHeadquarter && (
                   <th style={{ width: 150 }}>Review comments</th>
-                )}
+                )} */}
               </tr>
             </thead>
             <tbody>
@@ -321,7 +341,7 @@ const ApplicationDetails = () => {
                             readOnly
                         />
                     </td> */}
-                  {isCW2Role && (
+                  {/* {isCW2Role && (
                     <td style={{ width: 200 }}>
                       <input
                         type="text"
@@ -334,7 +354,7 @@ const ApplicationDetails = () => {
                         }
                       />
                     </td>
-                  )}
+                  )} */}
                   {!isUnitRole ||
                     (isHeadquarter && (
                       <>
@@ -462,7 +482,7 @@ const ApplicationDetails = () => {
                         </td>
                       </>
                     ))}
-                  {isHeadquarter && (
+                  {/* {isHeadquarter && (
                     <td style={{ width: 150 }}>
                       {Array.isArray(param?.comments) &&
                       param.comments.length > 0 ? (
@@ -482,7 +502,7 @@ const ApplicationDetails = () => {
                         <span className="text-muted">--</span>
                       )}
                     </td>
-                  )}
+                  )} */}
                 </tr>
               ))}
             </tbody>
@@ -574,6 +594,51 @@ const ApplicationDetails = () => {
                   >
                     Reject
                   </button>
+                </>
+              )}
+              {isHeadquarter && (
+                <>
+                  <button
+                    type="button"
+                    className="_btn success"
+                    onClick={() => {
+                      setReviewCommentsShow(true);
+                      setReviewCommentsData(unitDetail?.fds?.comments);
+                    }}
+                  >
+                    Review Comments
+                  </button>
+                </>
+              )}
+            </div>
+          </div>
+        )}
+                {isCW2Role && (
+          <div className="submit-button-wrapper">
+  
+            <div className="d-flex flex-sm-row flex-column gap-sm-3 gap-1 justify-content-end">
+     
+
+              {!isHeadquarter && (
+                <>
+                  <div className="d-flex align-items-center gap-2">
+                    <label
+                      className="fw-medium text-muted mb-0"
+                      style={{ whiteSpace: "nowrap" }}
+                    >
+                      Drop Comment:
+                    </label>
+                    <input
+      type="text"
+      className="form-control"
+      placeholder="Enter comment"
+      style={{ maxWidth: "250px" }}
+      value={commentsState?.__application__ || ""}
+      onChange={(e) => handleCommentChange("__application__", e.target.value)}
+    />
+
+
+                  </div>
                 </>
               )}
             </div>

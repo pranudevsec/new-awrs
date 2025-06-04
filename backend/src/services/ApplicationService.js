@@ -1,6 +1,7 @@
 const dbService = require("../utils/postgres/dbService");
 const ResponseHelper = require("../utils/responseHelper");
 const AuthService = require("../services/AuthService.js");
+const { application } = require("express");
 
 exports.getAllApplicationsForUnit = async (user, query) => {
   const client = await dbService.getClient();
@@ -1027,6 +1028,101 @@ exports.getApplicationsScoreboard = async (user, query) => {
         }
         return param;
       });
+  
+      await client.query(
+        `UPDATE ${tableName}
+         SET ${fdsColumn} = $1
+         WHERE ${idColumn} = $2`,
+        [fds, application_id]
+      );
+  
+      return ResponseHelper.success(200, "Comment added successfully");
+    } catch (error) {
+      return ResponseHelper.error(500, "Failed to add comments", error.message);
+    } finally {
+      client.release();
+    }
+  };
+  exports.addApplicationComment = async (user, body) => {
+    const client = await dbService.getClient();
+    try {
+      const { type, application_id, parameters, comment } = body;
+  
+      if (!["citation", "appreciation"].includes(type)) {
+        return ResponseHelper.error(400, "Invalid type provided");
+      }
+  
+      const tableName = type === "citation" ? "Citation_tab" : "Appre_tab";
+      const idColumn = type === "citation" ? "citation_id" : "appreciation_id";
+      const fdsColumn = type === "citation" ? "citation_fds" : "appre_fds";
+  
+      const res = await client.query(
+        `SELECT ${idColumn}, ${fdsColumn} AS fds FROM ${tableName} WHERE ${idColumn} = $1`,
+        [application_id]
+      );
+  
+      if (res.rowCount === 0) {
+        return ResponseHelper.error(404, "Application not found");
+      }
+  
+      let fds = res.rows[0].fds;
+      const now = new Date();
+  
+      // ✅ Application-level comment (stored as array)
+      if (typeof comment === "string" && comment.trim() !== "") {
+        if (!Array.isArray(fds.comments)) {
+          fds.comments = [];
+        }
+  
+        const newAppComment = {
+          comment: comment.trim(),
+          commented_by_role_type: user.cw2_type || null,
+          commented_by_role: user.user_role || null,
+          commented_at: now,
+          commented_by: user.user_id,
+        };
+  
+        const existingAppCommentIndex = fds.comments.findIndex(
+          (c) => c.commented_by === user.user_id
+        );
+  
+        if (existingAppCommentIndex >= 0) {
+          fds.comments[existingAppCommentIndex] = newAppComment;
+        } else {
+          fds.comments.push(newAppComment);
+        }
+      }
+  
+      // ✅ Parameter-level comments
+      if (Array.isArray(parameters) && parameters.length > 0) {
+        fds.parameters = fds.parameters.map((param) => {
+          const incomingParam = parameters.find((p) => p.name === param.name);
+          if (incomingParam) {
+            if (!Array.isArray(param.comments)) {
+              param.comments = [];
+            }
+  
+            const newParamComment = {
+              comment: incomingParam.comment || "",
+              commented_by_role_type: user.cw2_type || null,
+              commented_by_role: user.user_role || null,
+              commented_at: now,
+              commented_by: user.user_id,
+            };
+  
+            const existingCommentIndex = param.comments.findIndex(
+              (c) => c.commented_by === user.user_id
+            );
+  
+            if (existingCommentIndex >= 0) {
+              param.comments[existingCommentIndex] = newParamComment;
+            } else {
+              param.comments.push(newParamComment);
+            }
+          }
+          return param;
+        });
+      }
   
       await client.query(
         `UPDATE ${tableName}
