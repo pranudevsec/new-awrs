@@ -470,27 +470,25 @@ if (missingUploads.length > 0) {
                         </td>
                         <td style={{ width: 300, minWidth: 300, maxWidth: 300 }}>
   {param.proof_reqd ? (
-    Number(counts[param.param_id] || 0) > 0 ? (
-      // If count > 0, show either the uploaded link or the file-input
-      uploadedFiles[param.param_id] ? (
-        <a
-          href={`${baseURL}${uploadedFiles[param.param_id]}`}
-          target="_blank"
-          rel="noopener noreferrer"
-          style={{ fontSize: 18 }}
-        >
-          {SVGICON.app.pdf}
-        </a>
-      ) : (
-        <input
-          type="file"
-          className="form-control"
-          autoComplete="off"
-          onChange={(e) => handleFileChange(e, param.param_id, param.name)}
-        />
-      )
+    uploadedFiles[param.param_id] ? (
+      <a
+        href={`${baseURL}${uploadedFiles[param.param_id]}`}
+        target="_blank"
+        rel="noopener noreferrer"
+        style={{ fontSize: 18, display: "flex", alignItems: "center", gap: "8px" }}
+      >
+        {SVGICON.app.pdf}
+        <span style={{ fontSize: 14, wordBreak: 'break-word' }}>
+          {uploadedFiles[param.param_id]?.split("/").pop()}
+        </span>
+      </a>
     ) : (
-      null
+      <input
+        type="file"
+        className="form-control"
+        autoComplete="off"
+        onChange={(e) => handleFileChange(e, param.param_id, param.name)}
+      />
     )
   ) : (
     <span>Not required</span>
@@ -527,7 +525,7 @@ if (missingUploads.length > 0) {
                 className="_btn danger"
                 onClick={handleDeleteDraft}
               >
-                Delete
+                Discard
               </button>
             </div>
           </div>

@@ -68,25 +68,69 @@ const ApplicationDetails = () => {
   const lowerRole = roleHierarchy[roleHierarchy.indexOf(role) - 1] ?? null;
   const award_type = searchParams.get("award_type") || "";
   const numericAppId = Number(application_id);
+  const [graceMarks, setGraceMarks] = useState("");
 
   useEffect(() => {
     if (award_type && numericAppId)
       dispatch(fetchApplicationUnitDetail({ award_type, numericAppId }));
   }, [award_type, numericAppId, isRefreshData]);
 
-  const parameters = unitDetail?.fds?.parameters || [];
-  const totalParams = parameters.length;
-  const filledParams = parameters.filter(
-    (param: any) => (param.count ?? 0) > 0 || (param.marks ?? 0) > 0
-  ).length;
-  const negativeMarks = parameters.reduce((acc: any, param: any) => {
-    return (param.marks ?? 0) < 0 ? acc + (param.marks ?? 0) : acc;
-  }, 0);
-  const totalMarks = parameters.reduce(
-    (acc: any, param: any) => acc + (param.marks ?? 0),
-    0
-  );
-
+  const [paramStats, setParamStats] = useState({
+    totalParams: 0,
+    filledParams: 0,
+    marks: 0,
+    approvedMarks: 0,
+    totalMarks: 0,
+  });
+  const calculateParameterStats = (parameters: any[], graceMarks: number = 0) => {
+    const totalParams = parameters.length;
+  
+    const filledParams = parameters.filter(
+      (param) => (param.count ?? 0) > 0 || (param.marks ?? 0) > 0
+    ).length;
+  
+    const marks = parameters.reduce(
+      (acc, param) => acc + (param.marks ?? 0),
+      0
+    );
+  
+    const approvedMarks = parameters.reduce(
+      (acc, param) => acc + Number(param.approved_marks ?? 0),
+      0
+    );
+  
+    // Use approved_marks if available, else use marks
+    const totalParameterMarks = parameters.reduce((acc, param) => {
+      const hasValidApproved =
+        param.approved_marks !== undefined &&
+        param.approved_marks !== null &&
+        param.approved_marks !== "" &&
+        !isNaN(Number(param.approved_marks));
+    
+      const approved = hasValidApproved ? Number(param.approved_marks) : null;
+      const original = param.marks ?? 0;
+    
+      return acc + (approved !== null ? approved : original);
+    }, 0);
+    
+    const totalMarks = totalParameterMarks + Number(graceMarks ?? 0);
+  
+    return {
+      totalParams,
+      filledParams,
+      marks,
+      approvedMarks,
+      totalMarks,
+    };
+  };
+  
+  useEffect(() => {
+    const parameters = unitDetail?.fds?.parameters || [];
+    const graceMarkss = unitDetail?.fds?.applicationGraceMarks?.[0]?.marks || 0;
+  
+    const stats = calculateParameterStats(parameters, graceMarkss);
+    setParamStats(stats);
+  }, [unitDetail,graceMarks]);  
   const [commentsState, setCommentsState] = React.useState<
     Record<string, string>
   >({});
@@ -120,27 +164,36 @@ const ApplicationDetails = () => {
     }
   }, [unitDetail, profile]);
 
-  const handleSave = (paramName: string, marks: string) => {
+  const handleSave = async (paramName: string, marks: string) => {
     if (marks === undefined) return;
-
+  
     const body = {
       type: unitDetail?.type || "citation",
       application_id: unitDetail?.id || 0,
       parameters: [{ name: paramName, approved_marks: marks }],
     };
+  
+    try {
+      await dispatch(approveMarks(body)).unwrap();
+      dispatch(fetchApplicationUnitDetail({ award_type, numericAppId }));
 
-    dispatch(approveMarks(body)).unwrap();
+      const graceMarks = unitDetail?.fds?.applicationGraceMarks?.[0]?.marks || 0;
+      const updatedStats = calculateParameterStats(unitDetail?.fds?.parameters, graceMarks);
+      setParamStats(updatedStats);
+  
+    } catch (err) {
+      console.error("Failed to save approved marks:", err);
+    }
   };
+  
 
   // Create debounced version of handleSave
   const debouncedHandleSave = useDebounce(handleSave, 600);
 
   const handleInputChange = (paramName: string, value: string) => {
     setApprovedMarksState((prev) => ({ ...prev, [paramName]: value }));
-    debouncedHandleSave(paramName, value); // <-- pass value here directly
+    debouncedHandleSave(paramName, value); // this uses the updated handleSave
   };
-
-  const [graceMarks, setGraceMarks] = useState("");
 
   useEffect(() => {
     const grace = unitDetail?.fds?.applicationGraceMarks?.find(
@@ -170,6 +223,7 @@ const ApplicationDetails = () => {
     const value = e.target.value;
     setGraceMarks(value);
     debouncedGraceMarksSave(value);
+
   };
 
   const hierarchy = ["brigade", "division", "corps", "command","headquarter"];
@@ -303,7 +357,7 @@ const ApplicationDetails = () => {
                 {!isUnitRole && !isHeadquarter && (
   <>
     <th style={{ width: 200 }}>Approved Marks</th>
-   {!isRaisedScreen && <th style={{ width: 150 }}>Add Clarification</th>}
+   {!isRaisedScreen && <th style={{ width: 150 }}>Ask Clarification</th>}
 { isRaisedScreen &&  <>
  <th style={{ width: 200 }}>Requested Clarification</th>
     <th style={{ width: 150 }}>Action</th> </>}
@@ -530,25 +584,28 @@ const ApplicationDetails = () => {
         </div>
         {!isUnitRole && (
           <div className="submit-button-wrapper">
-            <div className="row text-center text-sm-start mb-3">
-              <div className="col-6 col-sm-3">
-                <span className="fw-medium text-muted">Total Params:</span>
-                <div className="fw-bold">{totalParams}</div>
-              </div>
-              <div className="col-6 col-sm-3">
-                <span className="fw-medium text-muted">Filled Params:</span>
-                <div className="fw-bold">{filledParams}</div>
-              </div>
-              <div className="col-6 col-sm-3">
-                <span className="fw-medium text-muted">Negative Marks:</span>
-                <div className="fw-bold text-danger">{negativeMarks}</div>
-              </div>
-              <div className="col-6 col-sm-3">
-                <span className="fw-medium text-muted">Total Marks:</span>
-                <div className="fw-bold text-success">{Number(totalMarks) + Number(graceMarks)}
-                </div>
-              </div>
-            </div>
+ <div className="row text-center text-sm-start mb-3">
+  <div className="col-6 col-sm-3">
+    <span className="fw-medium text-muted">Filled Params:</span>
+    <div className="fw-bold">{paramStats.filledParams}</div>
+  </div>
+
+  <div className="col-6 col-sm-3">
+    <span className="fw-medium text-muted">Marks:</span>
+    <div className="fw-bold">{paramStats.marks}</div>
+  </div>
+
+  <div className="col-6 col-sm-3">
+    <span className="fw-medium text-muted">Approved Marks:</span>
+    <div className="fw-bold text-primary">{paramStats.approvedMarks}</div>
+  </div>
+
+  <div className="col-6 col-sm-3">
+    <span className="fw-medium text-muted">Total Marks:</span>
+    <div className="fw-bold text-success">{paramStats.totalMarks}</div>
+  </div>
+</div>
+
 
             {/* Grace Marks Field */}
 
