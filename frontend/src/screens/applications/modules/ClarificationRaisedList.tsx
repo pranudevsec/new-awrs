@@ -110,7 +110,7 @@ const ClarificationRaisedList = () => {
                 filteredUnits.map((unit: any) => (
                   <tr
                     key={unit.id}
-                    onClick={() => navigate(`/applications/list/${unit.id}?award_type=${unit.type}`)}
+                    onClick={() => navigate(`/applications/list/${unit.id}?award_type=${unit.type}&raised_clarifications=true`)}
                     style={{ cursor: "pointer" }}
                   >
                     <td style={{ width: 150, minWidth: 150, maxWidth: 150 }}>
@@ -142,7 +142,7 @@ const ClarificationRaisedList = () => {
                   </td> */}
                     <td style={{ width: 100, minWidth: 100, maxWidth: 100 }}>
                       <Link
-                        to={`/applications/list/${unit.id}?award_type=${unit.type}`}
+                        to={`/applications/list/${unit.id}?award_type=${unit.type}&raised_clarifications=true`}
                         className="action-btn bg-transparent d-inline-flex align-items-center justify-content-center"
                         onClick={(e) => e.stopPropagation()} // prevent triggering row click navigation
                       >

@@ -23,6 +23,7 @@ const ApplicationsList = () => {
   const [debouncedSearch, setDebouncedSearch] = useState<string>("");
   const [page, setPage] = useState<number>(1);
   const [limit, setLimit] = useState<number>(10);
+  const role = profile?.user?.user_role?.toLowerCase() ?? "";
 
   useEffect(() => {
     const handler = setTimeout(() => {
@@ -63,10 +64,10 @@ const ApplicationsList = () => {
     <div className="clarification-section">
       <div className="d-flex flex-sm-row flex-column align-items-sm-center justify-content-between mb-4">
         <Breadcrumb
-          title="Application Listing"
+          title="Applications Listing"
           paths={[
             { label: "Home", href: "/applications" },
-            { label: "Application Listing", href: "/applications/list" },
+            { label: "Applications Listing", href: "/applications/list" },
           ]}
         />
       </div>
@@ -101,6 +102,9 @@ const ApplicationsList = () => {
                 Application Id
               </th>
               <th style={{ width: 150, minWidth: 150, maxWidth: 150 }}>Unit ID</th>
+              {role === "headquarter" && (
+  <th style={{ width: 150, minWidth: 150, maxWidth: 150 }}>Command</th>
+)}
               <th style={{ width: 200, minWidth: 200, maxWidth: 200 }}>
                 Submission Date
               </th>
@@ -128,9 +132,13 @@ const ApplicationsList = () => {
                   <td style={{ width: 150, minWidth: 150, maxWidth: 150 }}>
                     <p className="fw-4">#{unit.id}</p>
                   </td>
+              
                   <td style={{ width: 150, minWidth: 150, maxWidth: 150 }}>
                     <p className="fw-4">#{unit.unit_id}</p>
                   </td>
+                  {role === "headquarter" &&   <td style={{ width: 150, minWidth: 150, maxWidth: 150 }}>
+                    <p className="fw-4">{unit?.fds?.command}</p>
+                  </td>}
                   <td style={{ width: 200, minWidth: 200, maxWidth: 200 }}>
                     <p className="fw-4">
                       {new Date(unit.date_init).toLocaleDateString()}

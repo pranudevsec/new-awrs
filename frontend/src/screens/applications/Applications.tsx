@@ -66,7 +66,10 @@ const Applications = () => {
                     width={100}
                   />
                 </div>
-                <h5 className="fw-6 mt-4">Applications To Review</h5>
+                <h5 className="fw-6 mt-4">
+  {userRole === "headquarter" ? "Submitted by Commands" : "Applications To Review"}
+</h5>
+
               </div>
             </Link>
           </div>

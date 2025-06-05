@@ -625,6 +625,7 @@ exports.getApplicationsOfSubordinates = async (user, query) => {
   }
 };
 
+
 exports.getApplicationsScoreboard = async (user, query) => {
   const client = await dbService.getClient();
 
@@ -958,11 +959,9 @@ exports.getApplicationsScoreboard = async (user, query) => {
       // 4. Update in DB
       await client.query(
         `UPDATE ${tableName}
-         SET ${type === "citation" ? "citation_fds" : "appre_fds"} = $1,
-             last_approved_by_role = $2,
-             last_approved_at = $3
-         WHERE ${idColumn} = $4`,
-        [fds, user.user_role, now, application_id]
+         SET ${type === "citation" ? "citation_fds" : "appre_fds"} = $1
+         WHERE ${idColumn} = $2`,
+        [fds, application_id]
       );
   
       return ResponseHelper.success(200, "Marks approved successfully");

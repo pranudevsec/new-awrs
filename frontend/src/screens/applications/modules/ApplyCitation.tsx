@@ -197,20 +197,22 @@ const ApplyCitation = () => {
       try {
         const uploadedDocs = JSON.parse(localStorage.getItem(DRAFT_FILE_UPLOAD_KEY) || "{}");
 
-        const formattedParameters = parameters.map((param: any) => {
+        const formattedParameters = parameters
+        .map((param: any) => {
           const trimmedName = param.name.trim();
           const count = Number(counts[param.param_id] ?? 0);
           const calculatedMarks = marks[param.param_id] ?? 0;
           const uploadPath = uploadedDocs[param.param_id] || "";
-
+      
           return {
             name: trimmedName,
             count,
             marks: calculatedMarks,
             upload: uploadPath,
           };
-        });
-
+        })
+        .filter((param) => param.count > 0 || param.marks > 0);
+      
         const payload = {
           date_init: new Date().toISOString().split("T")[0],
           citation_fds: {
@@ -294,16 +296,28 @@ const ApplyCitation = () => {
 
   const handlePreviewClick = () => {
     const uploadedDocs = JSON.parse(localStorage.getItem(DRAFT_FILE_UPLOAD_KEY) || "{}");
-  
-    // Check for required uploads
-    const missingUploads = parameters.filter(
-      (param: any) => param.proof_reqd && !uploadedDocs[param.param_id]
-    );
-  
-    if (missingUploads.length > 0) {
-      toast.error("Please upload all necessary files before previewing.");
-      return;
-    }
+      const hasAtLeastOneCount = parameters.some(
+        (param: any) => Number(counts[param.param_id] ?? 0) > 0
+      );
+    
+      if (!hasAtLeastOneCount) {
+        toast.error("Please fill at least one parameter count before previewing.");
+        return;
+      }
+const missingUploads = parameters.filter((param: any) => {
+  const count = Number(counts[param.param_id] ?? 0);
+  const mark = Number(marks[param.param_id] ?? 0);
+  const requiresUpload = param.proof_reqd && (count > 0 || mark > 0);
+  const fileUploaded = uploadedDocs[param.param_id];
+
+  return requiresUpload && !fileUploaded;
+});
+
+if (missingUploads.length > 0) {
+  toast.error("Please upload all necessary files before previewing.");
+  return;
+}
+
   
     // If all good, navigate
     navigate('/applications/citation-review');
@@ -455,37 +469,36 @@ const ApplyCitation = () => {
                           </div>
                         </td>
                         <td style={{ width: 300, minWidth: 300, maxWidth: 300 }}>
-                          {/* {param.proof_reqd ? (
-                            <input
-                              type="file"
-                              className="form-control"
-                              autoComplete="off"
-                              onChange={(e) => handleFileChange(e, param.param_id, param.name)} />
-                          ) : (
-                            <span>Not required</span>
-                          )} */}
-                          {param.proof_reqd ? (
-                            uploadedFiles[param.param_id] ? (
-                              <a
-                                href={`${baseURL}${uploadedFiles[param.param_id]}`}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                style={{ fontSize: 18 }}
-                              >
-                                {SVGICON.app.pdf}
-                              </a>
-                            ) : (
-                              <input
-                                type="file"
-                                className="form-control"
-                                autoComplete="off"
-                                onChange={(e) => handleFileChange(e, param.param_id, param.name)}
-                              />
-                            )
-                          ) : (
-                            <span>Not required</span>
-                          )}
-                        </td>
+  {param.proof_reqd ? (
+    Number(counts[param.param_id] || 0) > 0 ? (
+      // If count > 0, show either the uploaded link or the file-input
+      uploadedFiles[param.param_id] ? (
+        <a
+          href={`${baseURL}${uploadedFiles[param.param_id]}`}
+          target="_blank"
+          rel="noopener noreferrer"
+          style={{ fontSize: 18 }}
+        >
+          {SVGICON.app.pdf}
+        </a>
+      ) : (
+        <input
+          type="file"
+          className="form-control"
+          autoComplete="off"
+          onChange={(e) => handleFileChange(e, param.param_id, param.name)}
+        />
+      )
+    ) : (
+      null
+    )
+  ) : (
+    <span>Not required</span>
+  )}
+</td>
+
+
+
                       </tr>
                     ))}
                   </tbody>

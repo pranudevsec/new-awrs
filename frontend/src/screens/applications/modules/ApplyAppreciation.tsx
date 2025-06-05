@@ -294,17 +294,23 @@ const ApplyAppreciation = () => {
   };
   const handlePreviewClick = () => {
     const uploadedDocs = JSON.parse(localStorage.getItem(DRAFT_FILE_UPLOAD_KEY) || "{}");
+
   
-    // Check for required uploads
-    const missingUploads = parameters.filter(
-      (param: any) => param.proof_reqd && !uploadedDocs[param.param_id]
-    );
-  
-    if (missingUploads.length > 0) {
-      toast.error("Please upload all necessary files before previewing.");
-      return;
-    }
-  
+const missingUploads = parameters.filter((param: any) => {
+  const count = Number(counts[param.param_id] ?? 0);
+  const mark = Number(marks[param.param_id] ?? 0);
+  const requiresUpload = param.proof_reqd && (count > 0 || mark > 0);
+  const fileUploaded = uploadedDocs[param.param_id];
+
+  return requiresUpload && !fileUploaded;
+});
+
+if (missingUploads.length > 0) {
+  toast.error("Please upload all necessary files before previewing.");
+  return;
+}
+      
+
     // If all good, navigate
     navigate('/applications/appreciation-review');
   };
@@ -454,7 +460,7 @@ const ApplyAppreciation = () => {
                           </div>
                         </td>
                         <td style={{ width: 300, minWidth: 300, maxWidth: 300 }}>
-                          {/* {param.proof_reqd ? (
+                                         {/* {param.proof_reqd ? (
                                                     <input
                                                       type="file"
                                                       className="form-control"
@@ -463,29 +469,32 @@ const ApplyAppreciation = () => {
                                                   ) : (
                                                     <span>Not required</span>
                                                   )} */}
-                          {param.proof_reqd ? (
-                            uploadedFiles[param.param_id] ? (
-                              <a
-                                href={`${baseURL}${uploadedFiles[param.param_id]}`}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                style={{ fontSize: 18 }}
-                              >
-                                {SVGICON.app.pdf}
-                              </a>
-                            ) : (
-                              <input
-                                type="file"
-                                className="form-control"
-                                autoComplete="off"
-                                onChange={(e) => handleFileChange(e, param.param_id, param.name)}
-                              />
-                            )
-                          ) : (
-                            <span>Not required</span>
-                          )}
-                        </td>
-                      </tr>
+  {param.proof_reqd ? (
+    Number(counts[param.param_id] || 0) > 0 ? (
+      uploadedFiles[param.param_id] ? (
+        <a
+          href={`${baseURL}${uploadedFiles[param.param_id]}`}
+          target="_blank"
+          rel="noopener noreferrer"
+          style={{ fontSize: 18 }}
+        >
+          {SVGICON.app.pdf}
+        </a>
+      ) : (
+        <input
+          type="file"
+          className="form-control"
+          autoComplete="off"
+          onChange={(e) => handleFileChange(e, param.param_id, param.name)}
+        />
+      )
+    ) : (
+      null
+    )
+  ) : (
+    <span>Not required</span>
+  )}
+</td>               </tr>
                     ))}
                   </tbody>
                 </table>

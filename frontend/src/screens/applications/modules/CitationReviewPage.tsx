@@ -164,22 +164,22 @@ const CitationReviewPage = () => {
           return;
         }
 
-        const formattedParameters = parameters.map((param: any) => {
+        const formattedParameters = parameters
+        .map((param: any) => {
           const trimmedName = param.name.trim();
           const count = Number(counts[param.param_id] ?? 0);
           const calculatedMarks = marks[param.param_id] ?? 0;
-          // const uploadPath = param.proof_reqd
-          //   ? `uploads/${trimmedName.toLowerCase().replace(/\s+/g, "_")}_file.pdf`
-          //   : "";
           const uploadPath = uploadedFiles[param.param_id] || "";
-
+      
           return {
             name: trimmedName,
             count,
             marks: calculatedMarks,
             upload: uploadPath,
           };
-        });
+        })
+        .filter((param) => param.count > 0 || param.marks > 0);
+      
 
         const payload = {
           date_init: new Date().toISOString().split("T")[0],

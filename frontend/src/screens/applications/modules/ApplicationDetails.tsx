@@ -18,6 +18,7 @@ import Loader from "../../../components/ui/loader/Loader";
 import { baseURL } from "../../../reduxToolkit/helper/axios";
 import { useDebounce } from "../../../hooks/useDebounce";
 import ReviewCommentModal from "../../../modals/ReviewCommentModal";
+import ViewCreatedClarificationModal from "../../../modals/ViewCreatedClarificationModal";
 
 const ApplicationDetails = () => {
   const navigate = useNavigate();
@@ -28,6 +29,9 @@ const ApplicationDetails = () => {
   const profile = useAppSelector((state) => state.admin.profile);
   const { loading, unitDetail } = useAppSelector((state) => state.application);
 
+  const raisedParam = searchParams.get("raised_clarifications");
+
+  const isRaisedScreen = raisedParam === "true";
   // States
   const [clarificationShow, setClarificationShow] = useState(false);
   const [clarificationType, setClarificationType] =
@@ -44,7 +48,12 @@ const ApplicationDetails = () => {
     clarificationClarificationForView,
     setClarificationClarificationForView,
   ] = useState<string | null>(null);
+  const [
+    reviewerClarificationForView,
+    setReviewerClarificationForView,
+  ] = useState<string | null>(null);
   const [reqClarificationShow, setReqClarificationShow] = useState(false);
+  const [reqViewCreatedClarificationShow, setReqViewCreatedClarificationShow] = useState(false);
   const [reviewCommentsShow, setReviewCommentsShow] = useState(false);
   const [isRefreshData, setIsRefreshData] = useState(false);
   const [approvedMarksState, setApprovedMarksState] = useState<
@@ -170,13 +179,13 @@ const ApplicationDetails = () => {
   const roleMarksMap = unitDetail?.fds?.applicationGraceMarks || [];
 
   const displayedMarks = lowerRoles
-    .map((r) => {
-      const entry = roleMarksMap.find((e: any) => e.role?.toLowerCase() === r);
-      return entry
-        ? `${r.charAt(0).toUpperCase() + r.slice(1)}: ${entry.marks}`
-        : null;
-    })
-    .filter(Boolean);
+  .map((r) => {
+    const entry = roleMarksMap.find((e: any) => e.role?.toLowerCase() === r);
+    return entry
+      ? `Marks by ${r.charAt(0).toUpperCase() + r.slice(1)}: ${entry.marks}`
+      : null;
+  })
+  .filter(Boolean);
 
     const handleSaveComment = (paramName: string, comment: string) => {
       if (!comment) return;
@@ -227,7 +236,7 @@ const ApplicationDetails = () => {
             title={`Application ID: #${unitDetail?.id}`}
             paths={[
               { label: "Home", href: "/applications" },
-              { label: "Application Listing", href: "/applications/list" },
+              { label: "Applications Listing", href: "/applications/list" },
               { label: "Details", href: "/applications/list/1" },
             ]}
           />
@@ -294,9 +303,10 @@ const ApplicationDetails = () => {
                 {!isUnitRole && !isHeadquarter && (
   <>
     <th style={{ width: 200 }}>Approved Marks</th>
-    <th style={{ width: 150 }}>Add Clarification</th>
-    <th style={{ width: 200 }}>Requested Clarification</th>
-    <th style={{ width: 150 }}>Action</th>
+   {!isRaisedScreen && <th style={{ width: 150 }}>Add Clarification</th>}
+{ isRaisedScreen &&  <>
+ <th style={{ width: 200 }}>Requested Clarification</th>
+    <th style={{ width: 150 }}>Action</th> </>}
   </>
 )}
 
@@ -328,7 +338,7 @@ const ApplicationDetails = () => {
                         {SVGICON.app.pdf}
                       </a>
                     ) : (
-                      "--"
+                      ""
                     )}
                   </td>
                   {/* <td style={{ width: 200 }}>
@@ -370,13 +380,24 @@ const ApplicationDetails = () => {
                           />
                         </td>
 
-                        <td style={{ width: 120 }}>
+                        {!isRaisedScreen && <td style={{ width: 120 }}>
                           {param?.clarification_id ||
                           (param?.last_clarification_id &&
                             [role, lowerRole].includes(
                               param?.last_clarification_handled_by
                             )) ? (
-                            <p className="fw-5">Already Asked</p>
+                              <button
+                              className="action-btn bg-transparent d-inline-flex align-items-center justify-content-center"
+                              onClick={() => {
+                                setReqViewCreatedClarificationShow(true);
+                                setReviewerClarificationForView(
+                                  param?.clarification_details
+                                    ?.reviewer_comment
+                                );
+                              }}
+                            >
+                              {SVGICON.app.eye}
+                            </button>
                           ) : (
                             <button
                               onClick={() => {
@@ -398,9 +419,9 @@ const ApplicationDetails = () => {
                               Ask Clarification
                             </button>
                           )}
-                        </td>
+                        </td>}
 
-                        <td style={{ width: 200 }}>
+                { isRaisedScreen &&  <>     <td style={{ width: 200 }}>
                           {param?.clarification_details?.clarification ? (
                             <button
                               className="action-btn bg-transparent d-inline-flex align-items-center justify-content-center"
@@ -418,7 +439,7 @@ const ApplicationDetails = () => {
                               {SVGICON.app.eye}
                             </button>
                           ) : (
-                            "--"
+                            ""
                           )}
                         </td>
 
@@ -476,9 +497,9 @@ const ApplicationDetails = () => {
                               </span>
                             )
                           ) : (
-                            "--"
+                            ""
                           )}
-                        </td>
+                        </td> </>}
                       </>
                     )}
                   {/* {isHeadquarter && (
@@ -524,7 +545,8 @@ const ApplicationDetails = () => {
               </div>
               <div className="col-6 col-sm-3">
                 <span className="fw-medium text-muted">Total Marks:</span>
-                <div className="fw-bold text-success">{totalMarks}</div>
+                <div className="fw-bold text-success">{Number(totalMarks) + Number(graceMarks)}
+                </div>
               </div>
             </div>
 
@@ -534,7 +556,6 @@ const ApplicationDetails = () => {
               {/* Approved by roles below */}
               {displayedMarks.length > 0 && (
                 <div className="text-muted small me-auto align-self-center">
-                  <strong>Approved Grace Marks:</strong>{" "}
                   {displayedMarks.join(" | ")}
                 </div>
               )}
@@ -658,6 +679,11 @@ const ApplicationDetails = () => {
         handleClose={() => setReqClarificationShow(false)}
         clarification_doc={clarificationDocForView}
         clarification={clarificationClarificationForView}
+      />
+      <ViewCreatedClarificationModal
+        show={reqViewCreatedClarificationShow}
+        handleClose={() => setReqViewCreatedClarificationShow(false)}
+        reviewer_comment={reviewerClarificationForView}
       />
       <ReviewCommentModal
         show={reviewCommentsShow}
