@@ -11,7 +11,7 @@ CREATE TABLE User_tab (
     username VARCHAR UNIQUE NOT NULL,
     password TEXT NOT NULL,
     unit_id INTEGER,
-    cw2_type VARCHAR(2), -- new column
+    cw2_type VARCHAR(2),
 
     is_active BOOLEAN DEFAULT TRUE,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -123,7 +123,7 @@ CREATE TABLE Citation_tab (
     last_approved_by_role VARCHAR(50),
 last_approved_at TIMESTAMP,
     status_flag VARCHAR(20) NOT NULL CHECK (
-        status_flag IN ( 'in_review', 'in_clarification', 'approved', 'rejected')
+        status_flag IN ( 'in_review', 'in_clarification', 'approved', 'rejected','draft')
     ),
     isShortlisted BOOLEAN DEFAULT FALSE
 );
@@ -140,7 +140,7 @@ CREATE TABLE Appre_tab (
     last_approved_by_role VARCHAR(50),
 last_approved_at TIMESTAMP,
      status_flag VARCHAR(20) NOT NULL CHECK (
-        status_flag IN ('in_review','in_clarification', 'approved', 'rejected')
+        status_flag IN ('in_review','in_clarification', 'approved', 'rejected','draft')
     ),
     isShortlisted BOOLEAN DEFAULT FALSE 
 );

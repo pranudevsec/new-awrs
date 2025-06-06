@@ -64,10 +64,10 @@ const ApplicationsList = () => {
     <div className="clarification-section">
       <div className="d-flex flex-sm-row flex-column align-items-sm-center justify-content-between mb-4">
         <Breadcrumb
-          title="Applications Listing"
+          title="Applications"
           paths={[
             { label: "Home", href: "/applications" },
-            { label: "Applications Listing", href: "/applications/list" },
+            { label: "Applications", href: "/applications/list" },
           ]}
         />
       </div>
@@ -110,6 +110,7 @@ const ApplicationsList = () => {
               </th>
               <th style={{ width: 200, minWidth: 200, maxWidth: 200 }}>Dead Line</th>
               <th style={{ width: 150, minWidth: 150, maxWidth: 150 }}>Type</th>
+              {role === "unit" && (<th style={{ width: 150, minWidth: 150, maxWidth: 150 }}>Status</th>)}
               <th style={{ width: 100, minWidth: 100, maxWidth: 100 }}></th>
             </tr>
           </thead>
@@ -126,7 +127,13 @@ const ApplicationsList = () => {
               : units.length > 0 && units.map((unit: any, idx) => (
                 <tr
                   key={idx}
-                  onClick={() => navigate(`/applications/list/${unit.id}?award_type=${unit.type}`)}
+                  onClick={() => {
+                    if (unit.status_flag === "draft") {
+                      navigate(`/applications/${unit.type}?id=${unit.id}`);
+                    } else {
+                      navigate(`/applications/list/${unit.id}?award_type=${unit.type}`);
+                    }
+                  }}
                   style={{ cursor: "pointer" }}
                 >
                   <td style={{ width: 150, minWidth: 150, maxWidth: 150 }}>
@@ -154,21 +161,43 @@ const ApplicationsList = () => {
                   <td style={{ width: 150, minWidth: 150, maxWidth: 150 }}>
                     <p className="fw-4">{unit.type.charAt(0).toUpperCase() + unit.type.slice(1)}</p>
                   </td>
+                  {role === "unit" && (
+  <td style={{ width: 150, minWidth: 150, maxWidth: 150 }}>
+    <p className="fw-4">
+      {unit?.status_flag
+        ? unit.status_flag.charAt(0).toUpperCase() + unit.status_flag.slice(1)
+        : "Submitted"}
+    </p>
+  </td>
+)}
+
+
                   {/* <td style={{ width: 200, minWidth: 200, maxWidth: 200 }}>
                     <div className="status-content approved pending d-flex align-items-center gap-3">
                       <span></span>
                       <p className="text-capitalize fw-5">Accepted</p>
                     </div>
                   </td> */}
-                  <td style={{ width: 100, minWidth: 100, maxWidth: 100 }}>
-                    <Link
-                      to={`/applications/list/${unit.id}?award_type=${unit.type}`}
-                      className="action-btn bg-transparent d-inline-flex align-items-center justify-content-center"
-                      onClick={(e) => e.stopPropagation()}
-                    >
-                      {SVGICON.app.eye}
-                    </Link>
-                  </td>
+                <td style={{ width: 100, minWidth: 100, maxWidth: 100 }}>
+  {unit?.status_flag === "draft" ? (
+    <Link
+      to={`/applications/${unit.type}?id=${unit?.id}`}
+      className="action-btn bg-transparent d-inline-flex align-items-center justify-content-center"
+      onClick={(e) => e.stopPropagation()}
+    >
+      {SVGICON.app.edit} 
+    </Link>
+  ) : (
+    <Link
+      to={`/applications/list/${unit.id}?award_type=${unit.type}`}
+      className="action-btn bg-transparent d-inline-flex align-items-center justify-content-center"
+      onClick={(e) => e.stopPropagation()}
+    >
+      {SVGICON.app.eye}
+    </Link>
+  )}
+</td>
+
                 </tr>
               ))}
           </tbody>

@@ -66,39 +66,47 @@ const GiveClarificationModal: React.FC<ClarificationModalProps> = ({
       dialogClassName="clarification-modal"
     >
       <div className="modal-header border-0 d-flex align-items-center justify-content-between">
-        <h4 className="font-lexend fw-6">Create clarification</h4>
+        <h4 className="font-lexend fw-6">Add clarification</h4>
         <button className="close-btn bg-transparent border-0" onClick={handleClose}>
           {SVGICON.app.close}
         </button>
       </div>
       <div className="modal-body bg-white rounded-3 pt-0">
-        <form onSubmit={handleSubmit}>
-          <div className="mb-4">
-            <input
-              type="file"
-              className="form-control"
-              name="clarification_doc"
-              autoComplete="off"
-              onChange={handleFileChange}
-            />
-          </div>
-          <div className="mb-4">
-            <FormInput
+      <form onSubmit={handleSubmit}>
+  <div className="mb-4">
+    <label htmlFor="clarification_doc" className="form-label fw-5 mb-2">
+      Please upload a supporting document (Max: 5MB)
+    </label>
+    <input
+      type="file"
+      className="form-control"
+      name="clarification_doc"
+      id="clarification_doc"
+      autoComplete="off"
+      onChange={handleFileChange}
+    />
+  </div>
+  <div className="mb-4">
+    <label htmlFor="clarification" className="form-label fw-5 mb-2">
+      Enter your clarification (max 200 words)
+    </label>
+    <FormInput
               name="clarification"
-              placeholder="Maximum 200 Words...."
+              placeholder="Type here...."
               type="text"
               as="textarea"
               rows={8}
               value={clarification}
               onChange={(e) => setClarification(e.target.value)}
             />
-          </div>
-          <div className="d-flex align-items-center justify-content-end gap-3">
-            <button type="submit" className="_btn primary">
-              Add
-            </button>
-          </div>
-        </form>
+  </div>
+  <div className="d-flex align-items-center justify-content-end gap-3">
+    <button type="submit" className="_btn primary">
+      Add
+    </button>
+  </div>
+</form>
+
       </div>
     </Modal>
   );

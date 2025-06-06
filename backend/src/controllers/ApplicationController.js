@@ -120,4 +120,3 @@ exports.getApplicationsScoreboard = async (req, res) => {
       );
     }
   };
-  

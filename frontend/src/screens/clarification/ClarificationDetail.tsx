@@ -45,7 +45,7 @@ const ClarificationDetail = () => {
             title="Application ID: #12345"
             paths={[
               { label: "Clarification", href: "/clarification" },
-              { label: "Details", href: "/clarification/1" },
+              { label: "Application Details", href: "/clarification/1" },
             ]}
           />
         </div>

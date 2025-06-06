@@ -15,9 +15,23 @@ export interface AppreciationFormData {
 export interface CreateAppreciationPayload {
   date_init: string;
   appre_fds: AppreciationFormData;
+  isDraft?:boolean;
 }
 
 export interface CreateAppreciationResponse {
+  success: boolean;
+  message: string;
+  data?: any;
+}
+
+export interface UpdateAppreciationRequest {
+  id: number;
+  appre_fds: AppreciationFormData;
+  date_init?: string;
+  isDraft?: boolean;
+}
+
+export interface UpdateAppreciationResponse {
   success: boolean;
   message: string;
   data?: any;

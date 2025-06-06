@@ -42,7 +42,7 @@ const UnitClarificationDetail = () => {
             title={`Application ID: #${unitDetail?.id}`}
             paths={[
               { label: "Clarification", href: "/clarification" },
-              { label: "Details", href: "/clarification/1" },
+              { label: "Application Details", href: "/clarification/1" },
             ]}
           />
         </div>
@@ -94,7 +94,7 @@ const UnitClarificationDetail = () => {
                 <th style={{ width: 200, minWidth: 200, maxWidth: 200 }}>
                   <div className="d-flex align-items-start">Total applied marks</div>
                 </th>
-                <th style={{ width: 100, minWidth: 100, maxWidth: 100 }}>
+                <th style={{ width: 200, minWidth: 200, maxWidth: 200 }}>
                   <div className="d-flex align-items-start">Document</div>
                 </th>
                 <th style={{ width: 200, minWidth: 200, maxWidth: 200 }}>
@@ -123,7 +123,7 @@ const UnitClarificationDetail = () => {
                     <td style={{ width: 200 }}>
                       <p className="fw-5">{param.marks}</p>
                     </td>
-                    <td style={{ width: 100 }}>
+                    <td style={{ width: 200 }}>
                       {
                         param.upload ? <a
                           href={`${baseURL}${param.upload}`}
@@ -131,7 +131,9 @@ const UnitClarificationDetail = () => {
                           rel="noopener noreferrer"
                           style={{ fontSize: 18 }}
                         >
-                          {SVGICON.app.pdf}
+                          {SVGICON.app.pdf} <span style={{ fontSize: 14, wordBreak: 'break-word' }}>
+          {param?.upload?.split("/").pop()}
+        </span>
                         </a> : "--"
                       }
                     </td>

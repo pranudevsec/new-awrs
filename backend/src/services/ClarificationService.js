@@ -151,7 +151,7 @@ exports.addClarification = async (user, data) => {
       values.push(clarification_id);
   
       const updateResult = await client.query(updateQuery, values);
-  
+
       if (
         ["clarified", "rejected"].includes(clarification_status) &&
         application_type &&
@@ -186,20 +186,38 @@ exports.addClarification = async (user, data) => {
               fds.parameters = fds.parameters.map(param => {
                 if (param.clarification_id == clarification_id) {
                   wasClarificationRemoved = true;
-          
-                  // Destructure and add two new fields
+            
                   const { clarification_id, ...rest } = param;
-          
-                  return {
+                  const updatedParam = {
                     ...rest,
-                    last_clarification_handled_by: 'brigade',
-                    last_clarification_status: 'clarified',
+                    last_clarification_handled_by: user.user_role,
+                    last_clarification_status: clarification_status,
                     last_clarification_id: clarification_id
                   };
+            
+                  if (clarification_status === "rejected") {
+                    return {
+                      ...updatedParam,
+                      approved_marks: "8",
+                      approved_by_role: user.user_role,
+                      approved_by_user: user.id,
+                      approved_marks_at: new Date().toISOString()
+                    };
+                  } else {
+                    const {
+                      approved_marks,
+                      approved_by_role,
+                      approved_by_user,
+                      approved_marks_at,
+                      ...cleanedParam
+                    } = updatedParam;
+            
+                    return cleanedParam;
+                  }
                 }
                 return param;
               });
-          
+
               if (wasClarificationRemoved) {
                 const updateJSONQuery = `
                   UPDATE ${tableName}

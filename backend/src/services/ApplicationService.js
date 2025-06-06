@@ -96,9 +96,13 @@ exports.getAllApplicationsForUnit = async (user, query) => {
     });
 
     if (user.user_role === "unit") {
-      allApps = allApps.map(({ status_flag, ...rest }) => rest);
+      allApps = allApps.map(({ status_flag, ...rest }) => {
+        if (status_flag === "draft") {
+          return { status_flag, ...rest };
+        }
+        return rest;
+      });
     }
-
     let total_pending_clarifications = 0;
     allApps = allApps.map(app => {
       let clarifications_count = 0;
@@ -471,9 +475,9 @@ exports.getApplicationsOfSubordinates = async (user, query) => {
     const queryParams = [unitIds];
 
     if (user_role.toLowerCase() === 'brigade') {
-      baseFilters = `unit_id = ANY($1) AND status_flag != 'approved' AND (last_approved_by_role IS NULL OR last_approved_at IS NULL)`;
+      baseFilters = `unit_id = ANY($1) AND status_flag != 'approved' AND status_flag != 'draft' AND (last_approved_by_role IS NULL OR last_approved_at IS NULL)`;
     } else {
-      baseFilters = `unit_id = ANY($1) AND status_flag = 'approved' AND last_approved_by_role = $2`;
+      baseFilters = `unit_id = ANY($1) AND status_flag = 'approved' AND status_flag != 'draft' AND last_approved_by_role = $2`;
       queryParams.push(lowerRole);
     }
 
@@ -584,7 +588,7 @@ exports.getApplicationsOfSubordinates = async (user, query) => {
           total_pending_clarifications++;
         }
         delete newParam.clarification;
-        delete newParam.clarification_id;
+        // delete newParam.clarification_id;
         return newParam;
       });
 
@@ -832,64 +836,102 @@ exports.getApplicationsScoreboard = async (user, query) => {
 };
 
 
-  exports.updateApplicationStatus = async (id, type, status, user) => {
-    const client = await dbService.getClient();
-  
-    try {
-      const validTypes = {
-        citation: { table: "Citation_tab", column: "citation_id" },
-        appreciation: { table: "Appre_tab", column: "appreciation_id" }
-      };
-  
-      const config = validTypes[type];
-      if (!config) throw new Error("Invalid application type");
-  
-      const allowedStatuses = ['in_review', 'in_clarification', 'approved', 'rejected'];
-      const statusLower = status.toLowerCase();
-      if (!allowedStatuses.includes(statusLower)) {
-        throw new Error("Invalid status value");
-      }
-  
-      let query, values;
-  
-      if (statusLower === 'approved') {
-        // Include approval role and timestamp
-        query = `
-          UPDATE ${config.table}
-          SET 
-            status_flag = $1,
-            last_approved_by_role = $3,
-            last_approved_at = $4
-          WHERE ${config.column} = $2
-          RETURNING *;
-        `;
-        values = [statusLower, id, user.user_role, new Date()];
-      } else {
-        // Normal status update
-        query = `
-          UPDATE ${config.table}
-          SET status_flag = $1
-          WHERE ${config.column} = $2
-          RETURNING *;
-        `;
-        values = [statusLower, id];
-      }
-  
-      const result = await client.query(query, values);
-  
-      if (result.rowCount === 0) {
-        throw new Error("Application not found or update failed");
-      }
-  
-      return result.rows[0];
-  
-    } catch (err) {
-      console.error("Error updating status:", err);
-      throw new Error(err.message);
-    } finally {
-      client.release();
+exports.updateApplicationStatus = async (id, type, status, user) => {
+  const client = await dbService.getClient();
+
+  try {
+    const validTypes = {
+      citation: { table: "Citation_tab", column: "citation_id", fdsColumn: "citation_fds" },
+      appreciation: { table: "Appre_tab", column: "appreciation_id", fdsColumn: "appre_fds" },
+    };
+
+    const config = validTypes[type];
+    if (!config) throw new Error("Invalid application type");
+
+    const allowedStatuses = ["in_review", "in_clarification", "approved", "rejected"];
+    const statusLower = status.toLowerCase();
+    if (!allowedStatuses.includes(statusLower)) {
+      throw new Error("Invalid status value");
     }
-  };
+
+    let updatedFds = null;
+    if (statusLower === "approved") {
+      const fetchRes = await client.query(
+        `SELECT ${config.fdsColumn} FROM ${config.table} WHERE ${config.column} = $1`,
+        [id]
+      );
+
+      if (fetchRes.rowCount === 0) {
+        throw new Error("Application not found");
+      }
+
+      const fds = fetchRes.rows[0][config.fdsColumn];
+
+      if (fds?.parameters && Array.isArray(fds.parameters)) {
+        const updatedParameters = fds.parameters.map((param) => {
+          if (param.clarification_id) {
+            const { clarification_id, ...rest } = param;
+            return {
+              ...rest,
+              last_clarification_handled_by: user.user_role,
+              last_clarification_status: "clarified",
+              last_clarification_id: clarification_id,
+            };
+          }
+          return param;
+        });
+
+        updatedFds = {
+          ...fds,
+          parameters: updatedParameters,
+        };
+
+        await client.query(
+          `UPDATE ${config.table}
+           SET ${config.fdsColumn} = $1
+           WHERE ${config.column} = $2`,
+          [updatedFds, id]
+        );
+      }
+    }
+
+    let query, values;
+    if (statusLower === "approved") {
+      query = `
+        UPDATE ${config.table}
+        SET 
+          status_flag = $1,
+          last_approved_by_role = $3,
+          last_approved_at = $4
+        WHERE ${config.column} = $2
+        RETURNING *;
+      `;
+      values = [statusLower, id, user.user_role, new Date()];
+    } else {
+      query = `
+        UPDATE ${config.table}
+        SET status_flag = $1
+        WHERE ${config.column} = $2
+        RETURNING *;
+      `;
+      values = [statusLower, id];
+    }
+
+    const result = await client.query(query, values);
+    if (result.rowCount === 0) {
+      throw new Error("Application not found or update failed");
+    }
+
+    return result.rows[0];
+
+  } catch (err) {
+    console.error("Error updating status:", err);
+    throw new Error(err.message);
+  } finally {
+    client.release();
+  }
+};
+
   exports.approveApplicationMarks = async (user, body) => {
     const client = await dbService.getClient();
     try {
@@ -914,7 +956,7 @@ exports.getApplicationsScoreboard = async (user, query) => {
   
       let fds = res.rows[0].fds;
       const now = new Date();
-  console.log(parameters)
+
       if (Array.isArray(parameters) && parameters.length > 0) {
         const updatedParams = fds.parameters.map((param) => {
           const approvedParam = parameters.find((p) => p.name === param.name);
@@ -932,7 +974,7 @@ exports.getApplicationsScoreboard = async (user, query) => {
   
         fds.parameters = updatedParams;
       }
-  
+
       if (applicationGraceMarks !== undefined) {
         if (!Array.isArray(fds.applicationGraceMarks)) {
           fds.applicationGraceMarks = [];
@@ -1133,6 +1175,84 @@ exports.getApplicationsScoreboard = async (user, query) => {
       return ResponseHelper.success(200, "Comment added successfully");
     } catch (error) {
       return ResponseHelper.error(500, "Failed to add comments", error.message);
+    } finally {
+      client.release();
+    }
+  };
+  
+  exports.saveOrUpdateDraft = async (user, body) => {
+    const client = await dbService.getClient();
+    try {
+      const { type, draft_fds } = body;
+  
+      if (!["citation", "appreciation"].includes(type)) {
+        return ResponseHelper.error(400, "Invalid draft type");
+      }
+  
+      const now = new Date();
+  
+      const existing = await client.query(
+        `SELECT draft_id FROM Application_drafts WHERE user_id = $1 AND type = $2`,
+        [user.user_id, type]
+      );
+  
+      if (existing.rowCount > 0) {
+        await client.query(
+          `UPDATE Application_drafts 
+           SET draft_fds = $1, updated_at = $2
+           WHERE user_id = $3 AND type = $4`,
+          [draft_fds, now, user.user_id, type]
+        );
+      } else {
+        await client.query(
+          `INSERT INTO Application_drafts (user_id, type, draft_fds, created_at, updated_at)
+           VALUES ($1, $2, $3, $4, $4)`,
+          [user.user_id, type, draft_fds, now]
+        );
+      }
+  
+      return ResponseHelper.success(200, "Draft saved successfully");
+    } catch (err) {
+      console.error("Save draft error:", err);
+      return ResponseHelper.error(500, "Failed to save draft", err.message);
+    } finally {
+      client.release();
+    }
+  };
+
+  exports.getDraft = async (user, type) => {
+    const client = await dbService.getClient();
+    try {
+      const res = await client.query(
+        `SELECT draft_fds FROM Application_drafts WHERE user_id = $1 AND type = $2`,
+        [user.user_id, type]
+      );
+  
+      if (res.rowCount === 0) {
+        return ResponseHelper.success(200, "No draft found", null);
+      }
+  
+      return ResponseHelper.success(200, "Draft fetched successfully", res.rows[0].draft_fds);
+    } catch (err) {
+      console.error("Get draft error:", err);
+      return ResponseHelper.error(500, "Failed to fetch draft", err.message);
+    } finally {
+      client.release();
+    }
+  };
+
+  exports.deleteDraft = async (user, type) => {
+    const client = await dbService.getClient();
+    try {
+      await client.query(
+        `DELETE FROM Application_drafts WHERE user_id = $1 AND type = $2`,
+        [user.user_id, type]
+      );
+  
+      return ResponseHelper.success(200, "Draft deleted successfully");
+    } catch (err) {
+      console.error("Delete draft error:", err);
+      return ResponseHelper.error(500, "Failed to delete draft", err.message);
     } finally {
       client.release();
     }

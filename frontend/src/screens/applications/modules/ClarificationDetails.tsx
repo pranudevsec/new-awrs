@@ -38,7 +38,7 @@ const ClarificationDetails = () => {
                         paths={[
                             { label: "Home", href: "/applications" },
                             { label: "Clarification Listing", href: "/applications/clarification/list" },
-                            { label: "Details", href: "/applications/clarification/1" },
+                            { label: "Application Details", href: "/applications/clarification/1" },
                         ]}
                     />
                 </div>
@@ -126,7 +126,7 @@ const ClarificationDetails = () => {
                                     <p className="fw-5">8</p>
                                 </td>
                                 <td style={{ width: 100, minWidth: 100, maxWidth: 100 }}>
-                                    <div style={{ fontSize: 18 }}>{SVGICON.app.pdf}</div>
+                                    <div style={{ fontSize: 18 }}>{SVGICON.app.pdf} </div>
                                 </td>
                                 <td style={{ width: 200, minWidth: 200, maxWidth: 200 }}>
                                     <p className="fw-4">

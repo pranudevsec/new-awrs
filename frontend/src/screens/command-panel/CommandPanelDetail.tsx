@@ -64,7 +64,7 @@ console.log(numericAppId)
             paths={[
               { label: "Home", href: "/applications" },
               { label: "Scoreboard", href: "/command-panel" },
-              { label: "Details", href: "/command-panel/1" },
+              { label: "Application Details", href: "/command-panel/1" },
             ]}
           />
         </div>
@@ -107,7 +107,7 @@ console.log(numericAppId)
                 <th style={{ width: 150 }}>Parameter</th>
                 <th style={{ width: 100 }}>Count</th>
                 <th style={{ width: 100 }}>Marks</th>
-                <th style={{ width: 100 }}>Document</th>
+                <th style={{ width: 200 }}>Document</th>
           
                 {/* {!isUnitRole && (
                   <>
@@ -131,9 +131,11 @@ console.log(numericAppId)
                   <td style={{ width: 100 }}>
                     <p className="fw-5">{param.marks}</p>
                   </td>
-                  <td style={{ width: 100 }}>
+                  <td style={{ width: 200 }}>
                     <a href={param.upload} target="_blank" rel="noopener noreferrer" style={{ fontSize: 18 }}>
-                      {SVGICON.app.pdf}
+                      {SVGICON.app.pdf} <span style={{ fontSize: 14, wordBreak: 'break-word' }}>
+          {param?.upload?.split("/").pop()}
+        </span>
                     </a>
                   </td>
            

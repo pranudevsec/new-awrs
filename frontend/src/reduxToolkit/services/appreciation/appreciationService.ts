@@ -4,6 +4,8 @@ import Axios from "../../helper/axios";
 import type {
   CreateAppreciationPayload,
   CreateAppreciationResponse,
+  UpdateAppreciationRequest,
+  UpdateAppreciationResponse,
 } from "./appreciationInterface";
 import { apiEndPoints } from "../../../constants";
 
@@ -14,7 +16,9 @@ export const createAppreciation = createAsyncThunk<
   try {
     const response = await Axios.post(apiEndPoints.appreciation, payload);
     if (response.data.success) {
-      toast.success("Appreciation created successfully!");
+      
+      if(!payload?.isDraft )toast.success("Appreciation created successfully!");
+
       return response.data;
     } else {
       toast.error(response.data.message || "Failed to submit appreciation");
@@ -25,5 +29,70 @@ export const createAppreciation = createAsyncThunk<
     return rejectWithValue(
       error.response?.data?.message || "Failed to submit appreciation"
     );
+  }
+});
+
+// Fetch appreciation by ID
+export const fetchAppreciationById = createAsyncThunk<
+  CreateAppreciationResponse,
+  number
+>("appreciations/fetchById", async (id, { rejectWithValue }) => {
+  try {
+    const response = await Axios.get(`${apiEndPoints.appreciation}/${id}`);
+    if (response.data.success) {
+      return response.data;
+    } else {
+      toast.error("Failed to fetch appreciation");
+      return rejectWithValue(response.data.message);
+    }
+  } catch (error: any) {
+    toast.error(error.response?.data?.message || "Error fetching appreciation");
+    return rejectWithValue("Failed to fetch appreciation");
+  }
+});
+
+// Update appreciation by ID
+export const updateAppreciation = createAsyncThunk<
+  UpdateAppreciationResponse,
+  UpdateAppreciationRequest
+>("appreciations/update", async (payload, { rejectWithValue }) => {
+  try {
+    const { id, ...restPayload } = payload;
+    const response = await Axios.put(
+      `${apiEndPoints.appreciation}/${id}`,
+      restPayload
+    );
+
+    if (response.data.success) {
+      // toast.success("Appreciation updated successfully!");
+      return response.data;
+    } else {
+      toast.error("Failed to update appreciation");
+      return rejectWithValue(response.data.message);
+    }
+  } catch (error: any) {
+    toast.error(error.response?.data?.message || "Error updating appreciation");
+    return rejectWithValue("Failed to update appreciation");
+  }
+});
+
+// Delete appreciation by ID
+export const deleteAppreciation = createAsyncThunk<
+  UpdateAppreciationResponse,
+  number,
+  { rejectValue: string }
+>("appreciations/delete", async (id, { rejectWithValue }) => {
+  try {
+    const response = await Axios.delete(`${apiEndPoints.appreciation}/${id}`);
+    if (response.data.success) {
+      toast.success("Appreciation deleted successfully!");
+      return response.data;
+    } else {
+      toast.error("Failed to delete appreciation");
+      return rejectWithValue(response.data.message);
+    }
+  } catch (error: any) {
+    toast.error(error.response?.data?.message || "Error deleting appreciation");
+    return rejectWithValue("Failed to delete appreciation");
   }
 });

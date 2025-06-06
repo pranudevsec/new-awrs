@@ -376,6 +376,9 @@ const CitationReviewPage = () => {
                                   style={{ fontSize: 18 }}
                                 >
                                   {SVGICON.app.pdf}
+                                  <span style={{ fontSize: 14, wordBreak: 'break-word' }}>
+          {uploadedFiles[param.param_id]?.split("/").pop()}
+        </span>
                                 </a>
                               ) : (
                                 <input

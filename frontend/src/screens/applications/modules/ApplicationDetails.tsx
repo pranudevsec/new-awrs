@@ -19,6 +19,7 @@ import { baseURL } from "../../../reduxToolkit/helper/axios";
 import { useDebounce } from "../../../hooks/useDebounce";
 import ReviewCommentModal from "../../../modals/ReviewCommentModal";
 import ViewCreatedClarificationModal from "../../../modals/ViewCreatedClarificationModal";
+import toast from "react-hot-toast";
 
 const ApplicationDetails = () => {
   const navigate = useNavigate();
@@ -48,12 +49,11 @@ const ApplicationDetails = () => {
     clarificationClarificationForView,
     setClarificationClarificationForView,
   ] = useState<string | null>(null);
-  const [
-    reviewerClarificationForView,
-    setReviewerClarificationForView,
-  ] = useState<string | null>(null);
+  const [reviewerClarificationForView, setReviewerClarificationForView] =
+    useState<string | null>(null);
   const [reqClarificationShow, setReqClarificationShow] = useState(false);
-  const [reqViewCreatedClarificationShow, setReqViewCreatedClarificationShow] = useState(false);
+  const [reqViewCreatedClarificationShow, setReqViewCreatedClarificationShow] =
+    useState(false);
   const [reviewCommentsShow, setReviewCommentsShow] = useState(false);
   const [isRefreshData, setIsRefreshData] = useState(false);
   const [approvedMarksState, setApprovedMarksState] = useState<
@@ -82,37 +82,48 @@ const ApplicationDetails = () => {
     approvedMarks: 0,
     totalMarks: 0,
   });
-  const calculateParameterStats = (parameters: any[], graceMarks: number = 0) => {
+  const calculateParameterStats = (
+    parameters: any[],
+  ) => {
     const totalParams = parameters.length;
   
     const filledParams = parameters.filter(
-      (param) => (param.count ?? 0) > 0 || (param.marks ?? 0) > 0
+      (param) =>
+        (param.count ?? 0) > 0 || (param.marks ?? 0) > 0
     ).length;
   
-    const marks = parameters.reduce(
-      (acc, param) => acc + (param.marks ?? 0),
-      0
-    );
+    const marks = parameters.reduce((acc, param) => {
+      const isRejected =
+        param.clarification_details?.clarification_status === "rejected";
   
-    const approvedMarks = parameters.reduce(
-      (acc, param) => acc + Number(param.approved_marks ?? 0),
-      0
-    );
+      return acc + (isRejected ? 0 : param.marks ?? 0);
+    }, 0);
   
-    // Use approved_marks if available, else use marks
+    const approvedMarks = parameters.reduce((acc, param) => {
+      const isRejected =
+        param.clarification_details?.clarification_status === "rejected";
+  
+      return acc + (isRejected ? 0 : Number(param.approved_marks ?? 0));
+    }, 0);
+  
     const totalParameterMarks = parameters.reduce((acc, param) => {
+      const isRejected =
+        param.clarification_details?.clarification_status === "rejected";
+  
+      if (isRejected) return acc;
+  
       const hasValidApproved =
         param.approved_marks !== undefined &&
         param.approved_marks !== null &&
         param.approved_marks !== "" &&
         !isNaN(Number(param.approved_marks));
-    
+  
       const approved = hasValidApproved ? Number(param.approved_marks) : null;
       const original = param.marks ?? 0;
-    
+  
       return acc + (approved !== null ? approved : original);
     }, 0);
-    
+
     const totalMarks = totalParameterMarks + Number(graceMarks ?? 0);
   
     return {
@@ -124,13 +135,15 @@ const ApplicationDetails = () => {
     };
   };
   
+
   useEffect(() => {
     const parameters = unitDetail?.fds?.parameters || [];
-    const graceMarkss = unitDetail?.fds?.applicationGraceMarks?.[0]?.marks || 0;
-  
-    const stats = calculateParameterStats(parameters, graceMarkss);
+
+    const stats = calculateParameterStats(parameters);
+    console.log(stats)
     setParamStats(stats);
-  }, [unitDetail,graceMarks]);  
+  }, [unitDetail, graceMarks]);
+
   const [commentsState, setCommentsState] = React.useState<
     Record<string, string>
   >({});
@@ -166,26 +179,24 @@ const ApplicationDetails = () => {
 
   const handleSave = async (paramName: string, marks: string) => {
     if (marks === undefined) return;
-  
+
     const body = {
       type: unitDetail?.type || "citation",
       application_id: unitDetail?.id || 0,
       parameters: [{ name: paramName, approved_marks: marks }],
     };
-  
+
     try {
       await dispatch(approveMarks(body)).unwrap();
       dispatch(fetchApplicationUnitDetail({ award_type, numericAppId }));
-
-      const graceMarks = unitDetail?.fds?.applicationGraceMarks?.[0]?.marks || 0;
-      const updatedStats = calculateParameterStats(unitDetail?.fds?.parameters, graceMarks);
+      const updatedStats = calculateParameterStats(
+        unitDetail?.fds?.parameters   
+      );
       setParamStats(updatedStats);
-  
     } catch (err) {
       console.error("Failed to save approved marks:", err);
     }
   };
-  
 
   // Create debounced version of handleSave
   const debouncedHandleSave = useDebounce(handleSave, 600);
@@ -221,64 +232,66 @@ const ApplicationDetails = () => {
 
   const handleGraceMarksChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
+    console.log('value---',value)
     setGraceMarks(value);
     debouncedGraceMarksSave(value);
-
   };
 
-  const hierarchy = ["brigade", "division", "corps", "command","headquarter"];
+  const hierarchy = ["brigade", "division", "corps", "command", "headquarter"];
   const currentRoleIndex = hierarchy.indexOf(role?.toLowerCase());
 
   const lowerRoles = hierarchy.slice(0, currentRoleIndex); // roles below current role
   const roleMarksMap = unitDetail?.fds?.applicationGraceMarks || [];
 
   const displayedMarks = lowerRoles
-  .map((r) => {
-    const entry = roleMarksMap.find((e: any) => e.role?.toLowerCase() === r);
-    return entry
-      ? `Marks by ${r.charAt(0).toUpperCase() + r.slice(1)}: ${entry.marks}`
-      : null;
-  })
-  .filter(Boolean);
+    .map((r) => {
+      const entry = roleMarksMap.find((e: any) => e.role?.toLowerCase() === r);
+      return entry
+        ? `Marks by ${r.charAt(0).toUpperCase() + r.slice(1)}: ${entry.marks}`
+        : null;
+    })
+    .filter(Boolean);
 
-    const handleSaveComment = (paramName: string, comment: string) => {
-      if (!comment) return;
-    
-      const body: any = {
-        type: unitDetail?.type || "citation",
-        application_id: unitDetail?.id || 0,
-      };
-    
-      // If paramName is "__application__", treat it as an application-level comment
-      if (paramName === "__application__") {
-        body.comment = comment;
-      } else {
-        body.parameters = [{ name: paramName, comment }];
-      }
-    
-      dispatch(addApplicationComment(body)).unwrap().catch(() => {});
+  const handleSaveComment = (paramName: string, comment: string) => {
+    if (!comment) return;
+
+    const body: any = {
+      type: unitDetail?.type || "citation",
+      application_id: unitDetail?.id || 0,
     };
-    
-    const debouncedHandleSaveComment = useDebounce(handleSaveComment, 600);
-    
-    const handleCommentChange = (paramName: string, value: string) => {
-      setCommentsState((prev) => ({ ...prev, [paramName]: value }));
-      debouncedHandleSaveComment(paramName, value);
-    };
-    
-    useEffect(() => {
-      if (unitDetail?.fds?.comments && Array.isArray(unitDetail.fds.comments)) {
-        const existingComment = unitDetail.fds.comments.find(
-          (c:any) => c.commented_by_role_type?.toLowerCase() === cw2_type
-        );
-        if (existingComment) {
-          setCommentsState((prev) => ({
-            ...prev,
-            __application__: existingComment.comment,
-          }));
-        }
+
+    // If paramName is "__application__", treat it as an application-level comment
+    if (paramName === "__application__") {
+      body.comment = comment;
+    } else {
+      body.parameters = [{ name: paramName, comment }];
+    }
+
+    dispatch(addApplicationComment(body))
+      .unwrap()
+      .catch(() => {});
+  };
+
+  const debouncedHandleSaveComment = useDebounce(handleSaveComment, 600);
+
+  const handleCommentChange = (paramName: string, value: string) => {
+    setCommentsState((prev) => ({ ...prev, [paramName]: value }));
+    debouncedHandleSaveComment(paramName, value);
+  };
+
+  useEffect(() => {
+    if (unitDetail?.fds?.comments && Array.isArray(unitDetail.fds.comments)) {
+      const existingComment = unitDetail.fds.comments.find(
+        (c: any) => c.commented_by_role_type?.toLowerCase() === cw2_type
+      );
+      if (existingComment) {
+        setCommentsState((prev) => ({
+          ...prev,
+          __application__: existingComment.comment,
+        }));
       }
-    }, [unitDetail?.fds?.comments, role]);
+    }
+  }, [unitDetail?.fds?.comments, role]);
 
   // Show loader
   if (loading) return <Loader />;
@@ -290,8 +303,8 @@ const ApplicationDetails = () => {
             title={`Application ID: #${unitDetail?.id}`}
             paths={[
               { label: "Home", href: "/applications" },
-              { label: "Applications Listing", href: "/applications/list" },
-              { label: "Details", href: "/applications/list/1" },
+              { label: "Applications", href: "/applications/list" },
+              { label: "Application Details", href: "/applications/list/1" },
             ]}
           />
         </div>
@@ -355,14 +368,19 @@ const ApplicationDetails = () => {
                 <th style={{ width: 100 }}>Document</th>
                 {/* {isCW2Role && <th style={{ width: 100 }}>Drop comment</th>} */}
                 {!isUnitRole && !isHeadquarter && (
-  <>
-    <th style={{ width: 200 }}>Approved Marks</th>
-   {!isRaisedScreen && <th style={{ width: 150 }}>Ask Clarification</th>}
-{ isRaisedScreen &&  <>
- <th style={{ width: 200 }}>Requested Clarification</th>
-    <th style={{ width: 150 }}>Action</th> </>}
-  </>
-)}
+                  <>
+                    {!isRaisedScreen && (
+                      <th style={{ width: 150 }}>Ask Clarification</th>
+                    )}
+                    {isRaisedScreen && (
+                      <>
+                        <th style={{ width: 200 }}>Approved Marks</th>
+                        <th style={{ width: 200 }}>Requested Clarification</th>
+                        <th style={{ width: 150 }}>Action</th>{" "}
+                      </>
+                    )}
+                  </>
+                )}
 
                 {/* {isHeadquarter && (
                   <th style={{ width: 150 }}>Review comments</th>
@@ -381,7 +399,7 @@ const ApplicationDetails = () => {
                   <td style={{ width: 100 }}>
                     <p className="fw-5">{param.marks}</p>
                   </td>
-                  <td style={{ width: 100 }}>
+                  <td style={{ width: 200 }}>
                     {param.upload ? (
                       <a
                         href={`${baseURL}${param.upload}`}
@@ -390,6 +408,9 @@ const ApplicationDetails = () => {
                         style={{ fontSize: 18 }}
                       >
                         {SVGICON.app.pdf}
+                          <span style={{ fontSize: 14, wordBreak: 'break-word' }}>
+          {param?.upload?.split("/").pop()}
+        </span>
                       </a>
                     ) : (
                       ""
@@ -420,33 +441,20 @@ const ApplicationDetails = () => {
                     </td>
                   )} */}
                   {!isUnitRole && !isHeadquarter && (
-                      <>
-                        <td style={{ width: 200 }}>
-                          <input
-                            type="text"
-                            className="form-control"
-                            placeholder="Enter approved marks"
-                            autoComplete="off"
-                            value={approvedMarksState[param.name] ?? ""}
-                            onChange={(e) =>
-                              handleInputChange(param.name, e.target.value)
-                            }
-                          />
-                        </td>
-
-                        {!isRaisedScreen && <td style={{ width: 120 }}>
+                    <>
+                      {!isRaisedScreen && (
+                        <td style={{ width: 120 }}>
                           {param?.clarification_id ||
                           (param?.last_clarification_id &&
                             [role, lowerRole].includes(
                               param?.last_clarification_handled_by
                             )) ? (
-                              <button
+                            <button
                               className="action-btn bg-transparent d-inline-flex align-items-center justify-content-center"
                               onClick={() => {
                                 setReqViewCreatedClarificationShow(true);
                                 setReviewerClarificationForView(
-                                  param?.clarification_details
-                                    ?.reviewer_comment
+                                  param?.clarification_details?.reviewer_comment
                                 );
                               }}
                             >
@@ -473,89 +481,115 @@ const ApplicationDetails = () => {
                               Ask Clarification
                             </button>
                           )}
-                        </td>}
-
-                { isRaisedScreen &&  <>     <td style={{ width: 200 }}>
-                          {param?.clarification_details?.clarification ? (
-                            <button
-                              className="action-btn bg-transparent d-inline-flex align-items-center justify-content-center"
-                              onClick={() => {
-                                setReqClarificationShow(true);
-                                setClarificationDocForView(
-                                  param?.clarification_details
-                                    ?.clarification_doc
-                                );
-                                setClarificationClarificationForView(
-                                  param?.clarification_details?.clarification
-                                );
-                              }}
-                            >
-                              {SVGICON.app.eye}
-                            </button>
-                          ) : (
-                            ""
-                          )}
                         </td>
+                      )}
 
-                        <td style={{ width: 150 }}>
-                          {param?.clarification_details?.clarification &&
-                          param?.clarification_details?.clarification_id ? (
-                            param?.clarification_details
-                              ?.clarification_status === "pending" ? (
-                              <div className="d-flex gap-3">
-                                {/* APPROVE */}
-                                <button
-                                  className="action-btn bg-transparent d-flex align-items-center justify-content-center"
-                                  style={{ color: "var(--green-default)" }}
-                                  onClick={() => {
-                                    dispatch(
-                                      updateClarification({
-                                        id: param?.clarification_details
-                                          ?.clarification_id,
-                                        clarification_status: "clarified",
-                                      })
-                                    ).then(() => {
-                                      setIsRefreshData((prev) => !prev);
-                                    });
-                                  }}
-                                >
-                                  <IoMdCheckmark />
-                                </button>
-
-                                {/* REJECT */}
-                                <button
-                                  className="action-btn bg-transparent d-flex align-items-center justify-content-center"
-                                  style={{ color: "var(--red-default)" }}
-                                  onClick={() => {
-                                    dispatch(
-                                      updateClarification({
-                                        id: param?.clarification_details
-                                          ?.clarification_id,
-                                        clarification_status: "rejected",
-                                      })
-                                    ).then(() => {
-                                      setIsRefreshData((prev) => !prev);
-                                    });
-                                  }}
-                                >
-                                  <MdClose />
-                                </button>
-                              </div>
+                      {isRaisedScreen && (
+                        <>
+                          {" "}
+                          <td style={{ width: 200 }}>
+                            <input
+                              type="text"
+                              className="form-control"
+                              placeholder="Enter approved marks"
+                              autoComplete="off"
+                              value={
+                                param?.clarification_details
+                                  ?.clarification_status === "rejected"
+                                  ? "0"
+                                  : approvedMarksState[param.name] ?? ""
+                              }
+                              disabled={
+                                param?.clarification_details
+                                  ?.clarification_status === "rejected"
+                              }
+                              onChange={(e) =>
+                                handleInputChange(param.name, e.target.value)
+                              }
+                            />
+                          </td>
+                          <td style={{ width: 200 }}>
+                            {param?.clarification_details?.clarification ? (
+                              <button
+                                className="action-btn bg-transparent d-inline-flex align-items-center justify-content-center"
+                                onClick={() => {
+                                  setReqClarificationShow(true);
+                                  setClarificationDocForView(
+                                    param?.clarification_details
+                                      ?.clarification_doc
+                                  );
+                                  setClarificationClarificationForView(
+                                    param?.clarification_details?.clarification
+                                  );
+                                }}
+                              >
+                                {SVGICON.app.eye}
+                              </button>
                             ) : (
-                              // Show status text with first letter capitalized
-                              <span className="text-capitalize">
-                                <p className="fw-5">
-                                  {" "}
-                                  {param?.clarification_details?.clarification_status.toUpperCase()}
-                                </p>
-                              </span>
-                            )
-                          ) : (
-                            ""
-                          )}
-                        </td> </>}
-                      </>
-                    )}
+                              ""
+                            )}
+                          </td>
+                          <td style={{ width: 150 }}>
+                            {param?.clarification_details?.clarification &&
+                            param?.clarification_details?.clarification_id ? (
+                              param?.clarification_details
+                                ?.clarification_status === "pending" ? (
+                                <div className="d-flex gap-3">
+                                  {/* APPROVE */}
+                                  <button
+                                    className="action-btn bg-transparent d-flex align-items-center justify-content-center"
+                                    style={{ color: "var(--green-default)" }}
+                                    onClick={() => {
+                                      dispatch(
+                                        updateClarification({
+                                          id: param?.clarification_details
+                                            ?.clarification_id,
+                                          clarification_status: "clarified",
+                                        })
+                                      ).then(() => {
+                                        setIsRefreshData((prev) => !prev);
+                                      });
+                                    }}
+                                  >
+                                    <IoMdCheckmark />
+                                  </button>
+
+                                  {/* REJECT */}
+                                  <button
+                                    className="action-btn bg-transparent d-flex align-items-center justify-content-center"
+                                    style={{ color: "var(--red-default)" }}
+                                    onClick={() => {
+                                      dispatch(
+                                        updateClarification({
+                                          id: param?.clarification_details
+                                            ?.clarification_id,
+                                          clarification_status: "rejected",
+                                        })
+                                      ).then(() => {
+                                        setIsRefreshData((prev) => !prev);
+                                      });
+                                    }}
+                                  >
+                                    <MdClose />
+                                  </button>
+                                </div>
+                              ) : (
+                                // Show status text with first letter capitalized
+                                <span className="text-capitalize">
+                                  <p className="fw-5">
+                                    {" "}
+                                    {param?.clarification_details?.clarification_status.toUpperCase()}
+                                  </p>
+                                </span>
+                              )
+                            ) : (
+                              ""
+                            )}
+                          </td>{" "}
+                        </>
+                      )}
+                    </>
+                  )}
                   {/* {isHeadquarter && (
                     <td style={{ width: 150 }}>
                       {Array.isArray(param?.comments) &&
@@ -584,28 +618,31 @@ const ApplicationDetails = () => {
         </div>
         {!isUnitRole && (
           <div className="submit-button-wrapper">
- <div className="row text-center text-sm-start mb-3">
-  <div className="col-6 col-sm-3">
-    <span className="fw-medium text-muted">Filled Params:</span>
-    <div className="fw-bold">{paramStats.filledParams}</div>
-  </div>
+            <div className="row text-center text-sm-start mb-3">
+              <div className="col-6 col-sm-3">
+                <span className="fw-medium text-muted">Filled Params:</span>
+                <div className="fw-bold">{paramStats.filledParams}</div>
+              </div>
 
-  <div className="col-6 col-sm-3">
-    <span className="fw-medium text-muted">Marks:</span>
-    <div className="fw-bold">{paramStats.marks}</div>
-  </div>
+              <div className="col-6 col-sm-3">
+                <span className="fw-medium text-muted">Marks:</span>
+                <div className="fw-bold">{paramStats.marks}</div>
+              </div>
 
-  <div className="col-6 col-sm-3">
-    <span className="fw-medium text-muted">Approved Marks:</span>
-    <div className="fw-bold text-primary">{paramStats.approvedMarks}</div>
-  </div>
+              <div className="col-6 col-sm-3">
+                <span className="fw-medium text-muted">Approved Marks:</span>
+                <div className="fw-bold text-primary">
+                  {paramStats.approvedMarks}
+                </div>
+              </div>
 
-  <div className="col-6 col-sm-3">
-    <span className="fw-medium text-muted">Total Marks:</span>
-    <div className="fw-bold text-success">{paramStats.totalMarks}</div>
-  </div>
-</div>
-
+              <div className="col-6 col-sm-3">
+                <span className="fw-medium text-muted">Total Marks:</span>
+                <div className="fw-bold text-success">
+                  {paramStats.totalMarks}
+                </div>
+              </div>
+            </div>
 
             {/* Grace Marks Field */}
 
@@ -637,22 +674,28 @@ const ApplicationDetails = () => {
                   </div>
 
                   <button
-                    type="button"
-                    className="_btn success"
-                    onClick={() => {
-                      dispatch(
-                        updateApplication({
-                          id: unitDetail?.id,
-                          type: unitDetail?.type,
-                          status: "approved",
-                        })
-                      ).then(() => {
-                        navigate("/applications/list");
-                      });
-                    }}
-                  >
-                    Approve
-                  </button>
+  type="button"
+  className="_btn success"
+  onClick={() => {
+    if (graceMarks === "" || graceMarks === null || isNaN(Number(graceMarks))) {
+      toast.error("Please enter Discretionary Points before approving.");
+      return;
+    }
+
+    dispatch(
+      updateApplication({
+        id: unitDetail?.id,
+        type: unitDetail?.type,
+        status: "approved",
+      })
+    ).then(() => {
+      navigate("/applications/list");
+    });
+  }}
+>
+  Approve
+</button>
+
 
                   <button
                     type="button"
@@ -690,12 +733,9 @@ const ApplicationDetails = () => {
             </div>
           </div>
         )}
-                {isCW2Role && (
+        {isCW2Role && (
           <div className="submit-button-wrapper">
-  
             <div className="d-flex flex-sm-row flex-column gap-sm-3 gap-1 justify-content-end">
-     
-
               {!isHeadquarter && (
                 <>
                   <div className="d-flex align-items-center gap-2">
@@ -706,15 +746,15 @@ const ApplicationDetails = () => {
                       Drop Comment:
                     </label>
                     <input
-      type="text"
-      className="form-control"
-      placeholder="Enter comment"
-      style={{ maxWidth: "250px" }}
-      value={commentsState?.__application__ || ""}
-      onChange={(e) => handleCommentChange("__application__", e.target.value)}
-    />
-
-
+                      type="text"
+                      className="form-control"
+                      placeholder="Enter comment"
+                      style={{ maxWidth: "250px" }}
+                      value={commentsState?.__application__ || ""}
+                      onChange={(e) =>
+                        handleCommentChange("__application__", e.target.value)
+                      }
+                    />
                   </div>
                 </>
               )}

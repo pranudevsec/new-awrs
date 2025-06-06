@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { useFormik } from "formik";
 import { Tabs, Tab } from "react-bootstrap";
 import { unwrapResult } from "@reduxjs/toolkit";
@@ -13,11 +13,11 @@ import { awardTypeOptions } from "../../../data/options";
 import { useAppDispatch, useAppSelector } from "../../../reduxToolkit/hooks";
 import { getConfig } from "../../../reduxToolkit/services/config/configService";
 import { fetchParameters } from "../../../reduxToolkit/services/parameter/parameterService";
-import { resetCitationState } from "../../../reduxToolkit/slices/citation/citationSlice";
-import { createAppreciation } from "../../../reduxToolkit/services/appreciation/appreciationService";
+import { createAppreciation, deleteAppreciation, fetchAppreciationById, updateAppreciation } from "../../../reduxToolkit/services/appreciation/appreciationService";
 import type { Parameter } from "../../../reduxToolkit/services/parameter/parameterInterface";
 import Axios, { baseURL } from "../../../reduxToolkit/helper/axios";
 import { SVGICON } from "../../../constants/iconsList";
+import { resetAppreciationState } from "../../../reduxToolkit/slices/appreciation/appreciationSlice";
 
 const DRAFT_STORAGE_KEY = "applyAppreciationDraft";
 const DRAFT_FILE_UPLOAD_KEY = "applyAppreciationUploadedDocsDraft";
@@ -34,12 +34,18 @@ const groupParametersByCategory = (params: Parameter[]) => {
 const ApplyAppreciation = () => {
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
-
+  const isDraftRef = useRef(false);
+  const { draftData } = useAppSelector((state) => state.appreciation);
+  useEffect(() => {
+    localStorage.removeItem("applyAppreciationDraft");
+    localStorage.removeItem("applyAppreciationUploadedDocsDraft");
+  }, []);
   const { profile } = useAppSelector((state) => state.admin);
   const { loading } = useAppSelector((state) => state.parameter);
 
   const initializedRef = useRef(false);
-
+  const [searchParams] = useSearchParams();
+  const id = searchParams.get("id") || "";
   // States
   const [parameters, setParameters] = useState<Parameter[]>([]);
   const [counts, setCounts] = useState<Record<number, string>>({});
@@ -56,7 +62,77 @@ const ApplyAppreciation = () => {
       return {};
     }
   });
+// Load from API or localStorage
+useEffect(() => {
+  if (id) {
+    dispatch(fetchAppreciationById(Number(id)));
+  } else {
+    const savedDraft = localStorage.getItem(DRAFT_STORAGE_KEY);
+    const savedUploads = localStorage.getItem(DRAFT_FILE_UPLOAD_KEY);
 
+    if (savedDraft) {
+      try {
+        const parsed = JSON.parse(savedDraft);
+        if (parsed.counts) setCounts(parsed.counts);
+        if (parsed.marks) setMarks(parsed.marks);
+      } catch (err) {
+        console.error("Failed to parse draft counts/marks", err);
+      }
+    }
+
+    if (savedUploads) {
+      try {
+        const parsedUploads = JSON.parse(savedUploads);
+        setUploadedFiles(parsedUploads);
+      } catch (err) {
+        console.error("Failed to parse uploaded file draft", err);
+      }
+    }
+  }
+
+  return () => {
+    dispatch(resetAppreciationState());
+  };
+}, [id, dispatch]);
+// Populate from API data
+useEffect(() => {
+  if (draftData?.appre_fds?.parameters && parameters?.length > 0) {
+    const newCounts: Record<string, string> = {};
+    const newMarks: Record<string, number> = {};
+    const newUploads: Record<number, string> = {};
+
+    const nameToIdMap = parameters.reduce((acc: Record<string, string>, param: any) => {
+      acc[param.name.trim()] = String(param.param_id);
+      return acc;
+    }, {});
+
+    draftData.appre_fds.parameters.forEach((param: any) => {
+      const paramId = nameToIdMap[param.name.trim()];
+      if (paramId) {
+        newCounts[paramId] = String(param.count);
+        newMarks[paramId] = param.marks;
+        if (param.upload) {
+          newUploads[Number(paramId)] = param.upload;
+        }
+      }
+    });
+
+    setCounts(newCounts);
+    setMarks(newMarks);
+    setUploadedFiles(newUploads);
+  }
+}, [draftData, parameters]);
+    useEffect(() => {
+      if (id && draftData?.appre_fds?.parameters) {
+        const uploads: Record<number, string> = {};
+        draftData.appre_fds.parameters.forEach((param: any, index: number) => {
+          if (param.upload) {
+            uploads[param.param_id || index] = param.upload; // Prefer param_id
+          }
+        });
+        setUploadedFiles(uploads);
+      }
+    }, [id, draftData]);
   useEffect(() => {
     if (!initializedRef.current) {
       const firstCategory = Object.keys(groupedParams)[0];
@@ -195,14 +271,11 @@ const ApplyAppreciation = () => {
     },
     onSubmit: async (values) => {
       try {
-        const uploadedDocs = JSON.parse(localStorage.getItem(DRAFT_FILE_UPLOAD_KEY) || "{}");
-
-
         const formattedParameters = parameters.map((param: any) => {
           const trimmedName = param.name.trim();
           const count = Number(counts[param.param_id] ?? 0);
           const calculatedMarks = marks[param.param_id] ?? 0;
-          const uploadPath = uploadedDocs[param.param_id] || "";
+          const uploadPath = uploadedFiles[param.param_id] || "";
 
           return {
             name: trimmedName,
@@ -221,20 +294,33 @@ const ApplyAppreciation = () => {
             command: values.command,
             parameters: formattedParameters,
           },
+          isDraft: isDraftRef.current,
         };
 
-        const resultAction = await dispatch(createAppreciation(payload));
-        const result = unwrapResult(resultAction);
+ 
+        let resultAction;
+        if (id) {
+          resultAction = await dispatch(updateAppreciation({ id: Number(id), ...payload }));
+        } else {
+          resultAction = await dispatch(createAppreciation(payload));
+        }
+            const result = unwrapResult(resultAction);
 
         if (result.success) {
           formik.resetForm();
-          dispatch(resetCitationState());
-          navigate("/applications/thanks");
+          dispatch(resetAppreciationState());
+          if (isDraftRef.current) {
+            toast.success("Draft saved!");
+            isDraftRef.current = false;
+          } else {
+            navigate("/applications/thanks");
+          }
         } else {
           toast.error("Failed to create appreciation.");
         }
       } catch (err) {
-        console.error("create failed", err);
+        console.error("Submit failed:", err);
+        toast.error("An error occurred while submitting.");
       }
     },
   });
@@ -284,18 +370,30 @@ const ApplyAppreciation = () => {
       setMarks((prev) => ({ ...prev, [paramId]: calcMarks }));
     }
   };
-
-  const handleDeleteDraft = () => {
-    localStorage.removeItem(DRAFT_STORAGE_KEY);
-    localStorage.removeItem(DRAFT_FILE_UPLOAD_KEY);
-    setCounts({});
-    setMarks({});
-    setUploadedFiles({});
+  const handleDeleteDraft = async () => {
+    if (id) {
+      try {
+        await dispatch(deleteAppreciation(Number(id))).unwrap();
+        localStorage.removeItem(DRAFT_STORAGE_KEY);
+        localStorage.removeItem(DRAFT_FILE_UPLOAD_KEY);
+        setCounts({});
+        setMarks({});
+        setUploadedFiles({});
+        navigate("/submitted-forms/list");
+      } catch (error) {
+      }
+    } else {
+      localStorage.removeItem(DRAFT_STORAGE_KEY);
+      localStorage.removeItem(DRAFT_FILE_UPLOAD_KEY);
+      setCounts({});
+      setMarks({});
+      setUploadedFiles({});
+    }
   };
   const handlePreviewClick = () => {
     const uploadedDocs = JSON.parse(localStorage.getItem(DRAFT_FILE_UPLOAD_KEY) || "{}");
 
-  
+
 const missingUploads = parameters.filter((param: any) => {
   const count = Number(counts[param.param_id] ?? 0);
   const mark = Number(marks[param.param_id] ?? 0);
@@ -495,13 +593,16 @@ if (missingUploads.length > 0) {
           </div>
           <div className="submit-button-wrapper">
             <div className="d-flex flex-sm-row flex-column gap-sm-3 gap-1 justify-content-end">
-              <button
-                type="button"
-                className="_btn outline"
-                onClick={() => toast.success("Draft saved!")}
-              >
-                Save as Draft
-              </button>
+            <button
+  type="button"
+  className="_btn outline"
+  onClick={() => {
+    isDraftRef.current = true;
+    formik.handleSubmit(); 
+  }}
+>
+{id ? "Save Draft" : "Save as Draft"}
+</button>
               <button
   type="button"
   className="_btn primary"
@@ -509,13 +610,13 @@ if (missingUploads.length > 0) {
 >
   Preview
 </button>
-              <button
-                type="button"
-                className="_btn danger"
-                onClick={handleDeleteDraft}
-              >
-                Discard
-              </button>
+<button
+        type="button"
+        className="_btn danger"
+        onClick={handleDeleteDraft}
+      >
+        {id ? "Delete Draft" : "Discard"}
+      </button>
             </div>
           </div>
         </form>

@@ -16,5 +16,4 @@ router.post("/approve-marks", ApplicationController.approveApplicationMarks);
 router.post("/add-comment", ApplicationController.addApplicationComment);
 router.post("/upload-doc",upload.any(),  ApplicationController.uploadDoc);
 
-
 module.exports = router;

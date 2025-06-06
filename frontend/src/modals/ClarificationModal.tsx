@@ -22,7 +22,7 @@ const ClarificationModal: React.FC<ClarificationModalProps> = ({
       dialogClassName="clarification-modal"
     >
       <div className="modal-header border-0 d-flex align-items-center justify-content-between">
-        <h4 className="font-lexend fw-6">Create clarification</h4>
+        <h4 className="font-lexend fw-6">Add clarification</h4>
         <button className="close-btn bg-transparent border-0" onClick={handleClose}>
           {SVGICON.app.close}
         </button>

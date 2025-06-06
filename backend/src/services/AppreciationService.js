@@ -5,8 +5,9 @@ const AuthService = require("../services/AuthService.js");
 exports.createAppre = async (data,user) => {
   const client = await dbService.getClient();
   try {
-    const {  date_init, appre_fds } = data;
-    const status_flag = "in_review";
+    const {  date_init, appre_fds,isDraft } = data;
+    const status_flag = isDraft === true ? "draft" : "in_review";
+
     const profile = await AuthService.getProfile(user);
     const unit = profile?.data?.unit;
 
