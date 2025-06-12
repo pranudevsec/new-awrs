@@ -54,22 +54,22 @@ export const corpsOptions: OptionType[] = [
 ];
 
 export const commandOptions: OptionType[] = [
-  { value: "n/a", label: "N/A" },
-  { value: "mycomd", label: "My Command" },
-  { value: "command1", label: "Command 1" },
-  { value: "command2", label: "Command 2" },
-  { value: "command3", label: "Command 3" },
-  { value: "command4", label: "Command 4" },
-  { value: "command5", label: "Command 5" },
+  { value: "northern", label: "Northern Command" },
+  { value: "western", label: "Western Command" },
+  { value: "central", label: "Central Command" },
+  { value: "eastern", label: "Eastern Command" },
+  { value: "southern", label: "Southern Command" },
+  { value: "south-western", label: "South Western Command" },
+  { value: "training", label: "Training Command" },
 ];
 
 export const hierarchicalStructure = [
-  ["mycomd", "mycorps", "mydiv", "mybde", "myunit"],
-  ["command1", "corps1", "divison1", "brigade1", "unit1"],
-  ["command2", "corps2", "divison2", "brigade2", "unit2"],
-  ["command3", "corps3", "divison3", "brigade3", "unit3"],
-  ["command4", "corps4", "divison4", "brigade4", "unit4"],
-  ["command5", "corps5", "divison5", "brigade5", "unit5"],
+  ["northern", "mycorps", "mydiv", "mybde", "myunit"],
+  ["western", "corps1", "divison1", "brigade1", "unit1"],
+  ["central", "corps2", "divison2", "brigade2", "unit2"],
+  ["eastern", "corps3", "divison3", "brigade3", "unit3"],
+  ["southern", "corps4", "divison4", "brigade4", "unit4"],
+  ["training", "corps5", "divison5", "brigade5", "unit5"],
 ];
 
 export const roleOptions: OptionType[] = [
@@ -91,4 +91,24 @@ export const roleOptions2: OptionType[] = [
   { value: "division", label: "Division" },
   { value: "corps", label: "Corps" },
   { value: "command", label: "Command" },
+];
+
+export const unitTypeOptions = [
+  { label: "AC – Armoured Corps", value: "AC" },
+  { label: "Arty – Artillery", value: "Arty" },
+  { label: "Army Avn – Army Aviation", value: "Army Avn" },
+  { label: "Egrs – Engineers", value: "Egrs" },
+  { label: "Guards – Brigade of the Guards", value: "Guards" },
+  { label: "Inf – Infantry", value: "Inf" },
+  { label: "Int Corps – Intelligence Corps", value: "Int Corps" },
+  { label: "AMC – Army Medical Corps", value: "AMC" },
+  { label: "ATC", value: "ATC" }
+];
+
+export const matrixUnitOptions = [
+  { label: "CT", value: "CT" },
+  { label: "LC", value: "LC" },
+  { label: "LAC", value: "LAC" },
+  { label: "IS", value: "IS" },
+  { label: "NM", value: "NM" },
 ];

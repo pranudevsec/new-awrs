@@ -86,7 +86,7 @@ exports.login = async (credentials) => {
   }
 };
 
-exports.getProfile = async ({user_id}) => {
+exports.getProfile = async ({ user_id }) => {
   try {
     const userId = user_id;
 
@@ -95,7 +95,8 @@ exports.getProfile = async ({user_id}) => {
       SELECT 
         u.user_id, u.name AS user_name, u.username, u.pers_no, u.rank, u.user_role, u.cw2_type,
         u.unit_id,
-        ut.sos_no, ut.name AS unit_name, ut.adm_channel, ut.tech_channel, ut.bde, ut.div, ut.corps, ut.comd
+        ut.sos_no, ut.name AS unit_name, ut.adm_channel, ut.tech_channel, ut.bde, ut.div, ut.corps, ut.comd,
+        ut.unit_type, ut.matrix_unit, ut.location
       FROM User_tab u
       LEFT JOIN Unit_tab ut ON u.unit_id = ut.unit_id
       WHERE u.user_id = $1
@@ -130,6 +131,9 @@ exports.getProfile = async ({user_id}) => {
             div: user.div,
             corps: user.corps,
             comd: user.comd,
+            unit_type: user.unit_type,
+            matrix_unit: user.matrix_unit,
+            location: user.location,
           }
         : null,
     });

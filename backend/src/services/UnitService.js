@@ -109,11 +109,17 @@ exports.createOrUpdateUnitForUser = async (userId, data) => {
         div,
         corps,
         comd,
+        unit_type,
+        matrix_unit,
+        location,
       } = data;
 
       const insertUnitQuery = `
-        INSERT INTO Unit_tab (sos_no, name, adm_channel, tech_channel, bde, div, corps, comd)
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+        INSERT INTO Unit_tab (
+          sos_no, name, adm_channel, tech_channel, bde, div, corps, comd,
+          unit_type, matrix_unit, location
+        )
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
         RETURNING unit_id
       `;
 
@@ -126,6 +132,9 @@ exports.createOrUpdateUnitForUser = async (userId, data) => {
         div,
         corps,
         comd,
+        unit_type,
+        matrix_unit,
+        location,
       ]);
 
       const newUnitId = insertRes.rows[0].unit_id;
@@ -146,13 +155,16 @@ exports.createOrUpdateUnitForUser = async (userId, data) => {
         "bde",
         "div",
         "corps",
-        "comd"
+        "comd",
+        "unit_type",
+        "matrix_unit",
+        "location"
       ];
-    
+
       const updateFields = [];
       const values = [];
       let index = 1;
-    
+
       for (const field of allowedFields) {
         if (data[field] !== undefined) {
           updateFields.push(`${field} = $${index}`);
@@ -160,11 +172,11 @@ exports.createOrUpdateUnitForUser = async (userId, data) => {
           index++;
         }
       }
-    
+
       if (updateFields.length === 0) {
         throw new Error("No valid fields provided for update");
       }
-    
+
       updateFields.push(`updated_at = CURRENT_TIMESTAMP`);
       const updateQuery = `
         UPDATE Unit_tab
@@ -172,9 +184,9 @@ exports.createOrUpdateUnitForUser = async (userId, data) => {
         WHERE unit_id = $${index}
         RETURNING unit_id
       `;
-    
+
       values.push(currentUnitId); // last value for WHERE clause
-    
+
       const updateRes = await client.query(updateQuery, values);
       unitResult = updateRes.rows[0];
     }

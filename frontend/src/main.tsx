@@ -16,5 +16,5 @@ createRoot(document.getElementById('root')!).render(
           <Toaster position="top-center" />
         </BrowserRouter>
     </PersistGate>
-  </Provider>,
+  </Provider>
 )

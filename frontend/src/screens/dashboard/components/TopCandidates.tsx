@@ -2,8 +2,7 @@ import { useState } from 'react';
 import * as XLSX from 'xlsx';
 import { saveAs } from 'file-saver';
 import FormSelect from '../../../components/form/FormSelect';
-import { useAppDispatch } from '../../../reduxToolkit/hooks';
-import { getScoreBoards } from '../../../reduxToolkit/services/command-panel/commandPanelService';
+import { useAppDispatch, useAppSelector } from '../../../reduxToolkit/hooks';
 
 const topCandidateOptions: any = [
   { value: 3, label: 'Top 3' },
@@ -13,57 +12,60 @@ const topCandidateOptions: any = [
 ];
 
 const TopCandidates = () => {
-  const [selectedTop, setSelectedTop] = useState(topCandidateOptions[1]);
-  const dispatch = useAppDispatch();
+  const [selectedTop, setSelectedTop] = useState(topCandidateOptions[1]); // default is 5
+  const { scoreboard } = useAppSelector((state) => state.commandPanel);
 
-  const handleDownload = async () => {
+  const handleDownload = () => {
     const topN = selectedTop?.value || 5;
-  
+
     try {
-      const topCandidates = await fetchTopScoreboards(topN);
-  
-      // Prepare Excel-ready data
-      const excelData = topCandidates.map((item: any) => {
-        const paramData = item.fds.parameters.reduce((acc: any, param: any) => {
-          acc[param.name] = param.marks || 0;
-          return acc;
-        }, {});
-  
+      const topCandidates = [...scoreboard]
+        .sort((a: any, b: any) => b.total_marks - a.total_marks)
+        .slice(0, topN);
+
+      const excelData = topCandidates.map((candidate: any, index: number) => {
+        const parameters = candidate.fds?.parameters || [];
+
+        const paramColumns: Record<string, number | string> = {};
+        parameters.forEach((param: any) => {
+          paramColumns[param.name] = param.marks ?? '';
+        });
+
         return {
-          Unit: item.unit_name || "",
-          Brigade: item.brigade || "",
-          Division: item.div || "",
-          Corps: item.corps || "",
-          ApplicationID: item.application_id || "",
-          TotalMarks: item.total_marks || 0,
-          ...paramData, // spread dynamic parameter columns
+          "Serial No": index + 1,
+          "Uni": candidate.unit_name || "",
+          "LoC": candidate.location || "",
+          "Brigade": candidate.bde || "",
+          "Div": candidate.div || "",
+          "Corp": candidate.corps || "",
+          "Command": candidate.comd || "",
+          ...paramColumns,
+          "Brigade Ranking": "",
+          "Div Ranking": "",
+          "Corp Ranking": "",
+          "Command Priority": "",
+          "MO Ranking": "",
+          "MO Remarks": "",
+          "OL Remarks": "",
         };
       });
-  
+
       const worksheet = XLSX.utils.json_to_sheet(excelData);
       const workbook = XLSX.utils.book_new();
       XLSX.utils.book_append_sheet(workbook, worksheet, 'Top Candidates');
-  
+
       const excelBuffer = XLSX.write(workbook, {
         bookType: 'xlsx',
         type: 'array',
       });
-  
-      const blob = new Blob([excelBuffer], { type: 'application/octet-stream' });
-      saveAs(blob, `Top_${topN}_Candidates_Report.xlsx`);
+
+      const data = new Blob([excelBuffer], { type: 'application/octet-stream' });
+      saveAs(data, `Top_${topN}_Candidates_Report.xlsx`);
     } catch (error) {
-      console.error("Failed to fetch top candidates:", error);
-      // Optionally show toast or alert
+      console.error("Failed to generate Excel from scoreboard:", error);
     }
   };
-  
 
-  const fetchTopScoreboards = async (topN: number) => {
-    const response = await dispatch(
-      getScoreBoards({ awardType:  "", search: "", page: 1, limit: topN })
-    ).unwrap();
-    return response?.data || [];
-  };
   return (
     <div className="unit-score-chart h-100">
       <div className="d-flex flex-wrap gap-2 justify-content-between align-items-center mb-3">

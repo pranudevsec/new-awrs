@@ -106,6 +106,9 @@ CREATE TABLE Unit_tab (
     div VARCHAR,
     corps VARCHAR,
     comd VARCHAR,
+    unit_type VARCHAR,
+    matrix_unit VARCHAR,
+    location VARCHAR,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );

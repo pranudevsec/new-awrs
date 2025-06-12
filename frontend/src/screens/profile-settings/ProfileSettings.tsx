@@ -8,6 +8,8 @@ import {
   corpsOptions,
   commandOptions,
   hierarchicalStructure,
+  unitTypeOptions,
+  matrixUnitOptions,
 } from "../../data/options";
 import { useAppSelector, useAppDispatch } from "../../reduxToolkit/hooks";
 import { getProfile, reqToUpdateUnitProfile } from "../../reduxToolkit/services/auth/authService";
@@ -36,7 +38,7 @@ const ProfileSettings = () => {
   const getVisibleFields = (role: UserRole): string[] => {
     switch (role) {
       case "unit":
-        return ["unit", "brigade", "division", "corps", "command"].slice().reverse();
+        return [ "brigade", "division", "corps", "command","unit"].slice().reverse();
       case "brigade":
         return ["unit", "division", "corps", "command"].slice().reverse();
       case "division":
@@ -81,6 +83,9 @@ const ProfileSettings = () => {
       command: profile?.unit?.comd || "",
       adm_channel: profile?.unit?.adm_channel || "",
       tech_channel: profile?.unit?.tech_channel || "",
+      unit_type: profile?.unit?.unit_type || "",
+      matrix_unit: profile?.unit?.matrix_unit || "",
+      location: profile?.unit?.location || "",
     },
     enableReinitialize: true,
     onSubmit: async (values: any, { resetForm }) => {
@@ -112,6 +117,9 @@ const ProfileSettings = () => {
         // Add other values
         payload["adm_channel"] = values.adm_channel;
         payload["tech_channel"] = values.tech_channel;
+        payload["unit_type"] = values.unit_type;
+        payload["matrix_unit"] = values.matrix_unit;
+        payload["location"] = values.location;
 
         const resultAction = await dispatch(reqToUpdateUnitProfile(payload));
         const result = unwrapResult(resultAction);
@@ -246,6 +254,63 @@ const ProfileSettings = () => {
               <div className="invalid-feedback">{formik.errors.tech_channel}</div>
             )}
           </div>
+
+          {profile?.user?.user_role === "unit" && (
+  <>
+    <div className="col-sm-6 mb-3">
+      <FormSelect
+        label="Unit Type"
+        name="unit_type"
+        options={unitTypeOptions}
+        value={
+          unitTypeOptions.find(opt => opt.value === formik.values.unit_type) || null
+        }
+        onChange={(selectedOption) =>
+          formik.setFieldValue("unit_type", selectedOption?.value || "")
+        }
+        placeholder="Select Unit Type"
+        errors={formik.errors.unit_type}
+        touched={formik.touched.unit_type}
+      />
+    </div>
+
+    <div className="col-sm-6 mb-3">
+      <FormSelect
+        label="Matrix Unit"
+        name="matrix_unit"
+        options={matrixUnitOptions}
+        value={
+          matrixUnitOptions.find(opt => opt.value === formik.values.matrix_unit) || null
+        }
+        onChange={(selectedOption) =>
+          formik.setFieldValue("matrix_unit", selectedOption?.value || "")
+        }
+        placeholder="Select Matrix Unit"
+        errors={formik.errors.matrix_unit}
+        touched={formik.touched.matrix_unit}
+      />
+    </div>
+
+    <div className="col-sm-6 mb-3">
+      <label htmlFor="location" className="form-label mb-1">
+        Location
+      </label>
+      <input
+        id="location"
+        name="location"
+        type="text"
+        className={`form-control ${formik.touched.location && formik.errors.location ? "is-invalid" : ""}`}
+        value={formik.values.location}
+        onChange={formik.handleChange}
+        onBlur={formik.handleBlur}
+        placeholder="Enter Unit Location"
+      />
+      {formik.touched.location && formik.errors.location && (
+        <div className="invalid-feedback">{formik.errors.location}</div>
+      )}
+    </div>
+  </>
+)}
           <div className="col-12 mt-2">
             <div className="d-flex align-items-center">
               <button type="submit" className="_btn _btn-lg primary" disabled={formik.isSubmitting}>

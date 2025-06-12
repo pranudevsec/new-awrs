@@ -58,6 +58,9 @@ export interface ProfileUnit {
   div: string;
   corps: string;
   comd: string;
+  unit_type?: string | null;     
+  matrix_unit?: string | null;   
+  location?: string | null;  
 }
 
 export interface ProfileResponse {

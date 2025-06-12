@@ -475,9 +475,9 @@ exports.getApplicationsOfSubordinates = async (user, query) => {
     const queryParams = [unitIds];
 
     if (user_role.toLowerCase() === 'brigade') {
-      baseFilters = `unit_id = ANY($1) AND status_flag != 'approved' AND status_flag != 'draft' AND (last_approved_by_role IS NULL OR last_approved_at IS NULL)`;
+      baseFilters = `unit_id = ANY($1) AND status_flag != 'approved' AND status_flag != 'draft' AND status_flag != 'rejected' AND (last_approved_by_role IS NULL OR last_approved_at IS NULL)`;
     } else {
-      baseFilters = `unit_id = ANY($1) AND status_flag = 'approved' AND status_flag != 'draft' AND last_approved_by_role = $2`;
+      baseFilters = `unit_id = ANY($1) AND status_flag = 'approved' AND status_flag != 'draft' AND status_flag != 'rejected' AND last_approved_by_role = $2`;
       queryParams.push(lowerRole);
     }
 
@@ -629,7 +629,6 @@ exports.getApplicationsOfSubordinates = async (user, query) => {
   }
 };
 
-
 exports.getApplicationsScoreboard = async (user, query) => {
   const client = await dbService.getClient();
 
@@ -732,42 +731,67 @@ exports.getApplicationsScoreboard = async (user, query) => {
 
     // Query with UNION ALL to get combined results with pagination
     const dataQuery = `
-      (
-        SELECT
-          citation_id AS id,
-          'citation' AS type,
-          unit_id,
-          date_init,
-          citation_fds AS fds,
-          status_flag,
-          last_approved_by_role,
-          last_approved_at,
-          isShortlisted
-        FROM Citation_tab
-        WHERE ${filterWhereClause('citation_fds')}
-          ${award_type ? `AND LOWER(citation_fds->>'award_type') = LOWER($${dataParams.length - 1})` : ''}
-          ${search ? `AND (CAST(citation_id AS TEXT) ILIKE $${dataParams.length - 0} OR LOWER(citation_fds->>'cycle_period') ILIKE $${dataParams.length - 0})` : ''}
-      )
-      UNION ALL
-      (
-        SELECT
-          appreciation_id AS id,
-          'appreciation' AS type,
-          unit_id,
-          date_init,
-          appre_fds AS fds,
-          status_flag,
-          last_approved_by_role,
-          last_approved_at,
-          isShortlisted
-        FROM Appre_tab
-        WHERE ${filterWhereClause('appre_fds')}
-          ${award_type ? `AND LOWER(appre_fds->>'award_type') = LOWER($${dataParams.length - 1})` : ''}
-          ${search ? `AND (CAST(appreciation_id AS TEXT) ILIKE $${dataParams.length - 0} OR LOWER(appre_fds->>'cycle_period') ILIKE $${dataParams.length - 0})` : ''}
-      )
-      ORDER BY date_init DESC
-      LIMIT $${dataParams.length - 1} OFFSET $${dataParams.length}
-    `;
+    (
+      SELECT
+        c.citation_id AS id,
+        'citation' AS type,
+        c.unit_id,
+        c.date_init,
+        c.citation_fds AS fds,
+        c.status_flag,
+        c.last_approved_by_role,
+        c.last_approved_at,
+        c.isShortlisted,
+        u.sos_no,
+        u.name AS unit_name,
+        u.adm_channel,
+        u.tech_channel,
+        u.bde,
+        u.div,
+        u.corps,
+        u.comd,
+        u.unit_type,
+        u.matrix_unit,
+        u.location
+      FROM Citation_tab c
+      JOIN Unit_tab u ON u.unit_id = c.unit_id
+      WHERE ${filterWhereClause('citation_fds')}
+        ${award_type ? `AND LOWER(c.citation_fds->>'award_type') = LOWER($${dataParams.length - 1})` : ''}
+        ${search ? `AND (CAST(c.citation_id AS TEXT) ILIKE $${dataParams.length - 0} OR LOWER(c.citation_fds->>'cycle_period') ILIKE $${dataParams.length - 0})` : ''}
+    )
+    UNION ALL
+    (
+      SELECT
+        a.appreciation_id AS id,
+        'appreciation' AS type,
+        a.unit_id,
+        a.date_init,
+        a.appre_fds AS fds,
+        a.status_flag,
+        a.last_approved_by_role,
+        a.last_approved_at,
+        a.isShortlisted,
+        u.sos_no,
+        u.name AS unit_name,
+        u.adm_channel,
+        u.tech_channel,
+        u.bde,
+        u.div,
+        u.corps,
+        u.comd,
+        u.unit_type,
+        u.matrix_unit,
+        u.location
+      FROM Appre_tab a
+      JOIN Unit_tab u ON u.unit_id = a.unit_id
+      WHERE ${filterWhereClause('appre_fds')}
+        ${award_type ? `AND LOWER(a.appre_fds->>'award_type') = LOWER($${dataParams.length - 1})` : ''}
+        ${search ? `AND (CAST(a.appreciation_id AS TEXT) ILIKE $${dataParams.length - 0} OR LOWER(a.appre_fds->>'cycle_period') ILIKE $${dataParams.length - 0})` : ''}
+    )
+    ORDER BY date_init DESC
+    LIMIT $${dataParams.length - 1} OFFSET $${dataParams.length}
+  `;
+  
 
     // Helper to build base filter depending on role
     function filterWhereClause(fdsField) {
