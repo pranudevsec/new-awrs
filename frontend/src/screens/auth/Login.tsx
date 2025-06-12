@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useFormik } from "formik";
 import { unwrapResult } from "@reduxjs/toolkit";
-import { roleOptions } from "../../data/options"; // Make sure this includes cw2 option
+import { roleOptions } from "../../data/options";
 import { LoginSchema } from "../../validations/validations";
 import { useAppDispatch } from "../../reduxToolkit/hooks";
 import { reqToLogin } from "../../reduxToolkit/services/auth/authService";
@@ -111,37 +111,41 @@ const Login = () => {
                     </div>
                     <div className="col-xxl-4 col-xl-5 col-md-10 d-flex align-items-center justify-content-center">
                         <div className="auth-form-wrapper w-100 d-flex flex-column align-items-center justify-content-center">
-                            <img src="/media/logo/logo.svg" alt="Logo" className="mb-3 mx-auto" width={110} />
+                            <div className="logo-area d-flex align-items-center">
+                                <h3 className="font-lexend fw-5">Unit</h3>
+                                <img src="/media/logo/logo.svg" alt="Logo" className="mb-3 mx-auto" width={110} />
+                                <h3 className="font-lexend fw-5">Citation</h3>
+                            </div>
                             <div className="auth-form-area w-100">
                                 <h2 className="font-lexend fw-6">Login to your Account</h2>
                                 <form onSubmit={formik.handleSubmit}>
-                                <div className="mb-3">
-                                <FormSelect
-                                    label="Role"
-                                    name="user_role"
-                                    options={roleOptions}
-                                    value={roleOptions.find((opt) => opt.value === formik.values.user_role) || null}
-                                    onChange={handleRoleChange}
-                                    placeholder="Select"
-                                    errors={formik.errors.user_role}
-                                    touched={formik.touched.user_role}
-                                />
-                            </div>
-                            {formik.values.user_role === "cw2" && (
-                                <div className="mb-3">
-                                    <FormSelect
-                                        label="CW2 Type"
-                                        name="cw2_type"
-                                        options={cw2TypeOptions}
-                                        value={cw2TypeOptions.find((opt) => opt.value === formik.values.cw2_type) || null}
-                                        onChange={handleCw2TypeChange}
-                                        placeholder="Select CW2 Type"
-                                        errors={formik.errors.cw2_type}
-                                        touched={formik.touched.cw2_type}
-                                    />
-                                </div>
-                            )}
-                            
+                                    <div className="mb-3">
+                                        <FormSelect
+                                            label="Role"
+                                            name="user_role"
+                                            options={roleOptions}
+                                            value={roleOptions.find((opt) => opt.value === formik.values.user_role) || null}
+                                            onChange={handleRoleChange}
+                                            placeholder="Select"
+                                            errors={formik.errors.user_role}
+                                            touched={formik.touched.user_role}
+                                        />
+                                    </div>
+                                    {formik.values.user_role === "cw2" && (
+                                        <div className="mb-3">
+                                            <FormSelect
+                                                label="CW2 Type"
+                                                name="cw2_type"
+                                                options={cw2TypeOptions}
+                                                value={cw2TypeOptions.find((opt) => opt.value === formik.values.cw2_type) || null}
+                                                onChange={handleCw2TypeChange}
+                                                placeholder="Select CW2 Type"
+                                                errors={formik.errors.cw2_type}
+                                                touched={formik.touched.cw2_type}
+                                            />
+                                        </div>
+                                    )}
+
                                     <div className="mb-3">
                                         <FormInput
                                             label="User Name"

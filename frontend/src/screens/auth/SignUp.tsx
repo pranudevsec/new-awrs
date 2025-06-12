@@ -47,7 +47,11 @@ const SignUp = () => {
                     </div>
                     <div className="col-xxl-4 col-xl-5 col-md-10 d-flex align-items-center justify-content-center">
                         <div className="auth-form-wrapper w-100 d-flex flex-column align-items-center justify-content-center">
-                            <img src="/media/logo/logo.svg" alt="Logo" className="mb-3 mx-auto" width={110} />
+                            <div className="logo-area d-flex align-items-center">
+                                <h3 className="font-lexend fw-5">Unit</h3>
+                                <img src="/media/logo/logo.svg" alt="Logo" className="mb-3 mx-auto" width={110} />
+                                <h3 className="font-lexend fw-5">Citation</h3>
+                            </div>
                             <div className="auth-form-area w-100">
                                 <h2 className="font-lexend fw-6">Create an Account</h2>
                                 <form onSubmit={formik.handleSubmit}>

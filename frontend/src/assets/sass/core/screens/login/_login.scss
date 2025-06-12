@@ -7,6 +7,14 @@
 
   .auth-form-wrapper {
     padding: 30px 30px 30px 0;
+
+    .logo-area h3 {
+      font-size: 35px;
+      color: var(--gray-0);
+      display: flex;
+      justify-content: end;
+      margin: 0 10px;
+    }
   }
 
   .auth-form-area {
@@ -79,6 +87,12 @@
 @media (max-width: 480px) {
   .auth-section .auth-form-wrapper {
     padding: 20px 0;
+
+    .logo-area h3 {
+      font-size: 22px;
+      color: var(--gray-0);
+      margin: 0 5px;
+    }
 
     .auth-form-area {
       padding: 20px;
