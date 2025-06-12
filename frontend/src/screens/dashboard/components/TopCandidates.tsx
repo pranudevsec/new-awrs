@@ -2,7 +2,7 @@ import { useState } from 'react';
 import * as XLSX from 'xlsx';
 import { saveAs } from 'file-saver';
 import FormSelect from '../../../components/form/FormSelect';
-import { useAppDispatch, useAppSelector } from '../../../reduxToolkit/hooks';
+import { useAppSelector } from '../../../reduxToolkit/hooks';
 
 const topCandidateOptions: any = [
   { value: 3, label: 'Top 3' },
