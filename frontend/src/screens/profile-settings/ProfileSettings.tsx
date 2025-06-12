@@ -38,7 +38,7 @@ const ProfileSettings = () => {
   const getVisibleFields = (role: UserRole): string[] => {
     switch (role) {
       case "unit":
-        return [ "brigade", "division", "corps", "command","unit"].slice().reverse();
+        return [ "brigade", "division", "corps", "command","location","matrix_unit","unit_type","unit"].slice().reverse();
       case "brigade":
         return ["unit", "division", "corps", "command"].slice().reverse();
       case "division":
@@ -60,6 +60,8 @@ const ProfileSettings = () => {
     division: divisionOptions,
     corps: corpsOptions,
     command: commandOptions,
+    unit_type: unitTypeOptions,
+    matrix_unit: matrixUnitOptions
   };
 
   const getPlaceholder = (role: string, field: string) => {
@@ -145,71 +147,105 @@ const ProfileSettings = () => {
 
       <form onSubmit={formik.handleSubmit}>
         <div className="row">
-          {visibleFields.map((field) => {
-            const optionsForField =
-              field === "unit"
-                ? {
-                  unit: unitOptions,
-                  brigade: brigadeOptions,
-                  division: divisionOptions,
-                  corps: corpsOptions,
-                  command: commandOptions,
-                }[profile?.user?.user_role ?? "unit"] || []
-                : optionsMap[field] || [];
-            const getDynamicLabel = (userRole: string, field: string): string => {
-              const roleMap: Record<string, string> = {
-                unit: "Unit",
-                brigade: "Brigade",
-                division: "Division",
-                corps: "Corps",
-                command: "Command",
-              };
+        {visibleFields.map((field) => {
+  const optionsForField =
+    field === "unit"
+      ? {
+          unit: unitOptions,
+          brigade: brigadeOptions,
+          division: divisionOptions,
+          corps: corpsOptions,
+          command: commandOptions,
+        }[profile?.user?.user_role ?? "unit"] || []
+      : optionsMap[field] || [];
 
-              if (field === "unit") {
-                const roleLabel = roleMap[userRole] || "Unit";
-                return `My ${roleLabel}`;
-              }
+  const getDynamicLabel = (userRole: string, field: string): string => {
+    const roleMap: Record<string, string> = {
+      unit: "Unit",
+      brigade: "Brigade",
+      division: "Division",
+      corps: "Corps",
+      command: "Command",
+    };
 
-              return roleMap[field] || field.charAt(0).toUpperCase() + field.slice(1);
-            };
-            return (
-              <div className="col-sm-6 mb-3" key={field}>
-                <FormSelect
-                  label={getDynamicLabel(profile?.user?.user_role ?? "", field)}
-                  name={field}
-                  options={optionsForField}
-                  value={
-                    optionsForField.find(
-                      (opt: any) => opt.value === formik.values[field]
-                    ) || null
-                  }
-                  onChange={(selectedOption) => {
-                    const selectedValue = selectedOption?.value || "";
-                    if (selectedValue == 'n/a') {
-                      formik.setFieldValue("corps", "");
-                      formik.setFieldValue("division", "");
-                      formik.setFieldValue("brigade", "");
-                      formik.setFieldValue("unit", "");
-                    }
-                    formik.setFieldValue(field, selectedValue);
+    if (field === "unit") {
+      const roleLabel = roleMap[userRole] || "Unit";
+      return `My ${roleLabel}`;
+    }
 
+    return field
+      .split("_")
+      .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+      .join(" ");
+  };
 
-                    // ✅ When command changes, update all child fields
-                    if (field === "command" && selectedValue && hierarchyMap[selectedValue]) {
-                      const [corps, division, brigade] = hierarchyMap[selectedValue];
-                      formik.setFieldValue("corps", corps);
-                      formik.setFieldValue("division", division);
-                      formik.setFieldValue("brigade", brigade);
-                      // formik.setFieldValue("unit", unit);
-                    }
-                  }}
-                  placeholder={getPlaceholder(profile?.user?.user_role ?? "", field)}
-                  errors={formik.errors[field]}
-                  touched={formik.touched[field]}
-                />
-              </div>
-            );
-          })}
+  if (!optionsForField.length) {
+    return (
+      <div className="col-sm-6 mb-3" key={field}>
+        <label htmlFor={field} className="form-label mb-1">
+          {getDynamicLabel(profile?.user?.user_role ?? "", field)}
+        </label>
+        <input
+          id={field}
+          name={field}
+          type="text"
+          className={`form-control ${
+            formik.touched[field] && formik.errors[field] ? "is-invalid" : ""
+          }`}
+          value={formik.values[field]}
+          onChange={formik.handleChange}
+          onBlur={formik.handleBlur}
+          placeholder={`Enter ${getDynamicLabel(profile?.user?.user_role ?? "", field)}`}
+        />
+        {formik.touched[field] && formik.errors[field] && (
+          <div className="invalid-feedback">{formik.errors[field]}</div>
+        )}
+      </div>
+    );
+  }
+
+  return (
+    <div className="col-sm-6 mb-3" key={field}>
+      <FormSelect
+        label={getDynamicLabel(profile?.user?.user_role ?? "", field)}
+        name={field}
+        options={optionsForField}
+        value={
+          optionsForField.find(
+            (opt: any) => opt.value === formik.values[field]
+          ) || null
+        }
+        onChange={(selectedOption) => {
+          const selectedValue = selectedOption?.value || "";
+
+          if (selectedValue === "n/a") {
+            formik.setFieldValue("corps", "");
+            formik.setFieldValue("division", "");
+            formik.setFieldValue("brigade", "");
+            formik.setFieldValue("unit", "");
+          }
+
+          formik.setFieldValue(field, selectedValue);
+
+          if (
+            field === "command" &&
+            selectedValue &&
+            hierarchyMap[selectedValue]
+          ) {
+            const [corps, division, brigade] = hierarchyMap[selectedValue];
+            formik.setFieldValue("corps", corps);
+            formik.setFieldValue("division", division);
+            formik.setFieldValue("brigade", brigade);
+          }
+        }}
+        placeholder={getPlaceholder(profile?.user?.user_role ?? "", field)}
+        errors={formik.errors[field]}
+        touched={formik.touched[field]}
+      />
+    </div>
+  );
+})}
+
 
           <div className="col-sm-6 mb-3">
             <label htmlFor="adm_channel" className="form-label mb-1">
@@ -255,62 +291,6 @@ const ProfileSettings = () => {
             )}
           </div>
 
-          {profile?.user?.user_role === "unit" && (
-  <>
-    <div className="col-sm-6 mb-3">
-      <FormSelect
-        label="Unit Type"
-        name="unit_type"
-        options={unitTypeOptions}
-        value={
-          unitTypeOptions.find(opt => opt.value === formik.values.unit_type) || null
-        }
-        onChange={(selectedOption) =>
-          formik.setFieldValue("unit_type", selectedOption?.value || "")
-        }
-        placeholder="Select Unit Type"
-        errors={formik.errors.unit_type}
-        touched={formik.touched.unit_type}
-      />
-    </div>
-
-    <div className="col-sm-6 mb-3">
-      <FormSelect
-        label="Matrix Unit"
-        name="matrix_unit"
-        options={matrixUnitOptions}
-        value={
-          matrixUnitOptions.find(opt => opt.value === formik.values.matrix_unit) || null
-        }
-        onChange={(selectedOption) =>
-          formik.setFieldValue("matrix_unit", selectedOption?.value || "")
-        }
-        placeholder="Select Matrix Unit"
-        errors={formik.errors.matrix_unit}
-        touched={formik.touched.matrix_unit}
-      />
-    </div>
-
-    <div className="col-sm-6 mb-3">
-      <label htmlFor="location" className="form-label mb-1">
-        Location
-      </label>
-      <input
-        id="location"
-        name="location"
-        type="text"
-        className={`form-control ${formik.touched.location && formik.errors.location ? "is-invalid" : ""}`}
-        value={formik.values.location}
-        onChange={formik.handleChange}
-        onBlur={formik.handleBlur}
-        placeholder="Enter Unit Location"
-      />
-      {formik.touched.location && formik.errors.location && (
-        <div className="invalid-feedback">{formik.errors.location}</div>
-      )}
-    </div>
-  </>
-)}
           <div className="col-12 mt-2">
             <div className="d-flex align-items-center">
               <button type="submit" className="_btn _btn-lg primary" disabled={formik.isSubmitting}>
