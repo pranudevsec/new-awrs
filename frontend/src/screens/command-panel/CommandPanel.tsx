@@ -12,7 +12,6 @@ import Pagination from "../../components/ui/pagination/Pagination";
 import EmptyTable from "../../components/ui/empty-table/EmptyTable";
 import Loader from "../../components/ui/loader/Loader";
 
-
 const CommandPanel = () => {
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
@@ -27,19 +26,19 @@ const CommandPanel = () => {
   const [limit, setLimit] = useState<number>(10);
   const handleDownload = () => {
     const topN = 5;
-  
+
     const topCandidates = scoreboard
       .sort((a: any, b: any) => b.total_marks - a.total_marks)
       .slice(0, topN);
-  
+
     const excelData = topCandidates.map((candidate: any, index: number) => {
       const parameters = candidate.fds?.parameters || [];
-  
+
       const paramColumns: any = {};
       parameters.forEach((param: any) => {
         paramColumns[param.name] = param.marks ?? '';
       });
-  
+
       return {
         "Serial No": index + 1,
         "Uni": candidate.unit_name || "",
@@ -58,20 +57,20 @@ const CommandPanel = () => {
         "OL Remarks": "",
       };
     });
-  
+
     const worksheet = XLSX.utils.json_to_sheet(excelData);
     const workbook = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(workbook, worksheet, 'Top Candidates');
-  
+
     const excelBuffer = XLSX.write(workbook, {
       bookType: 'xlsx',
       type: 'array',
     });
-  
+
     const data = new Blob([excelBuffer], { type: 'application/octet-stream' });
     saveAs(data, `scoreboard.xlsx`);
   };
-  
+
   useEffect(() => {
     const handler = setTimeout(() => {
       setDebouncedSearch(searchTerm);

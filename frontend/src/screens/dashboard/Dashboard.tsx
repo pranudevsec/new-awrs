@@ -1,6 +1,6 @@
-import { useEffect } from "react"
+import { useEffect, useState } from "react"
 import { useAppDispatch, useAppSelector } from "../../reduxToolkit/hooks"
-import { getDashboardStats, getDashboardUnitScores } from "../../reduxToolkit/services/command-panel/commandPanelService"
+import { getDashboardStats, getDashboardUnitScores, getScoreBoards } from "../../reduxToolkit/services/command-panel/commandPanelService"
 import Breadcrumb from "../../components/ui/breadcrumb/Breadcrumb"
 import ApplicationStatus from "./components/ApplicationStatus"
 import AssetsDetail from "./components/AssetsDetail"
@@ -12,6 +12,8 @@ import Loader from "../../components/ui/loader/Loader"
 const Dashboard = () => {
     const dispatch = useAppDispatch();
 
+    const [reportCount, setReportCount] = useState(5);
+
     const { loading, dashboardStats, unitScores } = useAppSelector((state) => state.commandPanel);
 
     // Fetch dashboard details API
@@ -19,6 +21,10 @@ const Dashboard = () => {
         dispatch(getDashboardStats());
         dispatch(getDashboardUnitScores());
     }, []);
+
+    useEffect(() => {
+        dispatch(getScoreBoards({ awardType: "", search: "", limit: reportCount, page: 1 }));
+    }, [reportCount])
 
     // Show loader
     if (loading) return <Loader />
@@ -37,7 +43,7 @@ const Dashboard = () => {
                     <ApplicationStatus dashboardStats={dashboardStats} />
                 </div>
                 <div className="col-lg-3">
-                    <TopCandidates />
+                    <TopCandidates setReportCount={setReportCount} reportCount={reportCount} />
                 </div>
             </div>
             <TopWinnersList />

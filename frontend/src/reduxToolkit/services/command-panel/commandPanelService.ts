@@ -83,7 +83,7 @@ export const getDashboardUnitScores =
     }
   );
 
-  // ✅ Get Home Count Stats
+// ✅ Get Home Count Stats
 export const getHomeCountStats = createAsyncThunk<HomeCountResponse>(
   "commandPanel/getHomeCounts",
   async (_, { rejectWithValue }) => {
@@ -96,7 +96,9 @@ export const getHomeCountStats = createAsyncThunk<HomeCountResponse>(
         return rejectWithValue(response.data.message);
       }
     } catch (error: any) {
-      toast.error(error.response?.data?.message || "Error fetching home counts");
+      toast.error(
+        error.response?.data?.message || "Error fetching home counts"
+      );
       return rejectWithValue(error.response?.data?.message);
     }
   }
