@@ -18,6 +18,7 @@ interface FetchUnitsParams {
   search?: string;
   page?: number;
   limit?: number;
+  isShortlisted?: boolean;
 }
 
 interface FetchHQApplicationsParams {
@@ -150,7 +151,10 @@ export const fetchSubordinates = createAsyncThunk<
     if (params?.search) queryParams.append("search", params.search);
     if (params?.page) queryParams.append("page", String(params.page));
     if (params?.limit) queryParams.append("limit", String(params.limit));
-
+    if (params?.isShortlisted !== undefined) {
+      queryParams.append("isShortlisted", String(params.isShortlisted));
+    }
+    
     const response = await Axios.get(
       `${apiEndPoints.applicationSubordinates}?${queryParams.toString()}`
     );

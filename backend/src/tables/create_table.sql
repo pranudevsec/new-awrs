@@ -126,7 +126,7 @@ CREATE TABLE Citation_tab (
     last_approved_by_role VARCHAR(50),
 last_approved_at TIMESTAMP,
     status_flag VARCHAR(20) NOT NULL CHECK (
-        status_flag IN ( 'in_review', 'in_clarification', 'approved', 'rejected','draft')
+        status_flag IN ( 'in_review', 'in_clarification', 'approved', 'rejected','draft','shortlisted_approved')
     ),
     isShortlisted BOOLEAN DEFAULT FALSE
 );
@@ -143,7 +143,7 @@ CREATE TABLE Appre_tab (
     last_approved_by_role VARCHAR(50),
 last_approved_at TIMESTAMP,
      status_flag VARCHAR(20) NOT NULL CHECK (
-        status_flag IN ('in_review','in_clarification', 'approved', 'rejected','draft')
+        status_flag IN ('in_review','in_clarification', 'approved', 'rejected','draft','shortlisted_approved')
     ),
     isShortlisted BOOLEAN DEFAULT FALSE 
 );

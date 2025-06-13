@@ -61,6 +61,20 @@ const SidebarMenu = () => {
     });
   }
 
+  const acceptedApplicationItem = {
+    label: "Accepted Application",
+    icon: SVGICON.sidebar.profile,
+    to: "/application/accepted",
+  };
+  
+  if (
+    userRole === "brigade" ||
+    userRole === "division" ||
+    userRole === "corps"
+  ) {
+    filteredStructure.push(acceptedApplicationItem);
+  }
+
   return (
     <aside className="sidebar-menu flex-shrink-0 d-xl-block d-none">
       <div className="position-sticky top-0">

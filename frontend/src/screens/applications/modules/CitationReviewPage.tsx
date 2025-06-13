@@ -8,7 +8,6 @@ import EmptyTable from "../../../components/ui/empty-table/EmptyTable";
 import Loader from "../../../components/ui/loader/Loader";
 import FormInput from "../../../components/form/FormInput";
 import FormSelect from "../../../components/form/FormSelect";
-import { SVGICON } from "../../../constants/iconsList";
 import { useAppDispatch, useAppSelector } from "../../../reduxToolkit/hooks";
 import { getConfig } from "../../../reduxToolkit/services/config/configService";
 import { fetchParameters } from "../../../reduxToolkit/services/parameter/parameterService";
@@ -375,7 +374,7 @@ const CitationReviewPage = () => {
                                   rel="noopener noreferrer"
                                   style={{ fontSize: 18 }}
                                 >
-                                  {SVGICON.app.pdf}
+                                  {/* {SVGICON.app.pdf} */}
                                   <span style={{ fontSize: 14, wordBreak: 'break-word' }}>
           {uploadedFiles[param.param_id]?.split("/").pop()}
         </span>

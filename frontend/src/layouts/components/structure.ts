@@ -46,4 +46,9 @@ export const sidebarStructure = [
     icon: SVGICON.sidebar.profile,
     to: "/parameters",
   },
+  {
+    label: "Accepted Application",
+    icon: SVGICON.sidebar.profile,
+    to: "/application/accepted",
+  },
 ];

@@ -1,5 +1,4 @@
 import { useEffect, useState } from "react";
-import { SVGICON } from "../../constants/iconsList";
 import {  useParams, useSearchParams } from "react-router-dom";
 import { useAppDispatch, useAppSelector } from "../../reduxToolkit/hooks";
 import { fetchApplicationUnitDetail } from "../../reduxToolkit/services/application/applicationService";
@@ -29,8 +28,6 @@ const CommandPanelDetail = () => {
   const isUnitRole = profile?.user?.user_role === "unit";
   const award_type = searchParams.get("award_type") || "";
   const numericAppId = Number(application_id);
-console.log(award_type)
-console.log(numericAppId)
   useEffect(() => {
     if (award_type && numericAppId) dispatch(fetchApplicationUnitDetail({ award_type, numericAppId }))
   }, [award_type, numericAppId, isRefreshData]);
@@ -133,7 +130,8 @@ console.log(numericAppId)
                   </td>
                   <td style={{ width: 200 }}>
                     <a href={param.upload} target="_blank" rel="noopener noreferrer" style={{ fontSize: 18 }}>
-                      {SVGICON.app.pdf} <span style={{ fontSize: 14, wordBreak: 'break-word' }}>
+                      {/* {SVGICON.app.pdf} */}
+                       <span style={{ fontSize: 14, wordBreak: 'break-word' }}>
           {param?.upload?.split("/").pop()}
         </span>
                     </a>

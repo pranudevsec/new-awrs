@@ -140,7 +140,6 @@ const ApplicationDetails = () => {
     const parameters = unitDetail?.fds?.parameters || [];
 
     const stats = calculateParameterStats(parameters);
-    console.log(stats)
     setParamStats(stats);
   }, [unitDetail, graceMarks]);
 
@@ -407,7 +406,7 @@ const ApplicationDetails = () => {
                         rel="noopener noreferrer"
                         style={{ fontSize: 18 }}
                       >
-                        {SVGICON.app.pdf}
+                        {/* {SVGICON.app.pdf} */}
                           <span style={{ fontSize: 14, wordBreak: 'break-word' }}>
           {param?.upload?.split("/").pop()}
         </span>
@@ -686,14 +685,14 @@ const ApplicationDetails = () => {
       updateApplication({
         id: unitDetail?.id,
         type: unitDetail?.type,
-        status: "approved",
+        status: "shortlisted_approved",
       })
     ).then(() => {
       navigate("/applications/list");
     });
   }}
 >
-  Approve
+  Accept
 </button>
 
 

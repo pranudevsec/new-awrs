@@ -61,7 +61,8 @@ exports.getApplicationsScoreboard = async (req, res) => {
     try {
       const { type, status } = req.body;
       const id=req.params.id;
-      if (!['approved', 'rejected'].includes(status)) {
+  
+      if (!['approved', 'rejected',"shortlisted_approved"].includes(status)) {
         return res.status(StatusCodes.BAD_REQUEST).send(
           ResponseHelper.error(StatusCodes.BAD_REQUEST, "Invalid status value")
         );

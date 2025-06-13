@@ -17,7 +17,6 @@ import { resetCitationState } from "../../../reduxToolkit/slices/citation/citati
 import { createCitation, deleteCitation, fetchCitationById, updateCitation } from "../../../reduxToolkit/services/citation/citationService";
 import type { Parameter } from "../../../reduxToolkit/services/parameter/parameterInterface";
 import Axios, { baseURL } from "../../../reduxToolkit/helper/axios";
-import { SVGICON } from "../../../constants/iconsList";
 
 const DRAFT_STORAGE_KEY = "applyCitationDraft";
 const DRAFT_FILE_UPLOAD_KEY = "applyCitationuploadedDocsDraft";
@@ -568,7 +567,7 @@ if (missingUploads.length > 0) {
         rel="noopener noreferrer"
         style={{ fontSize: 18, display: "flex", alignItems: "center", gap: "8px" }}
       >
-        {SVGICON.app.pdf}
+        {/* {SVGICON.app.pdf} */}
         <span style={{ fontSize: 14, wordBreak: 'break-word' }}>
           {uploadedFiles[param.param_id]?.split("/").pop()}
         </span>

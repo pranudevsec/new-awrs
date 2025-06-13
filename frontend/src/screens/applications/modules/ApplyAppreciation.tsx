@@ -16,7 +16,6 @@ import { fetchParameters } from "../../../reduxToolkit/services/parameter/parame
 import { createAppreciation, deleteAppreciation, fetchAppreciationById, updateAppreciation } from "../../../reduxToolkit/services/appreciation/appreciationService";
 import type { Parameter } from "../../../reduxToolkit/services/parameter/parameterInterface";
 import Axios, { baseURL } from "../../../reduxToolkit/helper/axios";
-import { SVGICON } from "../../../constants/iconsList";
 import { resetAppreciationState } from "../../../reduxToolkit/slices/appreciation/appreciationSlice";
 
 const DRAFT_STORAGE_KEY = "applyAppreciationDraft";
@@ -566,7 +565,7 @@ if (missingUploads.length > 0) {
         rel="noopener noreferrer"
         style={{ fontSize: 18, display: "flex", alignItems: "center", gap: "8px" }}
       >
-        {SVGICON.app.pdf}
+        {/* {SVGICON.app.pdf} */}
         <span style={{ fontSize: 14, wordBreak: 'break-word' }}>
           {uploadedFiles[param.param_id]?.split("/").pop()}
         </span>

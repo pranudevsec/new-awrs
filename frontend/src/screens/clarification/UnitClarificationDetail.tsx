@@ -2,7 +2,6 @@ import { useEffect, useState } from "react";
 import { useParams, useSearchParams } from "react-router-dom";
 import Breadcrumb from "../../components/ui/breadcrumb/Breadcrumb";
 import GiveClarificationModal from "../../modals/GiveClarificationModal";
-import { SVGICON } from "../../constants/iconsList";
 import { useAppDispatch } from "../../reduxToolkit/hooks";
 import { fetchApplicationUnitDetail } from "../../reduxToolkit/services/application/applicationService";
 import { baseURL } from "../../reduxToolkit/helper/axios";
@@ -131,7 +130,8 @@ const UnitClarificationDetail = () => {
                           rel="noopener noreferrer"
                           style={{ fontSize: 18 }}
                         >
-                          {SVGICON.app.pdf} <span style={{ fontSize: 14, wordBreak: 'break-word' }}>
+                          {/* {SVGICON.app.pdf} */}
+                           <span style={{ fontSize: 14, wordBreak: 'break-word' }}>
           {param?.upload?.split("/").pop()}
         </span>
                         </a> : "--"

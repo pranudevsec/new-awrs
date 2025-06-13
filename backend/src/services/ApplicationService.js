@@ -422,7 +422,7 @@ exports.getApplicationsOfSubordinates = async (user, query) => {
 
   try {
     const { user_role } = user;
-    const { award_type, search, page = 1, limit = 10 } = query;
+    const { award_type, search, page = 1, limit = 10,isShortlisted } = query;
 
     const profile = await AuthService.getProfile(user);
     const unit = profile?.data?.unit;
@@ -473,13 +473,16 @@ exports.getApplicationsOfSubordinates = async (user, query) => {
 
     let baseFilters = '';
     const queryParams = [unitIds];
-
-    if (user_role.toLowerCase() === 'brigade') {
-      baseFilters = `unit_id = ANY($1) AND status_flag != 'approved' AND status_flag != 'draft' AND status_flag != 'rejected' AND (last_approved_by_role IS NULL OR last_approved_at IS NULL)`;
+    
+    if (isShortlisted) {
+      baseFilters = `unit_id = ANY($1) AND status_flag = 'shortlisted_approved'`;
+    } else if (user_role.toLowerCase() === 'brigade') {
+      baseFilters = `unit_id = ANY($1) AND status_flag != 'approved' AND status_flag != 'draft' AND status_flag != 'shortlisted_approved' AND status_flag != 'rejected' AND (last_approved_by_role IS NULL OR last_approved_at IS NULL)`;
     } else {
-      baseFilters = `unit_id = ANY($1) AND status_flag = 'approved' AND status_flag != 'draft' AND status_flag != 'rejected' AND last_approved_by_role = $2`;
+      baseFilters = `unit_id = ANY($1) AND status_flag = 'approved' AND status_flag != 'draft' AND status_flag != 'shortlisted_approved' AND status_flag != 'rejected' AND last_approved_by_role = $2`;
       queryParams.push(lowerRole);
     }
+    
 
     const citationQuery = `
       SELECT 
@@ -872,7 +875,7 @@ exports.updateApplicationStatus = async (id, type, status, user) => {
     const config = validTypes[type];
     if (!config) throw new Error("Invalid application type");
 
-    const allowedStatuses = ["in_review", "in_clarification", "approved", "rejected"];
+    const allowedStatuses = ["in_review", "in_clarification", "approved", "rejected","shortlisted_approved"];
     const statusLower = status.toLowerCase();
     if (!allowedStatuses.includes(statusLower)) {
       throw new Error("Invalid status value");
@@ -1037,6 +1040,7 @@ exports.updateApplicationStatus = async (id, type, status, user) => {
       client.release();
     }
   };
+
   exports.addApplicationComment = async (user, body) => {
     const client = await dbService.getClient();
     try {
