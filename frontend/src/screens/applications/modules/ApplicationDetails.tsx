@@ -30,6 +30,9 @@ const ApplicationDetails = () => {
   const profile = useAppSelector((state) => state.admin.profile);
   const { loading, unitDetail } = useAppSelector((state) => state.application);
 
+  console.log("unitDetail -> ", unitDetail);
+
+
   const raisedParam = searchParams.get("raised_clarifications");
 
   const isRaisedScreen = raisedParam === "true";
@@ -232,14 +235,14 @@ const ApplicationDetails = () => {
   useEffect(() => {
     if (unitDetail?.remarks && Array.isArray(unitDetail?.remarks)) {
       const existing = unitDetail?.remarks.find(
-        (r:any) => r.remark_added_by_role?.toLowerCase() === role
+        (r: any) => r.remark_added_by_role?.toLowerCase() === role
       );
       if (existing) {
         setUnitRemarks(existing.remarks || "");
       }
     }
   }, [unitDetail?.remarks, role]);
-  const handleRemarksChange = async (e:any) => {
+  const handleRemarksChange = async (e: any) => {
     const value = e.target.value;
 
     // Optional: Enforce 200-char limit on input
@@ -650,6 +653,32 @@ const ApplicationDetails = () => {
           </table>
         </div>
         {!isUnitRole && (
+          <ul style={{
+            listStyleType: "none",
+            display: "flex",
+            alignItems: "center",
+            gap: "10px"
+          }}>
+            {unitDetail?.remarks.map((item: any, idx: number) => (
+              <li
+                key={idx}
+                style={{
+                  marginBottom: "8px",
+                  padding: "8px 12px",
+                  backgroundColor: "#f9f9f9",
+                  borderRadius: "6px",
+                  boxShadow: "0 1px 2px rgba(0,0,0,0.05)",
+                  fontSize: "14px",
+                  color: "#333"
+                }}
+              >
+                <strong>{item?.remark_added_by_role}:</strong> {item?.remarks}
+              </li>
+            ))}
+          </ul>
+        )}
+
+        {!isUnitRole && (
           <div className="submit-button-wrapper">
             <div className="row text-center text-sm-start mb-3">
               <div className="col-6 col-sm-3">
@@ -697,14 +726,14 @@ const ApplicationDetails = () => {
                       Enter Your Remarks:
                     </label>
                     <input
-      type="text"
-      className="form-control"
-      placeholder="Enter remarks (max 200 characters)"
-      style={{ maxWidth: 200, minWidth: 200 }}
-      name="unitRemarks"
-      value={unitRemarks}
-      onChange={handleRemarksChange}
-    />
+                      type="text"
+                      className="form-control"
+                      placeholder="Enter remarks (max 200 characters)"
+                      style={{ maxWidth: 200, minWidth: 200 }}
+                      name="unitRemarks"
+                      value={unitRemarks}
+                      onChange={handleRemarksChange}
+                    />
                   </div>
                   <div className="d-flex align-items-center gap-2">
                     <label
