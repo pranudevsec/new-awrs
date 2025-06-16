@@ -181,6 +181,9 @@ INSERT INTO Parameter_Master (
 ) VALUES
 ('NC', 'appreciation', 'ALL', 'recovery', 'Enemy Kills', 'Number of enemies neutralized', FALSE, 20, TRUE, 5, 1, 4, 4),
 ('WC', 'appreciation', 'ARMY', 'terrorist', 'Rescue Ops', 'Rescue operations conducted', FALSE, 15, TRUE, 4, 2, 5, 5),
+('NC', 'citation', 'ALL', 'Tenure', 'Tenure', 'Number of Tenure', FALSE, 25, TRUE, 5, 1, 5, 5),
+('NC', 'citation', 'ALL', 'Kills', 'Kills', 'Number of Kills', FALSE, 25, TRUE, 5, 1, 5, 5),
+('NC', 'citation', 'ALL', 'surrendered', 'surrendered', 'Number of surrendered', FALSE, 25, TRUE, 5, 1, 5, 5),
 ('NC', 'citation', 'ALL', 'terrorist', 'Terrorist Killed', 'Number of terrorists neutralized (killed)', FALSE, 25, TRUE, 5, 1, 5, 5),
 ('NC', 'citation', 'ALL', 'terrorist', 'Terrorist Apprehended with Weapon', 'Number of terrorists apprehended with weapon', FALSE, 20, TRUE, 4, 2, 4, 4),
 ('NC', 'citation', 'ALL', 'terrorist', 'Terrorist Surrendered with Weapon', 'Number of terrorists surrendered with weapon', FALSE, 15, TRUE, 3, 3, 3, 3),

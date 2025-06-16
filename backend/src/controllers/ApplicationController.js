@@ -80,6 +80,45 @@ exports.getApplicationsScoreboard = async (req, res) => {
     }
   };
   
+  exports.approveApplications = async (req, res) => {
+    try {
+      const { type, status = "approved", ids } = req.body;
+  
+      const allowedStatuses = ["approved", "rejected", "shortlisted_approved"];
+      if (!allowedStatuses.includes(status)) {
+        return res.status(StatusCodes.BAD_REQUEST).send(
+          ResponseHelper.error(StatusCodes.BAD_REQUEST, "Invalid status value")
+        );
+      }
+  
+      if (!Array.isArray(ids) || ids.length === 0) {
+        return res.status(StatusCodes.BAD_REQUEST).send(
+          ResponseHelper.error(StatusCodes.BAD_REQUEST, "No application IDs provided")
+        );
+      }
+  
+      const results = [];
+  
+      for (const id of ids) {
+        try {
+          const result = await ApplicationService.updateApplicationStatus(id, type, status, req.user);
+          results.push({ id, success: true, result });
+        } catch (err) {
+          results.push({ id, success: false, error: err.message });
+        }
+      }
+  
+      return res.status(StatusCodes.OK).send(
+        ResponseHelper.success(StatusCodes.OK, "Application approved", results)
+      );
+    } catch (error) {
+      return res.status(StatusCodes.INTERNAL_SERVER_ERROR).send(
+        ResponseHelper.error(StatusCodes.INTERNAL_SERVER_ERROR, "Internal Server Error", error.message)
+      );
+    }
+  };
+
+  
   exports.approveApplicationMarks = async (req, res) => {
     try {
       const result = await ApplicationService.approveApplicationMarks(req.user, req.body);

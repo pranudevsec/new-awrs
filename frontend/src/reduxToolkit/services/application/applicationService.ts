@@ -4,6 +4,8 @@ import Axios from "../../helper/axios";
 import type {
   AddCommentParam,
   AddCommentResponse,
+  ApproveApplicationsParams,
+  ApproveApplicationsResponse,
   ApproveMarksParam,
   ApproveMarksResponse,
   FetchApplicationUnitDetailResponse,
@@ -208,6 +210,39 @@ export const updateApplication = createAsyncThunk<
   }
 });
 
+export const approveApplications = createAsyncThunk<
+  ApproveApplicationsResponse,
+  ApproveApplicationsParams
+>("applications/approveApplications", async (params, { rejectWithValue }) => {
+  try {
+    const response = await Axios.put(
+      `${apiEndPoints.application}/approve/applications`,
+      {
+        type: params.type,
+        status: params.status || "approved",
+        ids: params.ids,
+      }
+    );
+
+    if (response.data.success) {
+      toast.success(
+        response.data.message || "Applications approved successfully"
+      );
+      return response.data;
+    } else {
+      toast.error(response.data.message || "Failed to approve applications");
+      return rejectWithValue(response.data.message);
+    }
+  } catch (error: any) {
+    toast.error(
+      error.response?.data?.message || "Error approving applications"
+    );
+    return rejectWithValue(
+      error.response?.data?.message || "Failed to approve applications"
+    );
+  }
+});
+
 export const approveMarks = createAsyncThunk<
   ApproveMarksResponse,
   ApproveMarksParam
@@ -219,7 +254,6 @@ export const approveMarks = createAsyncThunk<
     );
 
     if (response.data.success) {
-      toast.success(response.data.message || "Marks approved successfully");
       return response.data;
     } else {
       toast.error(response.data.message || "Failed to approve marks");

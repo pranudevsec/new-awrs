@@ -608,7 +608,61 @@ exports.getApplicationsOfSubordinates = async (user, query) => {
 
     // Sort by date
     allApps.sort((a, b) => new Date(b.date_init) - new Date(a.date_init));
-
+    
+    if (isShortlisted) {
+      const unitIdSet = [...new Set(allApps.map(app => app.unit_id))];
+      const unitDetailsRes = await client.query(
+        `SELECT * FROM Unit_tab WHERE unit_id = ANY($1)`,
+        [unitIdSet]
+      );
+      const unitDetailsMap = unitDetailsRes.rows.reduce((acc, unit) => {
+        acc[unit.unit_id] = unit;
+        return acc;
+      }, {});
+    
+      allApps = allApps.map(app => ({
+        ...app,
+        unit_details: unitDetailsMap[app.unit_id] || null,
+      }));
+    
+      const allParameterNames = Array.from(
+        new Set(
+          allApps.flatMap(app => app.fds?.parameters?.map(p => p.name?.trim().toLowerCase()) || [])
+        )
+      );
+    
+      const parameterMasterRes = await client.query(
+        `SELECT name, negative FROM Parameter_Master WHERE LOWER(TRIM(name)) = ANY($1)`,
+        [allParameterNames]
+      );
+    
+      const negativeParamMap = parameterMasterRes.rows.reduce((acc, row) => {
+        acc[row.name.trim().toLowerCase()] = row.negative;
+        return acc;
+      }, {});
+    
+      // --- Calculate totalNegativeMarks, totalMarks, netMarks
+      allApps = allApps.map(app => {
+        const parameters = app.fds?.parameters || [];
+    
+        const totalMarks = parameters.reduce((sum, param) => sum + (param.marks || 0), 0);
+    
+        const totalNegativeMarks = parameters.reduce((sum, param) => {
+          const isNegative = negativeParamMap[param.name.trim().toLowerCase()];
+          return isNegative ? sum + (param.marks || 0) : sum;
+        }, 0);
+    
+        const netMarks = totalMarks - totalNegativeMarks;
+    
+        return {
+          ...app,
+          totalMarks,
+          totalNegativeMarks,
+          netMarks,
+        };
+      });
+    }
+    
     // ✅ Pagination
     const pageInt = parseInt(page);
     const limitInt = parseInt(limit);
@@ -862,7 +916,6 @@ exports.getApplicationsScoreboard = async (user, query) => {
   }
 };
 
-
 exports.updateApplicationStatus = async (id, type, status, user) => {
   const client = await dbService.getClient();
 
@@ -962,7 +1015,7 @@ exports.updateApplicationStatus = async (id, type, status, user) => {
   exports.approveApplicationMarks = async (user, body) => {
     const client = await dbService.getClient();
     try {
-      const { type, application_id, parameters, applicationGraceMarks } = body;
+      const { type, application_id, parameters, applicationGraceMarks,applicationPriorityPoints } = body;
   
       if (!["citation", "appreciation"].includes(type)) {
         return ResponseHelper.error(400, "Invalid type provided");
@@ -1025,6 +1078,28 @@ exports.updateApplicationStatus = async (id, type, status, user) => {
         }
       }
   
+      if (applicationPriorityPoints !== undefined) {
+        if (!Array.isArray(fds.applicationPriority)) {
+          fds.applicationPriority = [];
+        }
+      
+        const existingPriorityIndex = fds.applicationPriority.findIndex(
+          (entry) => entry.role === user.user_role
+        );
+      
+        const priorityEntry = {
+          role: user.user_role,
+          priority: applicationPriorityPoints,
+          priorityAddedAt: now,
+        };
+      
+        if (existingPriorityIndex !== -1) {
+          fds.applicationPriority[existingPriorityIndex] = priorityEntry;
+        } else {
+          fds.applicationPriority.push(priorityEntry);
+        }
+      }
+
       // 4. Update in DB
       await client.query(
         `UPDATE ${tableName}

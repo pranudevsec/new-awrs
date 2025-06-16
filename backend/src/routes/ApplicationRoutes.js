@@ -12,6 +12,7 @@ router.get("/unit-detail",  ApplicationController.getSingleApplicationForUnit);
 router.get("/subordinates",  ApplicationController.getApplicationsOfSubordinates);
 router.get("/scoreboard",  ApplicationController.getApplicationsScoreboard);
 router.put("/:id",  ApplicationController.updateApplicationStatus);
+router.put("/approve/applications",  ApplicationController.approveApplications);
 router.post("/approve-marks", ApplicationController.approveApplicationMarks);
 router.post("/add-comment", ApplicationController.addApplicationComment);
 router.post("/upload-doc",upload.any(),  ApplicationController.uploadDoc);

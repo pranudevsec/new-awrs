@@ -2,6 +2,8 @@ export interface ApplicationUnit {
   id: number;
   name: string;
   description: string;
+  fds: any;
+  type: string;
 }
 
 export interface FetchApplicationUnitsResponse {
@@ -55,6 +57,7 @@ export interface UpdateApplicationResponse {
 export interface ApproveMarksParam {
   type: string;
   application_id: number;
+  applicationPriorityPoints?: number;
   parameters: {
     name: string;
     approved_marks: string | number;
@@ -78,4 +81,17 @@ export interface AddCommentParam {
 export interface AddCommentResponse {
   success: boolean;
   message: string;
+}
+
+
+export interface ApproveApplicationsParams {
+  type: string;
+  status?: string;
+  ids: (string | number)[];
+}
+
+export interface ApproveApplicationsResponse {
+  success: boolean;
+  message: string;
+  data: any;
 }

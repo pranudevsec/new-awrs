@@ -70,7 +70,8 @@ const SidebarMenu = () => {
   if (
     userRole === "brigade" ||
     userRole === "division" ||
-    userRole === "corps"
+    userRole === "corps"||
+    userRole === "command"
   ) {
     filteredStructure.push(acceptedApplicationItem);
   }
