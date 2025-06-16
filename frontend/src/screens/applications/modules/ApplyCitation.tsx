@@ -45,6 +45,7 @@ const ApplyCitation = () => {
   const initializedRef = useRef(false);
   const [searchParams] = useSearchParams();
   const id = searchParams.get("id") || "";
+
   // States
   const [parameters, setParameters] = useState<Parameter[]>([]);
   const [counts, setCounts] = useState<Record<number, string>>({});
@@ -61,76 +62,78 @@ const ApplyCitation = () => {
       return {};
     }
   });
-useEffect(() => {
-  if (id) {
-    dispatch(fetchCitationById(Number(id)));
-  } else {
-    const savedDraft = localStorage.getItem(DRAFT_STORAGE_KEY);
-    const savedUploads = localStorage.getItem(DRAFT_FILE_UPLOAD_KEY);
 
-    if (savedDraft) {
-      try {
-        const parsed = JSON.parse(savedDraft);
-        if (parsed.counts) setCounts(parsed.counts);
-        if (parsed.marks) setMarks(parsed.marks);
-      } catch (err) {
-        console.error("Failed to parse draft counts/marks", err);
-      }
-    }
+  useEffect(() => {
+    if (id) {
+      dispatch(fetchCitationById(Number(id)));
+    } else {
+      const savedDraft = localStorage.getItem(DRAFT_STORAGE_KEY);
+      const savedUploads = localStorage.getItem(DRAFT_FILE_UPLOAD_KEY);
 
-    if (savedUploads) {
-      try {
-        const parsedUploads = JSON.parse(savedUploads);
-        setUploadedFiles(parsedUploads);
-      } catch (err) {
-        console.error("Failed to parse uploaded file draft", err);
-      }
-    }
-  }
-
-  return () => {
-    dispatch(resetCitationState());
-  };
-}, [id, dispatch]);
-// Populate from API data
-useEffect(() => {
-  if (draftData?.citation_fds?.parameters && parameters?.length > 0) {
-    const newCounts: Record<string, string> = {};
-    const newMarks: Record<string, number> = {};
-    const newUploads: Record<number, string> = {};
-
-    const nameToIdMap = parameters.reduce((acc: Record<string, string>, param: any) => {
-      acc[param.name.trim()] = String(param.param_id);
-      return acc;
-    }, {});
-
-    draftData.citation_fds.parameters.forEach((param: any) => {
-      const paramId = nameToIdMap[param.name.trim()];
-      if (paramId) {
-        newCounts[paramId] = String(param.count);
-        newMarks[paramId] = param.marks;
-        if (param.upload) {
-          newUploads[Number(paramId)] = param.upload;
+      if (savedDraft) {
+        try {
+          const parsed = JSON.parse(savedDraft);
+          if (parsed.counts) setCounts(parsed.counts);
+          if (parsed.marks) setMarks(parsed.marks);
+        } catch (err) {
+          console.error("Failed to parse draft counts/marks", err);
         }
       }
-    });
 
-    setCounts(newCounts);
-    setMarks(newMarks);
-    setUploadedFiles(newUploads);
-  }
-}, [draftData, parameters]);
-    useEffect(() => {
-      if (id && draftData?.citation_fds?.parameters) {
-        const uploads: Record<number, string> = {};
-        draftData.citation_fds.parameters.forEach((param: any, index: number) => {
-          if (param.upload) {
-            uploads[param.param_id || index] = param.upload; // Prefer param_id
-          }
-        });
-        setUploadedFiles(uploads);
+      if (savedUploads) {
+        try {
+          const parsedUploads = JSON.parse(savedUploads);
+          setUploadedFiles(parsedUploads);
+        } catch (err) {
+          console.error("Failed to parse uploaded file draft", err);
+        }
       }
-    }, [id, draftData]);
+    }
+
+    return () => {
+      dispatch(resetCitationState());
+    };
+  }, [id]);
+
+  // Populate from API data
+  useEffect(() => {
+    if (draftData?.citation_fds?.parameters && parameters?.length > 0) {
+      const newCounts: Record<string, string> = {};
+      const newMarks: Record<string, number> = {};
+      const newUploads: Record<number, string> = {};
+
+      const nameToIdMap = parameters.reduce((acc: Record<string, string>, param: any) => {
+        acc[param.name.trim()] = String(param.param_id);
+        return acc;
+      }, {});
+
+      draftData.citation_fds.parameters.forEach((param: any) => {
+        const paramId = nameToIdMap[param.name.trim()];
+        if (paramId) {
+          newCounts[paramId] = String(param.count);
+          newMarks[paramId] = param.marks;
+          if (param.upload) {
+            newUploads[Number(paramId)] = param.upload;
+          }
+        }
+      });
+
+      setCounts(newCounts);
+      setMarks(newMarks);
+      setUploadedFiles(newUploads);
+    }
+  }, [draftData, parameters]);
+  useEffect(() => {
+    if (id && draftData?.citation_fds?.parameters) {
+      const uploads: Record<number, string> = {};
+      draftData.citation_fds.parameters.forEach((param: any, index: number) => {
+        if (param.upload) {
+          uploads[param.param_id || index] = param.upload; // Prefer param_id
+        }
+      });
+      setUploadedFiles(uploads);
+    }
+  }, [id, draftData]);
   useEffect(() => {
     if (!initializedRef.current) {
       const firstCategory = Object.keys(groupedParams)[0];
@@ -144,13 +147,13 @@ useEffect(() => {
   useEffect(() => {
     const container = scrollContainerRef.current;
     if (!container) return;
-  
+
     const handleScroll = () => {
       const containerTop = container.getBoundingClientRect().top;
-  
+
       let closestCategory = "";
       let minOffset = Infinity;
-  
+
       Object.entries(categoryRefs.current).forEach(([category, el]) => {
         if (el) {
           const offset = Math.abs(el.getBoundingClientRect().top - containerTop);
@@ -160,16 +163,16 @@ useEffect(() => {
           }
         }
       });
-  
+
       if (closestCategory && closestCategory !== activeTab) {
         setActiveTab(closestCategory);
       }
     };
-  
+
     container.addEventListener("scroll", handleScroll);
     return () => container.removeEventListener("scroll", handleScroll);
   }, [activeTab]);
-  
+
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const categoryRefs = useRef<{ [key: string]: HTMLDivElement | null }>({});
 
@@ -263,7 +266,7 @@ useEffect(() => {
             const count = Number(counts[param.param_id] ?? 0);
             const calculatedMarks = marks[param.param_id] ?? 0;
             const uploadPath = uploadedFiles[param.param_id] || "";
-    
+
             return {
               name: trimmedName,
               count,
@@ -272,7 +275,7 @@ useEffect(() => {
             };
           })
           .filter((param) => param.count > 0 || param.marks > 0);
-    
+
         const payload = {
           date_init: new Date().toISOString().split("T")[0],
           citation_fds: {
@@ -284,7 +287,7 @@ useEffect(() => {
           },
           isDraft: isDraftRef.current,
         };
-    
+
         let resultAction;
         if (id) {
           // Update if `id` exists
@@ -293,13 +296,13 @@ useEffect(() => {
           // Otherwise, create new
           resultAction = await dispatch(createCitation(payload));
         }
-    
+
         const result = unwrapResult(resultAction);
-    
+
         if (result.success) {
           formik.resetForm();
           dispatch(resetCitationState());
-    
+
           if (isDraftRef.current) {
             toast.success("Draft saved!");
             isDraftRef.current = false;
@@ -314,7 +317,7 @@ useEffect(() => {
         toast.error("An error occurred while submitting.");
       }
     }
-    
+
   });
 
   useEffect(() => {
@@ -365,29 +368,29 @@ useEffect(() => {
 
   const handlePreviewClick = () => {
     const uploadedDocs = JSON.parse(localStorage.getItem(DRAFT_FILE_UPLOAD_KEY) || "{}");
-      const hasAtLeastOneCount = parameters.some(
-        (param: any) => Number(counts[param.param_id] ?? 0) > 0
-      );
-    
-      if (!hasAtLeastOneCount) {
-        toast.error("Please fill at least one parameter count before previewing.");
-        return;
-      }
-const missingUploads = parameters.filter((param: any) => {
-  const count = Number(counts[param.param_id] ?? 0);
-  const mark = Number(marks[param.param_id] ?? 0);
-  const requiresUpload = param.proof_reqd && (count > 0 || mark > 0);
-  const fileUploaded = uploadedDocs[param.param_id];
+    const hasAtLeastOneCount = parameters.some(
+      (param: any) => Number(counts[param.param_id] ?? 0) > 0
+    );
 
-  return requiresUpload && !fileUploaded;
-});
+    if (!hasAtLeastOneCount) {
+      toast.error("Please fill at least one parameter count before previewing.");
+      return;
+    }
+    const missingUploads = parameters.filter((param: any) => {
+      const count = Number(counts[param.param_id] ?? 0);
+      const mark = Number(marks[param.param_id] ?? 0);
+      const requiresUpload = param.proof_reqd && (count > 0 || mark > 0);
+      const fileUploaded = uploadedDocs[param.param_id];
 
-if (missingUploads.length > 0) {
-  toast.error("Please upload all necessary files before previewing.");
-  return;
-}
+      return requiresUpload && !fileUploaded;
+    });
 
-  
+    if (missingUploads.length > 0) {
+      toast.error("Please upload all necessary files before previewing.");
+      return;
+    }
+
+
     // If all good, navigate
     navigate('/applications/citation-review');
   };
@@ -559,31 +562,31 @@ if (missingUploads.length > 0) {
                           </div>
                         </td>
                         <td style={{ width: 300, minWidth: 300, maxWidth: 300 }}>
-  {param.proof_reqd ? (
-    uploadedFiles[param.param_id] ? (
-      <a
-        href={`${baseURL}${uploadedFiles[param.param_id]}`}
-        target="_blank"
-        rel="noopener noreferrer"
-        style={{ fontSize: 18, display: "flex", alignItems: "center", gap: "8px" }}
-      >
-        {/* {SVGICON.app.pdf} */}
-        <span style={{ fontSize: 14, wordBreak: 'break-word' }}>
-          {uploadedFiles[param.param_id]?.split("/").pop()}
-        </span>
-      </a>
-    ) : (
-      <input
-        type="file"
-        className="form-control"
-        autoComplete="off"
-        onChange={(e) => handleFileChange(e, param.param_id, param.name)}
-      />
-    )
-  ) : (
-    <span>Not required</span>
-  )}
-</td>
+                          {param.proof_reqd ? (
+                            uploadedFiles[param.param_id] ? (
+                              <a
+                                href={`${baseURL}${uploadedFiles[param.param_id]}`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                style={{ fontSize: 18, display: "flex", alignItems: "center", gap: "8px" }}
+                              >
+                                {/* {SVGICON.app.pdf} */}
+                                <span style={{ fontSize: 14, wordBreak: 'break-word' }}>
+                                  {uploadedFiles[param.param_id]?.split("/").pop()}
+                                </span>
+                              </a>
+                            ) : (
+                              <input
+                                type="file"
+                                className="form-control"
+                                autoComplete="off"
+                                onChange={(e) => handleFileChange(e, param.param_id, param.name)}
+                              />
+                            )
+                          ) : (
+                            <span>Not required</span>
+                          )}
+                        </td>
 
 
 
@@ -593,19 +596,23 @@ if (missingUploads.length > 0) {
                 </table>
               </div>
             ))}
+            <div style={{ maxWidth: 400 }}>
+              <FormInput label="Unit Remarks" name="unitRemarks" value="" placeholder="Enter remarks (max 500 characters)"
+              />
+            </div>
           </div>
           <div className="submit-button-wrapper">
             <div className="d-flex flex-sm-row flex-column gap-sm-3 gap-1 justify-content-end">
-            <button
-  type="button"
-  className="_btn outline"
-  onClick={() => {
-    isDraftRef.current = true;
-    formik.handleSubmit(); // Trigger the form submission
-  }}
->
-{id ? "Save Draft" : "Save as Draft"}
-</button>
+              <button
+                type="button"
+                className="_btn outline"
+                onClick={() => {
+                  isDraftRef.current = true;
+                  formik.handleSubmit(); // Trigger the form submission
+                }}
+              >
+                {id ? "Save Draft" : "Save as Draft"}
+              </button>
               <button
                 type="button"
                 className="_btn primary"
@@ -614,12 +621,12 @@ if (missingUploads.length > 0) {
                 Preview
               </button>
               <button
-        type="button"
-        className="_btn danger"
-        onClick={handleDeleteDraft}
-      >
-        {id ? "Delete Draft" : "Discard"}
-      </button>
+                type="button"
+                className="_btn danger"
+                onClick={handleDeleteDraft}
+              >
+                {id ? "Delete Draft" : "Discard"}
+              </button>
             </div>
           </div>
         </form>

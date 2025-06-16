@@ -86,46 +86,46 @@ const ApplicationDetails = () => {
     parameters: any[],
   ) => {
     const totalParams = parameters.length;
-  
+
     const filledParams = parameters.filter(
       (param) =>
         (param.count ?? 0) > 0 || (param.marks ?? 0) > 0
     ).length;
-  
+
     const marks = parameters.reduce((acc, param) => {
       const isRejected =
         param.clarification_details?.clarification_status === "rejected";
-  
+
       return acc + (isRejected ? 0 : param.marks ?? 0);
     }, 0);
-  
+
     const approvedMarks = parameters.reduce((acc, param) => {
       const isRejected =
         param.clarification_details?.clarification_status === "rejected";
-  
+
       return acc + (isRejected ? 0 : Number(param.approved_marks ?? 0));
     }, 0);
-  
+
     const totalParameterMarks = parameters.reduce((acc, param) => {
       const isRejected =
         param.clarification_details?.clarification_status === "rejected";
-  
+
       if (isRejected) return acc;
-  
+
       const hasValidApproved =
         param.approved_marks !== undefined &&
         param.approved_marks !== null &&
         param.approved_marks !== "" &&
         !isNaN(Number(param.approved_marks));
-  
+
       const approved = hasValidApproved ? Number(param.approved_marks) : null;
       const original = param.marks ?? 0;
-  
+
       return acc + (approved !== null ? approved : original);
     }, 0);
 
     const totalMarks = totalParameterMarks + Number(graceMarks ?? 0);
-  
+
     return {
       totalParams,
       filledParams,
@@ -134,7 +134,7 @@ const ApplicationDetails = () => {
       totalMarks,
     };
   };
-  
+
 
   useEffect(() => {
     const parameters = unitDetail?.fds?.parameters || [];
@@ -189,7 +189,7 @@ const ApplicationDetails = () => {
       await dispatch(approveMarks(body)).unwrap();
       dispatch(fetchApplicationUnitDetail({ award_type, numericAppId }));
       const updatedStats = calculateParameterStats(
-        unitDetail?.fds?.parameters   
+        unitDetail?.fds?.parameters
       );
       setParamStats(updatedStats);
     } catch (err) {
@@ -231,7 +231,7 @@ const ApplicationDetails = () => {
 
   const handleGraceMarksChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
-    console.log('value---',value)
+    console.log('value---', value)
     setGraceMarks(value);
     debouncedGraceMarksSave(value);
   };
@@ -268,7 +268,7 @@ const ApplicationDetails = () => {
 
     dispatch(addApplicationComment(body))
       .unwrap()
-      .catch(() => {});
+      .catch(() => { });
   };
 
   const debouncedHandleSaveComment = useDebounce(handleSaveComment, 600);
@@ -317,7 +317,7 @@ const ApplicationDetails = () => {
               <p className="fw-5 mb-0">
                 {unitDetail?.type
                   ? unitDetail.type.charAt(0).toUpperCase() +
-                    unitDetail.type.slice(1)
+                  unitDetail.type.slice(1)
                   : "--"}
               </p>
             </div>
@@ -407,9 +407,9 @@ const ApplicationDetails = () => {
                         style={{ fontSize: 18 }}
                       >
                         {/* {SVGICON.app.pdf} */}
-                          <span style={{ fontSize: 14, wordBreak: 'break-word' }}>
-          {param?.upload?.split("/").pop()}
-        </span>
+                        <span style={{ fontSize: 14, wordBreak: 'break-word' }}>
+                          {param?.upload?.split("/").pop()}
+                        </span>
                       </a>
                     ) : (
                       ""
@@ -444,10 +444,10 @@ const ApplicationDetails = () => {
                       {!isRaisedScreen && (
                         <td style={{ width: 120 }}>
                           {param?.clarification_id ||
-                          (param?.last_clarification_id &&
-                            [role, lowerRole].includes(
-                              param?.last_clarification_handled_by
-                            )) ? (
+                            (param?.last_clarification_id &&
+                              [role, lowerRole].includes(
+                                param?.last_clarification_handled_by
+                              )) ? (
                             <button
                               className="action-btn bg-transparent d-inline-flex align-items-center justify-content-center"
                               onClick={() => {
@@ -530,7 +530,7 @@ const ApplicationDetails = () => {
                           </td>
                           <td style={{ width: 150 }}>
                             {param?.clarification_details?.clarification &&
-                            param?.clarification_details?.clarification_id ? (
+                              param?.clarification_details?.clarification_id ? (
                               param?.clarification_details
                                 ?.clarification_status === "pending" ? (
                                 <div className="d-flex gap-3">
@@ -660,40 +660,57 @@ const ApplicationDetails = () => {
                       className="fw-medium text-muted mb-0"
                       style={{ whiteSpace: "nowrap" }}
                     >
+                      Unit Remarks:
+                    </label>
+                    <input
+                      type="number"
+                      className="form-control"
+                      placeholder="Enter remarks (max 200 characters)"
+                      style={{ maxWidth: "200", minWidth: 200 }}
+                      name="unitRemarks"
+                      value={graceMarks}
+                      onChange={handleGraceMarksChange}
+                    />
+                  </div>
+                  <div className="d-flex align-items-center gap-2">
+                    <label
+                      className="fw-medium text-muted mb-0"
+                      style={{ whiteSpace: "nowrap" }}
+                    >
                       Discretionary Points:
                     </label>
                     <input
                       type="number"
                       className="form-control"
                       placeholder="Enter discretionary points"
-                      style={{ maxWidth: "190px" }}
+                      style={{ maxWidth: "200", minWidth: 200 }}
                       value={graceMarks}
                       onChange={handleGraceMarksChange}
                     />
                   </div>
 
                   <button
-  type="button"
-  className="_btn success"
-  onClick={() => {
-    if (graceMarks === "" || graceMarks === null || isNaN(Number(graceMarks))) {
-      toast.error("Please enter Discretionary Points before approving.");
-      return;
-    }
+                    type="button"
+                    className="_btn success"
+                    onClick={() => {
+                      if (graceMarks === "" || graceMarks === null || isNaN(Number(graceMarks))) {
+                        toast.error("Please enter Discretionary Points before approving.");
+                        return;
+                      }
 
-    dispatch(
-      updateApplication({
-        id: unitDetail?.id,
-        type: unitDetail?.type,
-        status: "shortlisted_approved",
-      })
-    ).then(() => {
-      navigate("/applications/list");
-    });
-  }}
->
-  Accept
-</button>
+                      dispatch(
+                        updateApplication({
+                          id: unitDetail?.id,
+                          type: unitDetail?.type,
+                          status: "shortlisted_approved",
+                        })
+                      ).then(() => {
+                        navigate("/applications/list");
+                      });
+                    }}
+                  >
+                    Accept
+                  </button>
 
 
                   <button
