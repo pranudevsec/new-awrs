@@ -82,73 +82,79 @@ const TopCandidates: React.FC<TopCandidatesProps> = ({ setReportCount, reportCou
 
   const handleDownload = () => {
     const topN = selectedTop?.value || 5;
-
-    let excelData: any[] = [];
-
-    if (scoreboard.length > 0) {
-      const topCandidates = [...scoreboard]
-        .sort((a: any, b: any) => b.total_marks - a.total_marks)
-        .slice(0, topN);
-
-      excelData = topCandidates.map((candidate: any, index: number) => {
-        const parameters = candidate.fds?.parameters || [];
-
-        const paramColumns: Record<string, number | string> = {};
-        parameters.forEach((param: any) => {
-          paramColumns[param.name] = param.marks ?? '';
-        });
-
-        return {
-          "Serial No": index + 1,
-          "Uni": candidate.unit_name || "",
-          "LoC": candidate.location || "",
-          "Brigade": candidate.bde || "",
-          "Div": candidate.div || "",
-          "Corp": candidate.corps || "",
-          "Command": candidate.comd || "",
-          ...paramColumns,
-          "Brigade Ranking": "",
-          "Div Ranking": "",
-          "Corp Ranking": "",
-          "Command Priority": "",
-          "MO Ranking": "",
-          "MO Remarks": "",
-          "OL Remarks": "",
-        };
-      });
-    } else {
-      excelData = [
-        {
-          "Serial No": "",
-          "Uni": "",
-          "LoC": "",
-          "Brigade": "",
-          "Div": "",
-          "Corp": "",
-          "Command": "",
-          "Brigade Ranking": "",
-          "Div Ranking": "",
-          "Corp Ranking": "",
-          "Command Priority": "",
-          "MO Ranking": "",
-          "MO Remarks": "",
-          "OL Remarks": "",
-        }
-      ];
-    }
-
+  
+    const topCandidates = [...scoreboard]
+      .sort((a: any, b: any) => b.total_marks - a.total_marks)
+      .slice(0, topN);
+  
+    const roles = ["brigade", "division", "corps", "command"];
+  
+    const excelData = topCandidates.map((candidate: any, index: number) => {
+      const parameters = candidate.fds?.parameters || [];
+      const graceMarks = candidate.fds?.applicationGraceMarks || [];
+      const priorities = candidate.fds?.applicationPriority || [];
+  
+      const getParamMarks = (paramName: string) => {
+        return (
+          parameters.find((p: any) =>
+            p.name?.toLowerCase()?.includes(paramName.toLowerCase())
+          )?.marks ?? ""
+        );
+      };
+  
+      const graceMarksByRole = roles.reduce((acc: any, role) => {
+        acc[`Points by ${capitalize(role)}`] =
+          graceMarks.find((g: any) => g.role === role)?.marks ?? "";
+        return acc;
+      }, {});
+  
+      const prioritiesByRole = roles.reduce((acc: any, role) => {
+        acc[`${capitalize(role)} Priority`] =
+          priorities.find((p: any) => p.role === role)?.priority ?? "";
+        return acc;
+      }, {});
+  
+      return {
+        "S. No.": index + 1,
+        "Unit": candidate.unit_name || "",
+        "Location": candidate.location || "",
+        "Brigade": candidate.bde || "",
+        "Division": candidate.div || "",
+        "Corps": candidate.corps || "",
+        "Command": candidate.comd || "",
+        "Unit Type": candidate.unit_type || "",
+        "Tenure": getParamMarks("tenure"),
+        "Kills": getParamMarks("kills"),
+        "Surrendered": getParamMarks("surrendered"),
+        "Radioset Recovery": getParamMarks("radioset"),
+        "Pistol Recovery": getParamMarks("pistol"),
+        "(-ve Marks)": candidate.totalNegativeMarks ?? 0,
+        ...graceMarksByRole,
+        "Total Marks": candidate.total_marks ?? 0,
+        ...prioritiesByRole,
+        "MO Remarks": "",
+        "OL Remarks": "",
+      };
+    });
+  
     const worksheet = XLSX.utils.json_to_sheet(excelData);
     const workbook = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(workbook, worksheet, 'Top Candidates');
-
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Top Candidates");
+  
     const excelBuffer = XLSX.write(workbook, {
-      bookType: 'xlsx',
-      type: 'array',
+      bookType: "xlsx",
+      type: "array",
     });
-
-    const data = new Blob([excelBuffer], { type: 'application/octet-stream' });
-    saveAs(data, `Top_${topN}_Candidates_Report.xlsx`);
+  
+    const data = new Blob([excelBuffer], {
+      type: "application/octet-stream",
+    });
+    saveAs(data, `Top_${topN}_Candidates_Scoreboard.xlsx`);
   };
+  
+  const capitalize = (str: string) =>
+    str.charAt(0).toUpperCase() + str.slice(1);
+  
 
   const handleCandidateChange = (option: any) => {
     setSelectedTop(option);

@@ -261,7 +261,7 @@ const CitationReviewPage = () => {
           title="Citation For Review"
           paths={[
             { label: "Home", href: "/applications" },
-            { label: "Apply for Citation", href: "/applications/citation" },
+            { label: "Apply For Citation", href: "/applications/citation" },
             { label: "Citation For Review", href: "/applications/citation-review" },
           ]}
         />

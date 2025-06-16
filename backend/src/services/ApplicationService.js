@@ -475,14 +475,18 @@ exports.getApplicationsOfSubordinates = async (user, query) => {
     const queryParams = [unitIds];
     
     if (isShortlisted) {
-      baseFilters = `unit_id = ANY($1) AND status_flag = 'shortlisted_approved'`;
-    } else if (user_role.toLowerCase() === 'brigade') {
+      baseFilters = `
+        unit_id = ANY($1)
+        AND status_flag = 'shortlisted_approved'
+        AND last_shortlisted_approved_role = $2
+      `;
+      queryParams.push(user_role);
+    }else if (user_role.toLowerCase() === 'brigade') {
       baseFilters = `unit_id = ANY($1) AND status_flag != 'approved' AND status_flag != 'draft' AND status_flag != 'shortlisted_approved' AND status_flag != 'rejected' AND (last_approved_by_role IS NULL OR last_approved_at IS NULL)`;
     } else {
       baseFilters = `unit_id = ANY($1) AND status_flag = 'approved' AND status_flag != 'draft' AND status_flag != 'shortlisted_approved' AND status_flag != 'rejected' AND last_approved_by_role = $2`;
       queryParams.push(lowerRole);
     }
-    
 
     const citationQuery = `
       SELECT 
@@ -778,9 +782,6 @@ exports.getApplicationsScoreboard = async (user, query) => {
       });
     }
 
-    // Now fetch paginated data with union of citations + appreciations ordered by date_init desc
-    // We'll use OFFSET/LIMIT on the union
-
     const dataParams = [...countParams];
     if (award_type) dataParams.push(award_type);
     if (search) dataParams.push(`%${search.toLowerCase()}%`);
@@ -812,7 +813,7 @@ exports.getApplicationsScoreboard = async (user, query) => {
         u.location
       FROM Citation_tab c
       JOIN Unit_tab u ON u.unit_id = c.unit_id
-      WHERE ${filterWhereClause('citation_fds')}
+      WHERE ${filterWhereClause('citation_fds', 'c')}
         ${award_type ? `AND LOWER(c.citation_fds->>'award_type') = LOWER($${dataParams.length - 1})` : ''}
         ${search ? `AND (CAST(c.citation_id AS TEXT) ILIKE $${dataParams.length - 0} OR LOWER(c.citation_fds->>'cycle_period') ILIKE $${dataParams.length - 0})` : ''}
     )
@@ -841,7 +842,7 @@ exports.getApplicationsScoreboard = async (user, query) => {
         u.location
       FROM Appre_tab a
       JOIN Unit_tab u ON u.unit_id = a.unit_id
-      WHERE ${filterWhereClause('appre_fds')}
+      WHERE ${filterWhereClause('appre_fds', 'a')}
         ${award_type ? `AND LOWER(a.appre_fds->>'award_type') = LOWER($${dataParams.length - 1})` : ''}
         ${search ? `AND (CAST(a.appreciation_id AS TEXT) ILIKE $${dataParams.length - 0} OR LOWER(a.appre_fds->>'cycle_period') ILIKE $${dataParams.length - 0})` : ''}
     )
@@ -851,11 +852,11 @@ exports.getApplicationsScoreboard = async (user, query) => {
   
 
     // Helper to build base filter depending on role
-    function filterWhereClause(fdsField) {
+    function filterWhereClause(fdsField, alias) {
       if (isCommand) {
-        return `unit_id = ANY($1) AND status_flag = 'approved' AND last_approved_by_role = 'command'`;
+        return `${alias}.unit_id = ANY($1) AND ${alias}.status_flag = 'approved' AND ${alias}.last_approved_by_role = 'command'`;
       } else {
-        return `status_flag = 'approved' AND last_approved_by_role = 'command'`;
+        return `${alias}.status_flag = 'approved' AND ${alias}.last_approved_by_role = 'command'`;
       }
     }
 
@@ -899,7 +900,56 @@ exports.getApplicationsScoreboard = async (user, query) => {
         app.total_marks = 0;
       }
     });
-
+    const unitIdSet = [...new Set(allApps.map(app => app.unit_id))];
+    const unitDetailsRes = await client.query(
+      `SELECT * FROM Unit_tab WHERE unit_id = ANY($1)`,
+      [unitIdSet]
+    );
+    const unitDetailsMap = unitDetailsRes.rows.reduce((acc, unit) => {
+      acc[unit.unit_id] = unit;
+      return acc;
+    }, {});
+  
+    allApps = allApps.map(app => ({
+      ...app,
+      unit_details: unitDetailsMap[app.unit_id] || null,
+    }));
+  
+    const allParameterNames = Array.from(
+      new Set(
+        allApps.flatMap(app => app.fds?.parameters?.map(p => p.name?.trim().toLowerCase()) || [])
+      )
+    );
+  
+    const parameterMasterRes = await client.query(
+      `SELECT name, negative FROM Parameter_Master WHERE LOWER(TRIM(name)) = ANY($1)`,
+      [allParameterNames]
+    );
+  
+    const negativeParamMap = parameterMasterRes.rows.reduce((acc, row) => {
+      acc[row.name.trim().toLowerCase()] = row.negative;
+      return acc;
+    }, {});
+  
+    allApps = allApps.map(app => {
+      const parameters = app.fds?.parameters || [];
+  
+      const totalMarks = parameters.reduce((sum, param) => sum + (param.marks || 0), 0);
+  
+      const totalNegativeMarks = parameters.reduce((sum, param) => {
+        const isNegative = negativeParamMap[param.name.trim().toLowerCase()];
+        return isNegative ? sum + (param.marks || 0) : sum;
+      }, 0);
+  
+      const netMarks = totalMarks - totalNegativeMarks;
+  
+      return {
+        ...app,
+        totalMarks,
+        totalNegativeMarks,
+        netMarks,
+      };
+    });
     const pagination = {
       totalItems,
       totalPages: Math.ceil(totalItems / limitInt),
@@ -928,22 +978,22 @@ exports.updateApplicationStatus = async (id, type, status, user) => {
     const config = validTypes[type];
     if (!config) throw new Error("Invalid application type");
 
-    const allowedStatuses = ["in_review", "in_clarification", "approved", "rejected","shortlisted_approved"];
+    const allowedStatuses = ["in_review", "in_clarification", "approved", "rejected", "shortlisted_approved"];
     const statusLower = status.toLowerCase();
     if (!allowedStatuses.includes(statusLower)) {
       throw new Error("Invalid status value");
     }
 
     let updatedFds = null;
+
+    // Handle FDS parameter clarification resolution (only for 'approved')
     if (statusLower === "approved") {
       const fetchRes = await client.query(
         `SELECT ${config.fdsColumn} FROM ${config.table} WHERE ${config.column} = $1`,
         [id]
       );
 
-      if (fetchRes.rowCount === 0) {
-        throw new Error("Application not found");
-      }
+      if (fetchRes.rowCount === 0) throw new Error("Application not found");
 
       const fds = fetchRes.rows[0][config.fdsColumn];
 
@@ -975,7 +1025,10 @@ exports.updateApplicationStatus = async (id, type, status, user) => {
       }
     }
 
+    // Determine which fields to update
     let query, values;
+    const now = new Date();
+
     if (statusLower === "approved") {
       query = `
         UPDATE ${config.table}
@@ -986,7 +1039,19 @@ exports.updateApplicationStatus = async (id, type, status, user) => {
         WHERE ${config.column} = $2
         RETURNING *;
       `;
-      values = [statusLower, id, user.user_role, new Date()];
+      values = [statusLower, id, user.user_role, now];
+
+    } else if (statusLower === "shortlisted_approved") {
+      query = `
+        UPDATE ${config.table}
+        SET 
+          status_flag = $1,
+          last_shortlisted_approved_role = $3
+        WHERE ${config.column} = $2
+        RETURNING *;
+      `;
+      values = [statusLower, id, user.user_role];
+
     } else {
       query = `
         UPDATE ${config.table}
@@ -998,9 +1063,7 @@ exports.updateApplicationStatus = async (id, type, status, user) => {
     }
 
     const result = await client.query(query, values);
-    if (result.rowCount === 0) {
-      throw new Error("Application not found or update failed");
-    }
+    if (result.rowCount === 0) throw new Error("Application not found or update failed");
 
     return result.rows[0];
 

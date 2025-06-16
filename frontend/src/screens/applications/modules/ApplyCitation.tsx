@@ -420,10 +420,10 @@ if (missingUploads.length > 0) {
     <div className="apply-citation-section">
       <div className="d-flex flex-sm-row flex-column align-items-sm-center justify-content-between mb-4">
         <Breadcrumb
-          title="Apply for Citation"
+          title="Apply For Citation"
           paths={[
             { label: "Home", href: "/applications" },
-            { label: "Apply for Citation", href: "/applications/citation" },
+            { label: "Apply For Citation", href: "/applications/citation" },
           ]}
         />
       </div>

@@ -39,6 +39,7 @@ const ApplyAppreciation = () => {
     localStorage.removeItem("applyAppreciationDraft");
     localStorage.removeItem("applyAppreciationUploadedDocsDraft");
   }, []);
+  
   const { profile } = useAppSelector((state) => state.admin);
   const { loading } = useAppSelector((state) => state.parameter);
 
@@ -418,10 +419,10 @@ if (missingUploads.length > 0) {
     <div className="apply-citation-section">
       <div className="d-flex flex-sm-row flex-column align-items-sm-center justify-content-between mb-4">
         <Breadcrumb
-          title="Apply for Appreciation"
+          title="Apply For Appreciation"
           paths={[
             { label: "Home", href: "/applications" },
-            { label: "Apply for Appreciation", href: "/applications/appreciation" },
+            { label: "Apply For Appreciation", href: "/applications/appreciation" },
           ]}
         />
       </div>

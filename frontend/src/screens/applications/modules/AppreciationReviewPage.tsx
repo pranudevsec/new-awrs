@@ -258,7 +258,7 @@ const AppreciationReviewPage = () => {
                     title="Appreciation For Review"
                     paths={[
                         { label: "Home", href: "/applications" },
-                        { label: "Apply for Appreciation", href: "/applications/appreciation" },
+                        { label: "Apply For Appreciation", href: "/applications/appreciation" },
                         { label: "Appreciation For Review", href: "/applications/appreciation-review" },
                     ]}
                 />

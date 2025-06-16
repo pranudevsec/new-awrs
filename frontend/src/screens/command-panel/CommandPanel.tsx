@@ -26,51 +26,78 @@ const CommandPanel = () => {
   const [limit, setLimit] = useState<number>(10);
   const handleDownload = () => {
     const topN = 5;
-
-    const topCandidates = scoreboard
-      .sort((a: any, b: any) => b.total_marks - a.total_marks)
+  
+    const topCandidates = [...scoreboard]
+      .sort((a, b) => b.total_marks - a.total_marks)
       .slice(0, topN);
-
-    const excelData = topCandidates.map((candidate: any, index: number) => {
+  
+    const excelData = topCandidates.map((candidate: any, index) => {
       const parameters = candidate.fds?.parameters || [];
-
-      const paramColumns: any = {};
-      parameters.forEach((param: any) => {
-        paramColumns[param.name] = param.marks ?? '';
-      });
-
+      const graceMarks = candidate.fds?.applicationGraceMarks || [];
+      const priorities = candidate.fds?.applicationPriority || [];
+  
+      const getParamMarks = (paramName: string) => {
+        return (
+          parameters.find((p: any) =>
+            p.name.toLowerCase().includes(paramName.toLowerCase())
+          )?.marks ?? ""
+        );
+      };
+  
+      // Roles to extract
+      const roles = ["brigade", "division", "corps", "command"];
+  
+      const graceMarksByRole = roles.reduce((acc: any, role) => {
+        acc[`Points by ${capitalize(role)}`] =
+          graceMarks.find((g: any) => g.role === role)?.marks ?? "";
+        return acc;
+      }, {});
+  
+      const prioritiesByRole = roles.reduce((acc: any, role) => {
+        acc[`${capitalize(role)} Priority`] =
+          priorities.find((p: any) => p.role === role)?.priority ?? "";
+        return acc;
+      }, {});
+  
       return {
-        "Serial No": index + 1,
-        "Uni": candidate.unit_name || "",
-        "LoC": candidate.location || "",
+        "S. No.": index + 1,
+        "Unit": candidate.unit_name || "",
+        "Location": candidate.location || "",
         "Brigade": candidate.bde || "",
-        "Div": candidate.div || "",
-        "Corp": candidate.corps || "",
+        "Division": candidate.div || "",
+        "Corps": candidate.corps || "",
         "Command": candidate.comd || "",
-        ...paramColumns,
-        "Brigade Ranking": "",
-        "Div Ranking": "",
-        "Corp Ranking": "",
-        "Command Priority": "",
-        "MO Ranking": "",
-        "MO Remarks": "",
-        "OL Remarks": "",
+        "Unit Type": candidate.unit_type || "",
+        "Tenure": getParamMarks("tenure"),
+        "Kills": getParamMarks("kills"),
+        "Surrendered": getParamMarks("surrendered"),
+        "Radioset Recovery": getParamMarks("radioset"),
+        "Pistol Recovery": getParamMarks("pistol"),
+        "(-ve Marks)": candidate.totalNegativeMarks ?? 0,
+        ...graceMarksByRole,
+        "Total Marks": candidate.total_marks ?? 0,
+        ...prioritiesByRole,
       };
     });
-
+  
     const worksheet = XLSX.utils.json_to_sheet(excelData);
     const workbook = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(workbook, worksheet, 'Top Candidates');
-
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Top Candidates");
+  
     const excelBuffer = XLSX.write(workbook, {
-      bookType: 'xlsx',
-      type: 'array',
+      bookType: "xlsx",
+      type: "array",
     });
-
-    const data = new Blob([excelBuffer], { type: 'application/octet-stream' });
-    saveAs(data, `scoreboard.xlsx`);
+  
+    const data = new Blob([excelBuffer], {
+      type: "application/octet-stream",
+    });
+    saveAs(data, `Top_5_Candidates_Scoreboard.xlsx`);
   };
-
+  
+  // Capitalize helper
+  const capitalize = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
+  
   useEffect(() => {
     const handler = setTimeout(() => {
       setDebouncedSearch(searchTerm);
