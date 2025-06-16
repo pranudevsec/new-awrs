@@ -653,30 +653,53 @@ const ApplicationDetails = () => {
           </table>
         </div>
         {!isUnitRole && (
-          <ul style={{
-            listStyleType: "none",
-            display: "flex",
-            alignItems: "center",
-            gap: "10px"
-          }}>
-            {unitDetail?.remarks.map((item: any, idx: number) => (
-              <li
-                key={idx}
-                style={{
-                  marginBottom: "8px",
-                  padding: "8px 12px",
-                  backgroundColor: "#f9f9f9",
-                  borderRadius: "6px",
-                  boxShadow: "0 1px 2px rgba(0,0,0,0.05)",
-                  fontSize: "14px",
-                  color: "#333"
-                }}
-              >
-                <strong>{item?.remark_added_by_role}:</strong> {item?.remarks}
-              </li>
-            ))}
-          </ul>
-        )}
+  <>
+    <ul
+      style={{
+        listStyleType: "none",
+        display: "flex",
+        alignItems: "center",
+        gap: "10px",
+        flexWrap: "wrap",
+        padding: 0,
+        marginBottom: "16px"
+      }}
+    >
+      {/* Unit Remark */}
+      {unitDetail?.fds?.unitRemarks && (
+        <li
+          style={{
+            padding: "8px 12px",
+            backgroundColor: "#e8f0fe",
+            borderRadius: "6px",
+            boxShadow: "0 1px 2px rgba(0,0,0,0.05)",
+            fontSize: "14px",
+            color: "#333"
+          }}
+        >
+          <strong>Unit:</strong> {unitDetail.fds.unitRemarks}
+        </li>
+      )}
+
+      {/* Other Remarks */}
+      {unitDetail?.remarks?.map((item: any, idx: number) => (
+        <li
+          key={idx}
+          style={{
+            padding: "8px 12px",
+            backgroundColor: "#f9f9f9",
+            borderRadius: "6px",
+            boxShadow: "0 1px 2px rgba(0,0,0,0.05)",
+            fontSize: "14px",
+            color: "#333"
+          }}
+        >
+          <strong>{item?.remark_added_by_role}:</strong> {item?.remarks}
+        </li>
+      ))}
+    </ul>
+  </>
+)}
 
         {!isUnitRole && (
           <div className="submit-button-wrapper">
