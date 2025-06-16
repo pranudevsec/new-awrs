@@ -36,7 +36,7 @@ const AcceptedApplicationsList = () => {
   const lowerRole = hierarchy[hierarchy.indexOf(role) - 1] || null;
   const getLowerRolePriority = (unit: any) => {
     if (!lowerRole || !unit?.fds?.applicationPriority) return "-";
-    const priorityEntry = unit.fds.applicationPriority.find(
+    const priorityEntry = unit?.fds.applicationPriority.find(
       (p: any) => p.role?.toLowerCase() === lowerRole
     );
     return priorityEntry?.priority ?? "-";

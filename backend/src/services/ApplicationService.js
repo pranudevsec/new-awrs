@@ -321,7 +321,8 @@ exports.getSingleApplicationForUnit = async (user, { application_id, award_type 
           c.last_approved_by_role,
           c.last_approved_at,
           c.status_flag,
-          c.isShortlisted
+          c.isShortlisted,
+          c.remarks
         FROM Citation_tab c
         JOIN Unit_tab u ON c.unit_id = u.unit_id
         WHERE c.citation_id = $1
@@ -338,7 +339,8 @@ exports.getSingleApplicationForUnit = async (user, { application_id, award_type 
           a.last_approved_by_role,
           a.last_approved_at,
           a.status_flag,
-          a.isShortlisted
+          a.isShortlisted,
+          a.remarks
         FROM Appre_tab a
         JOIN Unit_tab u ON a.unit_id = u.unit_id
         WHERE a.appreciation_id = $1
@@ -665,6 +667,79 @@ exports.getApplicationsOfSubordinates = async (user, query) => {
           netMarks,
         };
       });
+    }
+    const ROLE_HIERARCHY = ["unit", "brigade", "division", "corps", "command"];
+
+    if (isShortlisted) {
+      const unitIdSet = [...new Set(allApps.map(app => app.unit_id))];
+    
+      const unitDetailsRes = await client.query(
+        `SELECT * FROM Unit_tab WHERE unit_id = ANY($1)`,
+        [unitIdSet]
+      );
+      const unitDetailsMap = unitDetailsRes.rows.reduce((acc, unit) => {
+        acc[unit.unit_id] = unit;
+        return acc;
+      }, {});
+    
+      allApps = allApps.map(app => ({
+        ...app,
+        unit_details: unitDetailsMap[app.unit_id] || null,
+      }));
+    
+      const allParameterNames = Array.from(
+        new Set(
+          allApps.flatMap(app => app.fds?.parameters?.map(p => p.name?.trim().toLowerCase()) || [])
+        )
+      );
+    
+      const parameterMasterRes = await client.query(
+        `SELECT name, negative FROM Parameter_Master WHERE LOWER(TRIM(name)) = ANY($1)`,
+        [allParameterNames]
+      );
+    
+      const negativeParamMap = parameterMasterRes.rows.reduce((acc, row) => {
+        acc[row.name.trim().toLowerCase()] = row.negative;
+        return acc;
+      }, {});
+    
+      // Calculate marks
+      allApps = allApps.map(app => {
+        const parameters = app.fds?.parameters || [];
+    
+        const totalMarks = parameters.reduce((sum, param) => sum + (param.marks || 0), 0);
+    
+        const totalNegativeMarks = parameters.reduce((sum, param) => {
+          const isNegative = negativeParamMap[param.name.trim().toLowerCase()];
+          return isNegative ? sum + (param.marks || 0) : sum;
+        }, 0);
+    
+        const netMarks = totalMarks - totalNegativeMarks;
+    
+        return {
+          ...app,
+          totalMarks,
+          totalNegativeMarks,
+          netMarks,
+        };
+      });
+    
+      // Role-based priority sorting
+      const currentRole = user_role?.toLowerCase();
+      const currentRoleIndex = ROLE_HIERARCHY.indexOf(currentRole);
+      if (currentRoleIndex > 0) {
+        const lowerRole = ROLE_HIERARCHY[currentRoleIndex - 1];
+    
+        allApps.sort((a, b) => {
+          const aPriorityEntry = a.fds?.applicationPriority?.find(p => p.role === lowerRole);
+          const bPriorityEntry = b.fds?.applicationPriority?.find(p => p.role === lowerRole);
+    
+          const aPriority = aPriorityEntry?.priority ?? Number.MAX_SAFE_INTEGER;
+          const bPriority = bPriorityEntry?.priority ?? Number.MAX_SAFE_INTEGER;
+    
+          return aPriority - bPriority;
+        });
+      }
     }
     
     // ✅ Pagination
@@ -1075,109 +1150,140 @@ exports.updateApplicationStatus = async (id, type, status, user) => {
   }
 };
 
-  exports.approveApplicationMarks = async (user, body) => {
-    const client = await dbService.getClient();
-    try {
-      const { type, application_id, parameters, applicationGraceMarks,applicationPriorityPoints } = body;
-  
-      if (!["citation", "appreciation"].includes(type)) {
-        return ResponseHelper.error(400, "Invalid type provided");
-      }
-  
-      const tableName = type === "citation" ? "Citation_tab" : "Appre_tab";
-      const idColumn = type === "citation" ? "citation_id" : "appreciation_id";
-  
-      // 1. Get existing application
-      const res = await client.query(
-        `SELECT ${idColumn}, ${type === "citation" ? "citation_fds" : "appre_fds"} AS fds FROM ${tableName} WHERE ${idColumn} = $1`,
-        [application_id]
-      );
-  
-      if (res.rowCount === 0) {
-        return ResponseHelper.error(404, "Application not found");
-      }
-  
-      let fds = res.rows[0].fds;
-      const now = new Date();
+exports.approveApplicationMarks = async (user, body) => {
+  const client = await dbService.getClient();
+  try {
+    const { type, application_id, parameters, applicationGraceMarks, applicationPriorityPoints, remark } = body;
 
-      if (Array.isArray(parameters) && parameters.length > 0) {
-        const updatedParams = fds.parameters.map((param) => {
-          const approvedParam = parameters.find((p) => p.name === param.name);
-          if (approvedParam) {
-            return {
-              ...param,
-              approved_marks: approvedParam.approved_marks,
-              approved_by_user: user.user_id,
-              approved_by_role: user.user_role,
-              approved_marks_at: now,
-            };
-          }
-          return param;
-        });
-  
-        fds.parameters = updatedParams;
-      }
-
-      if (applicationGraceMarks !== undefined) {
-        if (!Array.isArray(fds.applicationGraceMarks)) {
-          fds.applicationGraceMarks = [];
-        }
-  
-        const existingIndex = fds.applicationGraceMarks.findIndex(
-          (entry) => entry.role === user.user_role
-        );
-  
-        const graceEntry = {
-          role: user.user_role,
-          marksBy: user.user_id,
-          marksAddedAt: now,
-          marks: applicationGraceMarks,
-        };
-  
-        if (existingIndex !== -1) {
-          fds.applicationGraceMarks[existingIndex] = graceEntry;
-        } else {
-          fds.applicationGraceMarks.push(graceEntry);
-        }
-      }
-  
-      if (applicationPriorityPoints !== undefined) {
-        if (!Array.isArray(fds.applicationPriority)) {
-          fds.applicationPriority = [];
-        }
-      
-        const existingPriorityIndex = fds.applicationPriority.findIndex(
-          (entry) => entry.role === user.user_role
-        );
-      
-        const priorityEntry = {
-          role: user.user_role,
-          priority: applicationPriorityPoints,
-          priorityAddedAt: now,
-        };
-      
-        if (existingPriorityIndex !== -1) {
-          fds.applicationPriority[existingPriorityIndex] = priorityEntry;
-        } else {
-          fds.applicationPriority.push(priorityEntry);
-        }
-      }
-
-      // 4. Update in DB
-      await client.query(
-        `UPDATE ${tableName}
-         SET ${type === "citation" ? "citation_fds" : "appre_fds"} = $1
-         WHERE ${idColumn} = $2`,
-        [fds, application_id]
-      );
-  
-      return ResponseHelper.success(200, "Marks approved successfully");
-    } catch (error) {
-      return ResponseHelper.error(500, "Failed to approve marks", error.message);
-    } finally {
-      client.release();
+    if (!["citation", "appreciation"].includes(type)) {
+      return ResponseHelper.error(400, "Invalid type provided");
     }
+
+    const tableName = type === "citation" ? "Citation_tab" : "Appre_tab";
+    const idColumn = type === "citation" ? "citation_id" : "appreciation_id";
+
+    // 1. Get existing application
+    const res = await client.query(
+      `SELECT ${idColumn}, ${type === "citation" ? "citation_fds" : "appre_fds"} AS fds, remarks FROM ${tableName} WHERE ${idColumn} = $1`,
+      [application_id]
+    );
+
+    if (res.rowCount === 0) {
+      return ResponseHelper.error(404, "Application not found");
+    }
+
+    let fds = res.rows[0].fds;
+    let remarks = res.rows[0].remarks || [];
+    const now = new Date();
+
+    if (Array.isArray(parameters) && parameters.length > 0) {
+      const updatedParams = fds.parameters.map((param) => {
+        const approvedParam = parameters.find((p) => p.name === param.name);
+        if (approvedParam) {
+          return {
+            ...param,
+            approved_marks: approvedParam.approved_marks,
+            approved_by_user: user.user_id,
+            approved_by_role: user.user_role,
+            approved_marks_at: now,
+          };
+        }
+        return param;
+      });
+
+      fds.parameters = updatedParams;
+    }
+
+    if (applicationGraceMarks !== undefined) {
+      if (!Array.isArray(fds.applicationGraceMarks)) {
+        fds.applicationGraceMarks = [];
+      }
+
+      const existingIndex = fds.applicationGraceMarks.findIndex(
+        (entry) => entry.role === user.user_role
+      );
+
+      const graceEntry = {
+        role: user.user_role,
+        marksBy: user.user_id,
+        marksAddedAt: now,
+        marks: applicationGraceMarks,
+      };
+
+      if (existingIndex !== -1) {
+        fds.applicationGraceMarks[existingIndex] = graceEntry;
+      } else {
+        fds.applicationGraceMarks.push(graceEntry);
+      }
+    }
+
+    if (applicationPriorityPoints !== undefined) {
+      if (!Array.isArray(fds.applicationPriority)) {
+        fds.applicationPriority = [];
+      }
+
+      const existingPriorityIndex = fds.applicationPriority.findIndex(
+        (entry) => entry.role === user.user_role
+      );
+
+      const priorityEntry = {
+        role: user.user_role,
+        priority: applicationPriorityPoints,
+        priorityAddedAt: now,
+      };
+
+      if (existingPriorityIndex !== -1) {
+        fds.applicationPriority[existingPriorityIndex] = priorityEntry;
+      } else {
+        fds.applicationPriority.push(priorityEntry);
+      }
+    }
+
+  // 5. Add or update remark (if provided)
+if (remark && typeof remark === "string") {
+  const newRemark = {
+    remarks: remark,
+    remark_added_by_role: user.user_role,
+    remark_added_by: user.user_id,
+    remark_added_at: now,
   };
+
+  if (!Array.isArray(remarks)) {
+    remarks = [];
+  }
+
+  // Check if a remark from the same role already exists
+  const existingIndex = remarks.findIndex(
+    (r) => r.remark_added_by_role === user.user_role
+  );
+
+  if (existingIndex !== -1) {
+    // ✅ Update existing remark
+    remarks[existingIndex] = newRemark;
+  } else {
+    // ✅ Add new remark
+    remarks.push(newRemark);
+  }
+}
+await client.query(
+  `UPDATE ${tableName}
+   SET ${type === "citation" ? "citation_fds" : "appre_fds"} = $1,
+       remarks = $2
+   WHERE ${idColumn} = $3`,
+  [
+    JSON.stringify(fds),
+    JSON.stringify(remarks),
+    application_id,
+  ]
+);
+    return ResponseHelper.success(200, "Marks approved successfully");
+  } catch (error) {
+    return ResponseHelper.error(500, "Failed to approve marks", error.message);
+  } finally {
+    client.release();
+  }
+};
+
 
   exports.addApplicationComment = async (user, body) => {
     const client = await dbService.getClient();

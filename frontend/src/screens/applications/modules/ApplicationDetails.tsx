@@ -226,7 +226,41 @@ const ApplicationDetails = () => {
 
     dispatch(approveMarks(body)).unwrap();
   };
+  const [unitRemarks, setUnitRemarks] = useState("");
 
+  // Set remark value when application is loaded or profile changes
+  useEffect(() => {
+    if (unitDetail?.remarks && Array.isArray(unitDetail?.remarks)) {
+      const existing = unitDetail?.remarks.find(
+        (r:any) => r.remark_added_by_role?.toLowerCase() === role
+      );
+      if (existing) {
+        setUnitRemarks(existing.remarks || "");
+      }
+    }
+  }, [unitDetail?.remarks, role]);
+  const handleRemarksChange = async (e:any) => {
+    const value = e.target.value;
+
+    // Optional: Enforce 200-char limit on input
+    if (value.length > 200) return;
+
+    setUnitRemarks(value);
+
+    const body = {
+      type: unitDetail?.type || "citation",
+      application_id: unitDetail?.id || 0,
+      remark: value,
+      parameters: [],
+    };
+
+    try {
+      await dispatch(approveMarks(body)).unwrap();
+      // Optional: Add a toast or success indicator here
+    } catch (err) {
+      console.error("Failed to update remarks", err);
+    }
+  };
   const debouncedGraceMarksSave = useDebounce(handleGraceMarksSave, 600);
 
   const handleGraceMarksChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -660,17 +694,17 @@ const ApplicationDetails = () => {
                       className="fw-medium text-muted mb-0"
                       style={{ whiteSpace: "nowrap" }}
                     >
-                      Unit Remarks:
+                      Enter Your Remarks:
                     </label>
                     <input
-                      type="number"
-                      className="form-control"
-                      placeholder="Enter remarks (max 200 characters)"
-                      style={{ maxWidth: "200", minWidth: 200 }}
-                      name="unitRemarks"
-                      value={graceMarks}
-                      onChange={handleGraceMarksChange}
-                    />
+      type="text"
+      className="form-control"
+      placeholder="Enter remarks (max 200 characters)"
+      style={{ maxWidth: 200, minWidth: 200 }}
+      name="unitRemarks"
+      value={unitRemarks}
+      onChange={handleRemarksChange}
+    />
                   </div>
                   <div className="d-flex align-items-center gap-2">
                     <label

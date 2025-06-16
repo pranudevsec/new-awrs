@@ -19,6 +19,7 @@ export interface ApplicationDetail {
   unit_id: number;
   date_init: string;
   fds: any;
+  remarks:any;
   clarifications_count: number;
   total_pending_clarifications: number;
   unit_name: string;
@@ -56,6 +57,7 @@ export interface UpdateApplicationResponse {
 
 export interface ApproveMarksParam {
   type: string;
+  remark?: string;
   application_id: number;
   applicationPriorityPoints?: number;
   parameters: {
