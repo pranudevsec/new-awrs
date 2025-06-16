@@ -54,8 +54,16 @@ const CitationReviewPage = () => {
       return {};
     }
   });
+  const [unitRemarks, setUnitRemarks] = useState(() => {
+    return localStorage.getItem("applyCitationUnitRemarks") || "";
+  });
+
   const filteredParameters = parameters.filter((param: any) => counts[param.param_id] !== undefined && counts[param.param_id] !== "");
   const groupedParams = groupParametersByCategory(filteredParameters);
+
+  useEffect(() => {
+    localStorage.setItem("applyCitationUnitRemarks", unitRemarks);
+  }, [unitRemarks]);
 
   useEffect(() => {
     if (!initializedRef.current) {
@@ -164,21 +172,21 @@ const CitationReviewPage = () => {
         }
 
         const formattedParameters = parameters
-        .map((param: any) => {
-          const trimmedName = param.name.trim();
-          const count = Number(counts[param.param_id] ?? 0);
-          const calculatedMarks = marks[param.param_id] ?? 0;
-          const uploadPath = uploadedFiles[param.param_id] || "";
-      
-          return {
-            name: trimmedName,
-            count,
-            marks: calculatedMarks,
-            upload: uploadPath,
-          };
-        })
-        .filter((param) => param.count > 0 || param.marks > 0);
-      
+          .map((param: any) => {
+            const trimmedName = param.name.trim();
+            const count = Number(counts[param.param_id] ?? 0);
+            const calculatedMarks = marks[param.param_id] ?? 0;
+            const uploadPath = uploadedFiles[param.param_id] || "";
+
+            return {
+              name: trimmedName,
+              count,
+              marks: calculatedMarks,
+              upload: uploadPath,
+            };
+          })
+          .filter((param) => param.count > 0 || param.marks > 0);
+
 
         const payload = {
           date_init: new Date().toISOString().split("T")[0],
@@ -188,6 +196,7 @@ const CitationReviewPage = () => {
             last_date: values.lastDate,
             command: values.command,
             parameters: formattedParameters,
+            unitRemarks: unitRemarks
           },
         };
 
@@ -376,8 +385,8 @@ const CitationReviewPage = () => {
                                 >
                                   {/* {SVGICON.app.pdf} */}
                                   <span style={{ fontSize: 14, wordBreak: 'break-word' }}>
-          {uploadedFiles[param.param_id]?.split("/").pop()}
-        </span>
+                                    {uploadedFiles[param.param_id]?.split("/").pop()}
+                                  </span>
                                 </a>
                               ) : (
                                 <input
@@ -398,6 +407,15 @@ const CitationReviewPage = () => {
                 </table>
               </div>
             ))}
+            <div style={{ maxWidth: 400 }}>
+              <FormInput
+                label="Unit Remarks"
+                name="unitRemarks"
+                placeholder="Enter remarks (max 500 characters)"
+                value={unitRemarks}
+                onChange={(e) => setUnitRemarks(e.target.value)}
+              />
+            </div>
           </div>
           <div className="submit-button-wrapper">
             <div className="row text-center text-sm-start mb-3">
@@ -420,13 +438,13 @@ const CitationReviewPage = () => {
             </div>
 
             <div className="d-flex flex-sm-row flex-column gap-sm-3 gap-2 justify-content-end">
-            <button
-  type="button"
-  className="_btn outline"
-  onClick={() => navigate(-1)} 
->
-  Back
-</button>
+              <button
+                type="button"
+                className="_btn outline"
+                onClick={() => navigate(-1)}
+              >
+                Back
+              </button>
               <button type="submit" className="_btn primary">
                 Submit
               </button>

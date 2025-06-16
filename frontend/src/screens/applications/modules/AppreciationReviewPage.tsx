@@ -54,6 +54,15 @@ const AppreciationReviewPage = () => {
             return {};
         }
     });
+
+    const [unitRemarks, setUnitRemarks] = useState(() => {
+        return localStorage.getItem("applyAppreciationUnitRemarks") || "";
+    });
+
+    useEffect(() => {
+        localStorage.setItem("applyAppreciationUnitRemarks", unitRemarks);
+    }, [unitRemarks]);
+
     const filteredParameters = parameters.filter((param: any) => counts[param.param_id] !== undefined && counts[param.param_id] !== "");
     const groupedParams = groupParametersByCategory(filteredParameters);
 
@@ -185,6 +194,7 @@ const AppreciationReviewPage = () => {
                         last_date: values.lastDate,
                         command: values.command,
                         parameters: formattedParameters,
+                        unitRemarks: unitRemarks
                     },
                 };
 
@@ -373,8 +383,8 @@ const AppreciationReviewPage = () => {
                                                                 >
                                                                     {/* {SVGICON.app.pdf} */}
                                                                     <span style={{ fontSize: 14, wordBreak: 'break-word' }}>
-          {uploadedFiles[param.param_id]?.split("/").pop()}
-        </span>
+                                                                        {uploadedFiles[param.param_id]?.split("/").pop()}
+                                                                    </span>
                                                                 </a>
                                                             ) : (
                                                                 <input
@@ -395,6 +405,15 @@ const AppreciationReviewPage = () => {
                                 </table>
                             </div>
                         ))}
+                        <div style={{ maxWidth: 400 }}>
+                            <FormInput
+                                label="Unit Remarks"
+                                name="unitRemarks"
+                                placeholder="Enter remarks (max 500 characters)"
+                                value={unitRemarks}
+                                onChange={(e) => setUnitRemarks(e.target.value)}
+                            />
+                        </div>
                     </div>
                     <div className="submit-button-wrapper">
                         <div className="row text-center text-sm-start mb-3">
@@ -417,13 +436,13 @@ const AppreciationReviewPage = () => {
                         </div>
 
                         <div className="d-flex flex-sm-row flex-column gap-sm-3 gap-2 justify-content-end">
-                        <button
-  type="button"
-  className="_btn outline"
-  onClick={() => navigate(-1)} 
->
-  Back
-</button>
+                            <button
+                                type="button"
+                                className="_btn outline"
+                                onClick={() => navigate(-1)}
+                            >
+                                Back
+                            </button>
                             <button type="submit" className="_btn primary">
                                 Submit
                             </button>

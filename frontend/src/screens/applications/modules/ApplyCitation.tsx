@@ -62,6 +62,9 @@ const ApplyCitation = () => {
       return {};
     }
   });
+  const [unitRemarks, setUnitRemarks] = useState(() => {
+    return localStorage.getItem("applyCitationUnitRemarks") || "";
+  });
 
   useEffect(() => {
     if (id) {
@@ -94,6 +97,10 @@ const ApplyCitation = () => {
       dispatch(resetCitationState());
     };
   }, [id]);
+
+  useEffect(() => {
+    localStorage.setItem("applyCitationUnitRemarks", unitRemarks);
+  }, [unitRemarks]);
 
   // Populate from API data
   useEffect(() => {
@@ -390,7 +397,6 @@ const ApplyCitation = () => {
       return;
     }
 
-
     // If all good, navigate
     navigate('/applications/citation-review');
   };
@@ -401,6 +407,7 @@ const ApplyCitation = () => {
         await dispatch(deleteCitation(Number(id))).unwrap();
         localStorage.removeItem(DRAFT_STORAGE_KEY);
         localStorage.removeItem(DRAFT_FILE_UPLOAD_KEY);
+        localStorage.removeItem("applyCitationUnitRemarks");
         setCounts({});
         setMarks({});
         setUploadedFiles({});
@@ -410,6 +417,7 @@ const ApplyCitation = () => {
     } else {
       localStorage.removeItem(DRAFT_STORAGE_KEY);
       localStorage.removeItem(DRAFT_FILE_UPLOAD_KEY);
+      localStorage.removeItem("applyCitationUnitRemarks");
       setCounts({});
       setMarks({});
       setUploadedFiles({});
@@ -597,7 +605,12 @@ const ApplyCitation = () => {
               </div>
             ))}
             <div style={{ maxWidth: 400 }}>
-              <FormInput label="Unit Remarks" name="unitRemarks" value="" placeholder="Enter remarks (max 500 characters)"
+              <FormInput
+                label="Unit Remarks"
+                name="unitRemarks"
+                placeholder="Enter remarks (max 500 characters)"
+                value={unitRemarks}
+                onChange={(e) => setUnitRemarks(e.target.value)}
               />
             </div>
           </div>

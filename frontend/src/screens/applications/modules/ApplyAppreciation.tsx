@@ -39,7 +39,7 @@ const ApplyAppreciation = () => {
     localStorage.removeItem("applyAppreciationDraft");
     localStorage.removeItem("applyAppreciationUploadedDocsDraft");
   }, []);
-  
+
   const { profile } = useAppSelector((state) => state.admin);
   const { loading } = useAppSelector((state) => state.parameter);
 
@@ -62,77 +62,86 @@ const ApplyAppreciation = () => {
       return {};
     }
   });
-// Load from API or localStorage
-useEffect(() => {
-  if (id) {
-    dispatch(fetchAppreciationById(Number(id)));
-  } else {
-    const savedDraft = localStorage.getItem(DRAFT_STORAGE_KEY);
-    const savedUploads = localStorage.getItem(DRAFT_FILE_UPLOAD_KEY);
+  const [unitRemarks, setUnitRemarks] = useState(() => {
+    return localStorage.getItem("applyAppreciationUnitRemarks") || "";
+  });
 
-    if (savedDraft) {
-      try {
-        const parsed = JSON.parse(savedDraft);
-        if (parsed.counts) setCounts(parsed.counts);
-        if (parsed.marks) setMarks(parsed.marks);
-      } catch (err) {
-        console.error("Failed to parse draft counts/marks", err);
-      }
-    }
+  // Load from API or localStorage
+  useEffect(() => {
+    if (id) {
+      dispatch(fetchAppreciationById(Number(id)));
+    } else {
+      const savedDraft = localStorage.getItem(DRAFT_STORAGE_KEY);
+      const savedUploads = localStorage.getItem(DRAFT_FILE_UPLOAD_KEY);
 
-    if (savedUploads) {
-      try {
-        const parsedUploads = JSON.parse(savedUploads);
-        setUploadedFiles(parsedUploads);
-      } catch (err) {
-        console.error("Failed to parse uploaded file draft", err);
-      }
-    }
-  }
-
-  return () => {
-    dispatch(resetAppreciationState());
-  };
-}, [id, dispatch]);
-// Populate from API data
-useEffect(() => {
-  if (draftData?.appre_fds?.parameters && parameters?.length > 0) {
-    const newCounts: Record<string, string> = {};
-    const newMarks: Record<string, number> = {};
-    const newUploads: Record<number, string> = {};
-
-    const nameToIdMap = parameters.reduce((acc: Record<string, string>, param: any) => {
-      acc[param.name.trim()] = String(param.param_id);
-      return acc;
-    }, {});
-
-    draftData.appre_fds.parameters.forEach((param: any) => {
-      const paramId = nameToIdMap[param.name.trim()];
-      if (paramId) {
-        newCounts[paramId] = String(param.count);
-        newMarks[paramId] = param.marks;
-        if (param.upload) {
-          newUploads[Number(paramId)] = param.upload;
+      if (savedDraft) {
+        try {
+          const parsed = JSON.parse(savedDraft);
+          if (parsed.counts) setCounts(parsed.counts);
+          if (parsed.marks) setMarks(parsed.marks);
+        } catch (err) {
+          console.error("Failed to parse draft counts/marks", err);
         }
       }
-    });
 
-    setCounts(newCounts);
-    setMarks(newMarks);
-    setUploadedFiles(newUploads);
-  }
-}, [draftData, parameters]);
-    useEffect(() => {
-      if (id && draftData?.appre_fds?.parameters) {
-        const uploads: Record<number, string> = {};
-        draftData.appre_fds.parameters.forEach((param: any, index: number) => {
-          if (param.upload) {
-            uploads[param.param_id || index] = param.upload; // Prefer param_id
-          }
-        });
-        setUploadedFiles(uploads);
+      if (savedUploads) {
+        try {
+          const parsedUploads = JSON.parse(savedUploads);
+          setUploadedFiles(parsedUploads);
+        } catch (err) {
+          console.error("Failed to parse uploaded file draft", err);
+        }
       }
-    }, [id, draftData]);
+    }
+
+    return () => {
+      dispatch(resetAppreciationState());
+    };
+  }, [id, dispatch]);
+
+  useEffect(() => {
+    localStorage.setItem("applyAppreciationUnitRemarks", unitRemarks);
+  }, [unitRemarks]);
+
+  // Populate from API data
+  useEffect(() => {
+    if (draftData?.appre_fds?.parameters && parameters?.length > 0) {
+      const newCounts: Record<string, string> = {};
+      const newMarks: Record<string, number> = {};
+      const newUploads: Record<number, string> = {};
+
+      const nameToIdMap = parameters.reduce((acc: Record<string, string>, param: any) => {
+        acc[param.name.trim()] = String(param.param_id);
+        return acc;
+      }, {});
+
+      draftData.appre_fds.parameters.forEach((param: any) => {
+        const paramId = nameToIdMap[param.name.trim()];
+        if (paramId) {
+          newCounts[paramId] = String(param.count);
+          newMarks[paramId] = param.marks;
+          if (param.upload) {
+            newUploads[Number(paramId)] = param.upload;
+          }
+        }
+      });
+
+      setCounts(newCounts);
+      setMarks(newMarks);
+      setUploadedFiles(newUploads);
+    }
+  }, [draftData, parameters]);
+  useEffect(() => {
+    if (id && draftData?.appre_fds?.parameters) {
+      const uploads: Record<number, string> = {};
+      draftData.appre_fds.parameters.forEach((param: any, index: number) => {
+        if (param.upload) {
+          uploads[param.param_id || index] = param.upload; // Prefer param_id
+        }
+      });
+      setUploadedFiles(uploads);
+    }
+  }, [id, draftData]);
   useEffect(() => {
     if (!initializedRef.current) {
       const firstCategory = Object.keys(groupedParams)[0];
@@ -145,13 +154,13 @@ useEffect(() => {
   useEffect(() => {
     const container = scrollContainerRef.current;
     if (!container) return;
-  
+
     const handleScroll = () => {
       const containerTop = container.getBoundingClientRect().top;
-  
+
       let closestCategory = "";
       let minOffset = Infinity;
-  
+
       Object.entries(categoryRefs.current).forEach(([category, el]) => {
         if (el) {
           const offset = Math.abs(el.getBoundingClientRect().top - containerTop);
@@ -161,16 +170,16 @@ useEffect(() => {
           }
         }
       });
-  
+
       if (closestCategory && closestCategory !== activeTab) {
         setActiveTab(closestCategory);
       }
     };
-  
+
     container.addEventListener("scroll", handleScroll);
     return () => container.removeEventListener("scroll", handleScroll);
   }, [activeTab]);
-  
+
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const categoryRefs = useRef<{ [key: string]: HTMLDivElement | null }>({});
 
@@ -297,14 +306,14 @@ useEffect(() => {
           isDraft: isDraftRef.current,
         };
 
- 
+
         let resultAction;
         if (id) {
           resultAction = await dispatch(updateAppreciation({ id: Number(id), ...payload }));
         } else {
           resultAction = await dispatch(createAppreciation(payload));
         }
-            const result = unwrapResult(resultAction);
+        const result = unwrapResult(resultAction);
 
         if (result.success) {
           formik.resetForm();
@@ -376,6 +385,7 @@ useEffect(() => {
         await dispatch(deleteAppreciation(Number(id))).unwrap();
         localStorage.removeItem(DRAFT_STORAGE_KEY);
         localStorage.removeItem(DRAFT_FILE_UPLOAD_KEY);
+        localStorage.removeItem("applyAppreciationUnitRemarks");
         setCounts({});
         setMarks({});
         setUploadedFiles({});
@@ -385,6 +395,7 @@ useEffect(() => {
     } else {
       localStorage.removeItem(DRAFT_STORAGE_KEY);
       localStorage.removeItem(DRAFT_FILE_UPLOAD_KEY);
+      localStorage.removeItem("applyAppreciationUnitRemarks");
       setCounts({});
       setMarks({});
       setUploadedFiles({});
@@ -394,20 +405,20 @@ useEffect(() => {
     const uploadedDocs = JSON.parse(localStorage.getItem(DRAFT_FILE_UPLOAD_KEY) || "{}");
 
 
-const missingUploads = parameters.filter((param: any) => {
-  const count = Number(counts[param.param_id] ?? 0);
-  const mark = Number(marks[param.param_id] ?? 0);
-  const requiresUpload = param.proof_reqd && (count > 0 || mark > 0);
-  const fileUploaded = uploadedDocs[param.param_id];
+    const missingUploads = parameters.filter((param: any) => {
+      const count = Number(counts[param.param_id] ?? 0);
+      const mark = Number(marks[param.param_id] ?? 0);
+      const requiresUpload = param.proof_reqd && (count > 0 || mark > 0);
+      const fileUploaded = uploadedDocs[param.param_id];
 
-  return requiresUpload && !fileUploaded;
-});
+      return requiresUpload && !fileUploaded;
+    });
 
-if (missingUploads.length > 0) {
-  toast.error("Please upload all necessary files before previewing.");
-  return;
-}
-      
+    if (missingUploads.length > 0) {
+      toast.error("Please upload all necessary files before previewing.");
+      return;
+    }
+
 
     // If all good, navigate
     navigate('/applications/appreciation-review');
@@ -558,65 +569,74 @@ if (missingUploads.length > 0) {
                           </div>
                         </td>
                         <td style={{ width: 300, minWidth: 300, maxWidth: 300 }}>
-  {param.proof_reqd ? (
-    uploadedFiles[param.param_id] ? (
-      <a
-        href={`${baseURL}${uploadedFiles[param.param_id]}`}
-        target="_blank"
-        rel="noopener noreferrer"
-        style={{ fontSize: 18, display: "flex", alignItems: "center", gap: "8px" }}
-      >
-        {/* {SVGICON.app.pdf} */}
-        <span style={{ fontSize: 14, wordBreak: 'break-word' }}>
-          {uploadedFiles[param.param_id]?.split("/").pop()}
-        </span>
-      </a>
-    ) : (
-      <input
-        type="file"
-        className="form-control"
-        autoComplete="off"
-        onChange={(e) => handleFileChange(e, param.param_id, param.name)}
-      />
-    )
-  ) : (
-    <span>Not required</span>
-  )}
-</td>
+                          {param.proof_reqd ? (
+                            uploadedFiles[param.param_id] ? (
+                              <a
+                                href={`${baseURL}${uploadedFiles[param.param_id]}`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                style={{ fontSize: 18, display: "flex", alignItems: "center", gap: "8px" }}
+                              >
+                                {/* {SVGICON.app.pdf} */}
+                                <span style={{ fontSize: 14, wordBreak: 'break-word' }}>
+                                  {uploadedFiles[param.param_id]?.split("/").pop()}
+                                </span>
+                              </a>
+                            ) : (
+                              <input
+                                type="file"
+                                className="form-control"
+                                autoComplete="off"
+                                onChange={(e) => handleFileChange(e, param.param_id, param.name)}
+                              />
+                            )
+                          ) : (
+                            <span>Not required</span>
+                          )}
+                        </td>
 
-             </tr>
+                      </tr>
                     ))}
                   </tbody>
                 </table>
               </div>
             ))}
+            <div style={{ maxWidth: 400 }}>
+              <FormInput
+                label="Unit Remarks"
+                name="unitRemarks"
+                placeholder="Enter remarks (max 500 characters)"
+                value={unitRemarks}
+                onChange={(e) => setUnitRemarks(e.target.value)}
+              />
+            </div>
           </div>
           <div className="submit-button-wrapper">
             <div className="d-flex flex-sm-row flex-column gap-sm-3 gap-1 justify-content-end">
-            <button
-  type="button"
-  className="_btn outline"
-  onClick={() => {
-    isDraftRef.current = true;
-    formik.handleSubmit(); 
-  }}
->
-{id ? "Save Draft" : "Save as Draft"}
-</button>
               <button
-  type="button"
-  className="_btn primary"
-  onClick={handlePreviewClick}
->
-  Preview
-</button>
-<button
-        type="button"
-        className="_btn danger"
-        onClick={handleDeleteDraft}
-      >
-        {id ? "Delete Draft" : "Discard"}
-      </button>
+                type="button"
+                className="_btn outline"
+                onClick={() => {
+                  isDraftRef.current = true;
+                  formik.handleSubmit();
+                }}
+              >
+                {id ? "Save Draft" : "Save as Draft"}
+              </button>
+              <button
+                type="button"
+                className="_btn primary"
+                onClick={handlePreviewClick}
+              >
+                Preview
+              </button>
+              <button
+                type="button"
+                className="_btn danger"
+                onClick={handleDeleteDraft}
+              >
+                {id ? "Delete Draft" : "Discard"}
+              </button>
             </div>
           </div>
         </form>
