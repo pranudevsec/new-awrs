@@ -49,21 +49,29 @@ const Login = () => {
         },
         validationSchema: LoginSchema,
         onSubmit: async (values, { resetForm }) => {
-            const resultAction = await dispatch(reqToLogin(values));
-            const result = unwrapResult(resultAction);
-            if (result.success) {
-                resetForm();
-                setTimeout(() => {
-                    if (values.user_role === "admin") {
-                        navigate("/admin-settings");
-                    } else if (values.user_role === "command") {
-                        navigate("/dashboard");
-                    } else {
-                        navigate("/");
-                    }
-                }, 400);
+            const payload = { ...values };
+          
+            if (payload.user_role.startsWith("cw2_")) {
+              payload.cw2_type = payload.user_role.split("cw2_")[1];
+              payload.user_role = "cw2";
             }
-        },
+          
+            const resultAction = await dispatch(reqToLogin(payload));
+            const result = unwrapResult(resultAction);
+          
+            if (result.success) {
+              resetForm();
+          
+              setTimeout(() => {
+                if (values.user_role === "admin") {
+                  navigate("/admin-settings");
+                } else if (values.user_role === "command") {
+                  navigate("/dashboard");
+                } else {
+                  navigate("/");
+                }
+              }, 400);
+            }}
     });
 
     const handleRoleChange = (selectedOption: any) => {

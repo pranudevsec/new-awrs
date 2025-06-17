@@ -2,7 +2,7 @@ export interface ApplicationUnit {
   id: number;
   name: string;
   description: string;
-  fds: any;
+  fds?: any;
   type: string;
 }
 

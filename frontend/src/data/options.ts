@@ -72,18 +72,31 @@ export const hierarchicalStructure = [
   ["training", "corps5", "divison5", "brigade5", "unit5"],
 ];
 
-export const roleOptions: OptionType[] = [
-  { value: "unit", label: "Unit" },
-  { value: "brigade", label: "Brigade" },
-  { value: "division", label: "Division" },
-  { value: "corps", label: "Corps" },
-  { value: "command", label: "Command" },
-  { value: "headquarter", label: "Headquarter" },
-  { value: "cw2", label: "CW2" },
-  { value: "admin", label: "Admin" },
+// export const roleOptions: OptionType[] = [
+//   { value: "unit", label: "Unit" },
+//   { value: "brigade", label: "Brigade" },
+//   { value: "division", label: "Division" },
+//   { value: "corps", label: "Corps" },
+//   { value: "command", label: "Command" },
+//   { value: "headquarter", label: "Headquarter" },
+//   { value: "cw2", label: "CW2" },
+//   { value: "admin", label: "Admin" },
 
+// ];
+export const roleOptions = [
+  { label: "Unit", value: "unit" },
+  { label: "Brigade", value: "brigade" },
+  { label: "Division", value: "division" },
+  { label: "Corps", value: "corps" },
+  { label: "Command", value: "command" },
+  { label: "CW2", value: "headquarter" }, 
+  { label: "MO", value: "cw2_mo" },
+  { label: "OL", value: "cw2_ol" },
+  { label: "HR", value: "cw2_hr" },
+  { label: "DV", value: "cw2_dv" },
+  { label: "MP", value: "cw2_mp" },
+  { label: "Admin", value: "admin" },
 ];
-
 export const roleOptions2: OptionType[] = [
   { value: "all", label: "All" },
   { value: "unit", label: "Unit" },

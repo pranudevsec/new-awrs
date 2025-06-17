@@ -33,7 +33,10 @@ const AcceptedApplicationsList = () => {
     [key: string]: string;
   }>({});
   const hierarchy = ["unit", "brigade", "division", "corps", "command"];
+  const allRoles = ["brigade", "division", "corps", "command"];
   const lowerRole = hierarchy[hierarchy.indexOf(role) - 1] || null;
+  const currentRole = profile?.user?.user_role?.toLowerCase() ?? "";
+  const allowedRoles = allRoles.slice(0, allRoles.indexOf(currentRole) + 1);
   const getLowerRolePriority = (unit: any) => {
     if (!lowerRole || !unit?.fds?.applicationPriority) return "-";
     const priorityEntry = unit?.fds.applicationPriority.find(
@@ -117,20 +120,41 @@ const AcceptedApplicationsList = () => {
 
     return totalParameterMarks + graceMarks;
   };
-  const getDiscretionaryMarksByRole = (unit: any): number => {
-    const currentRole = profile?.user?.user_role?.toLowerCase();
+  const getDiscretionaryMarksByRole = (unit: any, role: string): number => {
     const graceEntry = unit?.fds?.applicationGraceMarks?.find(
-      (item: any) => item?.role?.toLowerCase() === currentRole
+      (item: any) => item?.role?.toLowerCase() === role.toLowerCase()
     );
     return graceEntry?.marks ?? 0;
   };
 
   // Helper function to update priority
-  const handlePriorityChange = async (unitDetail: any, value: string) => {
+  const handlePriorityChange = async (
+    unitDetail: any,
+    value: string,
+    allUnits: any[]
+  ) => {
     const priorityPoints = parseInt(value);
+    const role = profile?.user?.user_role?.toLowerCase() ?? "";
 
     if (isNaN(priorityPoints)) {
       toast.error("Please enter a valid number");
+      return;
+    }
+
+    const duplicate = allUnits.find((unit) => {
+      if (unit?.id === unitDetail?.id) return false;
+
+      return unit?.fds?.applicationPriority?.some(
+        (item: any) =>
+          item?.role?.toLowerCase() === role &&
+          item?.priority === priorityPoints
+      );
+    });
+
+    if (duplicate) {
+      toast.error(
+        `Priority ${priorityPoints} already exists for role "${role}"`
+      );
       return;
     }
 
@@ -143,6 +167,7 @@ const AcceptedApplicationsList = () => {
 
     try {
       await dispatch(approveMarks(body)).unwrap();
+      toast.success("Priority updated successfully");
     } catch (error) {
       toast.error("Failed to update priority");
     }
@@ -278,10 +303,14 @@ const AcceptedApplicationsList = () => {
               <th style={{ width: 200, minWidth: 200, maxWidth: 200 }}>
                 -ve Marks
               </th>
-              <th style={{ width: 150, minWidth: 150, maxWidth: 150 }}>
-                Points By{" "}
-                {role ? role.charAt(0).toUpperCase() + role.slice(1) : "-"}
-              </th>
+              {allowedRoles.map((role) => (
+                <th
+                  key={role}
+                  style={{ width: 150, minWidth: 150, maxWidth: 150 }}
+                >
+                  Points By {role.charAt(0).toUpperCase() + role.slice(1)}
+                </th>
+              ))}
               {role === "headquarter" && (
                 <th style={{ width: 150, minWidth: 150, maxWidth: 150 }}>
                   Command
@@ -423,9 +452,17 @@ const AcceptedApplicationsList = () => {
                   <td style={{ width: 200, minWidth: 200, maxWidth: 200 }}>
                     <p className="fw-4">{unit?.totalNegativeMarks || "-"}</p>
                   </td>
-                  <td style={{ width: 150, minWidth: 150, maxWidth: 150 }}>
-                    <p className="fw-4">{getDiscretionaryMarksByRole(unit)}</p>
-                  </td>
+                  {allowedRoles.map((role) => (
+                    <td
+                      key={role}
+                      style={{ width: 150, minWidth: 150, maxWidth: 150 }}
+                    >
+                      <p className="fw-4">
+                        {getDiscretionaryMarksByRole(unit, role)}
+                      </p>
+                    </td>
+                  ))}
+
                   {role === "headquarter" && (
                     <td style={{ width: 150, minWidth: 150, maxWidth: 150 }}>
                       <p className="fw-4">{unit?.fds?.command}</p>
@@ -453,7 +490,7 @@ const AcceptedApplicationsList = () => {
                           ...prev,
                           [unit.id]: value,
                         }));
-                        handlePriorityChange(unit, value); // Optional: only if you want to call API on every change
+                        handlePriorityChange(unit, value, units); // Optional: only if you want to call API on every change
                       }}
                     />
                   </td>
