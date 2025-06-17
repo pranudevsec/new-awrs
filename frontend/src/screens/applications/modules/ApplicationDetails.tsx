@@ -682,7 +682,8 @@ const ApplicationDetails = () => {
       )}
 
       {/* Other Remarks */}
-      {unitDetail?.remarks?.map((item: any, idx: number) => (
+      {Array.isArray(unitDetail?.remarks) &&
+  unitDetail.remarks.map((item: any, idx: number) => (
         <li
           key={idx}
           style={{

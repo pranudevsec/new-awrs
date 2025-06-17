@@ -311,6 +311,7 @@ const AcceptedApplicationsList = () => {
                   Points By {role.charAt(0).toUpperCase() + role.slice(1)}
                 </th>
               ))}
+          
               {role === "headquarter" && (
                 <th style={{ width: 150, minWidth: 150, maxWidth: 150 }}>
                   Command
@@ -328,7 +329,9 @@ const AcceptedApplicationsList = () => {
                   Priority
                 </th>
               )}
-
+          {role==='command' && <th style={{ width: 200, minWidth: 200, maxWidth: 200 }}>
+               Status
+              </th>}
               <th style={{ width: 150, minWidth: 150, maxWidth: 150 }}>
                 {role ? role.charAt(0).toUpperCase() + role.slice(1) : "-"}{" "}
                 Priority
@@ -477,6 +480,20 @@ const AcceptedApplicationsList = () => {
                       <p className="fw-4">{getLowerRolePriority(unit)}</p>
                     </td>
                   )}
+ {role === 'command' && (
+  <td style={{ width: 200, minWidth: 200, maxWidth: 200 }}>
+    <p
+      className="fw-4"
+      style={{
+        color: unit?.status_flag === 'approved' ? 'green' : 'red',
+      }}
+    >
+      {unit?.status_flag === 'approved' ? 'Approved' : 'Not Approved'}
+    </p>
+  </td>
+)}
+
+
                   <td style={{ width: 200, minWidth: 200, maxWidth: 200 }}>
                     <input
                       type="text"

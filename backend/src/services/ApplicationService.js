@@ -476,7 +476,17 @@ exports.getApplicationsOfSubordinates = async (user, query) => {
     let baseFilters = '';
     const queryParams = [unitIds];
     
-    if (isShortlisted) {
+    if (isShortlisted && user_role.toLowerCase() === "command") {
+      baseFilters = `
+        unit_id = ANY($1)
+        AND (
+          (status_flag = 'shortlisted_approved' AND last_shortlisted_approved_role = $2)
+          OR
+          (status_flag = 'approved' AND last_approved_by_role = $2)
+        )
+      `;
+      queryParams.push(user_role); // $2
+    }else if (isShortlisted) {
       baseFilters = `
         unit_id = ANY($1)
         AND status_flag = 'shortlisted_approved'
@@ -770,7 +780,7 @@ exports.getApplicationsScoreboard = async (user, query) => {
 
   try {
     const { user_role } = user;
-    const { award_type, search, page = 1, limit = 10 } = query;
+    const { award_type, search, page = 1, limit = 10,isShortlisted} = query;
 
     if (!["command", "headquarter"].includes(user_role.toLowerCase())) {
       return ResponseHelper.error(403, "Access denied. Only 'command' and 'headquarter' roles allowed.");
@@ -1025,6 +1035,134 @@ exports.getApplicationsScoreboard = async (user, query) => {
         netMarks,
       };
     });
+
+    if (isShortlisted) {
+      const unitIdSet = [...new Set(allApps.map(app => app.unit_id))];
+      const unitDetailsRes = await client.query(
+        `SELECT * FROM Unit_tab WHERE unit_id = ANY($1)`,
+        [unitIdSet]
+      );
+      const unitDetailsMap = unitDetailsRes.rows.reduce((acc, unit) => {
+        acc[unit.unit_id] = unit;
+        return acc;
+      }, {});
+    
+      allApps = allApps.map(app => ({
+        ...app,
+        unit_details: unitDetailsMap[app.unit_id] || null,
+      }));
+    
+      const allParameterNames = Array.from(
+        new Set(
+          allApps.flatMap(app => app.fds?.parameters?.map(p => p.name?.trim().toLowerCase()) || [])
+        )
+      );
+    
+      const parameterMasterRes = await client.query(
+        `SELECT name, negative FROM Parameter_Master WHERE LOWER(TRIM(name)) = ANY($1)`,
+        [allParameterNames]
+      );
+    
+      const negativeParamMap = parameterMasterRes.rows.reduce((acc, row) => {
+        acc[row.name.trim().toLowerCase()] = row.negative;
+        return acc;
+      }, {});
+    
+      // --- Calculate totalNegativeMarks, totalMarks, netMarks
+      allApps = allApps.map(app => {
+        const parameters = app.fds?.parameters || [];
+    
+        const totalMarks = parameters.reduce((sum, param) => sum + (param.marks || 0), 0);
+    
+        const totalNegativeMarks = parameters.reduce((sum, param) => {
+          const isNegative = negativeParamMap[param.name.trim().toLowerCase()];
+          return isNegative ? sum + (param.marks || 0) : sum;
+        }, 0);
+    
+        const netMarks = totalMarks - totalNegativeMarks;
+    
+        return {
+          ...app,
+          totalMarks,
+          totalNegativeMarks,
+          netMarks,
+        };
+      });
+    }
+    const ROLE_HIERARCHY = ["unit", "brigade", "division", "corps", "command"];
+
+    if (isShortlisted) {
+      const unitIdSet = [...new Set(allApps.map(app => app.unit_id))];
+    
+      const unitDetailsRes = await client.query(
+        `SELECT * FROM Unit_tab WHERE unit_id = ANY($1)`,
+        [unitIdSet]
+      );
+      const unitDetailsMap = unitDetailsRes.rows.reduce((acc, unit) => {
+        acc[unit.unit_id] = unit;
+        return acc;
+      }, {});
+    
+      allApps = allApps.map(app => ({
+        ...app,
+        unit_details: unitDetailsMap[app.unit_id] || null,
+      }));
+    
+      const allParameterNames = Array.from(
+        new Set(
+          allApps.flatMap(app => app.fds?.parameters?.map(p => p.name?.trim().toLowerCase()) || [])
+        )
+      );
+    
+      const parameterMasterRes = await client.query(
+        `SELECT name, negative FROM Parameter_Master WHERE LOWER(TRIM(name)) = ANY($1)`,
+        [allParameterNames]
+      );
+    
+      const negativeParamMap = parameterMasterRes.rows.reduce((acc, row) => {
+        acc[row.name.trim().toLowerCase()] = row.negative;
+        return acc;
+      }, {});
+    
+      // Calculate marks
+      allApps = allApps.map(app => {
+        const parameters = app.fds?.parameters || [];
+    
+        const totalMarks = parameters.reduce((sum, param) => sum + (param.marks || 0), 0);
+    
+        const totalNegativeMarks = parameters.reduce((sum, param) => {
+          const isNegative = negativeParamMap[param.name.trim().toLowerCase()];
+          return isNegative ? sum + (param.marks || 0) : sum;
+        }, 0);
+    
+        const netMarks = totalMarks - totalNegativeMarks;
+    
+        return {
+          ...app,
+          totalMarks,
+          totalNegativeMarks,
+          netMarks,
+        };
+      });
+    
+      // Role-based priority sorting
+      const currentRole = user_role?.toLowerCase();
+      const currentRoleIndex = ROLE_HIERARCHY.indexOf(currentRole);
+      if (currentRoleIndex > 0) {
+        const lowerRole = ROLE_HIERARCHY[currentRoleIndex - 1];
+    
+        allApps.sort((a, b) => {
+          const aPriorityEntry = a.fds?.applicationPriority?.find(p => p.role === lowerRole);
+          const bPriorityEntry = b.fds?.applicationPriority?.find(p => p.role === lowerRole);
+    
+          const aPriority = aPriorityEntry?.priority ?? Number.MAX_SAFE_INTEGER;
+          const bPriority = bPriorityEntry?.priority ?? Number.MAX_SAFE_INTEGER;
+    
+          return aPriority - bPriority;
+        });
+      }
+    }
+
     const pagination = {
       totalItems,
       totalPages: Math.ceil(totalItems / limitInt),
