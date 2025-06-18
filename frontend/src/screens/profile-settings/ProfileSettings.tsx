@@ -43,6 +43,7 @@ const ProfileSettings = () => {
   const [officers, setOfficers] = useState<Officer[]>([
     { serialNumber: "", icNumber: "", rank: "", name: "", appointment: "", digitalSign: "" },
   ]);
+  const role = profile?.user?.user_role?.toLowerCase() ?? "";
 
   useEffect(() => {
     if (profile) setFirstLoad(false);
@@ -346,7 +347,8 @@ const ProfileSettings = () => {
         </div>
       </form>
 
-      {/* Commander */}
+
+{ !['unit', 'headquarter', 'cw2'].includes(role) &&  <> {/* Commander */}
       <div className="d-flex flex-sm-row flex-column align-items-sm-center justify-content-between mb-4">
         <Breadcrumb title="Commander" />
       </div>
@@ -548,7 +550,7 @@ const ProfileSettings = () => {
             Add
           </button>
         </div>
-      </form>
+      </form></> }
     </div>
   );
 };
