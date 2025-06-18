@@ -12,14 +12,14 @@ import type {
 // ✅ Get ScoreBoards
 export const getScoreBoards = createAsyncThunk<
   CommandPanelResponse,
-  { awardType: string; search: string; page?: number; limit?: number ; isShortlisted?: boolean;}
+  { award_type: string; search: string; page?: number; limit?: number ; isShortlisted?: boolean;}
 >(
   "commandPanel/get",
-  async ({ awardType, search, page, limit,isShortlisted }, { rejectWithValue }) => {
+  async ({ award_type, search, page, limit,isShortlisted }, { rejectWithValue }) => {
     try {
       const response = await Axios.get(
-        `${apiEndPoints.scoreBoard}?awardType=${
-          awardType || ""
+        `${apiEndPoints.scoreBoard}?award_type=${
+          award_type || ""
         }&search=${search}&page=${page || 1}&limit=${limit || 10}&isShortlisted=${
           isShortlisted || ""
         }`

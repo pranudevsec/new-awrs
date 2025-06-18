@@ -26,11 +26,11 @@ export interface CreateAppreciationResponse {
 
 export interface UpdateAppreciationRequest {
   id: number;
-  appre_fds: AppreciationFormData;
+  isShortlisted?: boolean;
+  appre_fds?: AppreciationFormData; // Make this optional
   date_init?: string;
   isDraft?: boolean;
 }
-
 export interface UpdateAppreciationResponse {
   success: boolean;
   message: string;

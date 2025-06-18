@@ -18,6 +18,7 @@ export interface Fds {
   award_type: string;
   parameters: Parameter[];
   cycle_period: string;
+  applicationPriority:any;
 }
 
 export interface Application {
@@ -29,6 +30,7 @@ export interface Application {
   status_flag: string;
   last_approved_by_role: string;
   last_approved_at: string;
+  isShortlisted: boolean;
   isshortlisted: boolean;
   total_marks: number;
 }

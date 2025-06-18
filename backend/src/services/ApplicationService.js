@@ -868,11 +868,19 @@ exports.getApplicationsScoreboard = async (user, query) => {
     }
 
     const dataParams = [...countParams];
-    if (award_type) dataParams.push(award_type);
-    if (search) dataParams.push(`%${search.toLowerCase()}%`);
-    dataParams.push(limitInt, offset);
+    let awardTypeIndex = null;
+    let searchIndex = null;
+    
+    if (award_type) {
+      awardTypeIndex = dataParams.length + 1;
+      dataParams.push(award_type);
+    }
+    
+    if (search) {
+      searchIndex = dataParams.length + 1;
+      dataParams.push(`%${search.toLowerCase()}%`);
+    }
 
-    // Query with UNION ALL to get combined results with pagination
     const dataQuery = `
     (
       SELECT
@@ -899,8 +907,8 @@ exports.getApplicationsScoreboard = async (user, query) => {
       FROM Citation_tab c
       JOIN Unit_tab u ON u.unit_id = c.unit_id
       WHERE ${filterWhereClause('citation_fds', 'c')}
-        ${award_type ? `AND LOWER(c.citation_fds->>'award_type') = LOWER($${dataParams.length - 1})` : ''}
-        ${search ? `AND (CAST(c.citation_id AS TEXT) ILIKE $${dataParams.length - 0} OR LOWER(c.citation_fds->>'cycle_period') ILIKE $${dataParams.length - 0})` : ''}
+        ${award_type ? `AND LOWER(c.citation_fds->>'award_type') = LOWER($${awardTypeIndex})` : ''}
+        ${search ? `AND (CAST(c.citation_id AS TEXT) ILIKE $${searchIndex} OR LOWER(c.citation_fds->>'cycle_period') ILIKE $${searchIndex})` : ''}
     )
     UNION ALL
     (
@@ -928,14 +936,13 @@ exports.getApplicationsScoreboard = async (user, query) => {
       FROM Appre_tab a
       JOIN Unit_tab u ON u.unit_id = a.unit_id
       WHERE ${filterWhereClause('appre_fds', 'a')}
-        ${award_type ? `AND LOWER(a.appre_fds->>'award_type') = LOWER($${dataParams.length - 1})` : ''}
-        ${search ? `AND (CAST(a.appreciation_id AS TEXT) ILIKE $${dataParams.length - 0} OR LOWER(a.appre_fds->>'cycle_period') ILIKE $${dataParams.length - 0})` : ''}
+        ${award_type ? `AND LOWER(a.appre_fds->>'award_type') = LOWER($${awardTypeIndex})` : ''}
+        ${search ? `AND (CAST(a.appreciation_id AS TEXT) ILIKE $${searchIndex} OR LOWER(a.appre_fds->>'cycle_period') ILIKE $${searchIndex})` : ''}
     )
     ORDER BY date_init DESC
-    LIMIT $${dataParams.length - 1} OFFSET $${dataParams.length}
-  `;
-  
-
+    `;
+    
+    
     // Helper to build base filter depending on role
     function filterWhereClause(fdsField, alias) {
       if (isCommand) {
@@ -1027,14 +1034,20 @@ exports.getApplicationsScoreboard = async (user, query) => {
       }, 0);
   
       const netMarks = totalMarks - totalNegativeMarks;
-  
+    // Extract command priority
+    const commandPriorityObj = app.fds?.applicationPriority?.find(
+      (p) => p.role?.toLowerCase() === 'command'
+    );
+    const commandPriority = commandPriorityObj?.priority ?? Infinity;
       return {
         ...app,
         totalMarks,
         totalNegativeMarks,
         netMarks,
+        commandPriority
       };
     });
+    allApps.sort((a, b) => a.commandPriority - b.commandPriority);
 
     if (isShortlisted) {
       const unitIdSet = [...new Set(allApps.map(app => app.unit_id))];
@@ -1163,6 +1176,9 @@ exports.getApplicationsScoreboard = async (user, query) => {
       }
     }
 
+// Slice the data for current page
+const paginatedData = allApps.slice(offset, offset + limitInt);
+
     const pagination = {
       totalItems,
       totalPages: Math.ceil(totalItems / limitInt),
@@ -1170,7 +1186,7 @@ exports.getApplicationsScoreboard = async (user, query) => {
       itemsPerPage: limitInt,
     };
     
-    return ResponseHelper.success(200, "Fetched approved applications", allApps, pagination);
+    return ResponseHelper.success(200, "Fetched approved applications", paginatedData, pagination);
 
   } catch (err) {
     return ResponseHelper.error(500, "Failed to fetch scoreboard data", err.message);
