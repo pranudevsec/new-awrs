@@ -268,7 +268,6 @@ const ApplicationDetails = () => {
 
   const handleGraceMarksChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
-    console.log('value---', value)
     setGraceMarks(value);
     debouncedGraceMarksSave(value);
   };
@@ -759,7 +758,7 @@ const ApplicationDetails = () => {
                       onChange={handleRemarksChange}
                     />
                   </div>
-                  <div className="d-flex align-items-center gap-2">
+                  {/* <div className="d-flex align-items-center gap-2">
                     <label
                       className="fw-medium text-muted mb-0"
                       style={{ whiteSpace: "nowrap" }}
@@ -774,16 +773,16 @@ const ApplicationDetails = () => {
                       value={graceMarks}
                       onChange={handleGraceMarksChange}
                     />
-                  </div>
+                  </div> */}
 
                   <button
                     type="button"
                     className="_btn success"
                     onClick={() => {
-                      if (graceMarks === "" || graceMarks === null || isNaN(Number(graceMarks))) {
-                        toast.error("Please enter Discretionary Points before approving.");
-                        return;
-                      }
+                      // if (graceMarks === "" || graceMarks === null || isNaN(Number(graceMarks))) {
+                      //   toast.error("Please enter Discretionary Points before approving.");
+                      //   return;
+                      // }
 
                       dispatch(
                         updateApplication({

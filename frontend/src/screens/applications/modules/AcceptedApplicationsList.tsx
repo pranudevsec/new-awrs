@@ -15,6 +15,7 @@ import EmptyTable from "../../../components/ui/empty-table/EmptyTable";
 import Loader from "../../../components/ui/loader/Loader";
 import Pagination from "../../../components/ui/pagination/Pagination";
 import toast from "react-hot-toast";
+import ReqSignatureApproveModal from "../../../modals/ReqSignatureApproveModal";
 
 const AcceptedApplicationsList = () => {
   const dispatch = useAppDispatch();
@@ -23,6 +24,7 @@ const AcceptedApplicationsList = () => {
   const { units, loading, meta } = useAppSelector((state) => state.application);
 
   // States
+  const [showSignatureModal, setShowSignatureModal] = useState(false);
   const [awardType, setAwardType] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState<string>("");
   const [debouncedSearch, setDebouncedSearch] = useState<string>("");
@@ -36,7 +38,7 @@ const AcceptedApplicationsList = () => {
   const allRoles = ["brigade", "division", "corps", "command"];
   const lowerRole = hierarchy[hierarchy.indexOf(role) - 1] || null;
   const currentRole = profile?.user?.user_role?.toLowerCase() ?? "";
-  const allowedRoles = allRoles.slice(0, allRoles.indexOf(currentRole) + 1);
+  const allowedRoles = allRoles.slice(0, allRoles.indexOf(currentRole));
   const getLowerRolePriority = (unit: any) => {
     if (!lowerRole || !unit?.fds?.applicationPriority) return "-";
     const priorityEntry = unit?.fds.applicationPriority.find(
@@ -223,6 +225,39 @@ const AcceptedApplicationsList = () => {
     }
   };
 
+  const [graceMarksValues, setGraceMarksValues] = useState<{ [key: string]: string }>({});
+
+  useEffect(() => {
+    const initialGraceValues: { [key: string]: string } = {};
+  
+    units.forEach((unit) => {
+      const found = unit?.fds?.applicationGraceMarks?.find(
+        (g: any) => g.role?.toLowerCase() === role
+      );
+      initialGraceValues[unit.id] = found?.marks?.toString() || "";
+    });
+  
+    setGraceMarksValues(initialGraceValues);
+  }, [units, role]);
+const handleGraceMarksChange = (unitId: string, value: string) => {
+  setGraceMarksValues((prev) => ({
+    ...prev,
+    [unitId]: value,
+  }));
+};
+
+const handleGraceMarksSave = (unitId: string, unitType: string, value: string) => {
+  if (value === undefined || value === "") return;
+
+  const body: any = {
+    type: unitType || "citation",
+    application_id: unitId,
+    applicationGraceMarks: Number(value),
+    role, // pass current role if your backend uses it
+  };
+
+  dispatch(approveMarks(body)).unwrap();
+};
   return (
     <div className="clarification-section">
       <div className="d-flex flex-sm-row flex-column align-items-sm-center justify-content-between mb-4">
@@ -311,7 +346,9 @@ const AcceptedApplicationsList = () => {
                   Points By {role.charAt(0).toUpperCase() + role.slice(1)}
                 </th>
               ))}
-          
+             <th style={{ width: 200, minWidth: 200, maxWidth: 200 }}>
+             Discretionary Points
+              </th>
               {role === "headquarter" && (
                 <th style={{ width: 150, minWidth: 150, maxWidth: 150 }}>
                   Command
@@ -465,6 +502,17 @@ const AcceptedApplicationsList = () => {
                       </p>
                     </td>
                   ))}
+<td style={{ width: 200, minWidth: 200, maxWidth: 200 }}>
+  <input
+    type="number"
+    className="form-control"
+    placeholder="Enter discretionary points"
+    autoComplete="off"
+    value={graceMarksValues[unit.id] || ""}
+    onChange={(e) => handleGraceMarksChange(unit.id, e.target.value)}
+    onBlur={(e) => handleGraceMarksSave(unit.id, unit.type, e.target.value)}
+  />
+</td>
 
                   {role === "headquarter" && (
                     <td style={{ width: 150, minWidth: 150, maxWidth: 150 }}>
@@ -563,8 +611,8 @@ const AcceptedApplicationsList = () => {
       {!loading && units.length === 0 && <EmptyTable />}
       {units && units.length > 0 && (
         <div className="button-groups d-flex flex-wrap gap-2 align-items-center justify-content-end mt-4">
-          <button className="_btn outline">Upload signature</button>
-          <button className="_btn outline">Upload signature</button>
+          {/* <button className="_btn outline">Upload signature</button>
+          <button className="_btn outline">Upload signature</button> */}
           <button
             className="_btn success"
             onClick={() => {
@@ -579,10 +627,11 @@ const AcceptedApplicationsList = () => {
                 );
                 return;
               }
-              handleBulkApprove();
+          
+              setShowSignatureModal(true)
             }}
           >
-            Approved
+            Approve
           </button>
         </div>
       )}
@@ -597,6 +646,15 @@ const AcceptedApplicationsList = () => {
           setLimit={setLimit}
         />
       )}
+      <ReqSignatureApproveModal
+  show={showSignatureModal}
+  handleClose={() => setShowSignatureModal(false)}
+  handleApprove={(signatureFile) => {
+    console.log("Approving with signature:", signatureFile);
+        handleBulkApprove();
+        setShowSignatureModal(false)
+  }}
+/>
     </div>
   );
 };
