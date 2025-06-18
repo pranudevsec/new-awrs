@@ -76,3 +76,8 @@ export const CreateCitationSchema = Yup.object().shape({
       .matches(/^\d{4}-\d{2}-\d{2}$/, 'Date must be in YYYY-MM-DD format'),
   }),
 });
+
+export const ApplyCitationSchema = Yup.object().shape({
+  unitRemarks: Yup.string()
+    .max(500, "Maximum 500 characters allowed"),
+});

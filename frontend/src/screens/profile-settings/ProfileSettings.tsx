@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, type FormEvent } from "react";
 import { useFormik } from "formik";
 import { unwrapResult } from "@reduxjs/toolkit";
 import {
@@ -16,8 +16,18 @@ import { getProfile, reqToUpdateUnitProfile } from "../../reduxToolkit/services/
 import FormSelect from "../../components/form/FormSelect";
 import Breadcrumb from "../../components/ui/breadcrumb/Breadcrumb";
 import Loader from "../../components/ui/loader/Loader";
+import FormInput from "../../components/form/FormInput";
 
 type UserRole = "unit" | "brigade" | "division" | "corps" | "command" | string;
+
+interface Officer {
+  serialNumber: string;
+  icNumber: string;
+  rank: string;
+  name: string;
+  appointment: string;
+  digitalSign: string;
+}
 
 const hierarchyMap: Record<string, string[]> = {};
 hierarchicalStructure.forEach(([command, corps, division, brigade, unit]) => {
@@ -30,6 +40,9 @@ const ProfileSettings = () => {
 
   // States
   const [firstLoad, setFirstLoad] = useState(true);
+  const [officers, setOfficers] = useState<Officer[]>([
+    { serialNumber: "", icNumber: "", rank: "", name: "", appointment: "", digitalSign: "" },
+  ]);
 
   useEffect(() => {
     if (profile) setFirstLoad(false);
@@ -38,7 +51,7 @@ const ProfileSettings = () => {
   const getVisibleFields = (role: UserRole): string[] => {
     switch (role) {
       case "unit":
-        return [ "brigade", "division", "corps", "command","location","matrix_unit","unit_type","unit"].slice().reverse();
+        return ["brigade", "division", "corps", "command", "location", "matrix_unit", "unit_type", "unit"].slice().reverse();
       case "brigade":
         return ["unit", "division", "corps", "command"].slice().reverse();
       case "division":
@@ -73,6 +86,31 @@ const ProfileSettings = () => {
     } else {
       return `Select ${capField}`;
     }
+  };
+
+  const handleChange = (
+    index: number,
+    field: keyof Officer,
+    value: string
+  ) => {
+    const updated = [...officers];
+    updated[index][field] = value;
+    setOfficers(updated);
+  };
+
+  const handleAdd = (e: FormEvent<HTMLButtonElement>) => {
+    e.preventDefault();
+    setOfficers((prev) => [
+      ...prev,
+      {
+        serialNumber: "",
+        icNumber: "",
+        rank: "",
+        name: "",
+        appointment: "",
+        digitalSign: "",
+      },
+    ]);
   };
 
   // Formik form
@@ -145,106 +183,106 @@ const ProfileSettings = () => {
         <Breadcrumb title="Profile Settings" />
       </div>
 
-      <form onSubmit={formik.handleSubmit}>
+      {/* Profile Settings */}
+      <form onSubmit={formik.handleSubmit} className="mb-5">
         <div className="row">
-        {visibleFields.map((field) => {
-  const optionsForField =
-    field === "unit"
-      ? {
-          unit: unitOptions,
-          brigade: brigadeOptions,
-          division: divisionOptions,
-          corps: corpsOptions,
-          command: commandOptions,
-        }[profile?.user?.user_role ?? "unit"] || []
-      : optionsMap[field] || [];
+          {visibleFields.map((field) => {
+            const optionsForField =
+              field === "unit"
+                ? {
+                  unit: unitOptions,
+                  brigade: brigadeOptions,
+                  division: divisionOptions,
+                  corps: corpsOptions,
+                  command: commandOptions,
+                }[profile?.user?.user_role ?? "unit"] || []
+                : optionsMap[field] || [];
 
-  const getDynamicLabel = (userRole: string, field: string): string => {
-    const roleMap: Record<string, string> = {
-      unit: "Unit",
-      brigade: "Brigade",
-      division: "Division",
-      corps: "Corps",
-      command: "Command",
-    };
+            const getDynamicLabel = (userRole: string, field: string): string => {
+              const roleMap: Record<string, string> = {
+                unit: "Unit",
+                brigade: "Brigade",
+                division: "Division",
+                corps: "Corps",
+                command: "Command",
+              };
 
-    if (field === "unit") {
-      const roleLabel = roleMap[userRole] || "Unit";
-      return `My ${roleLabel}`;
-    }
+              if (field === "unit") {
+                const roleLabel = roleMap[userRole] || "Unit";
+                return `My ${roleLabel}`;
+              }
 
-    return field
-      .split("_")
-      .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
-      .join(" ");
-  };
+              return field
+                .split("_")
+                .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+                .join(" ");
+            };
 
-  if (!optionsForField.length) {
-    return (
-      <div className="col-sm-6 mb-3" key={field}>
-        <label htmlFor={field} className="form-label mb-1">
-          {getDynamicLabel(profile?.user?.user_role ?? "", field)}
-        </label>
-        <input
-          id={field}
-          name={field}
-          type="text"
-          className={`form-control ${
-            formik.touched[field] && formik.errors[field] ? "is-invalid" : ""
-          }`}
-          value={formik.values[field]}
-          onChange={formik.handleChange}
-          onBlur={formik.handleBlur}
-          placeholder={`Enter ${getDynamicLabel(profile?.user?.user_role ?? "", field)}`}
-        />
-        {formik.touched[field] && formik.errors[field] && (
-          <div className="invalid-feedback">{formik.errors[field]}</div>
-        )}
-      </div>
-    );
-  }
+            if (!optionsForField.length) {
+              return (
+                <div className="col-sm-6 mb-3" key={field}>
+                  <label htmlFor={field} className="form-label mb-1">
+                    {getDynamicLabel(profile?.user?.user_role ?? "", field)}
+                  </label>
+                  <input
+                    id={field}
+                    name={field}
+                    type="text"
+                    className={`form-control ${formik.touched[field] && formik.errors[field] ? "is-invalid" : ""
+                      }`}
+                    value={formik.values[field]}
+                    onChange={formik.handleChange}
+                    onBlur={formik.handleBlur}
+                    placeholder={`Enter ${getDynamicLabel(profile?.user?.user_role ?? "", field)}`}
+                  />
+                  {formik.touched[field] && formik.errors[field] && (
+                    <div className="invalid-feedback">{formik.errors[field]}</div>
+                  )}
+                </div>
+              );
+            }
 
-  return (
-    <div className="col-sm-6 mb-3" key={field}>
-      <FormSelect
-        label={getDynamicLabel(profile?.user?.user_role ?? "", field)}
-        name={field}
-        options={optionsForField}
-        value={
-          optionsForField.find(
-            (opt: any) => opt.value === formik.values[field]
-          ) || null
-        }
-        onChange={(selectedOption) => {
-          const selectedValue = selectedOption?.value || "";
+            return (
+              <div className="col-sm-6 mb-3" key={field}>
+                <FormSelect
+                  label={getDynamicLabel(profile?.user?.user_role ?? "", field)}
+                  name={field}
+                  options={optionsForField}
+                  value={
+                    optionsForField.find(
+                      (opt: any) => opt.value === formik.values[field]
+                    ) || null
+                  }
+                  onChange={(selectedOption) => {
+                    const selectedValue = selectedOption?.value || "";
 
-          if (selectedValue === "n/a") {
-            formik.setFieldValue("corps", "");
-            formik.setFieldValue("division", "");
-            formik.setFieldValue("brigade", "");
-            formik.setFieldValue("unit", "");
-          }
+                    if (selectedValue === "n/a") {
+                      formik.setFieldValue("corps", "");
+                      formik.setFieldValue("division", "");
+                      formik.setFieldValue("brigade", "");
+                      formik.setFieldValue("unit", "");
+                    }
 
-          formik.setFieldValue(field, selectedValue);
+                    formik.setFieldValue(field, selectedValue);
 
-          if (
-            field === "command" &&
-            selectedValue &&
-            hierarchyMap[selectedValue]
-          ) {
-            const [corps, division, brigade] = hierarchyMap[selectedValue];
-            formik.setFieldValue("corps", corps);
-            formik.setFieldValue("division", division);
-            formik.setFieldValue("brigade", brigade);
-          }
-        }}
-        placeholder={getPlaceholder(profile?.user?.user_role ?? "", field)}
-        errors={formik.errors[field]}
-        touched={formik.touched[field]}
-      />
-    </div>
-  );
-})}
+                    if (
+                      field === "command" &&
+                      selectedValue &&
+                      hierarchyMap[selectedValue]
+                    ) {
+                      const [corps, division, brigade] = hierarchyMap[selectedValue];
+                      formik.setFieldValue("corps", corps);
+                      formik.setFieldValue("division", division);
+                      formik.setFieldValue("brigade", brigade);
+                    }
+                  }}
+                  placeholder={getPlaceholder(profile?.user?.user_role ?? "", field)}
+                  errors={formik.errors[field]}
+                  touched={formik.touched[field]}
+                />
+              </div>
+            );
+          })}
 
 
           <div className="col-sm-6 mb-3">
@@ -305,6 +343,210 @@ const ProfileSettings = () => {
               </button>
             </div>
           </div>
+        </div>
+      </form>
+
+      {/* Commander */}
+      <div className="d-flex flex-sm-row flex-column align-items-sm-center justify-content-between mb-4">
+        <Breadcrumb title="Commander" />
+      </div>
+      <form className="mb-5">
+        <div className="row">
+          <div className="col-sm-6 mb-3">
+            <FormInput
+              label="Serial Number"
+              name="serialNumber"
+              placeholder="Enter Serial Number"
+              value=""
+            />
+          </div>
+          <div className="col-sm-6 mb-3">
+            <FormInput
+              label="IC Number"
+              name="icNumber"
+              placeholder="Enter IC Number"
+              value=""
+            />
+          </div>
+          <div className="col-sm-6 mb-3">
+            <FormInput
+              label="Rank"
+              name="rank"
+              placeholder="Enter Rank"
+              value=""
+            />
+          </div>
+          <div className="col-sm-6 mb-3">
+            <FormInput
+              label="Name"
+              name="name"
+              placeholder="Enter Name"
+              value=""
+            />
+          </div>
+          <div className="col-sm-6 mb-3">
+            <FormInput
+              label="Appointment"
+              name="appointment"
+              placeholder="Enter Appointment"
+              value=""
+            />
+          </div>
+          <div className="col-sm-6 mb-3">
+            <FormInput
+              label="Digital Sign"
+              name="digitalSign"
+              placeholder="Enter Digital Sign"
+              value=""
+            />
+          </div>
+          <div className="col-12 mt-2">
+            <div className="d-flex align-items-center">
+              <button type="submit" className="_btn _btn-lg primary">
+                Add  Commander
+              </button>
+            </div>
+          </div>
+        </div>
+      </form>
+
+      {/* Presiding Officer */}
+      <div className="d-flex flex-sm-row flex-column align-items-sm-center justify-content-between mb-4">
+        <Breadcrumb title="Presiding Officer" />
+      </div>
+      <form className="mb-5">
+        <div className="row">
+          <div className="col-sm-6 mb-3">
+            <FormInput
+              label="Serial Number"
+              name="serialNumber"
+              placeholder="Enter Serial Number"
+              value=""
+            />
+          </div>
+          <div className="col-sm-6 mb-3">
+            <FormInput
+              label="IC Number"
+              name="icNumber"
+              placeholder="Enter IC Number"
+              value=""
+            />
+          </div>
+          <div className="col-sm-6 mb-3">
+            <FormInput
+              label="Rank"
+              name="rank"
+              placeholder="Enter Rank"
+              value=""
+            />
+          </div>
+          <div className="col-sm-6 mb-3">
+            <FormInput
+              label="Name"
+              name="name"
+              placeholder="Enter Name"
+              value=""
+            />
+          </div>
+          <div className="col-sm-6 mb-3">
+            <FormInput
+              label="Appointment"
+              name="appointment"
+              placeholder="Enter Appointment"
+              value=""
+            />
+          </div>
+          <div className="col-sm-6 mb-3">
+            <FormInput
+              label="Digital Sign"
+              name="digitalSign"
+              placeholder="Enter Digital Sign"
+              value=""
+            />
+          </div>
+          <div className="col-12 mt-2">
+            <div className="d-flex align-items-center">
+              <button type="submit" className="_btn _btn-lg primary">
+                Add Presiding Officer
+              </button>
+            </div>
+          </div>
+        </div>
+      </form>
+
+      {/* Officers */}
+      <form className="mb-5">
+        {officers.map((officer, index) => (
+          <div key={index} className="mb-4">
+            <div className="d-flex flex-sm-row flex-column align-items-sm-center justify-content-between mb-3">
+              <Breadcrumb title={`Officer ${index + 1}`} />
+            </div>
+            <div className="row">
+              <div className="col-sm-6 mb-3">
+                <FormInput
+                  label="Serial Number"
+                  name={`serialNumber-${index}`}
+                  placeholder="Enter Serial Number"
+                  value={officer.serialNumber}
+                  onChange={(e) => handleChange(index, "serialNumber", e.target.value)}
+                />
+              </div>
+              <div className="col-sm-6 mb-3">
+                <FormInput
+                  label="IC Number"
+                  name={`icNumber-${index}`}
+                  placeholder="Enter IC Number"
+                  value={officer.icNumber}
+                  onChange={(e) => handleChange(index, "icNumber", e.target.value)}
+                />
+              </div>
+              <div className="col-sm-6 mb-3">
+                <FormInput
+                  label="Rank"
+                  name={`rank-${index}`}
+                  placeholder="Enter Rank"
+                  value={officer.rank}
+                  onChange={(e) => handleChange(index, "rank", e.target.value)}
+                />
+              </div>
+              <div className="col-sm-6 mb-3">
+                <FormInput
+                  label="Name"
+                  name={`name-${index}`}
+                  placeholder="Enter Name"
+                  value={officer.name}
+                  onChange={(e) => handleChange(index, "name", e.target.value)}
+                />
+              </div>
+              <div className="col-sm-6 mb-3">
+                <FormInput
+                  label="Appointment"
+                  name={`appointment-${index}`}
+                  placeholder="Enter Appointment"
+                  value={officer.appointment}
+                  onChange={(e) => handleChange(index, "appointment", e.target.value)}
+                />
+              </div>
+              <div className="col-sm-6 mb-3">
+                <FormInput
+                  label="Digital Sign"
+                  name={`digitalSign-${index}`}
+                  placeholder="Enter Digital Sign"
+                  value={officer.digitalSign}
+                  onChange={(e) => handleChange(index, "digitalSign", e.target.value)}
+                />
+              </div>
+            </div>
+          </div>
+        ))}
+
+        <div className="d-flex align-items-center gap-2">
+          <button type="submit" className="_btn _btn-lg primary">
+            Add Officers
+          </button>
+          <button className="_btn _btn-lg success" onClick={handleAdd}>
+            Add
+          </button>
         </div>
       </form>
     </div>

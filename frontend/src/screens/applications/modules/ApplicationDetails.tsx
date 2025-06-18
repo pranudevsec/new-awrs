@@ -19,7 +19,6 @@ import { baseURL } from "../../../reduxToolkit/helper/axios";
 import { useDebounce } from "../../../hooks/useDebounce";
 import ReviewCommentModal from "../../../modals/ReviewCommentModal";
 import ViewCreatedClarificationModal from "../../../modals/ViewCreatedClarificationModal";
-import toast from "react-hot-toast";
 
 const ApplicationDetails = () => {
   const navigate = useNavigate();
@@ -32,6 +31,7 @@ const ApplicationDetails = () => {
 
   console.log("unitDetail -> ", unitDetail);
 
+  const [remarksError, setRemarksError] = useState<string | null>(null);
 
   const raisedParam = searchParams.get("raised_clarifications");
 
@@ -218,17 +218,17 @@ const ApplicationDetails = () => {
     }
   }, [unitDetail, role]);
 
-  const handleGraceMarksSave = (value: string) => {
-    if (value === undefined) return;
+  // const handleGraceMarksSave = (value: string) => {
+  //   if (value === undefined) return;
 
-    const body: any = {
-      type: unitDetail?.type || "citation",
-      application_id: unitDetail?.id || 0,
-      applicationGraceMarks: Number(value),
-    };
+  //   const body: any = {
+  //     type: unitDetail?.type || "citation",
+  //     application_id: unitDetail?.id || 0,
+  //     applicationGraceMarks: Number(value),
+  //   };
 
-    dispatch(approveMarks(body)).unwrap();
-  };
+  //   dispatch(approveMarks(body)).unwrap();
+  // };
   const [unitRemarks, setUnitRemarks] = useState("");
 
   // Set remark value when application is loaded or profile changes
@@ -242,14 +242,18 @@ const ApplicationDetails = () => {
       }
     }
   }, [unitDetail?.remarks, role]);
+
   const handleRemarksChange = async (e: any) => {
     const value = e.target.value;
 
-    // Optional: Enforce 200-char limit on input
-    if (value.length > 200) return;
-
     setUnitRemarks(value);
 
+    if (value.length > 200) {
+      setRemarksError("Remarks cannot exceed 200 characters.");
+      return;
+    } else {
+      setRemarksError(null);
+    }
     const body = {
       type: unitDetail?.type || "citation",
       application_id: unitDetail?.id || 0,
@@ -264,13 +268,13 @@ const ApplicationDetails = () => {
       console.error("Failed to update remarks", err);
     }
   };
-  const debouncedGraceMarksSave = useDebounce(handleGraceMarksSave, 600);
+  // const debouncedGraceMarksSave = useDebounce(handleGraceMarksSave, 600);
 
-  const handleGraceMarksChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value;
-    setGraceMarks(value);
-    debouncedGraceMarksSave(value);
-  };
+  // const handleGraceMarksChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  //   const value = e.target.value;
+  //   setGraceMarks(value);
+  //   debouncedGraceMarksSave(value);
+  // };
 
   const hierarchy = ["brigade", "division", "corps", "command", "headquarter"];
   const currentRoleIndex = hierarchy.indexOf(role?.toLowerCase());
@@ -652,54 +656,54 @@ const ApplicationDetails = () => {
           </table>
         </div>
         {!isUnitRole && (
-  <>
-    <ul
-      style={{
-        listStyleType: "none",
-        display: "flex",
-        alignItems: "center",
-        gap: "10px",
-        flexWrap: "wrap",
-        padding: 0,
-        marginBottom: "16px"
-      }}
-    >
-      {/* Unit Remark */}
-      {unitDetail?.fds?.unitRemarks && (
-        <li
-          style={{
-            padding: "8px 12px",
-            backgroundColor: "#e8f0fe",
-            borderRadius: "6px",
-            boxShadow: "0 1px 2px rgba(0,0,0,0.05)",
-            fontSize: "14px",
-            color: "#333"
-          }}
-        >
-          <strong>Unit:</strong> {unitDetail.fds.unitRemarks}
-        </li>
-      )}
+          <>
+            <ul
+              style={{
+                listStyleType: "none",
+                display: "flex",
+                alignItems: "center",
+                gap: "10px",
+                flexWrap: "wrap",
+                padding: 0,
+                marginBottom: "16px"
+              }}
+            >
+              {/* Unit Remark */}
+              {unitDetail?.fds?.unitRemarks && (
+                <li
+                  style={{
+                    padding: "8px 12px",
+                    backgroundColor: "#e8f0fe",
+                    borderRadius: "6px",
+                    boxShadow: "0 1px 2px rgba(0,0,0,0.05)",
+                    fontSize: "14px",
+                    color: "#333"
+                  }}
+                >
+                  <strong>Unit:</strong> {unitDetail.fds.unitRemarks}
+                </li>
+              )}
 
-      {/* Other Remarks */}
-      {Array.isArray(unitDetail?.remarks) &&
-  unitDetail.remarks.map((item: any, idx: number) => (
-        <li
-          key={idx}
-          style={{
-            padding: "8px 12px",
-            backgroundColor: "#f9f9f9",
-            borderRadius: "6px",
-            boxShadow: "0 1px 2px rgba(0,0,0,0.05)",
-            fontSize: "14px",
-            color: "#333"
-          }}
-        >
-          <strong>{item?.remark_added_by_role}:</strong> {item?.remarks}
-        </li>
-      ))}
-    </ul>
-  </>
-)}
+              {/* Other Remarks */}
+              {Array.isArray(unitDetail?.remarks) &&
+                unitDetail.remarks.map((item: any, idx: number) => (
+                  <li
+                    key={idx}
+                    style={{
+                      padding: "8px 12px",
+                      backgroundColor: "#f9f9f9",
+                      borderRadius: "6px",
+                      boxShadow: "0 1px 2px rgba(0,0,0,0.05)",
+                      fontSize: "14px",
+                      color: "#333"
+                    }}
+                  >
+                    <strong>{item?.remark_added_by_role}:</strong> {item?.remarks}
+                  </li>
+                ))}
+            </ul>
+          </>
+        )}
 
         {!isUnitRole && (
           <div className="submit-button-wrapper">
@@ -731,6 +735,28 @@ const ApplicationDetails = () => {
 
             {/* Grace Marks Field */}
 
+            {!isHeadquarter && (
+              <>
+                <div className="w-100 mb-4">
+                  <label
+                    className="fw-medium text-muted mb-0"
+                    style={{ whiteSpace: "nowrap" }}
+                  >
+                    Enter Your Remarks:
+                  </label>
+                  <textarea
+                    className="form-control"
+                    placeholder="Enter remarks (max 200 characters)"
+                    name="unitRemarks"
+                    value={unitRemarks}
+                    onChange={handleRemarksChange}
+                    rows={4}
+                  />
+                  {remarksError && <p className="error-text">{remarksError}</p>}
+                </div>
+              </>
+            )}
+
             <div className="d-flex flex-sm-row flex-column gap-sm-3 gap-1 justify-content-end">
               {/* Approved by roles below */}
               {displayedMarks.length > 0 && (
@@ -741,23 +767,6 @@ const ApplicationDetails = () => {
 
               {!isHeadquarter && (
                 <>
-                  <div className="d-flex align-items-center gap-2">
-                    <label
-                      className="fw-medium text-muted mb-0"
-                      style={{ whiteSpace: "nowrap" }}
-                    >
-                      Enter Your Remarks:
-                    </label>
-                    <input
-                      type="text"
-                      className="form-control"
-                      placeholder="Enter remarks (max 200 characters)"
-                      style={{ maxWidth: 200, minWidth: 200 }}
-                      name="unitRemarks"
-                      value={unitRemarks}
-                      onChange={handleRemarksChange}
-                    />
-                  </div>
                   {/* <div className="d-flex align-items-center gap-2">
                     <label
                       className="fw-medium text-muted mb-0"

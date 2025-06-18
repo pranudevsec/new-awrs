@@ -37,7 +37,7 @@ const ApplicationsList = () => {
 
   useEffect(() => {
     if (!profile?.user?.user_role) return;
-  
+
     const fetchData = () => {
       const params = {
         award_type: awardType || '',
@@ -45,9 +45,9 @@ const ApplicationsList = () => {
         page,
         limit,
       };
-  
+
       const role = profile.user.user_role;
-  
+
       if (role === 'cw2' || role === 'headquarter') {
         dispatch(fetchApplicationsForHQ(params));
       } else if (role !== 'unit') {
@@ -56,10 +56,10 @@ const ApplicationsList = () => {
         dispatch(fetchApplicationUnits(params));
       }
     };
-  
+
     fetchData();
   }, [awardType, debouncedSearch, profile, page, limit]);
-  
+
   return (
     <div className="clarification-section">
       <div className="d-flex flex-sm-row flex-column align-items-sm-center justify-content-between mb-4">
@@ -103,8 +103,8 @@ const ApplicationsList = () => {
               </th>
               <th style={{ width: 150, minWidth: 150, maxWidth: 150 }}>Unit ID</th>
               {role === "headquarter" && (
-  <th style={{ width: 150, minWidth: 150, maxWidth: 150 }}>Command</th>
-)}
+                <th style={{ width: 150, minWidth: 150, maxWidth: 150 }}>Command</th>
+              )}
               <th style={{ width: 200, minWidth: 200, maxWidth: 200 }}>
                 Submission Date
               </th>
@@ -139,11 +139,11 @@ const ApplicationsList = () => {
                   <td style={{ width: 150, minWidth: 150, maxWidth: 150 }}>
                     <p className="fw-4">#{unit.id}</p>
                   </td>
-              
+
                   <td style={{ width: 150, minWidth: 150, maxWidth: 150 }}>
                     <p className="fw-4">#{unit.unit_id}</p>
                   </td>
-                  {role === "headquarter" &&   <td style={{ width: 150, minWidth: 150, maxWidth: 150 }}>
+                  {role === "headquarter" && <td style={{ width: 150, minWidth: 150, maxWidth: 150 }}>
                     <p className="fw-4">{unit?.fds?.command}</p>
                   </td>}
                   <td style={{ width: 200, minWidth: 200, maxWidth: 200 }}>
@@ -162,14 +162,14 @@ const ApplicationsList = () => {
                     <p className="fw-4">{unit.type.charAt(0).toUpperCase() + unit.type.slice(1)}</p>
                   </td>
                   {role === "unit" && (
-  <td style={{ width: 150, minWidth: 150, maxWidth: 150 }}>
-    <p className="fw-4">
-      {unit?.status_flag
-        ? unit.status_flag.charAt(0).toUpperCase() + unit.status_flag.slice(1)
-        : "Submitted"}
-    </p>
-  </td>
-)}
+                    <td style={{ width: 150, minWidth: 150, maxWidth: 150 }}>
+                      <p className="fw-4">
+                        {unit?.status_flag
+                          ? unit.status_flag.charAt(0).toUpperCase() + unit.status_flag.slice(1)
+                          : "Submitted"}
+                      </p>
+                    </td>
+                  )}
 
 
                   {/* <td style={{ width: 200, minWidth: 200, maxWidth: 200 }}>
@@ -178,25 +178,25 @@ const ApplicationsList = () => {
                       <p className="text-capitalize fw-5">Accepted</p>
                     </div>
                   </td> */}
-                <td style={{ width: 100, minWidth: 100, maxWidth: 100 }}>
-  {unit?.status_flag === "draft" ? (
-    <Link
-      to={`/applications/${unit.type}?id=${unit?.id}`}
-      className="action-btn bg-transparent d-inline-flex align-items-center justify-content-center"
-      onClick={(e) => e.stopPropagation()}
-    >
-      {SVGICON.app.edit} 
-    </Link>
-  ) : (
-    <Link
-      to={`/applications/list/${unit.id}?award_type=${unit.type}`}
-      className="action-btn bg-transparent d-inline-flex align-items-center justify-content-center"
-      onClick={(e) => e.stopPropagation()}
-    >
-      {SVGICON.app.eye}
-    </Link>
-  )}
-</td>
+                  <td style={{ width: 100, minWidth: 100, maxWidth: 100 }}>
+                    {unit?.status_flag === "draft" ? (
+                      <Link
+                        to={`/applications/${unit.type}?id=${unit?.id}`}
+                        className="action-btn bg-transparent d-inline-flex align-items-center justify-content-center"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        {SVGICON.app.edit}
+                      </Link>
+                    ) : (
+                      <Link
+                        to={`/applications/list/${unit.id}?award_type=${unit.type}`}
+                        className="action-btn bg-transparent d-inline-flex align-items-center justify-content-center"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        {SVGICON.app.eye}
+                      </Link>
+                    )}
+                  </td>
 
                 </tr>
               ))}

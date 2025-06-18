@@ -153,6 +153,11 @@ const AppreciationReviewPage = () => {
         },
         onSubmit: async (values) => {
             try {
+
+                if (unitRemarks.length > 500) {
+                    toast.error("Maximum 500 characters allowed in Unit Remarks");
+                    return;
+                }
                 const requiredFields = [
                     { key: "bde", name: "Brigade" },
                     { key: "div", name: "Division" },
@@ -405,14 +410,18 @@ const AppreciationReviewPage = () => {
                                 </table>
                             </div>
                         ))}
-                        <div style={{ maxWidth: 400 }}>
+                        <div className="w-100">
                             <FormInput
                                 label="Unit Remarks"
+                                as="textarea"
                                 name="unitRemarks"
                                 placeholder="Enter remarks (max 500 characters)"
                                 value={unitRemarks}
                                 onChange={(e) => setUnitRemarks(e.target.value)}
                             />
+                            {unitRemarks.length > 500 && (
+                                <p className="error-text">Maximum 500 characters allowed</p>
+                            )}
                         </div>
                     </div>
                     <div className="submit-button-wrapper">

@@ -23,7 +23,7 @@ const Dashboard = () => {
     }, []);
 
     useEffect(() => {
-        dispatch(getScoreBoards({ awardType: "", search: "", limit: reportCount, page: 1 }));
+        dispatch(getScoreBoards({ award_type: "", search: "", limit: reportCount, page: 1 }));
     }, [reportCount])
 
     // Show loader
