@@ -348,8 +348,9 @@ const ProfileSettings = () => {
       </form>
 
 
-{ !['unit', 'headquarter', 'cw2'].includes(role) &&  <> {/* Commander */}
-      <div className="d-flex flex-sm-row flex-column align-items-sm-center justify-content-between mb-4">
+{ !['unit', 'headquarter', 'cw2'].includes(role) &&  <> 
+{/* Commander */}
+      {/* <div className="d-flex flex-sm-row flex-column align-items-sm-center justify-content-between mb-4">
         <Breadcrumb title="Commander" />
       </div>
       <form className="mb-5">
@@ -410,7 +411,7 @@ const ProfileSettings = () => {
             </div>
           </div>
         </div>
-      </form>
+      </form> */}
 
       {/* Presiding Officer */}
       <div className="d-flex flex-sm-row flex-column align-items-sm-center justify-content-between mb-4">
@@ -418,14 +419,14 @@ const ProfileSettings = () => {
       </div>
       <form className="mb-5">
         <div className="row">
-          <div className="col-sm-6 mb-3">
+          {/* <div className="col-sm-6 mb-3">
             <FormInput
               label="Serial Number"
               name="serialNumber"
               placeholder="Enter Serial Number"
               value=""
             />
-          </div>
+          </div> */}
           <div className="col-sm-6 mb-3">
             <FormInput
               label="IC Number"
@@ -481,10 +482,10 @@ const ProfileSettings = () => {
         {officers.map((officer, index) => (
           <div key={index} className="mb-4">
             <div className="d-flex flex-sm-row flex-column align-items-sm-center justify-content-between mb-3">
-              <Breadcrumb title={`Officer ${index + 1}`} />
+              <Breadcrumb title={`Member Officer ${index + 1}`} />
             </div>
             <div className="row">
-              <div className="col-sm-6 mb-3">
+              {/* <div className="col-sm-6 mb-3">
                 <FormInput
                   label="Serial Number"
                   name={`serialNumber-${index}`}
@@ -492,7 +493,7 @@ const ProfileSettings = () => {
                   value={officer.serialNumber}
                   onChange={(e) => handleChange(index, "serialNumber", e.target.value)}
                 />
-              </div>
+              </div> */}
               <div className="col-sm-6 mb-3">
                 <FormInput
                   label="IC Number"
@@ -544,7 +545,7 @@ const ProfileSettings = () => {
 
         <div className="d-flex align-items-center gap-2">
           <button type="submit" className="_btn _btn-lg primary">
-            Add Officers
+            Add Member Officers
           </button>
           <button className="_btn _btn-lg success" onClick={handleAdd}>
             Add
