@@ -12,7 +12,10 @@ import {
   matrixUnitOptions,
 } from "../../data/options";
 import { useAppSelector, useAppDispatch } from "../../reduxToolkit/hooks";
-import { getProfile, reqToUpdateUnitProfile } from "../../reduxToolkit/services/auth/authService";
+import {
+  getProfile,
+  reqToUpdateUnitProfile,
+} from "../../reduxToolkit/services/auth/authService";
 import FormSelect from "../../components/form/FormSelect";
 import Breadcrumb from "../../components/ui/breadcrumb/Breadcrumb";
 import Loader from "../../components/ui/loader/Loader";
@@ -41,7 +44,14 @@ const ProfileSettings = () => {
   // States
   const [firstLoad, setFirstLoad] = useState(true);
   const [officers, setOfficers] = useState<Officer[]>([
-    { serialNumber: "", icNumber: "", rank: "", name: "", appointment: "", digitalSign: "" },
+    {
+      serialNumber: "",
+      icNumber: "",
+      rank: "",
+      name: "",
+      appointment: "",
+      digitalSign: "",
+    },
   ]);
   const role = profile?.user?.user_role?.toLowerCase() ?? "";
 
@@ -52,7 +62,18 @@ const ProfileSettings = () => {
   const getVisibleFields = (role: UserRole): string[] => {
     switch (role) {
       case "unit":
-        return ["brigade", "division", "corps", "command", "location", "matrix_unit", "unit_type", "unit"].slice().reverse();
+        return [
+          "brigade",
+          "division",
+          "corps",
+          "command",
+          "location",
+          "matrix_unit",
+          "unit_type",
+          "unit",
+        ]
+          .slice()
+          .reverse();
       case "brigade":
         return ["unit", "division", "corps", "command"].slice().reverse();
       case "division":
@@ -75,7 +96,7 @@ const ProfileSettings = () => {
     corps: corpsOptions,
     command: commandOptions,
     unit_type: unitTypeOptions,
-    matrix_unit: matrixUnitOptions
+    matrix_unit: matrixUnitOptions,
   };
 
   const getPlaceholder = (role: string, field: string) => {
@@ -89,11 +110,7 @@ const ProfileSettings = () => {
     }
   };
 
-  const handleChange = (
-    index: number,
-    field: keyof Officer,
-    value: string
-  ) => {
+  const handleChange = (index: number, field: keyof Officer, value: string) => {
     const updated = [...officers];
     updated[index][field] = value;
     setOfficers(updated);
@@ -127,6 +144,10 @@ const ProfileSettings = () => {
       unit_type: profile?.unit?.unit_type || "",
       matrix_unit: profile?.unit?.matrix_unit || "",
       location: profile?.unit?.location || "",
+      goc_award: profile?.unit?.goc_award || "",
+      coas_award: profile?.unit?.coas_award || "",
+      goc_award_year: profile?.unit?.goc_award_year || "",
+      coas_award_year: profile?.unit?.coas_award_year || "",
     },
     enableReinitialize: true,
     onSubmit: async (values: any, { resetForm }) => {
@@ -161,6 +182,10 @@ const ProfileSettings = () => {
         payload["unit_type"] = values.unit_type;
         payload["matrix_unit"] = values.matrix_unit;
         payload["location"] = values.location;
+        payload["goc_award"] = values.goc_award;
+        payload["coas_award"] = values.coas_award;
+        payload["goc_award_year"] = values.goc_award_year;
+        payload["coas_award_year"] = values.coas_award_year;
 
         const resultAction = await dispatch(reqToUpdateUnitProfile(payload));
         const result = unwrapResult(resultAction);
@@ -173,6 +198,15 @@ const ProfileSettings = () => {
         console.error("Update failed", err);
       }
     },
+  });
+  const currentYear = new Date().getFullYear();
+  const yearOptions = Array.from({ length: 50 }, (_, i) => {
+    const year = currentYear - i;
+    return (
+      <option key={year} value={year}>
+        {year}
+      </option>
+    );
   });
 
   // Show loader
@@ -191,15 +225,18 @@ const ProfileSettings = () => {
             const optionsForField =
               field === "unit"
                 ? {
-                  unit: unitOptions,
-                  brigade: brigadeOptions,
-                  division: divisionOptions,
-                  corps: corpsOptions,
-                  command: commandOptions,
-                }[profile?.user?.user_role ?? "unit"] || []
+                    unit: unitOptions,
+                    brigade: brigadeOptions,
+                    division: divisionOptions,
+                    corps: corpsOptions,
+                    command: commandOptions,
+                  }[profile?.user?.user_role ?? "unit"] || []
                 : optionsMap[field] || [];
 
-            const getDynamicLabel = (userRole: string, field: string): string => {
+            const getDynamicLabel = (
+              userRole: string,
+              field: string
+            ): string => {
               const roleMap: Record<string, string> = {
                 unit: "Unit",
                 brigade: "Brigade",
@@ -211,6 +248,10 @@ const ProfileSettings = () => {
               if (field === "unit") {
                 const roleLabel = roleMap[userRole] || "Unit";
                 return `My ${roleLabel}`;
+              }
+
+              if (field === "unit_type") {
+                return "Arms / Services";
               }
 
               return field
@@ -229,15 +270,23 @@ const ProfileSettings = () => {
                     id={field}
                     name={field}
                     type="text"
-                    className={`form-control ${formik.touched[field] && formik.errors[field] ? "is-invalid" : ""
-                      }`}
+                    className={`form-control ${
+                      formik.touched[field] && formik.errors[field]
+                        ? "is-invalid"
+                        : ""
+                    }`}
                     value={formik.values[field]}
                     onChange={formik.handleChange}
                     onBlur={formik.handleBlur}
-                    placeholder={`Enter ${getDynamicLabel(profile?.user?.user_role ?? "", field)}`}
+                    placeholder={`Enter ${getDynamicLabel(
+                      profile?.user?.user_role ?? "",
+                      field
+                    )}`}
                   />
                   {formik.touched[field] && formik.errors[field] && (
-                    <div className="invalid-feedback">{formik.errors[field]}</div>
+                    <div className="invalid-feedback">
+                      {formik.errors[field]}
+                    </div>
                   )}
                 </div>
               );
@@ -271,71 +320,201 @@ const ProfileSettings = () => {
                       selectedValue &&
                       hierarchyMap[selectedValue]
                     ) {
-                      const [corps, division, brigade] = hierarchyMap[selectedValue];
+                      const [corps, division, brigade] =
+                        hierarchyMap[selectedValue];
                       formik.setFieldValue("corps", corps);
                       formik.setFieldValue("division", division);
                       formik.setFieldValue("brigade", brigade);
                     }
                   }}
-                  placeholder={getPlaceholder(profile?.user?.user_role ?? "", field)}
+                  placeholder={getPlaceholder(
+                    profile?.user?.user_role ?? "",
+                    field
+                  )}
                   errors={formik.errors[field]}
                   touched={formik.touched[field]}
                 />
               </div>
             );
           })}
+          {role === "unit" && (
+            <>
+              <div className="col-sm-6 mb-3">
+                <label htmlFor="goc_award" className="form-label mb-1">
+                  GOC Award
+                </label>
+                <input
+                  id="goc_award"
+                  name="goc_award"
+                  type="text"
+                  className={`form-control ${
+                    formik.touched.goc_award && formik.errors.goc_award
+                      ? "is-invalid"
+                      : ""
+                  }`}
+                  value={formik.values.goc_award}
+                  onChange={formik.handleChange}
+                  onBlur={formik.handleBlur}
+                  placeholder="Enter GOC Award"
+                />
+                {formik.touched.goc_award && formik.errors.goc_award && (
+                  <div className="invalid-feedback">
+                    {formik.errors.goc_award}
+                  </div>
+                )}
+              </div>
 
+              <div className="col-sm-6 mb-3">
+                <label htmlFor="goc_award_year" className="form-label mb-1">
+                  GOC Award Year
+                </label>
+                <select
+                  id="goc_award_year"
+                  name="goc_award_year"
+                  className={`form-select ${
+                    formik.touched.goc_award_year &&
+                    formik.errors.goc_award_year
+                      ? "is-invalid"
+                      : ""
+                  }`}
+                  value={formik.values.goc_award_year}
+                  onChange={formik.handleChange}
+                  onBlur={formik.handleBlur}
+                >
+                  <option value="">Select Year</option>
+                  {yearOptions}
+                </select>
+                {formik.touched.goc_award_year &&
+                  formik.errors.goc_award_year && (
+                    <div className="invalid-feedback">
+                      {formik.errors.goc_award_year}
+                    </div>
+                  )}
+              </div>
 
-          <div className="col-sm-6 mb-3">
-            <label htmlFor="adm_channel" className="form-label mb-1">
-              Adm Channel
-            </label>
-            <input
-              id="adm_channel"
-              name="adm_channel"
-              type="text"
-              className={`form-control ${formik.touched.adm_channel && formik.errors.adm_channel
-                ? "is-invalid"
-                : ""
-                }`}
-              value={formik.values.adm_channel}
-              onChange={formik.handleChange}
-              onBlur={formik.handleBlur}
-              placeholder="Enter Adm Channel"
-            />
-            {formik.touched.adm_channel && formik.errors.adm_channel && (
-              <div className="invalid-feedback">{formik.errors.adm_channel}</div>
-            )}
-          </div>
+              <div className="col-sm-6 mb-3">
+                <label htmlFor="coas_award" className="form-label mb-1">
+                  COAS Award
+                </label>
+                <input
+                  id="coas_award"
+                  name="coas_award"
+                  type="text"
+                  className={`form-control ${
+                    formik.touched.coas_award && formik.errors.coas_award
+                      ? "is-invalid"
+                      : ""
+                  }`}
+                  value={formik.values.coas_award}
+                  onChange={formik.handleChange}
+                  onBlur={formik.handleBlur}
+                  placeholder="Enter COAS Award"
+                />
+                {formik.touched.coas_award && formik.errors.coas_award && (
+                  <div className="invalid-feedback">
+                    {formik.errors.coas_award}
+                  </div>
+                )}
+              </div>
 
-          <div className="col-sm-6 mb-3">
-            <label htmlFor="tech_channel" className="form-label mb-1">
-              Tech Channel
-            </label>
-            <input
-              id="tech_channel"
-              name="tech_channel"
-              type="text"
-              className={`form-control ${formik.touched.tech_channel && formik.errors.tech_channel
-                ? "is-invalid"
-                : ""
-                }`}
-              value={formik.values.tech_channel}
-              onChange={formik.handleChange}
-              onBlur={formik.handleBlur}
-              placeholder="Enter Tech Channel"
-            />
-            {formik.touched.tech_channel && formik.errors.tech_channel && (
-              <div className="invalid-feedback">{formik.errors.tech_channel}</div>
-            )}
-          </div>
+              <div className="col-sm-6 mb-3">
+                <label htmlFor="coas_award_year" className="form-label mb-1">
+                  COAS Award Year
+                </label>
+                <select
+                  id="coas_award_year"
+                  name="coas_award_year"
+                  className={`form-select ${
+                    formik.touched.coas_award_year &&
+                    formik.errors.coas_award_year
+                      ? "is-invalid"
+                      : ""
+                  }`}
+                  value={formik.values.coas_award_year}
+                  onChange={formik.handleChange}
+                  onBlur={formik.handleBlur}
+                >
+                  <option value="">Select Year</option>
+                  {yearOptions}
+                </select>
+                {formik.touched.coas_award_year &&
+                  formik.errors.coas_award_year && (
+                    <div className="invalid-feedback">
+                      {formik.errors.coas_award_year}
+                    </div>
+                  )}
+              </div>
+            </>
+          )}
+
+          {role !== "unit" && (
+            <>
+              {" "}
+              <div className="col-sm-6 mb-3">
+                <label htmlFor="adm_channel" className="form-label mb-1">
+                  Adm Channel
+                </label>
+                <input
+                  id="adm_channel"
+                  name="adm_channel"
+                  type="text"
+                  className={`form-control ${
+                    formik.touched.adm_channel && formik.errors.adm_channel
+                      ? "is-invalid"
+                      : ""
+                  }`}
+                  value={formik.values.adm_channel}
+                  onChange={formik.handleChange}
+                  onBlur={formik.handleBlur}
+                  placeholder="Enter Adm Channel"
+                />
+                {formik.touched.adm_channel && formik.errors.adm_channel && (
+                  <div className="invalid-feedback">
+                    {formik.errors.adm_channel}
+                  </div>
+                )}
+              </div>
+              <div className="col-sm-6 mb-3">
+                <label htmlFor="tech_channel" className="form-label mb-1">
+                  Tech Channel
+                </label>
+                <input
+                  id="tech_channel"
+                  name="tech_channel"
+                  type="text"
+                  className={`form-control ${
+                    formik.touched.tech_channel && formik.errors.tech_channel
+                      ? "is-invalid"
+                      : ""
+                  }`}
+                  value={formik.values.tech_channel}
+                  onChange={formik.handleChange}
+                  onBlur={formik.handleBlur}
+                  placeholder="Enter Tech Channel"
+                />
+                {formik.touched.tech_channel && formik.errors.tech_channel && (
+                  <div className="invalid-feedback">
+                    {formik.errors.tech_channel}
+                  </div>
+                )}
+              </div>
+            </>
+          )}
 
           <div className="col-12 mt-2">
             <div className="d-flex align-items-center">
-              <button type="submit" className="_btn _btn-lg primary" disabled={formik.isSubmitting}>
+              <button
+                type="submit"
+                className="_btn _btn-lg primary"
+                disabled={formik.isSubmitting}
+              >
                 {formik.isSubmitting ? (
                   <span>
-                    <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                    <span
+                      className="spinner-border spinner-border-sm me-2"
+                      role="status"
+                      aria-hidden="true"
+                    ></span>
                     Submiting...
                   </span>
                 ) : (
@@ -347,10 +526,10 @@ const ProfileSettings = () => {
         </div>
       </form>
 
-
-{ !['unit', 'headquarter', 'cw2'].includes(role) &&  <> 
-{/* Commander */}
-      {/* <div className="d-flex flex-sm-row flex-column align-items-sm-center justify-content-between mb-4">
+      {!["unit", "headquarter", "cw2"].includes(role) && (
+        <>
+          {/* Commander */}
+          {/* <div className="d-flex flex-sm-row flex-column align-items-sm-center justify-content-between mb-4">
         <Breadcrumb title="Commander" />
       </div>
       <form className="mb-5">
@@ -413,13 +592,13 @@ const ProfileSettings = () => {
         </div>
       </form> */}
 
-      {/* Presiding Officer */}
-      <div className="d-flex flex-sm-row flex-column align-items-sm-center justify-content-between mb-4">
-        <Breadcrumb title="Presiding Officer" />
-      </div>
-      <form className="mb-5">
-        <div className="row">
-          {/* <div className="col-sm-6 mb-3">
+          {/* Presiding Officer */}
+          <div className="d-flex flex-sm-row flex-column align-items-sm-center justify-content-between mb-4">
+            <Breadcrumb title="Presiding Officer" />
+          </div>
+          <form className="mb-5">
+            <div className="row">
+              {/* <div className="col-sm-6 mb-3">
             <FormInput
               label="Serial Number"
               name="serialNumber"
@@ -427,65 +606,65 @@ const ProfileSettings = () => {
               value=""
             />
           </div> */}
-          <div className="col-sm-6 mb-3">
-            <FormInput
-              label="IC Number"
-              name="icNumber"
-              placeholder="Enter IC Number"
-              value=""
-            />
-          </div>
-          <div className="col-sm-6 mb-3">
-            <FormInput
-              label="Rank"
-              name="rank"
-              placeholder="Enter Rank"
-              value=""
-            />
-          </div>
-          <div className="col-sm-6 mb-3">
-            <FormInput
-              label="Name"
-              name="name"
-              placeholder="Enter Name"
-              value=""
-            />
-          </div>
-          <div className="col-sm-6 mb-3">
-            <FormInput
-              label="Appointment"
-              name="appointment"
-              placeholder="Enter Appointment"
-              value=""
-            />
-          </div>
-          <div className="col-sm-6 mb-3">
-            <FormInput
-              label="Digital Sign"
-              name="digitalSign"
-              placeholder="Enter Digital Sign"
-              value=""
-            />
-          </div>
-          <div className="col-12 mt-2">
-            <div className="d-flex align-items-center">
-              <button type="submit" className="_btn _btn-lg primary">
-                Add Presiding Officer
-              </button>
+              <div className="col-sm-6 mb-3">
+                <FormInput
+                  label="IC Number"
+                  name="icNumber"
+                  placeholder="Enter IC Number"
+                  value=""
+                />
+              </div>
+              <div className="col-sm-6 mb-3">
+                <FormInput
+                  label="Rank"
+                  name="rank"
+                  placeholder="Enter Rank"
+                  value=""
+                />
+              </div>
+              <div className="col-sm-6 mb-3">
+                <FormInput
+                  label="Name"
+                  name="name"
+                  placeholder="Enter Name"
+                  value=""
+                />
+              </div>
+              <div className="col-sm-6 mb-3">
+                <FormInput
+                  label="Appointment"
+                  name="appointment"
+                  placeholder="Enter Appointment"
+                  value=""
+                />
+              </div>
+              <div className="col-sm-6 mb-3">
+                <FormInput
+                  label="Digital Sign"
+                  name="digitalSign"
+                  placeholder="Enter Digital Sign"
+                  value=""
+                />
+              </div>
+              <div className="col-12 mt-2">
+                <div className="d-flex align-items-center">
+                  <button type="submit" className="_btn _btn-lg primary">
+                    Add Presiding Officer
+                  </button>
+                </div>
+              </div>
             </div>
-          </div>
-        </div>
-      </form>
+          </form>
 
-      {/* Officers */}
-      <form className="mb-5">
-        {officers.map((officer, index) => (
-          <div key={index} className="mb-4">
-            <div className="d-flex flex-sm-row flex-column align-items-sm-center justify-content-between mb-3">
-              <Breadcrumb title={`Member Officer ${index + 1}`} />
-            </div>
-            <div className="row">
-              {/* <div className="col-sm-6 mb-3">
+          {/* Officers */}
+          <form className="mb-5">
+            {officers.map((officer, index) => (
+              <div key={index} className="mb-4">
+                <div className="d-flex flex-sm-row flex-column align-items-sm-center justify-content-between mb-3">
+                  <Breadcrumb title={`Member Officer ${index + 1}`} />
+                </div>
+                <div className="row">
+                  {/* <div className="col-sm-6 mb-3">
                 <FormInput
                   label="Serial Number"
                   name={`serialNumber-${index}`}
@@ -494,64 +673,76 @@ const ProfileSettings = () => {
                   onChange={(e) => handleChange(index, "serialNumber", e.target.value)}
                 />
               </div> */}
-              <div className="col-sm-6 mb-3">
-                <FormInput
-                  label="IC Number"
-                  name={`icNumber-${index}`}
-                  placeholder="Enter IC Number"
-                  value={officer.icNumber}
-                  onChange={(e) => handleChange(index, "icNumber", e.target.value)}
-                />
+                  <div className="col-sm-6 mb-3">
+                    <FormInput
+                      label="IC Number"
+                      name={`icNumber-${index}`}
+                      placeholder="Enter IC Number"
+                      value={officer.icNumber}
+                      onChange={(e) =>
+                        handleChange(index, "icNumber", e.target.value)
+                      }
+                    />
+                  </div>
+                  <div className="col-sm-6 mb-3">
+                    <FormInput
+                      label="Rank"
+                      name={`rank-${index}`}
+                      placeholder="Enter Rank"
+                      value={officer.rank}
+                      onChange={(e) =>
+                        handleChange(index, "rank", e.target.value)
+                      }
+                    />
+                  </div>
+                  <div className="col-sm-6 mb-3">
+                    <FormInput
+                      label="Name"
+                      name={`name-${index}`}
+                      placeholder="Enter Name"
+                      value={officer.name}
+                      onChange={(e) =>
+                        handleChange(index, "name", e.target.value)
+                      }
+                    />
+                  </div>
+                  <div className="col-sm-6 mb-3">
+                    <FormInput
+                      label="Appointment"
+                      name={`appointment-${index}`}
+                      placeholder="Enter Appointment"
+                      value={officer.appointment}
+                      onChange={(e) =>
+                        handleChange(index, "appointment", e.target.value)
+                      }
+                    />
+                  </div>
+                  <div className="col-sm-6 mb-3">
+                    <FormInput
+                      label="Digital Sign"
+                      name={`digitalSign-${index}`}
+                      placeholder="Enter Digital Sign"
+                      value={officer.digitalSign}
+                      onChange={(e) =>
+                        handleChange(index, "digitalSign", e.target.value)
+                      }
+                    />
+                  </div>
+                </div>
               </div>
-              <div className="col-sm-6 mb-3">
-                <FormInput
-                  label="Rank"
-                  name={`rank-${index}`}
-                  placeholder="Enter Rank"
-                  value={officer.rank}
-                  onChange={(e) => handleChange(index, "rank", e.target.value)}
-                />
-              </div>
-              <div className="col-sm-6 mb-3">
-                <FormInput
-                  label="Name"
-                  name={`name-${index}`}
-                  placeholder="Enter Name"
-                  value={officer.name}
-                  onChange={(e) => handleChange(index, "name", e.target.value)}
-                />
-              </div>
-              <div className="col-sm-6 mb-3">
-                <FormInput
-                  label="Appointment"
-                  name={`appointment-${index}`}
-                  placeholder="Enter Appointment"
-                  value={officer.appointment}
-                  onChange={(e) => handleChange(index, "appointment", e.target.value)}
-                />
-              </div>
-              <div className="col-sm-6 mb-3">
-                <FormInput
-                  label="Digital Sign"
-                  name={`digitalSign-${index}`}
-                  placeholder="Enter Digital Sign"
-                  value={officer.digitalSign}
-                  onChange={(e) => handleChange(index, "digitalSign", e.target.value)}
-                />
-              </div>
-            </div>
-          </div>
-        ))}
+            ))}
 
-        <div className="d-flex align-items-center gap-2">
-          <button type="submit" className="_btn _btn-lg primary">
-            Add Member Officers
-          </button>
-          <button className="_btn _btn-lg success" onClick={handleAdd}>
-            Add
-          </button>
-        </div>
-      </form></> }
+            <div className="d-flex align-items-center gap-2">
+              <button type="submit" className="_btn _btn-lg primary">
+                Add Member Officers
+              </button>
+              <button className="_btn _btn-lg success" onClick={handleAdd}>
+                Add
+              </button>
+            </div>
+          </form>
+        </>
+      )}
     </div>
   );
 };

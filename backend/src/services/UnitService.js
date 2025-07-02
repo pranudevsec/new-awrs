@@ -112,14 +112,19 @@ exports.createOrUpdateUnitForUser = async (userId, data) => {
         unit_type,
         matrix_unit,
         location,
+        goc_award,
+        coas_award,
+        goc_award_year,
+        coas_award_year,
       } = data;
 
       const insertUnitQuery = `
         INSERT INTO Unit_tab (
           sos_no, name, adm_channel, tech_channel, bde, div, corps, comd,
-          unit_type, matrix_unit, location
+          unit_type, matrix_unit, location,
+          goc_award, coas_award, goc_award_year, coas_award_year
         )
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)
         RETURNING unit_id
       `;
 
@@ -135,6 +140,10 @@ exports.createOrUpdateUnitForUser = async (userId, data) => {
         unit_type,
         matrix_unit,
         location,
+        goc_award,
+        coas_award,
+        goc_award_year,
+        coas_award_year,
       ]);
 
       const newUnitId = insertRes.rows[0].unit_id;
@@ -158,7 +167,11 @@ exports.createOrUpdateUnitForUser = async (userId, data) => {
         "comd",
         "unit_type",
         "matrix_unit",
-        "location"
+        "location",
+        "goc_award",
+        "coas_award",
+        "goc_award_year",
+        "coas_award_year"
       ];
 
       const updateFields = [];

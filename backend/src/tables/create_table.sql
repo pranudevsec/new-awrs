@@ -109,6 +109,10 @@ CREATE TABLE Unit_tab (
     unit_type VARCHAR,
     matrix_unit VARCHAR,
     location VARCHAR,
+    goc_award VARCHAR,
+    coas_award VARCHAR,
+    goc_award_year VARCHAR,
+    coas_award_year VARCHAR,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );

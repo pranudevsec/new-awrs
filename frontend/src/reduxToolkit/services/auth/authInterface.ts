@@ -61,6 +61,10 @@ export interface ProfileUnit {
   unit_type?: string | null;     
   matrix_unit?: string | null;   
   location?: string | null;  
+  goc_award?: string | null;        
+  coas_award?: string | null;        
+  goc_award_year?: string | null;    
+  coas_award_year?: string | null; 
 }
 
 export interface ProfileResponse {
