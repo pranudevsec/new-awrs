@@ -846,30 +846,20 @@ const ApplicationDetails = () => {
         )}
         {isCW2Role && (
           <div className="submit-button-wrapper">
-            <div className="d-flex flex-sm-row flex-column gap-sm-3 gap-1 justify-content-end">
-              {!isHeadquarter && (
-                <>
-                  <div className="d-flex align-items-center gap-2">
-                    <label
-                      className="fw-medium text-muted mb-0"
-                      style={{ whiteSpace: "nowrap" }}
-                    >
-                      Drop Comment:
-                    </label>
-                    <input
-                      type="text"
-                      className="form-control"
-                      placeholder="Enter comment"
-                      style={{ maxWidth: "250px" }}
-                      value={commentsState?.__application__ || ""}
-                      onChange={(e) =>
-                        handleCommentChange("__application__", e.target.value)
-                      }
-                    />
-                  </div>
-                </>
-              )}
-            </div>
+            {!isHeadquarter && (
+              <>
+                <label className="form-label mb-1">Drop Comment:</label>
+                <textarea
+                  className="form-control"
+                  placeholder="Enter comment"
+                  rows={4}
+                  value={commentsState?.__application__ || ""}
+                  onChange={(e) =>
+                    handleCommentChange("__application__", e.target.value)
+                  }
+                />
+              </>
+            )}
           </div>
         )}
       </div>

@@ -133,30 +133,11 @@ const AcceptedApplicationsList = () => {
   const handlePriorityChange = async (
     unitDetail: any,
     value: string,
-    allUnits: any[]
   ) => {
     const priorityPoints = parseInt(value);
-    const role = profile?.user?.user_role?.toLowerCase() ?? "";
 
     if (isNaN(priorityPoints)) {
       toast.error("Please enter a valid number");
-      return;
-    }
-
-    const duplicate = allUnits.find((unit) => {
-      if (unit?.id === unitDetail?.id) return false;
-
-      return unit?.fds?.applicationPriority?.some(
-        (item: any) =>
-          item?.role?.toLowerCase() === role &&
-          item?.priority === priorityPoints
-      );
-    });
-
-    if (duplicate) {
-      toast.error(
-        `Priority ${priorityPoints} already exists for role "${role}"`
-      );
       return;
     }
 
@@ -229,35 +210,35 @@ const AcceptedApplicationsList = () => {
 
   useEffect(() => {
     const initialGraceValues: { [key: string]: string } = {};
-  
+
     units.forEach((unit) => {
       const found = unit?.fds?.applicationGraceMarks?.find(
         (g: any) => g.role?.toLowerCase() === role
       );
       initialGraceValues[unit.id] = found?.marks?.toString() || "";
     });
-  
+
     setGraceMarksValues(initialGraceValues);
   }, [units, role]);
-const handleGraceMarksChange = (unitId: string, value: string) => {
-  setGraceMarksValues((prev) => ({
-    ...prev,
-    [unitId]: value,
-  }));
-};
-
-const handleGraceMarksSave = (unitId: string, unitType: string, value: string) => {
-  if (value === undefined || value === "") return;
-
-  const body: any = {
-    type: unitType || "citation",
-    application_id: unitId,
-    applicationGraceMarks: Number(value),
-    role, // pass current role if your backend uses it
+  const handleGraceMarksChange = (unitId: string, value: string) => {
+    setGraceMarksValues((prev) => ({
+      ...prev,
+      [unitId]: value,
+    }));
   };
 
-  dispatch(approveMarks(body)).unwrap();
-};
+  const handleGraceMarksSave = (unitId: string, unitType: string, value: string) => {
+    if (value === undefined || value === "") return;
+
+    const body: any = {
+      type: unitType || "citation",
+      application_id: unitId,
+      applicationGraceMarks: Number(value),
+      role, // pass current role if your backend uses it
+    };
+
+    dispatch(approveMarks(body)).unwrap();
+  };
   return (
     <div className="clarification-section">
       <div className="d-flex flex-sm-row flex-column align-items-sm-center justify-content-between mb-4">
@@ -346,8 +327,8 @@ const handleGraceMarksSave = (unitId: string, unitType: string, value: string) =
                   Points By {role.charAt(0).toUpperCase() + role.slice(1)}
                 </th>
               ))}
-             <th style={{ width: 200, minWidth: 200, maxWidth: 200 }}>
-             Discretionary Points
+              <th style={{ width: 200, minWidth: 200, maxWidth: 200 }}>
+                Discretionary Points
               </th>
               {role === "headquarter" && (
                 <th style={{ width: 150, minWidth: 150, maxWidth: 150 }}>
@@ -366,8 +347,8 @@ const handleGraceMarksSave = (unitId: string, unitType: string, value: string) =
                   Priority
                 </th>
               )}
-          {role==='command' && <th style={{ width: 200, minWidth: 200, maxWidth: 200 }}>
-               Status
+              {role === 'command' && <th style={{ width: 200, minWidth: 200, maxWidth: 200 }}>
+                Status
               </th>}
               <th style={{ width: 150, minWidth: 150, maxWidth: 150 }}>
                 {role ? role.charAt(0).toUpperCase() + role.slice(1) : "-"}{" "}
@@ -382,7 +363,7 @@ const handleGraceMarksSave = (unitId: string, unitType: string, value: string) =
           <tbody>
             {loading ? (
               <tr>
-                <td colSpan={6}>
+                <td colSpan={10}>
                   <div className="d-flex justify-content-center py-5">
                     <Loader inline size={40} />
                   </div>
@@ -402,7 +383,7 @@ const handleGraceMarksSave = (unitId: string, unitType: string, value: string) =
                     //   );
                     // }
                   }}
-                  //   style={{ cursor: "pointer" }}
+                //   style={{ cursor: "pointer" }}
                 >
                   <td style={{ width: 150, minWidth: 150, maxWidth: 150 }}>
                     <p className="fw-4">#{unit.id}</p>
@@ -502,17 +483,17 @@ const handleGraceMarksSave = (unitId: string, unitType: string, value: string) =
                       </p>
                     </td>
                   ))}
-<td style={{ width: 200, minWidth: 200, maxWidth: 200 }}>
-  <input
-    type="number"
-    className="form-control"
-    placeholder="Enter discretionary points"
-    autoComplete="off"
-    value={graceMarksValues[unit.id] || ""}
-    onChange={(e) => handleGraceMarksChange(unit.id, e.target.value)}
-    onBlur={(e) => handleGraceMarksSave(unit.id, unit.type, e.target.value)}
-  />
-</td>
+                  <td style={{ width: 200, minWidth: 200, maxWidth: 200 }}>
+                    <input
+                      type="number"
+                      className="form-control"
+                      placeholder="Enter discretionary points"
+                      autoComplete="off"
+                      value={graceMarksValues[unit.id] || ""}
+                      onChange={(e) => handleGraceMarksChange(unit.id, e.target.value)}
+                      onBlur={(e) => handleGraceMarksSave(unit.id, unit.type, e.target.value)}
+                    />
+                  </td>
 
                   {role === "headquarter" && (
                     <td style={{ width: 150, minWidth: 150, maxWidth: 150 }}>
@@ -528,18 +509,18 @@ const handleGraceMarksSave = (unitId: string, unitType: string, value: string) =
                       <p className="fw-4">{getLowerRolePriority(unit)}</p>
                     </td>
                   )}
- {role === 'command' && (
-  <td style={{ width: 200, minWidth: 200, maxWidth: 200 }}>
-    <p
-      className="fw-4"
-      style={{
-        color: unit?.status_flag === 'approved' ? 'green' : 'red',
-      }}
-    >
-      {unit?.status_flag === 'approved' ? 'Approved' : 'Not Approved'}
-    </p>
-  </td>
-)}
+                  {role === 'command' && (
+                    <td style={{ width: 200, minWidth: 200, maxWidth: 200 }}>
+                      <p
+                        className="fw-4"
+                        style={{
+                          color: unit?.status_flag === 'approved' ? 'green' : 'red',
+                        }}
+                      >
+                        {unit?.status_flag === 'approved' ? 'Approved' : 'Not Approved'}
+                      </p>
+                    </td>
+                  )}
 
 
                   <td style={{ width: 200, minWidth: 200, maxWidth: 200 }}>
@@ -555,7 +536,7 @@ const handleGraceMarksSave = (unitId: string, unitType: string, value: string) =
                           ...prev,
                           [unit.id]: value,
                         }));
-                        handlePriorityChange(unit, value, units); // Optional: only if you want to call API on every change
+                        handlePriorityChange(unit, value);
                       }}
                     />
                   </td>
@@ -627,7 +608,7 @@ const handleGraceMarksSave = (unitId: string, unitType: string, value: string) =
                 );
                 return;
               }
-          
+
               setShowSignatureModal(true)
             }}
           >
@@ -647,14 +628,14 @@ const handleGraceMarksSave = (unitId: string, unitType: string, value: string) =
         />
       )}
       <ReqSignatureApproveModal
-  show={showSignatureModal}
-  handleClose={() => setShowSignatureModal(false)}
-  handleApprove={(signatureFile) => {
-    console.log("Approving with signature:", signatureFile);
-        handleBulkApprove();
-        setShowSignatureModal(false)
-  }}
-/>
+        show={showSignatureModal}
+        handleClose={() => setShowSignatureModal(false)}
+        handleApprove={(signatureFile) => {
+          console.log("Approving with signature:", signatureFile);
+          handleBulkApprove();
+          setShowSignatureModal(false)
+        }}
+      />
     </div>
   );
 };
