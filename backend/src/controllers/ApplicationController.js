@@ -130,6 +130,17 @@ exports.getApplicationsScoreboard = async (req, res) => {
     }
   };
   
+  exports.addApplicationSignature = async (req, res) => {
+    try {
+      const result = await ApplicationService.addApplicationSignature(req.user, req.body);
+      res.status(StatusCodes.OK).send(result);
+    } catch (error) {
+      res.status(StatusCodes.INTERNAL_SERVER_ERROR).send(
+        ResponseHelper.error(StatusCodes.INTERNAL_SERVER_ERROR, "Internal Server Error", error.message)
+      );
+    }
+  };
+  
   exports.addApplicationComment = async (req, res) => {
     try {
       const result = await ApplicationService.addApplicationComment(req.user, req.body);

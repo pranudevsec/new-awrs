@@ -89,7 +89,7 @@ export const roleOptions = [
   { label: "Division", value: "division" },
   { label: "Corps", value: "corps" },
   { label: "Command", value: "command" },
-  { label: "CW2", value: "headquarter" }, 
+  { label: "AGs Br/CW2/IHQ (Army)", value: "headquarter" }, 
   { label: "MO", value: "cw2_mo" },
   { label: "OL", value: "cw2_ol" },
   { label: "HR", value: "cw2_hr" },

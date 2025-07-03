@@ -1437,6 +1437,91 @@ await client.query(
     client.release();
   }
 };
+exports.addApplicationSignature = async (user, body) => {
+  const client = await dbService.getClient();
+  try {
+    const { type, application_id, id, member_order, member_type, name, added_signature = "" } = body;
+
+    if (!["citation", "appreciation"].includes(type)) {
+      return ResponseHelper.error(400, "Invalid type provided");
+    }
+
+    if (!id || !member_order || !member_type || !name) {
+      return ResponseHelper.error(400, "Missing required member fields");
+    }
+
+    const tableName = type === "citation" ? "Citation_tab" : "Appre_tab";
+    const idColumn = type === "citation" ? "citation_id" : "appreciation_id";
+
+    // Fetch existing application
+    const res = await client.query(
+      `SELECT ${idColumn}, ${type === "citation" ? "citation_fds" : "appre_fds"} AS fds FROM ${tableName} WHERE ${idColumn} = $1`,
+      [application_id]
+    );
+
+    if (res.rowCount === 0) {
+      return ResponseHelper.error(404, "Application not found");
+    }
+
+    let fds = res.rows[0].fds;
+    if (!fds || typeof fds !== "object") {
+      fds = {};
+    }
+
+    if (!Array.isArray(fds.signatures)) {
+      fds.signatures = [];
+    }
+
+    const userRole = user.user_role;
+    const now = new Date();
+
+    // Find or create the role entry
+    let roleEntry = fds.signatures.find(sig => sig.role === userRole);
+
+    if (!roleEntry) {
+      roleEntry = {
+        role: userRole,
+        signatures_of_members: [],
+      };
+      fds.signatures.push(roleEntry);
+    }
+
+    // Check if the member with the same ID already has a signature under this role
+    const existingSignature = roleEntry.signatures_of_members.find(m => m.id === id);
+
+    if (existingSignature) {
+      return ResponseHelper.error(400, "Signature already added for this member under this role");
+    }
+
+    // Add the signature entry
+    const newSignature = {
+      id,
+      member_order,
+      member_type,
+      name,
+      added_signature,
+      signature_added_by: user.user_id,
+      signature_added_at: now,
+    };
+
+    roleEntry.signatures_of_members.push(newSignature);
+
+    // Update back to DB
+    await client.query(
+      `UPDATE ${tableName}
+       SET ${type === "citation" ? "citation_fds" : "appre_fds"} = $1
+       WHERE ${idColumn} = $2`,
+      [JSON.stringify(fds), application_id]
+    );
+
+    return ResponseHelper.success(200, "Signature added successfully", newSignature);
+
+  } catch (error) {
+    return ResponseHelper.error(500, "Failed to add signature", error.message);
+  } finally {
+    client.release();
+  }
+};
 
 
   exports.addApplicationComment = async (user, body) => {

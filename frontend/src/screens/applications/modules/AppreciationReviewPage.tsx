@@ -203,14 +203,19 @@ const AppreciationReviewPage = () => {
                     },
                 };
 
-                const resultAction = await dispatch(createAppreciation(payload));
+                const resultAction :any= await dispatch(createAppreciation(payload));
                 const result = unwrapResult(resultAction);
 
                 if (result.success) {
                     formik.resetForm();
                     dispatch(resetCitationState());
-                    navigate("/applications/thanks");
-                } else {
+                    const id = resultAction?.payload?.data?.appreciation_id;
+
+                    if (id) {
+                      navigate(`/applications/thanks?id=${id}`);
+                    } else {
+                      navigate("/applications/thanks");
+                    }                } else {
                     toast.error("Failed to create appreciation.");
                 }
             } catch (err) {

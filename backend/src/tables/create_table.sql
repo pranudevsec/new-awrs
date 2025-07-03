@@ -99,7 +99,7 @@ DROP TABLE IF EXISTS Unit_tab;
 CREATE TABLE Unit_tab (
     unit_id SERIAL PRIMARY KEY,
     sos_no CHAR(8),
-    name VARCHAR NOT NULL,
+    name VARCHAR,
     adm_channel VARCHAR,
     tech_channel VARCHAR,
     bde VARCHAR,

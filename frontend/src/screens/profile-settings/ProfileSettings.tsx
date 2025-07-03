@@ -612,7 +612,7 @@ const ProfileSettings = () => {
         </div>
       </form>
 
-      {!["unit", "headquarter", "cw2"].includes(role) && (
+      {!["unit", "headquarter"].includes(role) && (
         <>
           {/* Commander */}
           {/* <div className="d-flex flex-sm-row flex-column align-items-sm-center justify-content-between mb-4">

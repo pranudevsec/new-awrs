@@ -206,13 +206,19 @@ const CitationReviewPage = () => {
           },
         };
 
-        const resultAction = await dispatch(createCitation(payload));
+        const resultAction :any= await dispatch(createCitation(payload));
         const result = unwrapResult(resultAction);
 
         if (result.success) {
           formik.resetForm();
           dispatch(resetCitationState());
-          navigate("/applications/thanks");
+          const id = resultAction?.payload?.data?.citation_id;
+
+          if (id) {
+            navigate(`/applications/thanks?id=${id}`);
+          } else {
+            navigate("/applications/thanks");
+          }
         } else {
           toast.error("Failed to create citation.");
         }

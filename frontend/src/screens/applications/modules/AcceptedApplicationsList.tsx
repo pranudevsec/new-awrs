@@ -13,12 +13,9 @@ import {
 import Breadcrumb from "../../../components/ui/breadcrumb/Breadcrumb";
 import FormSelect from "../../../components/form/FormSelect";
 import EmptyTable from "../../../components/ui/empty-table/EmptyTable";
-import Loader from "../../../components/ui/loader/Loader";
 import Pagination from "../../../components/ui/pagination/Pagination";
 import toast from "react-hot-toast";
 import ReqSignatureApproveModal from "../../../modals/ReqSignatureApproveModal";
-import { IoMdCheckmark } from "react-icons/io";
-import { MdClose } from "react-icons/md";
 import { useNavigate } from "react-router-dom";
 
 const AcceptedApplicationsList = () => {
@@ -240,23 +237,24 @@ const AcceptedApplicationsList = () => {
     fetchData();
   };
 
-  const handleGraceMarksSave = (
-    unitId: string,
-    unitType: string,
-    value: string
-  ) => {
-    if (value === undefined || value === "") return;
+  // const handleGraceMarksSave = (
+  //   unitId: string,
+  //   unitType: string,
+  //   value: string
+  // ) => {
+  //   if (value === undefined || value === "") return;
 
-    const body: any = {
-      type: unitType || "citation",
-      application_id: unitId,
-      applicationGraceMarks: Number(value),
-      role, // pass current role if your backend uses it
-    };
+  //   const body: any = {
+  //     type: unitType || "citation",
+  //     application_id: unitId,
+  //     applicationGraceMarks: Number(value),
+  //     role, // pass current role if your backend uses it
+  //   };
 
-    dispatch(approveMarks(body)).unwrap();
-    fetchData();
-  };
+  //   dispatch(approveMarks(body)).unwrap();
+  //   fetchData();
+  // };
+  
   return (
     <div className="clarification-section">
       <div className="d-flex flex-sm-row flex-column align-items-sm-center justify-content-between mb-4">
