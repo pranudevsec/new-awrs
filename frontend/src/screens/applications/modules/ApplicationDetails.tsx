@@ -704,7 +704,44 @@ const ApplicationDetails = () => {
             </ul>
           </>
         )}
-
+     {profile?.unit?.members &&
+  Array.isArray(profile.unit.members) &&
+  profile.unit.members.filter(m => m.digital_sign && m.digital_sign.trim() !== "").length > 0 && (
+    <div className="table-responsive">
+          <table className="table-style-1 w-100">
+        <thead className="table-light">
+          <tr>
+            <th>Name</th>
+            <th>Rank</th>
+            <th>Signature</th>
+          </tr>
+        </thead>
+        <tbody>
+          {[
+            ...profile.unit.members
+              .filter(m => m.member_type === "member_officer" && m.digital_sign && m.digital_sign.trim() !== "")
+              .sort((a, b) => Number(a.member_order || 0) - Number(b.member_order || 0)),
+            ...profile.unit.members
+              .filter(m => m.member_type === "presiding_officer" && m.digital_sign && m.digital_sign.trim() !== "")
+          ].map((member) => (
+            <tr key={member.id}>
+              <td>{member.name || "-"}</td>
+              <td>{member.rank || "-"}</td>
+              <td>
+                <button
+                  type="button"
+                  className="_btn success"
+                  onClick={() => alert(`Signature clicked for ${member.name}`)}
+                >
+                  Add Signature
+                </button>
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+)}
         {!isUnitRole && (
           <div className="submit-button-wrapper">
             <div className="row text-center text-sm-start mb-3">
@@ -841,7 +878,9 @@ const ApplicationDetails = () => {
                   </button>
                 </>
               )}
+              
             </div>
+            
           </div>
         )}
         {isCW2Role && (

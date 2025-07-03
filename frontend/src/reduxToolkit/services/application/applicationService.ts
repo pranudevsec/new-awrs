@@ -213,35 +213,48 @@ export const updateApplication = createAsyncThunk<
 export const approveApplications = createAsyncThunk<
   ApproveApplicationsResponse,
   ApproveApplicationsParams
->("applications/approveApplications", async (params, { rejectWithValue }) => {
-  try {
-    const response = await Axios.put(
-      `${apiEndPoints.application}/approve/applications`,
-      {
+>(
+  "applications/approveApplications",
+  async (params, { rejectWithValue }) => {
+    try {
+      const payload: any = {
         type: params.type,
         status: params.status || "approved",
-        ids: params.ids,
-      }
-    );
+      };
 
-    if (response.data.success) {
-      toast.success(
-        response.data.message || "Applications approved successfully"
+      if (params.id) {
+        payload.id = params.id; 
+      }
+
+      if (params.ids) {
+        payload.ids = params.ids;
+      }
+
+      const response = await Axios.put(
+        `${apiEndPoints.application}/approve/applications`,
+        payload
       );
-      return response.data;
-    } else {
-      toast.error(response.data.message || "Failed to approve applications");
-      return rejectWithValue(response.data.message);
+
+      if (response.data.success) {
+        toast.success(
+          response.data.message || "Applications approved successfully"
+        );
+        return response.data;
+      } else {
+        toast.error(response.data.message || "Failed to approve applications");
+        return rejectWithValue(response.data.message);
+      }
+    } catch (error: any) {
+      toast.error(
+        error.response?.data?.message || "Error approving applications"
+      );
+      return rejectWithValue(
+        error.response?.data?.message || "Failed to approve applications"
+      );
     }
-  } catch (error: any) {
-    toast.error(
-      error.response?.data?.message || "Error approving applications"
-    );
-    return rejectWithValue(
-      error.response?.data?.message || "Failed to approve applications"
-    );
   }
-});
+);
+
 
 export const approveMarks = createAsyncThunk<
   ApproveMarksResponse,

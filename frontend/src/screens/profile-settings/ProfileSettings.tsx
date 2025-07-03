@@ -20,10 +20,13 @@ import FormSelect from "../../components/form/FormSelect";
 import Breadcrumb from "../../components/ui/breadcrumb/Breadcrumb";
 import Loader from "../../components/ui/loader/Loader";
 import FormInput from "../../components/form/FormInput";
+import toast from "react-hot-toast";
+import type { UpdateUnitProfileRequest } from "../../reduxToolkit/services/auth/authInterface";
 
 type UserRole = "unit" | "brigade" | "division" | "corps" | "command" | string;
 
 interface Officer {
+  id?: string;
   serialNumber: string;
   icNumber: string;
   rank: string;
@@ -43,8 +46,19 @@ const ProfileSettings = () => {
 
   // States
   const [firstLoad, setFirstLoad] = useState(true);
+  const [presidingOfficer, setPresidingOfficer] = useState<Officer>({
+    id: undefined,
+    serialNumber: "",
+    icNumber: "",
+    rank: "",
+    name: "",
+    appointment: "",
+    digitalSign: "",
+  });
+
   const [officers, setOfficers] = useState<Officer[]>([
     {
+      id: undefined,
       serialNumber: "",
       icNumber: "",
       rank: "",
@@ -55,6 +69,56 @@ const ProfileSettings = () => {
   ]);
   const role = profile?.user?.user_role?.toLowerCase() ?? "";
 
+  useEffect(() => {
+    if (profile?.unit?.members && Array.isArray(profile.unit.members)) {
+      // Extract presiding officer
+      const presiding = profile.unit.members.find(
+        (member) => member.member_type === "presiding_officer"
+      );
+  
+      if (presiding) {
+        setPresidingOfficer({
+          id: presiding.id ?? undefined,
+          serialNumber: presiding.member_order ?? "",
+          icNumber: presiding.ic_number ?? "",
+          rank: presiding.rank ?? "",
+          name: presiding.name ?? "",
+          appointment: presiding.appointment ?? "",
+          digitalSign: presiding.digital_sign ?? "",
+        });
+      }
+  
+      // Extract other officers
+      const otherOfficers = profile.unit.members
+        .filter((member) => member.member_type !== "presiding_officer")
+        .map((member) => ({
+          id: member.id ?? undefined,
+          serialNumber: member.member_order ?? "",
+          icNumber: member.ic_number ?? "",
+          rank: member.rank ?? "",
+          name: member.name ?? "",
+          appointment: member.appointment ?? "",
+          digitalSign: member.digital_sign ?? "",
+        }));
+  
+      if (otherOfficers.length > 0) {
+        setOfficers(otherOfficers);
+      } else {
+        setOfficers([
+          {
+            id: undefined,
+            serialNumber: "",
+            icNumber: "",
+            rank: "",
+            name: "",
+            appointment: "",
+            digitalSign: "",
+          },
+        ]);
+      }
+    }
+  }, [profile?.unit?.members]);
+  
   useEffect(() => {
     if (profile) setFirstLoad(false);
   }, [profile]);
@@ -208,10 +272,32 @@ const ProfileSettings = () => {
       </option>
     );
   });
-
+  const handlePresidingChange = (field: keyof Officer, value: string) => {
+    setPresidingOfficer((prev) => ({
+      ...prev,
+      [field]: value,
+    }));
+  };
   // Show loader
   if (firstLoad) return <Loader />;
-
+  const buildUnitPayload = (members?: UpdateUnitProfileRequest["members"]): UpdateUnitProfileRequest => ({
+    name: profile?.unit?.name || "",
+    adm_channel: profile?.unit?.adm_channel ?? null,
+    tech_channel: profile?.unit?.tech_channel ?? null,
+    bde: profile?.unit?.bde ?? null,
+    div: profile?.unit?.div ?? null,
+    corps: profile?.unit?.corps ?? null,
+    comd: profile?.unit?.comd ?? null,
+    unit_type: profile?.unit?.unit_type ?? null,
+    matrix_unit: profile?.unit?.matrix_unit ?? null,
+    location: profile?.unit?.location ?? null,
+    goc_award: profile?.unit?.goc_award ?? null,
+    coas_award: profile?.unit?.coas_award ?? null,
+    goc_award_year: profile?.unit?.goc_award_year ?? null,
+    coas_award_year: profile?.unit?.coas_award_year ?? null,
+    members
+  });
+  
   return (
     <div className="profile-settings-section">
       <div className="d-flex flex-sm-row flex-column align-items-sm-center justify-content-between mb-4">
@@ -596,151 +682,206 @@ const ProfileSettings = () => {
           <div className="d-flex flex-sm-row flex-column align-items-sm-center justify-content-between mb-4">
             <Breadcrumb title="Presiding Officer" />
           </div>
-          <form className="mb-5">
-            <div className="row">
-              {/* <div className="col-sm-6 mb-3">
-            <FormInput
-              label="Serial Number"
-              name="serialNumber"
-              placeholder="Enter Serial Number"
-              value=""
-            />
-          </div> */}
-              <div className="col-sm-6 mb-3">
-                <FormInput
-                  label="IC Number"
-                  name="icNumber"
-                  placeholder="Enter IC Number"
-                  value=""
-                />
-              </div>
-              <div className="col-sm-6 mb-3">
-                <FormInput
-                  label="Rank"
-                  name="rank"
-                  placeholder="Enter Rank"
-                  value=""
-                />
-              </div>
-              <div className="col-sm-6 mb-3">
-                <FormInput
-                  label="Name"
-                  name="name"
-                  placeholder="Enter Name"
-                  value=""
-                />
-              </div>
-              <div className="col-sm-6 mb-3">
-                <FormInput
-                  label="Appointment"
-                  name="appointment"
-                  placeholder="Enter Appointment"
-                  value=""
-                />
-              </div>
-              <div className="col-sm-6 mb-3">
-                <FormInput
-                  label="Digital Sign"
-                  name="digitalSign"
-                  placeholder="Enter Digital Sign"
-                  value=""
-                />
-              </div>
-              <div className="col-12 mt-2">
-                <div className="d-flex align-items-center">
-                  <button type="submit" className="_btn _btn-lg primary">
-                    Add Presiding Officer
-                  </button>
-                </div>
-              </div>
-            </div>
-          </form>
+          <form
+  className="mb-5"
+  onSubmit={async (e) => {
+    e.preventDefault();
+
+    if (!presidingOfficer.icNumber || !presidingOfficer.rank || !presidingOfficer.name) {
+      toast.error("Please fill IC Number, Rank, and Name for Presiding Officer.");
+      return;
+    }
+
+    const presidingPayload = [{
+      ...(presidingOfficer.id ? { id: presidingOfficer.id } : {}),
+      member_type: "presiding_officer",
+      member_order: "",
+      ic_number: presidingOfficer.icNumber,
+      rank: presidingOfficer.rank,
+      name: presidingOfficer.name,
+      appointment: presidingOfficer.appointment,
+      digital_sign: presidingOfficer.digitalSign,
+    }];
+
+    try {
+      const payload = buildUnitPayload(presidingPayload);
+      const resultAction = await dispatch(reqToUpdateUnitProfile(payload));      const result = unwrapResult(resultAction);
+
+      if (result.success) {
+        await dispatch(getProfile());
+      }
+    } catch (error) {
+      toast.error("Failed to add Presiding Officer.");
+      console.error(error);
+    }
+  }}
+>
+  <div className="row">
+    <div className="col-sm-6 mb-3">
+      <FormInput
+        label="IC Number"
+        name="icNumber"
+        placeholder="Enter IC Number"
+        value={presidingOfficer.icNumber}
+        onChange={(e) => handlePresidingChange("icNumber", e.target.value)}
+      />
+    </div>
+    <div className="col-sm-6 mb-3">
+      <FormInput
+        label="Rank"
+        name="rank"
+        placeholder="Enter Rank"
+        value={presidingOfficer.rank}
+        onChange={(e) => handlePresidingChange("rank", e.target.value)}
+      />
+    </div>
+    <div className="col-sm-6 mb-3">
+      <FormInput
+        label="Name"
+        name="name"
+        placeholder="Enter Name"
+        value={presidingOfficer.name}
+        onChange={(e) => handlePresidingChange("name", e.target.value)}
+      />
+    </div>
+    <div className="col-sm-6 mb-3">
+      <FormInput
+        label="Appointment"
+        name="appointment"
+        placeholder="Enter Appointment"
+        value={presidingOfficer.appointment}
+        onChange={(e) => handlePresidingChange("appointment", e.target.value)}
+      />
+    </div>
+    <div className="col-sm-6 mb-3">
+      <FormInput
+        label="Digital Sign"
+        name="digitalSign"
+        placeholder="Enter Digital Sign"
+        value={presidingOfficer.digitalSign}
+        onChange={(e) => handlePresidingChange("digitalSign", e.target.value)}
+      />
+    </div>
+    <div className="col-12 mt-2">
+      <button type="submit" className="_btn _btn-lg primary">
+        Add Presiding Officer
+      </button>
+    </div>
+  </div>
+</form>
+
 
           {/* Officers */}
-          <form className="mb-5">
-            {officers.map((officer, index) => (
-              <div key={index} className="mb-4">
-                <div className="d-flex flex-sm-row flex-column align-items-sm-center justify-content-between mb-3">
-                  <Breadcrumb title={`Member Officer ${index + 1}`} />
-                </div>
-                <div className="row">
-                  {/* <div className="col-sm-6 mb-3">
-                <FormInput
-                  label="Serial Number"
-                  name={`serialNumber-${index}`}
-                  placeholder="Enter Serial Number"
-                  value={officer.serialNumber}
-                  onChange={(e) => handleChange(index, "serialNumber", e.target.value)}
-                />
-              </div> */}
-                  <div className="col-sm-6 mb-3">
-                    <FormInput
-                      label="IC Number"
-                      name={`icNumber-${index}`}
-                      placeholder="Enter IC Number"
-                      value={officer.icNumber}
-                      onChange={(e) =>
-                        handleChange(index, "icNumber", e.target.value)
-                      }
-                    />
-                  </div>
-                  <div className="col-sm-6 mb-3">
-                    <FormInput
-                      label="Rank"
-                      name={`rank-${index}`}
-                      placeholder="Enter Rank"
-                      value={officer.rank}
-                      onChange={(e) =>
-                        handleChange(index, "rank", e.target.value)
-                      }
-                    />
-                  </div>
-                  <div className="col-sm-6 mb-3">
-                    <FormInput
-                      label="Name"
-                      name={`name-${index}`}
-                      placeholder="Enter Name"
-                      value={officer.name}
-                      onChange={(e) =>
-                        handleChange(index, "name", e.target.value)
-                      }
-                    />
-                  </div>
-                  <div className="col-sm-6 mb-3">
-                    <FormInput
-                      label="Appointment"
-                      name={`appointment-${index}`}
-                      placeholder="Enter Appointment"
-                      value={officer.appointment}
-                      onChange={(e) =>
-                        handleChange(index, "appointment", e.target.value)
-                      }
-                    />
-                  </div>
-                  <div className="col-sm-6 mb-3">
-                    <FormInput
-                      label="Digital Sign"
-                      name={`digitalSign-${index}`}
-                      placeholder="Enter Digital Sign"
-                      value={officer.digitalSign}
-                      onChange={(e) =>
-                        handleChange(index, "digitalSign", e.target.value)
-                      }
-                    />
-                  </div>
-                </div>
-              </div>
-            ))}
+          <form
+  className="mb-5"
+  onSubmit={async (e) => {
+    e.preventDefault();
 
-            <div className="d-flex align-items-center gap-2">
-              <button type="submit" className="_btn _btn-lg primary">
-                Add Member Officers
-              </button>
-              <button className="_btn _btn-lg success" onClick={handleAdd}>
-                Add
-              </button>
-            </div>
-          </form>
+    if (officers.length === 0) {
+      toast.error("Please add at least one Member Officer.");
+      return;
+    }
+
+    const officersPayload: UpdateUnitProfileRequest["members"] = officers.map((officer, index) => ({
+      ...(officer.id ? { id: officer.id } : {}), 
+      member_type: "member_officer", // narrowed type
+      member_order: String(index + 1),
+      ic_number: officer.icNumber,
+      rank: officer.rank,
+      name: officer.name,
+      appointment: officer.appointment,
+      digital_sign: officer.digitalSign,
+    }));
+
+    try {
+      const payload = buildUnitPayload(officersPayload);
+      const resultAction = await dispatch(reqToUpdateUnitProfile(payload));
+      const result = unwrapResult(resultAction);
+
+      if (result.success) {
+        await dispatch(getProfile());
+      }
+    } catch (error) {
+      toast.error("Failed to add Member Officers.");
+      console.error(error);
+    }
+  }}
+>
+  {officers.map((officer, index) => (
+    <div key={index} className="mb-4">
+      <div className="d-flex flex-sm-row flex-column align-items-sm-center justify-content-between mb-3">
+        <Breadcrumb title={`Member Officer ${index + 1}`} />
+      </div>
+      <div className="row">
+        <div className="col-sm-6 mb-3">
+          <FormInput
+            label="IC Number"
+            name={`icNumber-${index}`}
+            placeholder="Enter IC Number"
+            value={officer.icNumber}
+            onChange={(e) =>
+              handleChange(index, "icNumber", e.target.value)
+            }
+          />
+        </div>
+        <div className="col-sm-6 mb-3">
+          <FormInput
+            label="Rank"
+            name={`rank-${index}`}
+            placeholder="Enter Rank"
+            value={officer.rank}
+            onChange={(e) =>
+              handleChange(index, "rank", e.target.value)
+            }
+          />
+        </div>
+        <div className="col-sm-6 mb-3">
+          <FormInput
+            label="Name"
+            name={`name-${index}`}
+            placeholder="Enter Name"
+            value={officer.name}
+            onChange={(e) =>
+              handleChange(index, "name", e.target.value)
+            }
+          />
+        </div>
+        <div className="col-sm-6 mb-3">
+          <FormInput
+            label="Appointment"
+            name={`appointment-${index}`}
+            placeholder="Enter Appointment"
+            value={officer.appointment}
+            onChange={(e) =>
+              handleChange(index, "appointment", e.target.value)
+            }
+          />
+        </div>
+        <div className="col-sm-6 mb-3">
+          <FormInput
+            label="Digital Sign"
+            name={`digitalSign-${index}`}
+            placeholder="Enter Digital Sign"
+            value={officer.digitalSign}
+            onChange={(e) =>
+              handleChange(index, "digitalSign", e.target.value)
+            }
+          />
+        </div>
+      </div>
+    </div>
+  ))}
+
+  <div className="d-flex align-items-center gap-2">
+    <button type="submit" className="_btn _btn-lg primary">
+      Add Member Officers
+    </button>
+    <button type="button" className="_btn _btn-lg success" onClick={handleAdd}>
+      Add
+    </button>
+  </div>
+</form>
+
         </>
       )}
     </div>

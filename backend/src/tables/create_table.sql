@@ -113,6 +113,7 @@ CREATE TABLE Unit_tab (
     coas_award VARCHAR,
     goc_award_year VARCHAR,
     coas_award_year VARCHAR,
+    members JSONB DEFAULT '[]',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );

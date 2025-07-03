@@ -1,5 +1,6 @@
 const dbService = require("../utils/postgres/dbService");
 const ResponseHelper = require("../utils/responseHelper");
+const { randomUUID } = require('crypto');
 
 exports.createUnit = async (data) => {
   const client = await dbService.getClient();
@@ -116,15 +117,22 @@ exports.createOrUpdateUnitForUser = async (userId, data) => {
         coas_award,
         goc_award_year,
         coas_award_year,
+        members = []
       } = data;
+
+      const processedMembers = members.map(member => ({
+        id: member.id || randomUUID(),
+        ...member
+      }));
 
       const insertUnitQuery = `
         INSERT INTO Unit_tab (
           sos_no, name, adm_channel, tech_channel, bde, div, corps, comd,
           unit_type, matrix_unit, location,
-          goc_award, coas_award, goc_award_year, coas_award_year
+          goc_award, coas_award, goc_award_year, coas_award_year,
+          members
         )
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)
         RETURNING unit_id
       `;
 
@@ -144,6 +152,7 @@ exports.createOrUpdateUnitForUser = async (userId, data) => {
         coas_award,
         goc_award_year,
         coas_award_year,
+        JSON.stringify(processedMembers)
       ]);
 
       const newUnitId = insertRes.rows[0].unit_id;
@@ -157,21 +166,9 @@ exports.createOrUpdateUnitForUser = async (userId, data) => {
 
     } else {
       const allowedFields = [
-        "sos_no",
-        "name",
-        "adm_channel",
-        "tech_channel",
-        "bde",
-        "div",
-        "corps",
-        "comd",
-        "unit_type",
-        "matrix_unit",
-        "location",
-        "goc_award",
-        "coas_award",
-        "goc_award_year",
-        "coas_award_year"
+        "sos_no", "name", "adm_channel", "tech_channel", "bde", "div", "corps",
+        "comd", "unit_type", "matrix_unit", "location",
+        "goc_award", "coas_award", "goc_award_year", "coas_award_year"
       ];
 
       const updateFields = [];
@@ -186,11 +183,65 @@ exports.createOrUpdateUnitForUser = async (userId, data) => {
         }
       }
 
+      if (data.members && Array.isArray(data.members)) {
+        const currentMembersRes = await client.query(
+          'SELECT members FROM Unit_tab WHERE unit_id = $1',
+          [currentUnitId]
+        );
+        const existingMembers = currentMembersRes.rows[0].members || [];
+
+        let updatedMembers = [...existingMembers];
+
+        for (const member of data.members) {
+          if (member.member_type === 'presiding_officer') {
+            const existingIndex = updatedMembers.findIndex(m => m.member_type === 'presiding_officer');
+
+            if (existingIndex !== -1) {
+              updatedMembers[existingIndex] = {
+                ...updatedMembers[existingIndex],
+                ...member,
+                id: updatedMembers[existingIndex].id || member.id || randomUUID(),
+              };
+            } else {
+              updatedMembers.push({
+                id: member.id || randomUUID(),
+                ...member
+              });
+            }
+          } else {
+            if (member.id) {
+              const existingIndex = updatedMembers.findIndex(m => m.id === member.id);
+              if (existingIndex !== -1) {
+                updatedMembers[existingIndex] = {
+                  ...updatedMembers[existingIndex],
+                  ...member
+                };
+              } else {
+                updatedMembers.push({
+                  id: member.id,
+                  ...member
+                });
+              }
+            } else {
+              updatedMembers.push({
+                id: randomUUID(),
+                ...member
+              });
+            }
+          }
+        }
+
+        updateFields.push(`members = $${index}`);
+        values.push(JSON.stringify(updatedMembers));
+        index++;
+      }
+
       if (updateFields.length === 0) {
         throw new Error("No valid fields provided for update");
       }
 
       updateFields.push(`updated_at = CURRENT_TIMESTAMP`);
+
       const updateQuery = `
         UPDATE Unit_tab
         SET ${updateFields.join(", ")}
@@ -198,7 +249,7 @@ exports.createOrUpdateUnitForUser = async (userId, data) => {
         RETURNING unit_id
       `;
 
-      values.push(currentUnitId); // last value for WHERE clause
+      values.push(currentUnitId);
 
       const updateRes = await client.query(updateQuery, values);
       unitResult = updateRes.rows[0];

@@ -85,11 +85,11 @@ export interface AddCommentResponse {
   message: string;
 }
 
-
 export interface ApproveApplicationsParams {
   type: string;
   status?: string;
-  ids: (string | number)[];
+  id?: string | number;
+  ids?: (string | number)[];
 }
 
 export interface ApproveApplicationsResponse {

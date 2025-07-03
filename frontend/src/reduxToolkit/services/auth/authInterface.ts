@@ -65,6 +65,7 @@ export interface ProfileUnit {
   coas_award?: string | null;        
   goc_award_year?: string | null;    
   coas_award_year?: string | null; 
+  members?: any;
 }
 
 export interface ProfileResponse {
@@ -75,7 +76,6 @@ export interface ProfileResponse {
     unit: ProfileUnit;
   };
 }
-
 export interface UpdateUnitProfileRequest {
   name: string;
   adm_channel: string | null;
@@ -84,7 +84,16 @@ export interface UpdateUnitProfileRequest {
   div: string | null;
   corps: string | null;
   comd: string | null;
+  unit_type?: string | null;      
+  matrix_unit?: string | null;     
+  location?: string | null;        
+  goc_award?: string | null;       
+  coas_award?: string | null;      
+  goc_award_year?: string | null;  
+  coas_award_year?: string | null; 
+  members?: any;
 }
+
 
 export interface UpdateUnitProfileResponse {
   statusCode: number;

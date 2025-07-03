@@ -8,6 +8,7 @@ import {
   fetchApplicationsForHQ,
   fetchApplicationUnits,
   fetchSubordinates,
+  updateApplication,
 } from "../../../reduxToolkit/services/application/applicationService";
 import Breadcrumb from "../../../components/ui/breadcrumb/Breadcrumb";
 import FormSelect from "../../../components/form/FormSelect";
@@ -16,9 +17,13 @@ import Loader from "../../../components/ui/loader/Loader";
 import Pagination from "../../../components/ui/pagination/Pagination";
 import toast from "react-hot-toast";
 import ReqSignatureApproveModal from "../../../modals/ReqSignatureApproveModal";
+import { IoMdCheckmark } from "react-icons/io";
+import { MdClose } from "react-icons/md";
+import { useNavigate } from "react-router-dom";
 
 const AcceptedApplicationsList = () => {
   const dispatch = useAppDispatch();
+  const navigate = useNavigate();
 
   const profile = useAppSelector((state) => state.admin.profile);
   const { units, loading, meta } = useAppSelector((state) => state.application);
@@ -68,29 +73,26 @@ const AcceptedApplicationsList = () => {
     };
   }, [searchTerm]);
 
-  useEffect(() => {
-    if (!profile?.user?.user_role) return;
-
-    const fetchData = () => {
-      const params = {
-        award_type: awardType || "",
-        search: debouncedSearch,
-        page,
-        limit,
-        isShortlisted: true,
-      };
-
-      const role = profile.user.user_role;
-
-      if (role === "cw2" || role === "headquarter") {
-        dispatch(fetchApplicationsForHQ(params));
-      } else if (role !== "unit") {
-        dispatch(fetchSubordinates(params));
-      } else {
-        dispatch(fetchApplicationUnits(params));
-      }
+  const fetchData = () => {
+    const params = {
+      award_type: awardType || "",
+      search: debouncedSearch,
+      page,
+      limit,
+      isShortlisted: true,
     };
+    if (!profile?.user?.user_role) return;
+    const role = profile.user.user_role;
 
+    if (role === "cw2" || role === "headquarter") {
+      dispatch(fetchApplicationsForHQ(params));
+    } else if (role !== "unit") {
+      dispatch(fetchSubordinates(params));
+    } else {
+      dispatch(fetchApplicationUnits(params));
+    }
+  };
+  useEffect(() => {
     fetchData();
   }, [awardType, debouncedSearch, profile, page, limit]);
 
@@ -130,10 +132,7 @@ const AcceptedApplicationsList = () => {
   };
 
   // Helper function to update priority
-  const handlePriorityChange = async (
-    unitDetail: any,
-    value: string,
-  ) => {
+  const handlePriorityChange = async (unitDetail: any, value: string) => {
     const priorityPoints = parseInt(value);
 
     if (isNaN(priorityPoints)) {
@@ -150,6 +149,7 @@ const AcceptedApplicationsList = () => {
 
     try {
       await dispatch(approveMarks(body)).unwrap();
+      fetchData();
       toast.success("Priority updated successfully");
     } catch (error) {
       toast.error("Failed to update priority");
@@ -206,7 +206,9 @@ const AcceptedApplicationsList = () => {
     }
   };
 
-  const [graceMarksValues, setGraceMarksValues] = useState<{ [key: string]: string }>({});
+  const [graceMarksValues, setGraceMarksValues] = useState<{
+    [key: string]: string;
+  }>({});
 
   useEffect(() => {
     const initialGraceValues: { [key: string]: string } = {};
@@ -220,14 +222,29 @@ const AcceptedApplicationsList = () => {
 
     setGraceMarksValues(initialGraceValues);
   }, [units, role]);
-  const handleGraceMarksChange = (unitId: string, value: string) => {
+  const handleGraceMarksChange = (unitId: string, value: string,unitType: string) => {
     setGraceMarksValues((prev) => ({
       ...prev,
       [unitId]: value,
     }));
+    if (value === undefined || value === "") return;
+
+    const body: any = {
+      type: unitType || "citation",
+      application_id: unitId,
+      applicationGraceMarks: Number(value),
+      role, 
+    };
+
+    dispatch(approveMarks(body)).unwrap();
+    fetchData();
   };
 
-  const handleGraceMarksSave = (unitId: string, unitType: string, value: string) => {
+  const handleGraceMarksSave = (
+    unitId: string,
+    unitType: string,
+    value: string
+  ) => {
     if (value === undefined || value === "") return;
 
     const body: any = {
@@ -238,6 +255,7 @@ const AcceptedApplicationsList = () => {
     };
 
     dispatch(approveMarks(body)).unwrap();
+    fetchData();
   };
   return (
     <div className="clarification-section">
@@ -347,29 +365,23 @@ const AcceptedApplicationsList = () => {
                   Priority
                 </th>
               )}
-              {role === 'command' && <th style={{ width: 200, minWidth: 200, maxWidth: 200 }}>
-                Status
-              </th>}
+              {role === "command" && (
+                <th style={{ width: 200, minWidth: 200, maxWidth: 200 }}>
+                  Status
+                </th>
+              )}
               <th style={{ width: 150, minWidth: 150, maxWidth: 150 }}>
                 {role ? role.charAt(0).toUpperCase() + role.slice(1) : "-"}{" "}
                 Priority
               </th>
-              {/* <th style={{ width: 150, minWidth: 150, maxWidth: 150 }}>
+              <th style={{ width: 150, minWidth: 150, maxWidth: 150 }}>
                 Action
-              </th> */}
+              </th>
             </tr>
           </thead>
 
           <tbody>
-            {loading ? (
-              <tr>
-                <td colSpan={10}>
-                  <div className="d-flex justify-content-center py-5">
-                    <Loader inline size={40} />
-                  </div>
-                </td>
-              </tr>
-            ) : (
+          {
               units.length > 0 &&
               units.map((unit: any, idx) => (
                 <tr
@@ -383,7 +395,7 @@ const AcceptedApplicationsList = () => {
                     //   );
                     // }
                   }}
-                //   style={{ cursor: "pointer" }}
+                  //   style={{ cursor: "pointer" }}
                 >
                   <td style={{ width: 150, minWidth: 150, maxWidth: 150 }}>
                     <p className="fw-4">#{unit.id}</p>
@@ -490,8 +502,9 @@ const AcceptedApplicationsList = () => {
                       placeholder="Enter discretionary points"
                       autoComplete="off"
                       value={graceMarksValues[unit.id] || ""}
-                      onChange={(e) => handleGraceMarksChange(unit.id, e.target.value)}
-                      onBlur={(e) => handleGraceMarksSave(unit.id, unit.type, e.target.value)}
+                      onChange={(e) =>
+                        handleGraceMarksChange(unit.id, e.target.value,unit.type)
+                      }
                     />
                   </td>
 
@@ -509,19 +522,21 @@ const AcceptedApplicationsList = () => {
                       <p className="fw-4">{getLowerRolePriority(unit)}</p>
                     </td>
                   )}
-                  {role === 'command' && (
+                  {role === "command" && (
                     <td style={{ width: 200, minWidth: 200, maxWidth: 200 }}>
                       <p
                         className="fw-4"
                         style={{
-                          color: unit?.status_flag === 'approved' ? 'green' : 'red',
+                          color:
+                            unit?.status_flag === "approved" ? "green" : "red",
                         }}
                       >
-                        {unit?.status_flag === 'approved' ? 'Approved' : 'Not Approved'}
+                        {unit?.status_flag === "approved"
+                          ? "Approved"
+                          : "Not Approved"}
                       </p>
                     </td>
                   )}
-
 
                   <td style={{ width: 200, minWidth: 200, maxWidth: 200 }}>
                     <input
@@ -540,51 +555,85 @@ const AcceptedApplicationsList = () => {
                       }}
                     />
                   </td>
-                  {/* <td >
- <div className="d-flex align-itemss-center gap-2">
- <button
-  className="action-btn bg-transparent d-flex align-items-center justify-content-center"
-  style={{ color: "var(--green-default)" }}
-  onClick={() => {
-    dispatch(
-      updateApplication({
-        id: unit?.id,
-        type: unit?.type,
-        status: "approved",
-      })
-    ).then(() => {
-      toast.success("Application approved successfully");
+                  <td style={{ maxWidth: "100%" }}>
+  {unit.status_flag === "approved" || unit.status_flag === "rejected" ? (
+    <div>
+      <p
+        className="fw-4"
+        style={{
+          color: unit?.status_flag === "approved" ? "green" : "red",
+          margin: 0,
+        }}
+      >
+        {unit?.status_flag === "approved" ? "Approved" : "Rejected"}
+      </p>
+    </div>
+  ) : (
+    <div className="d-flex align-items-center gap-2">
+<button
+  className="_btn success"
+  onClick={async () => {
+    const priorityExists = unit?.fds?.applicationPriority?.some(
+      (p:any) => p.role === role && p.priority != null
+    );
+
+    if (!priorityExists) {
+      toast.error(`Please add priority for the ${role} role before approving.`);
+      return;
+    }
+
+    try {
+      const graceMarksExist = unit?.fds?.applicationGraceMarks?.some(
+        (m:any) => m.role === role && m.marks != null
+      );
+
+      if (!graceMarksExist) {
+        toast.error(
+          `Please add Discretionary Points for the ${role} role before approving.`
+        );
+        return;
+      }
+      await dispatch(
+        updateApplication({
+          id: unit?.id,
+          type: unit?.type,
+          status: "approved",
+        })
+      ).unwrap();
+      // If all checks pass, navigate
       navigate("/applications/list");
-    });
+    } catch (error) {
+      toast.error("Error while approving the application.");
+    }
   }}
 >
-  <IoMdCheckmark />
+  Approve
 </button>
 
-                  <button
-                    className="action-btn bg-transparent d-flex align-items-center justify-content-center"
-                    style={{ color: "var(--red-default)" }}
-                    onClick={() => {
-                      dispatch(
-                        updateApplication({
-                          id: unit?.id,
-                          type: unit?.type,
-                          status: "rejected",
-                        })
-                      ).then(() => {
-                        navigate("/applications/list");
-                      });
-                    }}
-                  >
-                    <MdClose />
-                  </button>
- </div>
-                  
+      <button
+        className="_btn danger"
+        onClick={() => {
+          dispatch(
+            updateApplication({
+              id: unit?.id,
+              type: unit?.type,
+              status: "rejected",
+            })
+          ).then(() => {
+            navigate("/applications/list");
+          });
+        }}
+      >
+        Reject
+      </button>
+    </div>
+  )}
+</td>
 
-                  </td> */}
+
                 </tr>
               ))
-            )}
+            }
           </tbody>
         </table>
       </div>
@@ -594,7 +643,7 @@ const AcceptedApplicationsList = () => {
         <div className="button-groups d-flex flex-wrap gap-2 align-items-center justify-content-end mt-4">
           {/* <button className="_btn outline">Upload signature</button>
           <button className="_btn outline">Upload signature</button> */}
-          <button
+          {/* <button
             className="_btn success"
             onClick={() => {
               const incompleteUnits = units.filter((unit) => {
@@ -609,11 +658,11 @@ const AcceptedApplicationsList = () => {
                 return;
               }
 
-              setShowSignatureModal(true)
+              setShowSignatureModal(true);
             }}
           >
             Approve
-          </button>
+          </button> */}
         </div>
       )}
 
@@ -633,7 +682,7 @@ const AcceptedApplicationsList = () => {
         handleApprove={(signatureFile) => {
           console.log("Approving with signature:", signatureFile);
           handleBulkApprove();
-          setShowSignatureModal(false)
+          setShowSignatureModal(false);
         }}
       />
     </div>
