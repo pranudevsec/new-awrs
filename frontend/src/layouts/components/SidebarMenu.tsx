@@ -66,14 +66,24 @@ const SidebarMenu = () => {
     icon: SVGICON.sidebar.profile,
     to: "/application/accepted",
   };
-  
+
   if (
     userRole === "brigade" ||
     userRole === "division" ||
-    userRole === "corps"||
+    userRole === "corps" ||
     userRole === "command"
   ) {
     filteredStructure.push(acceptedApplicationItem);
+  }
+
+  const historyItem = {
+    label: "History",
+    icon: SVGICON.sidebar.history,
+    to: "/history",
+  };
+
+  if (userRole === "unit") {
+    filteredStructure.push(historyItem);
   }
 
   return (

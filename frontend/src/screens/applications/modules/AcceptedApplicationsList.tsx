@@ -219,7 +219,7 @@ const AcceptedApplicationsList = () => {
 
     setGraceMarksValues(initialGraceValues);
   }, [units, role]);
-  const handleGraceMarksChange = (unitId: string, value: string,unitType: string) => {
+  const handleGraceMarksChange = (unitId: string, value: string, unitType: string) => {
     setGraceMarksValues((prev) => ({
       ...prev,
       [unitId]: value,
@@ -230,7 +230,7 @@ const AcceptedApplicationsList = () => {
       type: unitType || "citation",
       application_id: unitId,
       applicationGraceMarks: Number(value),
-      role, 
+      role,
     };
 
     dispatch(approveMarks(body)).unwrap();
@@ -254,7 +254,7 @@ const AcceptedApplicationsList = () => {
   //   dispatch(approveMarks(body)).unwrap();
   //   fetchData();
   // };
-  
+
   return (
     <div className="clarification-section">
       <div className="d-flex flex-sm-row flex-column align-items-sm-center justify-content-between mb-4">
@@ -379,7 +379,7 @@ const AcceptedApplicationsList = () => {
           </thead>
 
           <tbody>
-          {
+            {
               units.length > 0 &&
               units.map((unit: any, idx) => (
                 <tr
@@ -393,7 +393,7 @@ const AcceptedApplicationsList = () => {
                     //   );
                     // }
                   }}
-                  //   style={{ cursor: "pointer" }}
+                //   style={{ cursor: "pointer" }}
                 >
                   <td style={{ width: 150, minWidth: 150, maxWidth: 150 }}>
                     <p className="fw-4">#{unit.id}</p>
@@ -501,7 +501,7 @@ const AcceptedApplicationsList = () => {
                       autoComplete="off"
                       value={graceMarksValues[unit.id] || ""}
                       onChange={(e) =>
-                        handleGraceMarksChange(unit.id, e.target.value,unit.type)
+                        handleGraceMarksChange(unit.id, e.target.value, unit.type)
                       }
                     />
                   </td>
@@ -554,79 +554,79 @@ const AcceptedApplicationsList = () => {
                     />
                   </td>
                   <td style={{ maxWidth: "100%" }}>
-  {unit.status_flag === "approved" || unit.status_flag === "rejected" ? (
-    <div>
-      <p
-        className="fw-4"
-        style={{
-          color: unit?.status_flag === "approved" ? "green" : "red",
-          margin: 0,
-        }}
-      >
-        {unit?.status_flag === "approved" ? "Approved" : "Rejected"}
-      </p>
-    </div>
-  ) : (
-    <div className="d-flex align-items-center gap-2">
-<button
-  className="_btn success"
-  onClick={async () => {
-    const priorityExists = unit?.fds?.applicationPriority?.some(
-      (p:any) => p.role === role && p.priority != null
-    );
+                    {unit.status_flag === "approved" || unit.status_flag === "rejected" ? (
+                      <div>
+                        <p
+                          className="fw-4"
+                          style={{
+                            color: unit?.status_flag === "approved" ? "green" : "red",
+                            margin: 0,
+                          }}
+                        >
+                          {unit?.status_flag === "approved" ? "Approved" : "Rejected"}
+                        </p>
+                      </div>
+                    ) : (
+                      <div className="d-flex align-items-center gap-2">
+                        <button
+                          className="_btn success"
+                          onClick={async () => {
+                            const priorityExists = unit?.fds?.applicationPriority?.some(
+                              (p: any) => p.role === role && p.priority != null
+                            );
 
-    if (!priorityExists) {
-      toast.error(`Please add priority for the ${role} role before approving.`);
-      return;
-    }
+                            if (!priorityExists) {
+                              toast.error(`Please add priority for the ${role} role before approving.`);
+                              return;
+                            }
 
-    try {
-      const graceMarksExist = unit?.fds?.applicationGraceMarks?.some(
-        (m:any) => m.role === role && m.marks != null
-      );
+                            try {
+                              const graceMarksExist = unit?.fds?.applicationGraceMarks?.some(
+                                (m: any) => m.role === role && m.marks != null
+                              );
 
-      if (!graceMarksExist) {
-        toast.error(
-          `Please add Discretionary Points for the ${role} role before approving.`
-        );
-        return;
-      }
-      await dispatch(
-        updateApplication({
-          id: unit?.id,
-          type: unit?.type,
-          status: "approved",
-        })
-      ).unwrap();
-      // If all checks pass, navigate
-      navigate("/applications/list");
-    } catch (error) {
-      toast.error("Error while approving the application.");
-    }
-  }}
->
-  Approve
-</button>
+                              if (!graceMarksExist) {
+                                toast.error(
+                                  `Please add Discretionary Points for the ${role} role before approving.`
+                                );
+                                return;
+                              }
+                              await dispatch(
+                                updateApplication({
+                                  id: unit?.id,
+                                  type: unit?.type,
+                                  status: "approved",
+                                })
+                              ).unwrap();
+                              // If all checks pass, navigate
+                              navigate("/applications/list");
+                            } catch (error) {
+                              toast.error("Error while approving the application.");
+                            }
+                          }}
+                        >
+                          Approve
+                        </button>
 
-      <button
-        className="_btn danger"
-        onClick={() => {
-          dispatch(
-            updateApplication({
-              id: unit?.id,
-              type: unit?.type,
-              status: "rejected",
-            })
-          ).then(() => {
-            navigate("/applications/list");
-          });
-        }}
-      >
-        Reject
-      </button>
-    </div>
-  )}
-</td>
+                        <button
+                          className="_btn danger"
+                          onClick={() => {
+                            dispatch(
+                              updateApplication({
+                                id: unit?.id,
+                                type: unit?.type,
+                                status: "rejected",
+                              })
+                            ).then(() => {
+                              navigate("/applications/list");
+                            });
+                          }}
+                        >
+                          Reject
+                        </button>
+                      </div>
+                    )}
+                  </td>
 
 
                 </tr>

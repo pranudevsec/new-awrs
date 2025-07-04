@@ -19,6 +19,7 @@ import { baseURL } from "../../../reduxToolkit/helper/axios";
 import { useDebounce } from "../../../hooks/useDebounce";
 import ReviewCommentModal from "../../../modals/ReviewCommentModal";
 import ViewCreatedClarificationModal from "../../../modals/ViewCreatedClarificationModal";
+import toast from "react-hot-toast";
 
 const ApplicationDetails = () => {
   const navigate = useNavigate();
@@ -83,6 +84,7 @@ const ApplicationDetails = () => {
     approvedMarks: 0,
     totalMarks: 0,
   });
+
   const calculateParameterStats = (
     parameters: any[],
   ) => {
@@ -144,7 +146,7 @@ const ApplicationDetails = () => {
   }, [unitDetail, graceMarks]);
 
   const [commentsState, setCommentsState] = React.useState<Record<string, string>>({});
-const [localComment, setLocalComment] = useState(commentsState?.__application__ || "");
+  const [localComment, setLocalComment] = useState(commentsState?.__application__ || "");
 
   useEffect(() => {
     if (unitDetail?.fds?.parameters && profile) {
@@ -305,6 +307,30 @@ const [localComment, setLocalComment] = useState(commentsState?.__application__ 
     dispatch(addApplicationComment(body))
       .unwrap()
       .catch(() => { });
+  };
+
+  // Helper function to update priority
+  const handlePriorityChange = async (value: string) => {
+    const priorityPoints = parseInt(value);
+
+    if (isNaN(priorityPoints)) {
+      toast.error("Please enter a valid number");
+      return;
+    }
+
+    const body = {
+      type: unitDetail?.type || "citation",
+      application_id: unitDetail?.id || 0,
+      applicationPriorityPoints: priorityPoints,
+      parameters: [],
+    };
+
+    try {
+      await dispatch(approveMarks(body)).unwrap();
+      toast.success("Priority updated successfully");
+    } catch (error) {
+      toast.error("Failed to update priority");
+    }
   };
 
   const debouncedHandleSaveComment = useDebounce(handleSaveComment, 600);
@@ -704,7 +730,7 @@ const [localComment, setLocalComment] = useState(commentsState?.__application__ 
         )}
 
         {!isUnitRole && (
-          <div style={{ borderTop: "1px solid var(--gray-200)",paddingTop:'20px',paddingBottom:'20px' }}>
+          <div style={{ borderTop: "1px solid var(--gray-200)", paddingTop: '20px', paddingBottom: '20px' }}>
             <div className="row text-center text-sm-start mb-3">
               <div className="col-6 col-sm-3">
                 <span className="fw-medium text-muted">Filled Params:</span>
@@ -752,56 +778,56 @@ const [localComment, setLocalComment] = useState(commentsState?.__application__ 
               Array.isArray(profile.unit.members) &&
               profile.unit.members.filter(m => m.digital_sign && m.digital_sign.trim() !== "").length > 0 && (
                 <div className="table-responsive mb-3">
-                   <label
-                  className="fw-medium text-muted mb-2"
-                  style={{ whiteSpace: "nowrap" }}
-                >
-                  Submit Signatures:
-                </label>
-                <table className="table-style-1 w-100">
-  <thead className="table-light">
-    <tr>
-      <th style={{ width: "25%" }}>Member</th> 
-      <th style={{ width: "25%" }}>Name</th>
-      <th style={{ width: "25%" }}>Rank</th>
-      <th style={{ width: "25%" }}>Signature</th>
-    </tr>
-  </thead>
-  <tbody>
-    {[
-      ...profile.unit.members
-        .filter(
-          m => m.member_type === "member_officer" && m.digital_sign && m.digital_sign.trim() !== ""
-        )
-        .sort(
-          (a, b) => Number(a.member_order || 0) - Number(b.member_order || 0)
-        ),
-      ...profile.unit.members
-        .filter(
-          m => m.member_type === "presiding_officer" && m.digital_sign && m.digital_sign.trim() !== ""
-        )
-    ].map((member) => (
-      <tr key={member.id}>
-        <td>
-          {member.member_type === "presiding_officer"
-            ? "Presiding Officer"
-            : "Member Officer"}
-        </td>
-        <td>{member.name || "-"}</td>
-        <td>{member.rank || "-"}</td>
-        <td>
-          <button
-            type="button"
-            className="_btn success"
-            onClick={() => alert(`Signature clicked for ${member.name}`)}
-          >
-            Add Signature
-          </button>
-        </td>
-      </tr>
-    ))}
-  </tbody>
-</table>
+                  <label
+                    className="fw-medium text-muted mb-2"
+                    style={{ whiteSpace: "nowrap" }}
+                  >
+                    Submit Signatures:
+                  </label>
+                  <table className="table-style-1 w-100">
+                    <thead className="table-light">
+                      <tr>
+                        <th style={{ width: "25%" }}>Member</th>
+                        <th style={{ width: "25%" }}>Name</th>
+                        <th style={{ width: "25%" }}>Rank</th>
+                        <th style={{ width: "25%" }}>Signature</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {[
+                        ...profile.unit.members
+                          .filter(
+                            m => m.member_type === "member_officer" && m.digital_sign && m.digital_sign.trim() !== ""
+                          )
+                          .sort(
+                            (a, b) => Number(a.member_order || 0) - Number(b.member_order || 0)
+                          ),
+                        ...profile.unit.members
+                          .filter(
+                            m => m.member_type === "presiding_officer" && m.digital_sign && m.digital_sign.trim() !== ""
+                          )
+                      ].map((member) => (
+                        <tr key={member.id}>
+                          <td>
+                            {member.member_type === "presiding_officer"
+                              ? "Presiding Officer"
+                              : "Member Officer"}
+                          </td>
+                          <td>{member.name || "-"}</td>
+                          <td>{member.rank || "-"}</td>
+                          <td>
+                            <button
+                              type="button"
+                              className="_btn success"
+                              onClick={() => alert(`Signature clicked for ${member.name}`)}
+                            >
+                              Add Signature
+                            </button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
 
                 </div>
               )}
@@ -890,81 +916,91 @@ const [localComment, setLocalComment] = useState(commentsState?.__application__ 
             </div>
           </div>
         )}
+
         {isCW2Role && (
-          <div style={{ borderTop: "1px solid var(--gray-200)",paddingTop:'20px',paddingBottom:'20px' }}>
+          <div style={{ borderTop: "1px solid var(--gray-200)", paddingTop: '20px', paddingBottom: '20px' }}>
             {!isHeadquarter && (
-              <form   onSubmit={(e) => {
-          e.preventDefault();
-          handleCommentChange("__application__", localComment);
-        }}>
-                <label className="form-label mb-1">Drop Comment:</label>
-                <textarea
-                  className="form-control"
-                  placeholder="Enter comment"
-                  rows={4}
-                  value={localComment}
-          onChange={(e) => setLocalComment(e.target.value)}
-                />
-                <div className="d-flex align-items-center justify-content-end mt-2">
-                  <button type="submit" className="_btn success" >Submit</button>
+              <>
+                <div className="mb-2">
+                  <label className="form-label mb-1">Priority:</label>
+                  <input type="text" className="form-control" name="priority"
+                    onChange={(e) => {
+                      const value = e.target.value;
+                      handlePriorityChange(value);
+                    }} />
                 </div>
-              </form>
-              
+                <form onSubmit={(e) => {
+                  e.preventDefault();
+                  handleCommentChange("__application__", localComment);
+                }}>
+                  <label className="form-label mb-1">Drop Comment:</label>
+                  <textarea
+                    className="form-control"
+                    placeholder="Enter comment"
+                    rows={4}
+                    value={localComment}
+                    onChange={(e) => setLocalComment(e.target.value)}
+                  />
+                  <div className="d-flex align-items-center justify-content-end mt-2">
+                    <button type="submit" className="_btn success" >Submit</button>
+                  </div>
+                </form>
+              </>
             )}
-                {profile?.unit?.members &&
+            {profile?.unit?.members &&
               Array.isArray(profile.unit.members) &&
               profile.unit.members.filter(m => m.digital_sign && m.digital_sign.trim() !== "").length > 0 && (
                 <div className="table-responsive mb-3">
-                   <label
-                  className="fw-medium text-muted mb-2"
-                  style={{ whiteSpace: "nowrap" }}
-                >
-                  Submit Signatures:
-                </label>
-                <table className="table-style-1 w-100">
-  <thead className="table-light">
-    <tr>
-      <th style={{ width: "25%" }}>Member</th> 
-      <th style={{ width: "25%" }}>Name</th>
-      <th style={{ width: "25%" }}>Rank</th>
-      <th style={{ width: "25%" }}>Signature</th>
-    </tr>
-  </thead>
-  <tbody>
-    {[
-      ...profile.unit.members
-        .filter(
-          m => m.member_type === "member_officer" && m.digital_sign && m.digital_sign.trim() !== ""
-        )
-        .sort(
-          (a, b) => Number(a.member_order || 0) - Number(b.member_order || 0)
-        ),
-      ...profile.unit.members
-        .filter(
-          m => m.member_type === "presiding_officer" && m.digital_sign && m.digital_sign.trim() !== ""
-        )
-    ].map((member) => (
-      <tr key={member.id}>
-        <td>
-          {member.member_type === "presiding_officer"
-            ? "Presiding Officer"
-            : "Member Officer"}
-        </td>
-        <td>{member.name || "-"}</td>
-        <td>{member.rank || "-"}</td>
-        <td>
-          <button
-            type="button"
-            className="_btn success"
-            onClick={() => alert(`Signature clicked for ${member.name}`)}
-          >
-            Add Signature
-          </button>
-        </td>
-      </tr>
-    ))}
-  </tbody>
-</table>
+                  <label
+                    className="fw-medium text-muted mb-2"
+                    style={{ whiteSpace: "nowrap" }}
+                  >
+                    Submit Signatures:
+                  </label>
+                  <table className="table-style-1 w-100">
+                    <thead className="table-light">
+                      <tr>
+                        <th style={{ width: "25%" }}>Member</th>
+                        <th style={{ width: "25%" }}>Name</th>
+                        <th style={{ width: "25%" }}>Rank</th>
+                        <th style={{ width: "25%" }}>Signature</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {[
+                        ...profile.unit.members
+                          .filter(
+                            m => m.member_type === "member_officer" && m.digital_sign && m.digital_sign.trim() !== ""
+                          )
+                          .sort(
+                            (a, b) => Number(a.member_order || 0) - Number(b.member_order || 0)
+                          ),
+                        ...profile.unit.members
+                          .filter(
+                            m => m.member_type === "presiding_officer" && m.digital_sign && m.digital_sign.trim() !== ""
+                          )
+                      ].map((member) => (
+                        <tr key={member.id}>
+                          <td>
+                            {member.member_type === "presiding_officer"
+                              ? "Presiding Officer"
+                              : "Member Officer"}
+                          </td>
+                          <td>{member.name || "-"}</td>
+                          <td>{member.rank || "-"}</td>
+                          <td>
+                            <button
+                              type="button"
+                              className="_btn success"
+                              onClick={() => alert(`Signature clicked for ${member.name}`)}
+                            >
+                              Add Signature
+                            </button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
 
                 </div>
               )}

@@ -36,6 +36,8 @@ const EditParameters = lazy(() => import("../screens/parameters/EditParameters")
 
 const Dashboard = lazy(() => import("../screens/dashboard/Dashboard"));
 
+const History = lazy(() => import("../screens/history/History"));
+
 interface RouteConfig {
   path: string;
   element: ReactElement;
@@ -88,4 +90,7 @@ export const authProtectedRoutes: RouteConfig[] = [
 
   // Dashboard
   { path: "/dashboard", element: <Dashboard /> },
+
+  // History
+  { path: "/history", element: <History /> },
 ];
