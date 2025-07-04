@@ -445,12 +445,12 @@ const ProfileSettings = () => {
       <label className="form-label fw-6">Awards</label>
       <table className="table table-bordered">
         <thead>
-          <tr>
+        {awards.length !== 0 && (  <tr>
             <th>Type</th>
             <th>Brigade</th>
             <th>Year</th>
             <th>Action</th>
-          </tr>
+          </tr>)}
         </thead>
         <tbody>
           {awards.map((award, idx) => (
