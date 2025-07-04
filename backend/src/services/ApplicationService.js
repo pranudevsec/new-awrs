@@ -1384,6 +1384,7 @@ exports.approveApplicationMarks = async (user, body) => {
         role: user.user_role,
         priority: applicationPriorityPoints,
         priorityAddedAt: now,
+        ...(user.user_role === 'cw2' && user.cw2_type ? { cw2_type: user.cw2_type } : {})
       };
 
       if (existingPriorityIndex !== -1) {

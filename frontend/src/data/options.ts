@@ -85,6 +85,7 @@ export const hierarchicalStructure = [
 // ];
 export const roleOptions = [
   { label: "Unit", value: "unit" },
+  { label: "Special Unit", value: "special_unit" },
   { label: "Brigade", value: "brigade" },
   { label: "Division", value: "division" },
   { label: "Corps", value: "corps" },

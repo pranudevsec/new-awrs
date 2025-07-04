@@ -5,12 +5,14 @@ const AuthService = require("../services/AuthService.js");
 exports.createCitation = async (data, user) => {
   const client = await dbService.getClient();
   try {
-    const { date_init, citation_fds,isDraft } = data;
-    const status_flag = isDraft === true ? "draft" : "in_review";
+    const { date_init, citation_fds, isDraft } = data;
+    let status_flag = isDraft === true ? "draft" : "in_review";
 
     const profile = await AuthService.getProfile(user);
     const unit = profile?.data?.unit;
-
+    const isSpecialUnit = profile?.data?.user?.is_special_unit === true; // 👈 check if special unit
+console.log(profile)
+console.log(isSpecialUnit)
     const requiredFields = ["name", "bde", "div", "corps", "comd"];
     const missingFields = requiredFields.filter((field) => !unit?.[field]);
 
@@ -59,11 +61,31 @@ exports.createCitation = async (data, user) => {
 
     citation_fds.parameters = updatedParameters;
 
+    // 🟩 If special unit, set auto-approve fields:
+    let isshortlisted = false;
+    let last_approved_at = null;
+    let last_approved_by_role = null;
+    if (isSpecialUnit && !isDraft) {
+      isshortlisted = true;
+      last_approved_at = new Date().toISOString();
+      last_approved_by_role = 'command';
+      status_flag = "approved";
+    }
+
     const result = await client.query(
-      `INSERT INTO Citation_tab (unit_id, date_init, citation_fds, status_flag)
-       VALUES ($1, $2, $3, $4)
+      `INSERT INTO Citation_tab 
+      (unit_id, date_init, citation_fds, status_flag, isshortlisted, last_approved_at, last_approved_by_role)
+       VALUES ($1, $2, $3, $4, $5, $6, $7)
        RETURNING *`,
-      [user.unit_id, date_init, JSON.stringify(citation_fds), status_flag]
+      [
+        user.unit_id,
+        date_init,
+        JSON.stringify(citation_fds),
+        status_flag,
+        isshortlisted,
+        last_approved_at,
+        last_approved_by_role
+      ]
     );
 
     return ResponseHelper.success(201, "Citation created", result.rows[0]);
