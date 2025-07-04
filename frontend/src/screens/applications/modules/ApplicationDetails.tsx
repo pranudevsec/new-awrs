@@ -71,7 +71,21 @@ const ApplicationDetails = () => {
   const award_type = searchParams.get("award_type") || "";
   const numericAppId = Number(application_id);
   const [graceMarks, setGraceMarks] = useState("");
+  let userPriority = "";
 
+  if (role === "cw2" && Array.isArray(unitDetail?.fds?.applicationPriority)) {
+    const foundPriority = unitDetail.fds.applicationPriority.find(
+      (item:any) => item.role?.toLowerCase() === "cw2" && item.cw2_type?.toLowerCase() === cw2_type
+    );
+    if (foundPriority) {
+      userPriority = foundPriority.priority ?? "";
+    }
+  }
+  const [priority, setPriority] = useState(userPriority);
+
+  useEffect(() => {
+    setPriority(userPriority);
+  }, [userPriority]);
   useEffect(() => {
     if (award_type && numericAppId)
       dispatch(fetchApplicationUnitDetail({ award_type, numericAppId }));
@@ -923,11 +937,18 @@ const ApplicationDetails = () => {
               <>
                 <div className="mb-2">
                   <label className="form-label mb-1">Priority:</label>
-                  <input type="text" className="form-control" name="priority"
-                    onChange={(e) => {
-                      const value = e.target.value;
-                      handlePriorityChange(value);
-                    }} />
+                  <input
+  type="text"
+  className="form-control"
+  name="priority"
+  value={priority}
+  onChange={(e) => {
+    const value = e.target.value;
+    setPriority(value);
+    handlePriorityChange(value);
+  }}
+/>
+
                 </div>
                 <form onSubmit={(e) => {
                   e.preventDefault();

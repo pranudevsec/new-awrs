@@ -2,9 +2,7 @@ import { useEffect, useState } from "react";
 import { awardTypeOptions } from "../../data/options";
 import { SVGICON } from "../../constants/iconsList";
 import { useAppDispatch, useAppSelector } from "../../reduxToolkit/hooks";
-import {
-  fetchApplicationHistory,
-} from "../../reduxToolkit/services/application/applicationService";
+import {  fetchAllApplications} from "../../reduxToolkit/services/application/applicationService";
 import Breadcrumb from "../../components/ui/breadcrumb/Breadcrumb";
 import FormSelect from "../../components/form/FormSelect";
 import EmptyTable from "../../components/ui/empty-table/EmptyTable";
@@ -46,7 +44,7 @@ const History = () => {
         limit,
       };
 
-      dispatch(fetchApplicationHistory(params));
+      dispatch(fetchAllApplications(params));
     };
 
     fetchData();
@@ -56,10 +54,10 @@ const History = () => {
     <div className="clarification-section">
       <div className="d-flex flex-sm-row flex-column align-items-sm-center justify-content-between mb-4">
         <Breadcrumb
-          title="History"
+          title="All Application"
           paths={[
             { label: "Home", href: "/applications" },
-            { label: "History", href: "/history" },
+            { label: "All Application", href: "/all-applications" },
           ]}
         />
       </div>
@@ -78,13 +76,6 @@ const History = () => {
           />
         </div>
        <div className="d-flex gap-2">
-       <button
-                              type="button"
-                              className="_btn success"
-                              onClick={() => alert(`Signature Submitted.Now you can view the history data`)}
-                            >
-                              Add Signature
-                            </button>
         <FormSelect
           name="awardType"
           options={awardTypeOptions}
@@ -123,7 +114,7 @@ const History = () => {
                 Status
               </th>
               <th style={{ width: 150, minWidth: 150, maxWidth: 150 }}>
-                Approved By Stage
+                Current Stage
               </th>
             </tr>
           </thead>

@@ -66,7 +66,16 @@ const SidebarMenu = () => {
     icon: SVGICON.sidebar.profile,
     to: "/application/accepted",
   };
-
+  const historyItem = {
+    label: "History",
+    icon: SVGICON.sidebar.history,
+    to: "/history",
+  };
+  const allApplicationsItem = {
+    label: "All Applications",
+    icon: SVGICON.sidebar.history,
+    to: "/all-applications",
+  };
   if (
     userRole === "brigade" ||
     userRole === "division" ||
@@ -74,16 +83,8 @@ const SidebarMenu = () => {
     userRole === "command"
   ) {
     filteredStructure.push(acceptedApplicationItem);
-  }
-
-  const historyItem = {
-    label: "History",
-    icon: SVGICON.sidebar.history,
-    to: "/history",
-  };
-
-  if (userRole === "unit") {
     filteredStructure.push(historyItem);
+    filteredStructure.push(allApplicationsItem);
   }
 
   return (
