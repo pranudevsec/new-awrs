@@ -497,7 +497,6 @@ const ApplyCitation = () => {
               </div>
             </div>
           </div>
-
           <div
             style={{
               position: 'sticky',
@@ -520,7 +519,7 @@ const ApplyCitation = () => {
                 gap: "0.5rem",
                 minWidth: "max-content", // Prevent shrinking
               }}
-            >
+              >
               {Object.keys(groupedParams).map((category) => (
                 <Tab
                   eventKey={category}
