@@ -2,23 +2,22 @@ const dbService = require("../utils/postgres/dbService");
 const ResponseHelper = require("../utils/responseHelper");
 const AuthService = require("../services/AuthService.js");
 // Create Appreciation
-exports.createAppre = async (data,user) => {
+exports.createAppre = async (data, user) => {
   const client = await dbService.getClient();
   try {
-    const {  date_init, appre_fds,isDraft } = data;
-    const status_flag = isDraft === true ? "draft" : "in_review";
+    const { date_init, appre_fds, isDraft } = data;
+    let status_flag = isDraft === true ? "draft" : "in_review";
 
     const profile = await AuthService.getProfile(user);
     const unit = profile?.data?.unit;
+    const isSpecialUnit = profile?.data?.user?.is_special_unit === true;
 
     const requiredFields = ["name", "bde", "div", "corps", "comd"];
     const missingFields = requiredFields.filter((field) => !unit?.[field]);
 
     if (missingFields.length > 0) {
       throw new Error(
-        `Incomplete unit profile. Please update the following fields in unit settings: ${missingFields.join(
-          ", "
-        )}`
+        `Incomplete unit profile. Please update the following fields in unit settings: ${missingFields.join(", ")}`
       );
     }
 
@@ -62,11 +61,35 @@ exports.createAppre = async (data,user) => {
       parameters: enrichedParams,
     };
 
+    // If special unit, auto-approve and set is_mo_ol_approved = true
+    let isshortlisted = false;
+    let last_approved_at = null;
+    let last_approved_by_role = null;
+    let is_mo_ol_approved = false;
+
+    if (isSpecialUnit && !isDraft) {
+      isshortlisted = true;
+      last_approved_at = new Date().toISOString();
+      last_approved_by_role = 'command';
+      status_flag = "approved";
+      is_mo_ol_approved = true; 
+    }
+
     const result = await client.query(
-      `INSERT INTO Appre_tab (unit_id, date_init, appre_fds, status_flag)
-       VALUES ($1, $2, $3, $4)
+      `INSERT INTO Appre_tab 
+       (unit_id, date_init, appre_fds, status_flag, isshortlisted, last_approved_at, last_approved_by_role, is_mo_ol_approved)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
        RETURNING *`,
-      [user.unit_id, date_init, JSON.stringify(finalFds), status_flag]
+      [
+        user.unit_id,
+        date_init,
+        JSON.stringify(finalFds),
+        status_flag,
+        isshortlisted,
+        last_approved_at,
+        last_approved_by_role,
+        is_mo_ol_approved
+      ]
     );
 
     return ResponseHelper.success(201, "Appreciation created", result.rows[0]);
@@ -114,7 +137,7 @@ exports.getAppreById = async (id) => {
 exports.updateAppre = async (id, data,user) => {
   const client = await dbService.getClient();
   try {
-    const allowedFields = [ "date_init", "appre_fds", "status_flag","isShortlisted"];
+    const allowedFields = [ "date_init", "appre_fds", "status_flag","isShortlisted","is_mo_ol_approved"];
     const keys = Object.keys(data).filter((key) => allowedFields.includes(key));
 
     if (keys.length === 0) {

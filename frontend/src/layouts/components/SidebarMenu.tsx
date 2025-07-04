@@ -86,7 +86,11 @@ const SidebarMenu = () => {
     filteredStructure.push(historyItem);
     filteredStructure.push(allApplicationsItem);
   }
-
+  if (
+    userRole === "headquarter"
+  ) {
+    filteredStructure.push(allApplicationsItem);
+  }
   return (
     <aside className="sidebar-menu flex-shrink-0 d-xl-block d-none">
       <div className="position-sticky top-0">

@@ -23,6 +23,7 @@ export interface ApplicationDetail {
   clarifications_count: number;
   total_pending_clarifications: number;
   unit_name: string;
+  is_mo_ol_approved:boolean;
 }
 
 export interface FetchApplicationUnitDetailResponse {
@@ -47,7 +48,8 @@ export interface FetchSubordinatesResponse {
 export interface UpdateApplicationParams {
   id?: number;
   type?: string;
-  status: string;
+  status?: string;
+  is_mo_ol_approved?: boolean;
 }
 export interface UpdateApplicationResponse {
   success: boolean;

@@ -10,7 +10,7 @@ router.use(authMiddleware);
 router.post("/",checkRole(["unit"]), validateCreateAppreciation, AppreController.createAppre);
 router.get("/", AppreController.getAllAppres);
 router.get("/:id", AppreController.getAppreById);
-router.put("/:id",checkRole(["unit","command","headquarter"]), validateUpdateAppreciation, AppreController.updateAppre);
+router.put("/:id",checkRole(["unit","command","headquarter","cw2"]), validateUpdateAppreciation, AppreController.updateAppre);
 router.delete("/:id", AppreController.deleteAppre);
 
 module.exports = router;

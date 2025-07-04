@@ -8,9 +8,11 @@ import FormSelect from "../../components/form/FormSelect";
 import EmptyTable from "../../components/ui/empty-table/EmptyTable";
 import Loader from "../../components/ui/loader/Loader";
 import Pagination from "../../components/ui/pagination/Pagination";
+import { useNavigate } from "react-router-dom";
 
 const History = () => {
   const dispatch = useAppDispatch();
+  const navigate = useNavigate();
 
   const profile = useAppSelector((state) => state.admin.profile);
   const { units, loading, meta } = useAppSelector((state) => state.application);
@@ -131,7 +133,14 @@ const History = () => {
             ) : (
               units.length > 0 &&
               units.map((unit: any, idx) => (
-                <tr key={idx}>
+                <tr      onClick={() => {
+                  if (unit.status_flag === "draft") {
+                    navigate(`/applications/${unit.type}?id=${unit.id}`);
+                  } else {
+                    navigate(`/applications/list/${unit.id}?award_type=${unit.type}`);
+                  }
+                }}
+                style={{ cursor: "pointer" }} key={idx}>
                   <td style={{ width: 150, minWidth: 150, maxWidth: 150 }}>
                     <p className="fw-4">#{unit.id}</p>
                   </td>
@@ -163,34 +172,45 @@ const History = () => {
                   </td>
 
                   <td style={{ width: 150, minWidth: 150, maxWidth: 150 }}>
-                    <p
-                      className="fw-4"
-                      style={{
-                        color:
-                          unit?.status_flag === "approved" ? "green" : "red",
-                      }}
-                    >
-                      {unit.status_flag.charAt(0).toUpperCase() +
-                        unit.status_flag.slice(1)}
-                    </p>
+                  <p
+  className="fw-4"
+  style={{
+    color:
+      unit?.status_flag === "approved" || unit?.status_flag === "shortlisted_approved"|| unit?.status_flag === "in_review"
+        ? "green"
+        : "red",
+  }}
+>
+  {unit.status_flag === "shortlisted_approved"|| unit?.status_flag === "in_review"
+    ? "Approved"
+    : unit.status_flag.charAt(0).toUpperCase() + unit.status_flag.slice(1)
+  }
+</p>
                   </td>
-
+               
                   {/* <td style={{ width: 200, minWidth: 200, maxWidth: 200 }}>
                     <div className="status-content approved pending d-flex align-items-center gap-3">
                       <span></span>
                       <p className="text-capitalize fw-5">Accepted</p>
                     </div>
                   </td> */}
-                  <td style={{ width: 150, minWidth: 150, maxWidth: 150 }}>
+               <td style={{ width: 150, minWidth: 150, maxWidth: 150 }}>
   <p className="fw-4">
     {unit?.status_flag === "rejected"
       ? "N/A"
       : unit?.last_approved_by_role
-        ? unit.last_approved_by_role.charAt(0).toUpperCase() + unit.last_approved_by_role.slice(1)
-        : "-"
+        ? unit.last_approved_by_role === "command" && unit.is_mo_ol_approved
+          ? unit.type === "citation"
+            ? "MO"
+            : unit.type === "appreciation"
+              ? "OL"
+              : unit.last_approved_by_role.charAt(0).toUpperCase() + unit.last_approved_by_role.slice(1)
+          : unit.last_approved_by_role.charAt(0).toUpperCase() + unit.last_approved_by_role.slice(1)
+        : "Unit"
     }
   </p>
 </td>
+
 
                 </tr>
               ))

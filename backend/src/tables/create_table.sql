@@ -134,6 +134,7 @@ last_approved_at TIMESTAMP,
         status_flag IN ( 'in_review', 'in_clarification', 'approved', 'rejected','draft','shortlisted_approved')
     ),
     isShortlisted BOOLEAN DEFAULT FALSE,
+    is_mo_ol_approved BOOLEAN DEFAULT FALSE,
     last_shortlisted_approved_role VARCHAR(50),
     unitRemarks TEXT, 
      remarks JSON 
@@ -153,6 +154,7 @@ last_approved_at TIMESTAMP,
      status_flag VARCHAR(20) NOT NULL CHECK (
         status_flag IN ('in_review','in_clarification', 'approved', 'rejected','draft','shortlisted_approved')
     ),
+    is_mo_ol_approved BOOLEAN DEFAULT FALSE,
     isShortlisted BOOLEAN DEFAULT FALSE ,
     last_shortlisted_approved_role VARCHAR(50),
     unitRemarks TEXT, 

@@ -153,10 +153,12 @@ exports.getAllApplicationsForUnit = async (user, query) => {
   }
 };
 
-exports.getAllApplicationsForHQ = async (query) => {
+exports.getAllApplicationsForHQ = async (user,query) => {
   const client = await dbService.getClient();
   try {
     const { award_type, search, page = 1, limit = 10 } = query;
+
+    const isMoOlCondition = user?.user_role === "cw2" ? "" : "AND is_mo_ol_approved = true";
 
     const citations = await client.query(`
       SELECT 
@@ -168,9 +170,12 @@ exports.getAllApplicationsForHQ = async (query) => {
         status_flag,
         last_approved_by_role
       FROM Citation_tab
-      WHERE status_flag = 'approved' AND last_approved_by_role = 'command'
+      WHERE 
+        status_flag = 'approved' 
+        AND last_approved_by_role = 'command'
+        ${isMoOlCondition}
     `);
-
+    
     const appreciations = await client.query(`
       SELECT 
         appreciation_id AS id,
@@ -181,14 +186,17 @@ exports.getAllApplicationsForHQ = async (query) => {
         status_flag,
         last_approved_by_role
       FROM Appre_tab
-      WHERE status_flag = 'approved' AND last_approved_by_role = 'command'
+      WHERE 
+        status_flag = 'approved' 
+        AND last_approved_by_role = 'command'
+        ${isMoOlCondition}
     `);
-
+    
     let allApps = [...citations.rows, ...appreciations.rows];
 
     if (award_type) {
       allApps = allApps.filter(app =>
-        app.fds?.award_type?.toLowerCase() === award_type.toLowerCase()
+        app.type?.toLowerCase() === award_type.toLowerCase()
       );
     }
 
@@ -300,7 +308,6 @@ exports.getAllApplicationsForHQ = async (query) => {
   }
 };
 
-
 exports.getSingleApplicationForUnit = async (user, { application_id, award_type }) => {
   const client = await dbService.getClient();
 
@@ -322,6 +329,7 @@ exports.getSingleApplicationForUnit = async (user, { application_id, award_type 
           c.last_approved_at,
           c.status_flag,
           c.isShortlisted,
+             c.is_mo_ol_approved,
           c.remarks
         FROM Citation_tab c
         JOIN Unit_tab u ON c.unit_id = u.unit_id
@@ -340,6 +348,7 @@ exports.getSingleApplicationForUnit = async (user, { application_id, award_type 
           a.last_approved_at,
           a.status_flag,
           a.isShortlisted,
+          a.is_mo_ol_approved,
           a.remarks
         FROM Appre_tab a
         JOIN Unit_tab u ON a.unit_id = u.unit_id
@@ -2007,44 +2016,56 @@ exports.addApplicationSignature = async (user, body) => {
   
       const ROLE_HIERARCHY = ["unit", "brigade", "division", "corps", "command"];
       const currentRole = user_role.toLowerCase();
-      const currentIndex = ROLE_HIERARCHY.indexOf(currentRole);
-      if (currentIndex === -1) throw new Error("Invalid user role");
   
-      const subordinateFieldMap = {
-        brigade: "bde",
-        division: "div",
-        corps: "corps",
-        command: "comd",
-      };
-  
-      // 🔹 Get unitIds for our role and all down levels
       let unitIds = [];
-      if (currentRole === "unit") {
-        unitIds = [unit.unit_id];
+      let allowedRoles = [];
+  
+      if (currentRole === "headquarter") {
+        const allUnitsRes = await client.query(`SELECT unit_id FROM Unit_tab`);
+        unitIds = allUnitsRes.rows.map(u => u.unit_id);
+        allowedRoles = ROLE_HIERARCHY;
       } else {
-        const matchField = subordinateFieldMap[currentRole];
-        const subUnitsRes = await client.query(
-          `SELECT unit_id FROM Unit_tab WHERE ${matchField} = $1`,
-          [unit.name]
-        );
-        unitIds = subUnitsRes.rows.map(u => u.unit_id);
+        const currentIndex = ROLE_HIERARCHY.indexOf(currentRole);
+        if (currentIndex === -1) throw new Error("Invalid user role");
+  
+        const subordinateFieldMap = {
+          brigade: "bde",
+          division: "div",
+          corps: "corps",
+          command: "comd",
+        };
+  
+        if (currentRole === "unit") {
+          unitIds = [unit.unit_id];
+        } else {
+          const matchField = subordinateFieldMap[currentRole];
+          const subUnitsRes = await client.query(
+            `SELECT unit_id FROM Unit_tab WHERE ${matchField} = $1`,
+            [unit.name]
+          );
+          unitIds = subUnitsRes.rows.map(u => u.unit_id);
+        }
+  
+        if (unitIds.length === 0) {
+          return ResponseHelper.success(200, "No applications found", [], { totalItems: 0 });
+        }
+  
+        allowedRoles = ROLE_HIERARCHY.slice(0, currentIndex + 1);
       }
-  
-      if (unitIds.length === 0) {
-        return ResponseHelper.success(200, "No applications found", [], { totalItems: 0 });
+      let baseFilters;
+      let queryParams = [unitIds];
+      
+      if (currentRole === 'headquarter') {
+        baseFilters = `unit_id = ANY($1)`;
+      } else {
+        baseFilters = `
+          unit_id = ANY($1) AND
+          status_flag IN ('approved', 'rejected') AND
+          last_approved_by_role = ANY($2)
+        `;
+        queryParams.push(allowedRoles);
       }
-  
-      // 🔹 We want "our role and down"
-      const allowedRoles = ROLE_HIERARCHY.slice(0, currentIndex + 1);
-  
-      const baseFilters = `
-        unit_id = ANY($1) AND
-        status_flag IN ('approved', 'rejected') AND
-        last_approved_by_role = ANY($2)
-      `;
-      const queryParams = [unitIds, allowedRoles];
-  
-      // Base Queries
+
       const citationQuery = `
         SELECT 
           citation_id AS id,
@@ -2053,6 +2074,7 @@ exports.addApplicationSignature = async (user, body) => {
           date_init,
           citation_fds AS fds,
           status_flag,
+          is_mo_ol_approved,
           last_approved_by_role,
           last_approved_at
         FROM Citation_tab
@@ -2067,6 +2089,7 @@ exports.addApplicationSignature = async (user, body) => {
           date_init,
           appre_fds AS fds,
           status_flag,
+          is_mo_ol_approved,
           last_approved_by_role,
           last_approved_at
         FROM Appre_tab
