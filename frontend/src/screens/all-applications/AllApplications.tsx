@@ -124,7 +124,7 @@ const History = () => {
           <tbody>
             {loading ? (
               <tr>
-                <td colSpan={6}>
+                <td colSpan={8}>
                   <div className="d-flex justify-content-center py-5">
                     <Loader inline size={40} />
                   </div>
