@@ -102,58 +102,36 @@ exports.createOrUpdateUnitForUser = async (userId, data) => {
 
     if (!currentUnitId) {
       const {
-        sos_no,
-        name,
-        adm_channel,
-        tech_channel,
-        bde,
-        div,
-        corps,
-        comd,
-        unit_type,
-        matrix_unit,
-        location,
-        goc_award,
-        coas_award,
-        goc_award_year,
-        coas_award_year,
-        members = []
-      } = data;
+        sos_no, name, adm_channel, tech_channel, bde, div, corps, comd,
+        unit_type, matrix_unit, location,
+        members = [],
+        awards = []
+    } = data;
 
       const processedMembers = members.map(member => ({
         id: member.id || randomUUID(),
         ...member
       }));
-
+      const processedAwards = awards.map(award => ({
+        award_id: award.award_id || randomUUID(),
+        ...award
+    }));
       const insertUnitQuery = `
-        INSERT INTO Unit_tab (
+      INSERT INTO Unit_tab (
           sos_no, name, adm_channel, tech_channel, bde, div, corps, comd,
           unit_type, matrix_unit, location,
-          goc_award, coas_award, goc_award_year, coas_award_year,
-          members
-        )
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)
-        RETURNING unit_id
-      `;
-
-      const insertRes = await client.query(insertUnitQuery, [
-        sos_no,
-        name,
-        adm_channel,
-        tech_channel,
-        bde,
-        div,
-        corps,
-        comd,
-        unit_type,
-        matrix_unit,
-        location,
-        goc_award,
-        coas_award,
-        goc_award_year,
-        coas_award_year,
-        JSON.stringify(processedMembers)
-      ]);
+          members, awards
+      )
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
+      RETURNING unit_id
+  `;
+  
+  const insertRes = await client.query(insertUnitQuery, [
+      sos_no, name, adm_channel, tech_channel, bde, div, corps, comd,
+      unit_type, matrix_unit, location,
+      JSON.stringify(processedMembers),
+      JSON.stringify(processedAwards)
+  ]);
 
       const newUnitId = insertRes.rows[0].unit_id;
 
@@ -167,9 +145,8 @@ exports.createOrUpdateUnitForUser = async (userId, data) => {
     } else {
       const allowedFields = [
         "sos_no", "name", "adm_channel", "tech_channel", "bde", "div", "corps",
-        "comd", "unit_type", "matrix_unit", "location",
-        "goc_award", "coas_award", "goc_award_year", "coas_award_year"
-      ];
+        "comd", "unit_type", "matrix_unit", "location"
+    ];
 
       const updateFields = [];
       const values = [];
@@ -235,7 +212,54 @@ exports.createOrUpdateUnitForUser = async (userId, data) => {
         values.push(JSON.stringify(updatedMembers));
         index++;
       }
-
+      if (data.awards && Array.isArray(data.awards)) {
+        const currentAwardsRes = await client.query(
+            'SELECT awards FROM Unit_tab WHERE unit_id = $1',
+            [currentUnitId]
+        );
+        const existingAwards = currentAwardsRes.rows[0].awards || [];
+    
+        // Create a map of incoming award_ids
+        const incomingAwardIds = new Set(
+            data.awards
+                .filter(a => a.award_id)
+                .map(a => a.award_id)
+        );
+    
+        // Filter out awards in DB that are not present in incoming data (remove them)
+        let updatedAwards = existingAwards.filter(
+            a => a.award_id && incomingAwardIds.has(a.award_id)
+        );
+    
+        for (const award of data.awards) {
+            if (award.award_id) {
+                const existingIndex = updatedAwards.findIndex(a => a.award_id === award.award_id);
+                if (existingIndex !== -1) {
+                    updatedAwards[existingIndex] = {
+                        ...updatedAwards[existingIndex],
+                        ...award
+                    };
+                } else {
+                    // Edge case: award_id provided but not in DB, add it
+                    updatedAwards.push({
+                        award_id: award.award_id,
+                        ...award
+                    });
+                }
+            } else {
+                updatedAwards.push({
+                    award_id: randomUUID(),
+                    ...award
+                });
+            }
+        }
+    
+        updateFields.push(`awards = $${index}`);
+        values.push(JSON.stringify(updatedAwards));
+        index++;
+    }
+    
+    
       if (updateFields.length === 0) {
         throw new Error("No valid fields provided for update");
       }

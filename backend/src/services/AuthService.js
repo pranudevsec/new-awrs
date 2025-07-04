@@ -104,7 +104,7 @@ SELECT
   u.unit_id, u.is_special_unit,  -- added here
   ut.sos_no, ut.name AS unit_name, ut.adm_channel, ut.tech_channel, ut.bde, ut.div, ut.corps, ut.comd,
   ut.unit_type, ut.matrix_unit, ut.location,
-  ut.goc_award, ut.coas_award, ut.goc_award_year, ut.coas_award_year,
+  ut.awards,
   ut.members
 FROM User_tab u
 LEFT JOIN Unit_tab ut ON u.unit_id = ut.unit_id
@@ -144,10 +144,7 @@ WHERE u.user_id = $1
             unit_type: user.unit_type,
             matrix_unit: user.matrix_unit,
             location: user.location,
-            goc_award: user.goc_award,
-            coas_award: user.coas_award,
-            goc_award_year: user.goc_award_year,
-            coas_award_year: user.coas_award_year,
+            awards: user.awards,
             members: user.members,
           }
         : null,

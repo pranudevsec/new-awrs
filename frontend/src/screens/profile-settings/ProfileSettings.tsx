@@ -34,7 +34,12 @@ interface Officer {
   appointment: string;
   digitalSign: string;
 }
-
+interface Award {
+  award_id?: string;
+  award_type: "goc" | "coas";
+  award_title: string;
+  award_year: string;
+}
 const hierarchyMap: Record<string, string[]> = {};
 hierarchicalStructure.forEach(([command, corps, division, brigade, unit]) => {
   hierarchyMap[command] = [corps, division, brigade, unit];
@@ -67,8 +72,22 @@ const ProfileSettings = () => {
       digitalSign: "",
     },
   ]);
-  const role = profile?.user?.user_role?.toLowerCase() ?? "";
+  const [awards, setAwards] = useState<Award[]>(profile?.unit?.awards ?? []);
 
+  const role = profile?.user?.user_role?.toLowerCase() ?? "";
+  useEffect(() => {
+    if (profile?.unit?.awards && Array.isArray(profile.unit.awards)) {
+      const processedAwards = profile.unit.awards.map((award) => ({
+        award_id: award.award_id ?? undefined,
+        award_type: award.award_type ?? "goc",
+        award_title: award.award_title ?? "",
+        award_year: award.award_year ?? "",
+      }));
+      setAwards(processedAwards);
+    } else {
+      setAwards([]);
+    }
+  }, [profile?.unit?.awards]);
   useEffect(() => {
     if (profile?.unit?.members && Array.isArray(profile.unit.members)) {
       // Extract presiding officer
@@ -223,10 +242,6 @@ const ProfileSettings = () => {
       unit_type: profile?.unit?.unit_type || "",
       matrix_unit: profile?.unit?.matrix_unit || "",
       location: profile?.unit?.location || "",
-      goc_award: profile?.unit?.goc_award || "",
-      coas_award: profile?.unit?.coas_award || "",
-      goc_award_year: profile?.unit?.goc_award_year || "",
-      coas_award_year: profile?.unit?.coas_award_year || "",
     },
     enableReinitialize: true,
     onSubmit: async (values: any, { resetForm }) => {
@@ -261,10 +276,7 @@ const ProfileSettings = () => {
         payload["unit_type"] = values.unit_type;
         payload["matrix_unit"] = values.matrix_unit;
         payload["location"] = values.location;
-        payload["goc_award"] = values.goc_award;
-        payload["coas_award"] = values.coas_award;
-        payload["goc_award_year"] = values.goc_award_year;
-        payload["coas_award_year"] = values.coas_award_year;
+        payload["awards"] = awards;
 
         const resultAction = await dispatch(reqToUpdateUnitProfile(payload));
         const result = unwrapResult(resultAction);
@@ -279,14 +291,8 @@ const ProfileSettings = () => {
     },
   });
   const currentYear = new Date().getFullYear();
-  const yearOptions = Array.from({ length: 50 }, (_, i) => {
-    const year = currentYear - i;
-    return (
-      <option key={year} value={year}>
-        {year}
-      </option>
-    );
-  });
+  const yearOptions = Array.from({ length: 50 }, (_, i) => `${currentYear - i}`);
+
   const handlePresidingChange = (field: keyof Officer, value: string) => {
     setPresidingOfficer((prev) => ({
       ...prev,
@@ -306,10 +312,6 @@ const ProfileSettings = () => {
     unit_type: profile?.unit?.unit_type ?? null,
     matrix_unit: profile?.unit?.matrix_unit ?? null,
     location: profile?.unit?.location ?? null,
-    goc_award: profile?.unit?.goc_award ?? null,
-    coas_award: profile?.unit?.coas_award ?? null,
-    goc_award_year: profile?.unit?.goc_award_year ?? null,
-    coas_award_year: profile?.unit?.coas_award_year ?? null,
     members
   });
 
@@ -437,111 +439,101 @@ const ProfileSettings = () => {
               </div>
             );
           })}
-          {role === "unit" && (
-            <>
-              <div className="col-sm-6 mb-3">
-                <label htmlFor="goc_award" className="form-label mb-1">
-                  GOC Award
-                </label>
-                <input
-                  id="goc_award"
-                  name="goc_award"
-                  type="text"
-                  className={`form-control ${formik.touched.goc_award && formik.errors.goc_award
-                    ? "is-invalid"
-                    : ""
-                    }`}
-                  value={formik.values.goc_award}
-                  onChange={formik.handleChange}
-                  onBlur={formik.handleBlur}
-                  placeholder="Enter GOC Award"
-                />
-                {formik.touched.goc_award && formik.errors.goc_award && (
-                  <div className="invalid-feedback">
-                    {formik.errors.goc_award}
-                  </div>
-                )}
-              </div>
-
-              <div className="col-sm-6 mb-3">
-                <label htmlFor="goc_award_year" className="form-label mb-1">
-                  GOC Award Year
-                </label>
+  {role === "unit" && (
+  <>
+    <div className="col-12 mb-3">
+      <label className="form-label fw-6">Awards</label>
+      <table className="table table-bordered">
+        <thead>
+          <tr>
+            <th>Type</th>
+            <th>Brigade</th>
+            <th>Year</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          {awards.map((award, idx) => (
+            <tr key={award.award_id ?? idx}>
+              <td>
                 <select
-                  id="goc_award_year"
-                  name="goc_award_year"
-                  className={`form-select ${formik.touched.goc_award_year &&
-                    formik.errors.goc_award_year
-                    ? "is-invalid"
-                    : ""
-                    }`}
-                  value={formik.values.goc_award_year}
-                  onChange={formik.handleChange}
-                  onBlur={formik.handleBlur}
+                  className="form-select"
+                  value={award.award_type}
+                  onChange={(e) => {
+                    const updated = [...awards];
+                    updated[idx].award_type = e.target.value as "goc" | "coas";
+                    setAwards(updated);
+                  }}
+                >
+                  <option value="goc">GOC</option>
+                  <option value="coas">COAS</option>
+                </select>
+              </td>
+              <td>
+                <input
+                  type="text"
+                  className="form-control"
+                  value={award.award_title}
+                  onChange={(e) => {
+                    const updated = [...awards];
+                    updated[idx].award_title = e.target.value;
+                    setAwards(updated);
+                  }}
+                  placeholder="Award Title"
+                />
+              </td>
+              <td>
+                <select
+                  className="form-select"
+                  value={award.award_year}
+                  onChange={(e) => {
+                    const updated = [...awards];
+                    updated[idx].award_year = e.target.value;
+                    setAwards(updated);
+                  }}
                 >
                   <option value="">Select Year</option>
-                  {yearOptions}
+                  {yearOptions.map((year) => (
+                    <option key={year} value={year}>{year}</option>
+                  ))}
                 </select>
-                {formik.touched.goc_award_year &&
-                  formik.errors.goc_award_year && (
-                    <div className="invalid-feedback">
-                      {formik.errors.goc_award_year}
-                    </div>
-                  )}
-              </div>
-
-              <div className="col-sm-6 mb-3">
-                <label htmlFor="coas_award" className="form-label mb-1">
-                  COAS Award
-                </label>
-                <input
-                  id="coas_award"
-                  name="coas_award"
-                  type="text"
-                  className={`form-control ${formik.touched.coas_award && formik.errors.coas_award
-                    ? "is-invalid"
-                    : ""
-                    }`}
-                  value={formik.values.coas_award}
-                  onChange={formik.handleChange}
-                  onBlur={formik.handleBlur}
-                  placeholder="Enter COAS Award"
-                />
-                {formik.touched.coas_award && formik.errors.coas_award && (
-                  <div className="invalid-feedback">
-                    {formik.errors.coas_award}
-                  </div>
-                )}
-              </div>
-
-              <div className="col-sm-6 mb-3">
-                <label htmlFor="coas_award_year" className="form-label mb-1">
-                  COAS Award Year
-                </label>
-                <select
-                  id="coas_award_year"
-                  name="coas_award_year"
-                  className={`form-select ${formik.touched.coas_award_year &&
-                    formik.errors.coas_award_year
-                    ? "is-invalid"
-                    : ""
-                    }`}
-                  value={formik.values.coas_award_year}
-                  onChange={formik.handleChange}
-                  onBlur={formik.handleBlur}
+              </td>
+              <td>
+                <button
+                  type="button"
+                  className="_btn danger btn-sm"
+                  onClick={() => {
+                    setAwards((prev) => prev.filter((_, i) => i !== idx));
+                  }}
                 >
-                  <option value="">Select Year</option>
-                  {yearOptions}
-                </select>
-                {formik.touched.coas_award_year &&
-                  formik.errors.coas_award_year && (
-                    <div className="invalid-feedback">
-                      {formik.errors.coas_award_year}
-                    </div>
-                  )}
-              </div>
-            </>
+                  Remove
+                </button>
+              </td>
+            </tr>
+          ))}
+          {awards.length === 0 && (
+            <tr>
+              <td colSpan={4} className="text-center text-muted">No awards added</td>
+            </tr>
           )}
+        </tbody>
+      </table>
+      <button
+        type="button"
+        className="_btn success btn-sm"
+        onClick={() => {
+          setAwards((prev) => [
+            ...prev,
+            { award_type: "goc", award_title: "", award_year: "" },
+          ]);
+        }}
+      >
+        Add Award
+      </button>
+    </div>
+  </>
+)}
+
 
           {role !== "unit" && (
             <>
