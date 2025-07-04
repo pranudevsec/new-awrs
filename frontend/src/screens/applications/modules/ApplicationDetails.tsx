@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { MdClose } from "react-icons/md";
 import { IoMdCheckmark } from "react-icons/io";
 import { SVGICON } from "../../../constants/iconsList";
+import toast from "react-hot-toast";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { useAppDispatch, useAppSelector } from "../../../reduxToolkit/hooks";
 import {
@@ -19,7 +20,7 @@ import { baseURL } from "../../../reduxToolkit/helper/axios";
 import { useDebounce } from "../../../hooks/useDebounce";
 import ReviewCommentModal from "../../../modals/ReviewCommentModal";
 import ViewCreatedClarificationModal from "../../../modals/ViewCreatedClarificationModal";
-import toast from "react-hot-toast";
+import StepProgressBar from "../../../components/ui/stepProgressBar/StepProgressBar";
 
 const ApplicationDetails = () => {
   const navigate = useNavigate();
@@ -75,7 +76,7 @@ const ApplicationDetails = () => {
 
   if (role === "cw2" && Array.isArray(unitDetail?.fds?.applicationPriority)) {
     const foundPriority = unitDetail.fds.applicationPriority.find(
-      (item:any) => item.role?.toLowerCase() === "cw2" && item.cw2_type?.toLowerCase() === cw2_type
+      (item: any) => item.role?.toLowerCase() === "cw2" && item.cw2_type?.toLowerCase() === cw2_type
     );
     if (foundPriority) {
       userPriority = foundPriority.priority ?? "";
@@ -788,6 +789,9 @@ const ApplicationDetails = () => {
                 {remarksError && <p className="error-text">{remarksError}</p>}
               </div>
             )}
+
+            <StepProgressBar currentStep={4} award_type={award_type} />
+
             {profile?.unit?.members &&
               Array.isArray(profile.unit.members) &&
               profile.unit.members.filter(m => m.digital_sign && m.digital_sign.trim() !== "").length > 0 && (
@@ -938,16 +942,16 @@ const ApplicationDetails = () => {
                 <div className="mb-2">
                   <label className="form-label mb-1">Priority:</label>
                   <input
-  type="text"
-  className="form-control"
-  name="priority"
-  value={priority}
-  onChange={(e) => {
-    const value = e.target.value;
-    setPriority(value);
-    handlePriorityChange(value);
-  }}
-/>
+                    type="text"
+                    className="form-control"
+                    name="priority"
+                    value={priority}
+                    onChange={(e) => {
+                      const value = e.target.value;
+                      setPriority(value);
+                      handlePriorityChange(value);
+                    }}
+                  />
 
                 </div>
                 <form onSubmit={(e) => {

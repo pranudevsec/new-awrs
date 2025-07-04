@@ -90,7 +90,7 @@ export const roleOptions = [
   { label: "Division", value: "division" },
   { label: "Corps", value: "corps" },
   { label: "Command", value: "command" },
-  { label: "AGs Br/CW2/IHQ (Army)", value: "headquarter" }, 
+  { label: "AGs Br/CW2/IHQ (Army)", value: "headquarter" },
   { label: "MO", value: "cw2_mo" },
   { label: "OL", value: "cw2_ol" },
   { label: "HR", value: "cw2_hr" },
@@ -116,7 +116,7 @@ export const unitTypeOptions = [
   { label: "Inf – Infantry", value: "Inf" },
   { label: "Int Corps – Intelligence Corps", value: "Int Corps" },
   { label: "AMC – Army Medical Corps", value: "AMC" },
-  { label: "ATC", value: "ATC" }
+  { label: "ATC", value: "ATC" },
 ];
 
 export const matrixUnitOptions = [
