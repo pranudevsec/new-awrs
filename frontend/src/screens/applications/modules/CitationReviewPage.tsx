@@ -206,7 +206,7 @@ const CitationReviewPage = () => {
           },
         };
 
-        const resultAction :any= await dispatch(createCitation(payload));
+        const resultAction: any = await dispatch(createCitation(payload));
         const result = unwrapResult(resultAction);
 
         if (result.success) {
@@ -462,7 +462,7 @@ const CitationReviewPage = () => {
                 Back
               </button>
               <button type="submit" className="_btn primary">
-                Submit
+                {profile?.user?.is_special_unit ? "Submit To CW2" : "Submit"}
               </button>
             </div>
           </div>
