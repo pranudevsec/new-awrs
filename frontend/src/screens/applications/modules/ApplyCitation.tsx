@@ -332,7 +332,15 @@ const ApplyCitation = () => {
       try {
         const [configRes, paramsRes] = await Promise.all([
           dispatch(getConfig()).unwrap(),
-          dispatch(fetchParameters({ awardType: "citation", search: "" })).unwrap(),
+          dispatch(fetchParameters({ 
+            awardType: "citation", 
+            search: "",
+            matrix_unit: profile?.unit?.matrix_unit ?? undefined,
+            comd: profile?.unit?.comd ?? undefined,
+            unit_type: profile?.unit?.unit_type ?? undefined,
+            page: 1, 
+            limit: 1000 
+          })).unwrap(),
         ]);
 
         if (configRes?.success && configRes.data) {
@@ -490,17 +498,59 @@ const ApplyCitation = () => {
             </div>
           </div>
 
-          <div style={{ position: 'sticky', top: 0, backgroundColor: 'white', zIndex: 10, paddingBottom: '1rem' }}>
+          <div
+            style={{
+              position: 'sticky',
+              top: 0,
+              backgroundColor: 'white',
+              zIndex: 10,
+              paddingBottom: '1rem',
+              overflowX: 'auto', // Enable horizontal scroll
+              whiteSpace: 'nowrap', // Prevent line breaks
+            }}
+          >
             <Tabs
               activeKey={activeTab}
               onSelect={handleTabSelect}
               id="category-tabs"
               className="mb-3 custom-tabs"
+              style={{
+                display: "inline-flex", // Inline for horizontal scroll
+                flexWrap: "nowrap",
+                gap: "0.5rem",
+                minWidth: "max-content", // Prevent shrinking
+              }}
             >
               {Object.keys(groupedParams).map((category) => (
                 <Tab
                   eventKey={category}
-                  title={<span className="form-label mb-1">{category.toUpperCase()}</span>}
+                  title={
+                    <span
+                      className="form-label mb-1"
+                      style={{
+                        // color: activeTab === category ? "#fff" : "#2563eb",
+                        // background: activeTab === category ? "linear-gradient(90deg, #3b82f6 60%, #2563eb 100%)" : "#e0e7ff",
+                        // borderRadius: 20,
+                        // padding: "0.5rem 1.8rem",
+                        // fontWeight: 600,
+                        // fontSize: 16,
+                        // boxShadow: activeTab === category ? "0 2px 8px rgba(59,130,246,0.15)" : "none",
+                        // border: activeTab === category ? "2px solid #2563eb" : "2px solid transparent",
+                        // letterSpacing: 1,
+                        // cursor: "pointer",
+                        // transition: "all 0.2s",
+                        // outline: activeTab === category ? "2px solid #93c5fd" : "none",
+                        // filter: activeTab === category ? "brightness(1.05)" : "none",
+                        // textDecoration: "none",
+                        // display: "inline-block",
+                        // marginRight: "0.5rem",
+                        // minWidth: 120,
+                        // textAlign: "center",
+                      }}
+                    >
+                      {category.toUpperCase()}
+                    </span>
+                  }
                   key={category}
                 />
               ))}

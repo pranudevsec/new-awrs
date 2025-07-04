@@ -68,6 +68,8 @@ CREATE TABLE Parameter_Master (
     applicability CHAR(4) NOT NULL,
     category CHAR(50) NOT NULL,
     name CHAR(50) NOT NULL,
+    arms_service VARCHAR  NOT NULL,
+    location  VARCHAR NOT NULL,
     description VARCHAR NOT NULL,
     negative BOOLEAN NOT NULL,
     per_unit_mark INTEGER NOT NULL DEFAULT 1,

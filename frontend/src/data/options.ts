@@ -108,18 +108,18 @@ export const roleOptions2: OptionType[] = [
 
 export const unitTypeOptions = [
   { label: "AC – Armoured Corps", value: "AC" },
-  { label: "Arty – Artillery", value: "Arty" },
+  { label: "Arty – Artillery", value: "ARTY" },
   { label: "Army Avn – Army Aviation", value: "Army Avn" },
-  { label: "Egrs – Engineers", value: "Egrs" },
+  { label: "Egrs – Engineers", value: "ENGRS" },
   { label: "Guards – Brigade of the Guards", value: "Guards" },
   { label: "Inf – Infantry", value: "Inf" },
   { label: "Int Corps – Intelligence Corps", value: "Int Corps" },
   { label: "AMC – Army Medical Corps", value: "AMC" },
-  { label: "ATC", value: "ATC" }
+  { label: "AAD", value: "AAD" }
 ];
 
 export const matrixUnitOptions = [
-  { label: "CT", value: "CT" },
+  { label: "CI/CT", value: "HINTERLAND" },
   { label: "LC", value: "LC" },
   { label: "LAC", value: "LAC" },
   { label: "IS", value: "IS" },

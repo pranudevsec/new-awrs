@@ -52,8 +52,8 @@ exports.createParameter = async (data) => {
 exports.getAllParameters = async (query) => {
   const client = await dbService.getClient();
   try {
-    const { awardType, search, page = 1, limit = 10 } = query;
-let award_type = awardType;
+    const { awardType, search,matrix_unit,comd,unit_type, page = 1, limit = 10 } = query;
+    let award_type = awardType;
     const pageInt = parseInt(page);
     const limitInt = parseInt(limit);
     const offset = (pageInt - 1) * limitInt;
@@ -61,18 +61,34 @@ let award_type = awardType;
     // Build dynamic query
     const filters = [];
     const values = [];
+    const orConditions = [];
 
     if (award_type) {
       values.push(award_type);
       filters.push(`award_type = $${values.length}`);
     }
-console.log(search)
+    if (comd) {
+      values.push(comd);
+      filters.push(`comd = $${values.length}`);
+    }
+    if (unit_type) {
+      values.push(unit_type);
+      orConditions.push(`arms_service = $${values.length}`);
+    }
+    if (matrix_unit) {
+      values.push(matrix_unit);
+      orConditions.push(`location = $${values.length}`);
+    }
     if (search) {
       values.push(`%${search.toLowerCase()}%`);
       filters.push(`LOWER(name) LIKE $${values.length}`);
     }
-
+    if (orConditions.length > 0) {
+      filters.push(`(${orConditions.join(" OR ")})`);
+    }
+    
     const whereClause = filters.length ? `WHERE ${filters.join(" AND ")}` : "";
+    
 
     // Count total
     const countQuery = `SELECT COUNT(*) FROM Parameter_Master ${whereClause}`;

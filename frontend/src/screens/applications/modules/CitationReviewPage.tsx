@@ -176,7 +176,7 @@ const CitationReviewPage = () => {
           navigate("/profile-settings");
           return;
         }
-
+        
         const formattedParameters = parameters
           .map((param: any) => {
             const trimmedName = param.name.trim();
@@ -233,7 +233,7 @@ const CitationReviewPage = () => {
       try {
         const [configRes, paramsRes] = await Promise.all([
           dispatch(getConfig()).unwrap(),
-          dispatch(fetchParameters({ awardType: "citation", search: "" })).unwrap(),
+          dispatch(fetchParameters({ awardType: "citation", search: "" ,limit: 100})).unwrap(),
         ]);
 
         if (configRes?.success && configRes.data) {
