@@ -12,7 +12,8 @@ interface FormSelectProps {
     touched?: boolean;
     placeholder?: string;
     isDisabled?: boolean
-    menuPlacement?: MenuPlacement
+    menuPlacement?: MenuPlacement;
+    isMulti?: boolean;
 }
 
 const FormSelect: FC<FormSelectProps> = ({
@@ -25,7 +26,8 @@ const FormSelect: FC<FormSelectProps> = ({
     errors,
     touched,
     isDisabled = false,
-    menuPlacement = "bottom"
+    menuPlacement = "bottom",
+    isMulti = false
 }) => {
     const isInvalid = !!(touched && errors);
 
@@ -44,6 +46,7 @@ const FormSelect: FC<FormSelectProps> = ({
                 placeholder={placeholder}
                 isDisabled={isDisabled}
                 menuPlacement={menuPlacement}
+                isMulti={isMulti}
             />
             {isInvalid && <p className="error-text">{errors}</p>}
         </Fragment>
