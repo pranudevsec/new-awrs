@@ -551,7 +551,23 @@ const ApplicationDetails = () => {
                             style={{ fontSize: 18 }}
                           >
                             <span style={{ fontSize: 14, wordBreak: 'break-word' }}>
-                              {param?.upload?.split("/").pop()}
+                            {Array.isArray(param?.upload)
+  ? param.upload.map((filePath:any, idx:any) => (
+      <span key={idx} style={{ display: "block" }}>
+        {filePath.split("/").pop()}
+      </span>
+    ))
+  : param?.upload
+    ? param.upload
+        .toString()
+        .split(",")
+        .map((filePath:any, idx:any) => (
+          <span key={idx} style={{ display: "block" }}>
+            {filePath.trim().split("/").pop()}
+          </span>
+        ))
+    : null}
+
                             </span>
                           </a>
                         ) : (
@@ -832,28 +848,108 @@ const ApplicationDetails = () => {
                             m.digital_sign &&
                             m.digital_sign.trim() !== ""
                         ),
-                      ].map((member) => (
-                        <tr key={member.id}>
-                          <td>
-                            {member.member_type === "presiding_officer"
-                              ? "Presiding Officer"
-                              : "Member Officer"}
-                          </td>
-                          <td>{member.name || "-"}</td>
-                          <td>{member.rank || "-"}</td>
-                          <td>
-                            <button
-                              type="button"
-                              className="_btn success"
-                              onClick={() =>
-                                alert(`Signature clicked for ${member.name}`)
-                              }
-                            >
-                              Add Signature
-                            </button>
-                          </td>
-                        </tr>
-                      ))}
+                      ].map((member) => {
+                        const acceptedMembers = unitDetail?.fds?.accepted_members || [];
+                        const foundMember = acceptedMembers.find(
+                          (m:any) => m.member_id === member.id
+                        );
+                        const isMemberAdded = !!foundMember;
+                        const isSignatureAdded = foundMember?.is_signature_added === true;
+              
+                        return (
+                          <tr key={member.id}>
+                            <td>
+                              {member.member_type === "presiding_officer"
+                                ? "Presiding Officer"
+                                : "Member Officer"}
+                            </td>
+                            <td>{member.name || "-"}</td>
+                            <td>{member.rank || "-"}</td>
+                            <td>
+                              <div className="d-flex flex-sm-row flex-column gap-sm-3 gap-1 ">
+                                {!isMemberAdded && (
+                                  <>
+                                   <button
+  type="button"
+  className="_btn success text-nowrap w-sm-auto"
+  onClick={() => {
+    dispatch(
+      updateApplication({
+        id: unitDetail?.id,
+        type: unitDetail?.type,
+        member: {
+          name: member.name,
+          ic_number: member.ic_number,
+          member_type: member.member_type,
+          member_id: member.id,
+        },
+      })
+    ).then(() => {
+      dispatch(fetchApplicationUnitDetail({ award_type, numericAppId }));
+    });
+  }}
+>
+  Accept
+</button>
+
+              
+                                    <button
+                                      type="button"
+                                      className="_btn danger text-nowrap  w-sm-auto"
+                                      onClick={() => {
+                                        dispatch(
+                                          updateApplication({
+                                            id: unitDetail?.id,
+                                            type: unitDetail?.type,
+                                            status: "rejected",
+                                          })
+                                        ).then(() => {
+                                          navigate("/applications/list");
+                                        });
+                                      }}
+                                    >
+                                      Reject
+                                    </button>
+                                  </>
+                                )}
+              
+                                {isMemberAdded && !isSignatureAdded && (
+                                <button
+                                type="button"
+                                className="_btn success text-nowrap w-sm-auto"
+                                onClick={() => {
+                                  dispatch(
+                                    updateApplication({
+                                      id: unitDetail?.id,
+                                      type: unitDetail?.type,
+                                      member: {
+                                        name: member.name,
+                                        ic_number: member.ic_number,
+                                        member_type: member.member_type,
+                                        member_id: member.id,
+                                        is_signature_added: true,
+                                      },
+                                    })
+                                  ).then(() => {
+                                    dispatch(fetchApplicationUnitDetail({ award_type, numericAppId }));
+                                  });
+                                }}
+                              >
+                                Add Signature
+                              </button>
+                              
+                                )}
+              
+                                {isMemberAdded && isSignatureAdded && (
+                                  <span className="text-success fw-semibold text-nowrap">
+                                    Signature Added
+                                  </span>
+                                )}
+                              </div>
+                            </td>
+                          </tr>
+                        );
+                      })}
                     </tbody>
                   </table>
                 </div>
@@ -884,7 +980,7 @@ const ApplicationDetails = () => {
                       onChange={handleGraceMarksChange}
                     />
                   </div> */}
-                  <button
+                  {/* <button
                     type="button"
                     className="_btn success"
                     onClick={() => {
@@ -917,7 +1013,7 @@ const ApplicationDetails = () => {
                     }}
                   >
                     Reject
-                  </button>
+                  </button> */}
                 </>
               )}
               {isHeadquarter && (
@@ -1025,102 +1121,28 @@ const ApplicationDetails = () => {
                             m.digital_sign &&
                             m.digital_sign.trim() !== ""
                         ),
-                      ].map((member) => {
-                        const acceptedMembers = unitDetail?.fds?.accepted_members || [];
-                        const foundMember = acceptedMembers.find(
-                          (m:any) => m.member_id === member.id
-                        );
-                        const isMemberAdded = !!foundMember;
-                        const isSignatureAdded = foundMember?.isSignatureAdded === true;
-              
-                        return (
-                          <tr key={member.id}>
-                            <td>
-                              {member.member_type === "presiding_officer"
-                                ? "Presiding Officer"
-                                : "Member Officer"}
-                            </td>
-                            <td>{member.name || "-"}</td>
-                            <td>{member.rank || "-"}</td>
-                            <td>
-                              <div className="d-flex flex-sm-row flex-column gap-sm-3 gap-1 ">
-                                {!isMemberAdded && (
-                                  <>
-                                    <button
-                                      type="button"
-                                      className="_btn success text-nowrap  w-sm-auto"
-                                      onClick={() => {
-                                        dispatch(
-                                          updateApplication({
-                                            id: unitDetail?.id,
-                                            type: unitDetail?.type,
-                                            member: {
-                                              name: member.name,
-                                              ic_number: member.ic_number,
-                                              member_type: member.member_type,
-                                              member_id: member.id,
-                                            },
-                                          })
-                                        );
-                                      }}
-                                    >
-                                      Accept
-                                    </button>
-              
-                                    <button
-                                      type="button"
-                                      className="_btn danger text-nowrap  w-sm-auto"
-                                      onClick={() => {
-                                        dispatch(
-                                          updateApplication({
-                                            id: unitDetail?.id,
-                                            type: unitDetail?.type,
-                                            status: "rejected",
-                                          })
-                                        ).then(() => {
-                                          navigate("/applications/list");
-                                        });
-                                      }}
-                                    >
-                                      Reject
-                                    </button>
-                                  </>
-                                )}
-              
-                                {isMemberAdded && !isSignatureAdded && (
-                                <button
-                                type="button"
-                                className="_btn success text-nowrap  w-sm-auto"
-                                onClick={() => {
-                                  dispatch(
-                                    updateApplication({
-                                      id: unitDetail?.id,
-                                      type: unitDetail?.type,
-                                      member: {
-                                        name: member.name,
-                                        ic_number: member.ic_number,
-                                        member_type: member.member_type,
-                                        member_id: member.id,
-                                        isSignatureAdded: false,
-                                      },
-                                    })
-                                  );
-                                }}
-                              >
-                                    Add Signature
-                                  </button>
-                                )}
-              
-                                {isMemberAdded && isSignatureAdded && (
-                                  <span className="text-success fw-semibold text-nowrap">
-                                    Signature Added
-                                  </span>
-                                )}
-                              </div>
-                            </td>
-                          </tr>
-                        );
-                      })}
+                      ].map((member) => (
+                        <tr key={member.id}>
+                          <td>
+                            {member.member_type === "presiding_officer"
+                              ? "Presiding Officer"
+                              : "Member Officer"}
+                          </td>
+                          <td>{member.name || "-"}</td>
+                          <td>{member.rank || "-"}</td>
+                          <td>
+                            <button
+                              type="button"
+                              className="_btn success"
+                              onClick={() =>
+                                alert(`Signature clicked for ${member.name}`)
+                              }
+                            >
+                              Add Signature
+                            </button>
+                          </td>
+                        </tr>
+                      ))}
                     </tbody>
                   </table>
                 </div>

@@ -2,7 +2,7 @@ export interface AppreciationParameter {
   name: string;
   count: number;
   marks: number;
-  upload: string;
+  upload: any;
 }
 
 export interface AppreciationFormData {

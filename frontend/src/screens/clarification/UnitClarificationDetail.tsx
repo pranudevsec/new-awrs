@@ -132,7 +132,22 @@ const UnitClarificationDetail = () => {
                         >
                           {/* {SVGICON.app.pdf} */}
                            <span style={{ fontSize: 14, wordBreak: 'break-word' }}>
-          {param?.upload?.split("/").pop()}
+                           {Array.isArray(param?.upload)
+  ? param.upload.map((filePath:any, idx:any) => (
+      <span key={idx} style={{ display: "block" }}>
+        {filePath.split("/").pop()}
+      </span>
+    ))
+  : param?.upload
+    ? param.upload
+        .toString()
+        .split(",")
+        .map((filePath:any, idx:any) => (
+          <span key={idx} style={{ display: "block" }}>
+            {filePath.trim().split("/").pop()}
+          </span>
+        ))
+    : null}
         </span>
                         </a> : "--"
                       }

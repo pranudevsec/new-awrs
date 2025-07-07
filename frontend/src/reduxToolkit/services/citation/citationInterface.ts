@@ -2,7 +2,7 @@ export interface CitationParameter {
     name: string;
     count: number;
     marks: number;
-    upload: string; 
+    upload: any; 
   }
   
   export interface CitationData {
