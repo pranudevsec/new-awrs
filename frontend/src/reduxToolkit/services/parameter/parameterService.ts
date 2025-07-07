@@ -10,7 +10,7 @@ export const fetchParameters = createAsyncThunk<
 >(
   "parameters/fetch",
   // async ({ awardType, search,matrix_unit,comd,unit_type, page, limit }, { rejectWithValue }) => {
-  async ({ awardType, search,comd,unit_type, page, limit }, { rejectWithValue }) => {
+  async ({ awardType, search, page, limit }, { rejectWithValue }) => {
     try {
       // const response = await Axios.get(
       //   `${apiEndPoints.parameter}?awardType=${
