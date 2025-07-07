@@ -118,6 +118,34 @@ const CitationReviewPage = () => {
     }
   };
 
+  const getParamDisplay = (param: any) => {
+    if (param.name != "no") {
+      return {
+        main: param.name,
+        header: param.subcategory || null,
+        subheader: param.subsubcategory || null,
+      };
+    } else if (param.subsubcategory) {
+      return {
+        main: param.subsubcategory,
+        header: param.subcategory || null,
+        subheader: null,
+      };
+    } else if (param.subcategory) {
+      return {
+        main: param.subcategory,
+        header: null,
+        subheader: null,
+      };
+    } else {
+      return {
+        main: param.category,
+        header: null,
+        subheader: null,
+      };
+    }
+  };
+
   const handleFileChange = async (
     e: React.ChangeEvent<HTMLInputElement>,
     paramId: number,
@@ -179,13 +207,13 @@ const CitationReviewPage = () => {
         
         const formattedParameters = parameters
           .map((param: any) => {
-            const trimmedName = param.name.trim();
+            const display = getParamDisplay(param);
             const count = Number(counts[param.param_id] ?? 0);
             const calculatedMarks = marks[param.param_id] ?? 0;
             const uploadPath = uploadedFiles[param.param_id] || "";
-
+            // console.log(display.main)
             return {
-              name: trimmedName,
+              name: display.main,
               count,
               marks: calculatedMarks,
               upload: uploadPath,
@@ -276,7 +304,7 @@ const CitationReviewPage = () => {
   if (loading) return <Loader />
 
   return (
-    <div className="apply-citation-section">
+    <div className="apply-citation-section" style={{ padding: "2rem"}}>
       <div className="d-flex flex-sm-row flex-column align-items-sm-center justify-content-between mb-4">
         <Breadcrumb
           title="Citation For Review"
@@ -367,54 +395,85 @@ const CitationReviewPage = () => {
                     </tr>
                   </thead>
                   <tbody>
-                    {params.map((param: any) => {
-                      const countValue = counts[param.param_id];
-                      const markValue = marks[param.param_id];
+                    {(() => {
+                      let prevHeader: string | null = null;
+                      let prevSubheader: string | null = null;
+                      const rows: any = [];
+                      params.forEach((param: any, idx: number) => {
+                        const display = getParamDisplay(param);
+                        const countValue = counts[param.param_id];
+                        const markValue = marks[param.param_id];
 
-                      if (countValue === undefined || countValue === "") return null;
+                        if (countValue === undefined || countValue === "") return;
 
-                      return (
-                        <tr key={param.param_id}>
-                          <td style={{ width: 300, minWidth: 300, maxWidth: 300 }}>
-                            <p className="fw-5">{param.name}</p>
-                          </td>
-                          <td style={{ width: 200, minWidth: 200, maxWidth: 200 }}>
-                            <p className="fw-5">{countValue !== undefined && countValue !== ""
-                              ? <span>{countValue}</span>
-                              : <span>--</span>}</p>
-                          </td>
-                          <td style={{ width: 200, minWidth: 200, maxWidth: 200 }}>
-                            <span><p className="fw-5">{markValue !== undefined ? markValue : "--"}</p></span>
-                          </td>
-                          <td style={{ width: 200, minWidth: 200, maxWidth: 200 }}>
-                            {param.proof_reqd ? (
-                              uploadedFiles[param.param_id] ? (
-                                <a
-                                  href={`${baseURL}${uploadedFiles[param.param_id]}`}
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                                  style={{ fontSize: 18 }}
-                                >
-                                  {/* {SVGICON.app.pdf} */}
-                                  <span style={{ fontSize: 14, wordBreak: 'break-word' }}>
-                                    {uploadedFiles[param.param_id]?.split("/").pop()}
-                                  </span>
-                                </a>
+                        const showHeader = display.header && display.header !== prevHeader;
+                        const showSubheader = display.subheader && display.subheader !== prevSubheader;
+
+                        if (showHeader) {
+                          rows.push(
+                            <tr key={`header-${display.header}-${idx}`}>
+                              <td colSpan={4} style={{ fontWeight: 600, color: "#555", fontSize: 15, background: "#f5f5f5" }}>
+                                {display.header}
+                              </td>
+                            </tr>
+                          );
+                        }
+                        if (showSubheader) {
+                          rows.push(
+                            <tr key={`subheader-${display.subheader}-${idx}`}>
+                              <td colSpan={4} style={{ color: display.header ? "#1976d2" : "#888", fontSize: 13, background: "#f8fafc" }}>
+                                {display.subheader}
+                              </td>
+                            </tr>
+                          );
+                        }
+
+                        prevHeader = display.header;
+                        prevSubheader = display.subheader;
+
+                        rows.push(
+                          <tr key={param.param_id}>
+                            <td style={{ width: 300, minWidth: 300, maxWidth: 300 }}>
+                              <p className="fw-5">{display.main}</p>
+                            </td>
+                            <td style={{ width: 200, minWidth: 200, maxWidth: 200 }}>
+                              <p className="fw-5">{countValue !== undefined && countValue !== ""
+                                ? <span>{countValue}</span>
+                                : <span>--</span>}</p>
+                            </td>
+                            <td style={{ width: 200, minWidth: 200, maxWidth: 200 }}>
+                              <span><p className="fw-5">{markValue !== undefined ? markValue : "--"}</p></span>
+                            </td>
+                            <td style={{ width: 200, minWidth: 200, maxWidth: 200 }}>
+                              {param.proof_reqd ? (
+                                uploadedFiles[param.param_id] ? (
+                                  <a
+                                    href={`${baseURL}${uploadedFiles[param.param_id]}`}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    style={{ fontSize: 18 }}
+                                  >
+                                    <span style={{ fontSize: 14, wordBreak: 'break-word' }}>
+                                      {uploadedFiles[param.param_id]?.split("/").pop()}
+                                    </span>
+                                  </a>
+                                ) : (
+                                  <input
+                                    type="file"
+                                    className="form-control"
+                                    autoComplete="off"
+                                    onChange={(e) => handleFileChange(e, param.param_id, display.main)}
+                                  />
+                                )
                               ) : (
-                                <input
-                                  type="file"
-                                  className="form-control"
-                                  autoComplete="off"
-                                  onChange={(e) => handleFileChange(e, param.param_id, param.name)}
-                                />
-                              )
-                            ) : (
-                              <span>Not required</span>
-                            )}
-                          </td>
-                        </tr>
-                      );
-                    })}
+                                <span>Not required</span>
+                              )}
+                            </td>
+                          </tr>
+                        );
+                      });
+                      return rows;
+                    })()}
                   </tbody>
                 </table>
               </div>

@@ -299,7 +299,7 @@ const ProfileSettings = () => {
   });
   
   return (
-    <div className="profile-settings-section">
+    <div className="profile-settings-section" style={{ padding: "2rem", maxWidth: "85vw"}}>
       <div className="d-flex flex-sm-row flex-column align-items-sm-center justify-content-between mb-4">
         <Breadcrumb title="Profile Settings" />
       </div>
