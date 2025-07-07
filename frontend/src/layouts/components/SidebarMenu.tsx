@@ -66,16 +66,7 @@ const SidebarMenu = () => {
     icon: SVGICON.sidebar.profile,
     to: "/application/accepted",
   };
-  const historyItem = {
-    label: "History",
-    icon: SVGICON.sidebar.history,
-    to: "/history",
-  };
-  const allApplicationsItem = {
-    label: "All Applications",
-    icon: SVGICON.sidebar.history,
-    to: "/all-applications",
-  };
+
   if (
     userRole === "brigade" ||
     userRole === "division" ||
@@ -83,27 +74,30 @@ const SidebarMenu = () => {
     userRole === "command"
   ) {
     filteredStructure.push(acceptedApplicationItem);
+  }
+
+  const historyItem = {
+    label: "History",
+    icon: SVGICON.sidebar.history,
+    to: "/history",
+  };
+
+  if (userRole === "unit") {
     filteredStructure.push(historyItem);
-    filteredStructure.push(allApplicationsItem);
   }
-  if (
-    userRole === "headquarter"
-  ) {
-    filteredStructure.push(allApplicationsItem);
-  }
+
   return (
-    <aside className="sidebar-menu flex-shrink-0 d-xl-block d-none">
-      <div className="position-sticky top-0">
-        <Link to="/" className="logo-sidebar d-block">
-          <img src="/media/logo/logo-text.svg" alt="Logo" />
-        </Link>
+    <aside className="sidebar bg-dark text-white p-3" style={{ width: "300px" }}>
+      <div className="d-flex flex-column justify-content-center align-items-center gap-2 mb-2">
+        <h5 className="text-white" >Menu</h5>
+        <div className="w-50" style={{ height: "4px", backgroundColor: "#dc3545", borderRadius: "50px" }}></div>
       </div>
       <div className="scroll-style-85">
         <div className="sidebar-wrapper mt-3 pb-3">
           {filteredStructure.map((item, index) => (
             <NavLink
               to={item.to}
-              className="nav-items d-flex align-items-center fw-5 position-relative"
+              className="nav-items d-flex align-items-center fw-5 position-relative text-white py-2"
               key={index}
             >
               <div className="d-flex align-items-center text-truncate">

@@ -8,7 +8,7 @@ const ClarificationList = () => {
     const navigate = useNavigate();
 
     return (
-        <div className="clarification-section">
+        <div className="clarification-section" style={{ padding: "2rem"}}>
             <div className="d-flex flex-sm-row flex-column align-items-sm-center justify-content-between mb-4">
                 <Breadcrumb
                     title="Clarification Listing"

@@ -46,7 +46,7 @@ const Clarification = () => {
   }, [profile?.user?.user_role, awardType, debouncedSearch, page, limit]);
 
   return (
-    <div className="clarification-section">
+    <div className="clarification-section" style={{ padding: "2rem"}}>
       <div className="d-flex flex-sm-row flex-column align-items-sm-center justify-content-between mb-4">
         <Breadcrumb title="Clarification to Resolve" />
       </div>

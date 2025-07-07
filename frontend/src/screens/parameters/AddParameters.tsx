@@ -42,7 +42,7 @@ const AddParameters = () => {
     });
 
     return (
-        <div className="profile-settings-section">
+        <div className="profile-settings-section" style={{ padding: "2rem"}}>
             <div className="d-flex flex-sm-row flex-column align-items-sm-center justify-content-between mb-4">
                 <Breadcrumb
                     title="Create Parameter"

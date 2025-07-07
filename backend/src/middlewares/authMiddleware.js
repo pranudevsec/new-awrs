@@ -11,7 +11,6 @@ const authMiddleware = async (req, res, next) => {
   try {
     // Extract the JWT token from the request headers
     const token = req.headers.authorization?.split(" ")[1];
-
     // Check if the token is missing
     if (!token) {
       return res.status(401).json(ResponseHelper.error(401, MSG.UNAUTHORIZED));
@@ -55,7 +54,7 @@ const authMiddleware = async (req, res, next) => {
       next();
     });
   } catch (error) {
-    res
+      res
       .status(500)
       .json(
         ResponseHelper.error(500, MSG.INTERNAL_SERVER_ERROR, error.message)

@@ -24,37 +24,44 @@ exports.createCitation = async (data, user) => {
     const { award_type, parameters } = citation_fds;
 
     const paramResult = await client.query(
-      `SELECT name, per_unit_mark, max_marks
+      `SELECT name, subsubcategory, subcategory, category, per_unit_mark, max_marks
        FROM Parameter_Master
        WHERE award_type = $1`,
       [award_type]
     );
 
-    const paramMap = {};
-    paramResult.rows.forEach((p) => {
-      paramMap[p.name.trim()] = {
-        per_unit_mark: p.per_unit_mark,
-        max_marks: p.max_marks,
-      };
-    });
+    const paramList = paramResult.rows;
 
-    const updatedParameters = parameters.map((p) => {
-      const matchedParam = paramMap[p.name.trim()];
-      if (!matchedParam) {
-        throw new Error(
-          `Parameter "${p.name}" not found in master for award_type "${award_type}"`
-        );
-      }
+const findMatchedParam = (frontendName) => {
+  frontendName = (frontendName || "").trim();
+  return paramList.find(p =>
+    [p.name, p.subsubcategory, p.subcategory, p.category]
+      .map(x => (x || "").trim())
+      .includes(frontendName)
+  );
+};
 
-      const calculatedMarks = p.count * matchedParam.per_unit_mark;
-      const cappedMarks = Math.min(calculatedMarks, matchedParam.max_marks);
+const updatedParameters = parameters.map((p) => {
+  const matchedParam = findMatchedParam(p.name);
+  if (!matchedParam) {
+    throw new Error(
+      `Parameter "${p.name}" not found in master for award_type "${award_type}"`
+    );
+  }
 
-      return {
-        ...p,
-        marks: cappedMarks,
-        info: `1 ${p.name} = ${matchedParam.per_unit_mark} marks (Max ${matchedParam.max_marks} marks)`,
-      };
-    });
+  const calculatedMarks = p.count * matchedParam.per_unit_mark;
+  const cappedMarks = Math.min(calculatedMarks, matchedParam.max_marks);
+
+  return {
+    ...p,
+    name: matchedParam.name,
+    subcategory: matchedParam.subcategory,
+    subsubcategory: matchedParam.subsubcategory,
+    category: matchedParam.category,
+    marks: cappedMarks,
+    info: `1 ${matchedParam.name} = ${matchedParam.per_unit_mark} marks (Max ${matchedParam.max_marks} marks)`,
+  };
+});
 
     citation_fds.parameters = updatedParameters;
 
@@ -154,37 +161,44 @@ exports.updateCitation = async (id, data,user) => {
       const { award_type, parameters } = data.citation_fds;
 
       const paramResult = await client.query(
-        `SELECT name, per_unit_mark, max_marks
+        `SELECT name,subsubcategory, subcategory, category, per_unit_mark, max_marks
          FROM Parameter_Master
          WHERE award_type = $1`,
         [award_type]
       );
 
-      const paramMap = {};
-      paramResult.rows.forEach((p) => {
-        paramMap[p.name.trim()] = {
-          per_unit_mark: p.per_unit_mark,
-          max_marks: p.max_marks,
-        };
-      });
+      const paramList = paramResult.rows;
 
-      const updatedParameters = parameters.map((p) => {
-        const matchedParam = paramMap[p.name.trim()];
-        if (!matchedParam) {
-          throw new Error(
-            `Parameter "${p.name}" not found in master for award_type "${award_type}"`
-          );
-        }
+  const findMatchedParam = (frontendName) => {
+    frontendName = (frontendName || "").trim();
+    return paramList.find(p =>
+      [p.name, p.subsubcategory, p.subcategory, p.category]
+        .map(x => (x || "").trim())
+        .includes(frontendName)
+    );
+  };
 
-        const calculatedMarks = p.count * matchedParam.per_unit_mark;
-        const cappedMarks = Math.min(calculatedMarks, matchedParam.max_marks);
+const updatedParameters = parameters.map((p) => {
+  const matchedParam = findMatchedParam(p.name);
+  if (!matchedParam) {
+    throw new Error(
+      `Parameter "${p.name}" not found in master for award_type "${award_type}"`
+    );
+  }
 
-        return {
-          ...p,
-          marks: cappedMarks,
-          info: `1 ${p.name} = ${matchedParam.per_unit_mark} marks (Max ${matchedParam.max_marks} marks)`,
-        };
-      });
+  const calculatedMarks = p.count * matchedParam.per_unit_mark;
+  const cappedMarks = Math.min(calculatedMarks, matchedParam.max_marks);
+
+  return {
+    ...p,
+    name: matchedParam.name,
+    subcategory: matchedParam.subcategory,
+    subsubcategory: matchedParam.subsubcategory,
+    category: matchedParam.category,
+    marks: cappedMarks,
+    info: `1 ${matchedParam.name} = ${matchedParam.per_unit_mark} marks (Max ${matchedParam.max_marks} marks)`,
+  };
+});
 
       data.citation_fds.parameters = updatedParameters;
     }

@@ -3,7 +3,7 @@ import Breadcrumb from "../../components/ui/breadcrumb/Breadcrumb";
 const Winners = () => {
   return (
     <>
-      <div className="clarification-section">
+      <div className="clarification-section" style={{ padding: "2rem"}}>
         <div className="d-flex flex-sm-row flex-column justify-content-between mb-4">
           <Breadcrumb title="Last Year Winners" />
         </div>
