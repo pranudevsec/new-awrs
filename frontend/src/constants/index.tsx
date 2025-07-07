@@ -21,6 +21,8 @@ export const apiEndPoints = {
     // Applications
     application: '/api/applications',
     applicationUnits: '/api/applications/units',
+    applicationHistory: '/api/applications/history',
+    applicationAll: '/api/applications/all',
     applicationUnitDetail: '/api/applications/unit-detail',
     applicationSubordinates: '/api/applications/subordinates',
 

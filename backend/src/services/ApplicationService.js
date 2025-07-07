@@ -153,10 +153,12 @@ exports.getAllApplicationsForUnit = async (user, query) => {
   }
 };
 
-exports.getAllApplicationsForHQ = async (query) => {
+exports.getAllApplicationsForHQ = async (user,query) => {
   const client = await dbService.getClient();
   try {
     const { award_type, search, page = 1, limit = 10 } = query;
+
+    const isMoOlCondition = user?.user_role === "cw2" ? "" : "AND is_mo_ol_approved = true";
 
     const citations = await client.query(`
       SELECT 
@@ -168,9 +170,12 @@ exports.getAllApplicationsForHQ = async (query) => {
         status_flag,
         last_approved_by_role
       FROM Citation_tab
-      WHERE status_flag = 'approved' AND last_approved_by_role = 'command'
+      WHERE 
+        status_flag = 'approved' 
+        AND last_approved_by_role = 'command'
+        ${isMoOlCondition}
     `);
-
+    
     const appreciations = await client.query(`
       SELECT 
         appreciation_id AS id,
@@ -181,14 +186,17 @@ exports.getAllApplicationsForHQ = async (query) => {
         status_flag,
         last_approved_by_role
       FROM Appre_tab
-      WHERE status_flag = 'approved' AND last_approved_by_role = 'command'
+      WHERE 
+        status_flag = 'approved' 
+        AND last_approved_by_role = 'command'
+        ${isMoOlCondition}
     `);
-
+    
     let allApps = [...citations.rows, ...appreciations.rows];
 
     if (award_type) {
       allApps = allApps.filter(app =>
-        app.fds?.award_type?.toLowerCase() === award_type.toLowerCase()
+        app.type?.toLowerCase() === award_type.toLowerCase()
       );
     }
 
@@ -300,7 +308,6 @@ exports.getAllApplicationsForHQ = async (query) => {
   }
 };
 
-
 exports.getSingleApplicationForUnit = async (user, { application_id, award_type }) => {
   const client = await dbService.getClient();
 
@@ -322,6 +329,7 @@ exports.getSingleApplicationForUnit = async (user, { application_id, award_type 
           c.last_approved_at,
           c.status_flag,
           c.isShortlisted,
+             c.is_mo_ol_approved,
           c.remarks
         FROM Citation_tab c
         JOIN Unit_tab u ON c.unit_id = u.unit_id
@@ -340,6 +348,7 @@ exports.getSingleApplicationForUnit = async (user, { application_id, award_type 
           a.last_approved_at,
           a.status_flag,
           a.isShortlisted,
+          a.is_mo_ol_approved,
           a.remarks
         FROM Appre_tab a
         JOIN Unit_tab u ON a.unit_id = u.unit_id
@@ -1370,29 +1379,33 @@ exports.approveApplicationMarks = async (user, body) => {
         fds.applicationGraceMarks.push(graceEntry);
       }
     }
-
     if (applicationPriorityPoints !== undefined) {
       if (!Array.isArray(fds.applicationPriority)) {
         fds.applicationPriority = [];
       }
-
-      const existingPriorityIndex = fds.applicationPriority.findIndex(
-        (entry) => entry.role === user.user_role
-      );
-
+    
+      const existingPriorityIndex = fds.applicationPriority.findIndex((entry) => {
+        if (entry.role !== user.user_role) return false;
+        if (user.user_role === 'cw2') {
+          return entry.cw2_type === user.cw2_type;
+        }
+        return true;
+      });
+    
       const priorityEntry = {
         role: user.user_role,
         priority: applicationPriorityPoints,
         priorityAddedAt: now,
+        ...(user.user_role === 'cw2' && user.cw2_type ? { cw2_type: user.cw2_type } : {})
       };
-
+    
       if (existingPriorityIndex !== -1) {
         fds.applicationPriority[existingPriorityIndex] = priorityEntry;
       } else {
         fds.applicationPriority.push(priorityEntry);
       }
     }
-
+    
   // 5. Add or update remark (if provided)
 if (remark && typeof remark === "string") {
   const newRemark = {
@@ -1764,6 +1777,454 @@ exports.addApplicationSignature = async (user, body) => {
     } catch (err) {
       console.error("Delete draft error:", err);
       return ResponseHelper.error(500, "Failed to delete draft", err.message);
+    } finally {
+      client.release();
+    }
+  };
+  exports.getApplicationsHistory = async (user, query) => {
+    const client = await dbService.getClient();
+    try {
+      const { user_role } = user;
+      const { award_type, search, page = 1, limit = 10 } = query;
+  
+      const profile = await AuthService.getProfile(user);
+      const unit = profile?.data?.unit;
+  
+      const ROLE_HIERARCHY = ["unit", "brigade", "division", "corps", "command"];
+      const currentRole = user_role.toLowerCase();
+      const currentIndex = ROLE_HIERARCHY.indexOf(currentRole);
+      if (currentIndex === -1) throw new Error("Invalid user role");
+  
+      const subordinateFieldMap = {
+        brigade: "bde",
+        division: "div",
+        corps: "corps",
+        command: "comd",
+      };
+  
+      let unitIds = [];
+      if (currentRole === "unit") {
+        unitIds = [unit.unit_id];
+      } else {
+        const matchField = subordinateFieldMap[currentRole];
+        const subUnitsRes = await client.query(
+          `SELECT unit_id FROM Unit_tab WHERE ${matchField} = $1`,
+          [unit.name]
+        );
+        unitIds = subUnitsRes.rows.map(u => u.unit_id);
+      }
+  
+      if (unitIds.length === 0) {
+        return ResponseHelper.success(200, "No applications found", [], { totalItems: 0 });
+      }
+      if (currentIndex === -1) throw new Error("Invalid user role");
+      
+      const allowedRoles = ROLE_HIERARCHY.slice(currentIndex);
+      
+      // Construct filters
+      const baseFilters = `
+      unit_id = ANY($1) AND
+      (
+        (status_flag = 'approved' AND last_approved_by_role = ANY($2)) OR
+        (status_flag = 'rejected' AND last_approved_by_role = ANY($3))
+      )
+    `;
+        
+    const getLowerRoles = (roles) => {
+      return roles
+        .map(role => {
+          const index = ROLE_HIERARCHY.indexOf(role);
+          return index > 0 ? ROLE_HIERARCHY[index - 1] : null;
+        })
+        .filter(role => role !== null);
+    };
+    
+    const lowerRoles = getLowerRoles(allowedRoles);
+    
+    const queryParams = [unitIds, allowedRoles, lowerRoles];
+  
+      // Base Queries
+      const citationQuery = `
+        SELECT 
+          citation_id AS id,
+          'citation' AS type,
+          unit_id,
+          date_init,
+          citation_fds AS fds,
+          status_flag,
+          last_approved_by_role,
+          last_approved_at
+        FROM Citation_tab
+        WHERE ${baseFilters}
+      `;
+  
+      const appreQuery = `
+        SELECT 
+          appreciation_id AS id,
+          'appreciation' AS type,
+          unit_id,
+          date_init,
+          appre_fds AS fds,
+          status_flag,
+          last_approved_by_role,
+          last_approved_at
+        FROM Appre_tab
+        WHERE ${baseFilters}
+      `;
+  
+      const [citations, appreciations] = await Promise.all([
+        client.query(citationQuery, queryParams),
+        client.query(appreQuery, queryParams)
+      ]);
+  
+      let allApps = [...citations.rows, ...appreciations.rows];
+  
+      // Award type filter
+      if (award_type) {
+        allApps = allApps.filter(app =>
+          app.fds?.award_type?.toLowerCase() === award_type.toLowerCase()
+        );
+      }
+  
+      // Search filter
+      if (search) {
+        const normalize = s => s?.toLowerCase().replace(/[\s\-]/g, "");
+        const searchNorm = normalize(search);
+        allApps = allApps.filter(app =>
+          app.id.toString().toLowerCase().includes(searchNorm) ||
+          normalize(app.fds?.cycle_period || "").includes(searchNorm)
+        );
+      }
+  
+      // Clarifications linking
+      const clarificationIds = [];
+      allApps.forEach(app => {
+        app.fds?.parameters?.forEach(param => {
+          if (param.clarification_id) {
+            clarificationIds.push(param.clarification_id);
+          }
+        });
+      });
+  
+      let clarificationMap = {};
+      if (clarificationIds.length > 0) {
+        const clarificationsRes = await client.query(
+          `SELECT * FROM Clarification_tab WHERE clarification_id = ANY($1)`,
+          [clarificationIds]
+        );
+        clarificationMap = clarificationsRes.rows.reduce((acc, cur) => {
+          acc[cur.clarification_id] = cur;
+          return acc;
+        }, {});
+      }
+  
+      // Attach clarifications
+      allApps = allApps.map(app => {
+        const updatedParams = app.fds?.parameters?.map(param => {
+          if (param.clarification_id) {
+            return {
+              ...param,
+              clarification: clarificationMap[param.clarification_id] || null,
+            };
+          }
+          return param;
+        }) || [];
+  
+        return {
+          ...app,
+          fds: {
+            ...app.fds,
+            parameters: updatedParams,
+          }
+        };
+      });
+  
+      // Marks calculation
+      const allParameterNames = Array.from(
+        new Set(allApps.flatMap(app => app.fds?.parameters?.map(p => p.name?.trim().toLowerCase()) || []))
+      );
+  
+      const parameterMasterRes = await client.query(
+        `SELECT name, negative FROM Parameter_Master WHERE LOWER(TRIM(name)) = ANY($1)`,
+        [allParameterNames]
+      );
+  
+      const negativeParamMap = parameterMasterRes.rows.reduce((acc, row) => {
+        acc[row.name.trim().toLowerCase()] = row.negative;
+        return acc;
+      }, {});
+  
+      allApps = allApps.map(app => {
+        const parameters = app.fds?.parameters || [];
+        const totalMarks = parameters.reduce((sum, param) => sum + (param.marks || 0), 0);
+        const totalNegativeMarks = parameters.reduce((sum, param) => {
+          const isNegative = negativeParamMap[param.name?.trim().toLowerCase()];
+          return isNegative ? sum + (param.marks || 0) : sum;
+        }, 0);
+        const netMarks = totalMarks - totalNegativeMarks;
+  
+        return {
+          ...app,
+          totalMarks,
+          totalNegativeMarks,
+          netMarks,
+          fds: {
+            ...app.fds,
+            parameters: parameters.map(p => {
+              const param = { ...p };
+              delete param.clarification;
+              return param;
+            })
+          }
+        };
+      });
+  
+      // Sort by date
+      allApps.sort((a, b) => new Date(b.date_init) - new Date(a.date_init));
+  
+      // Pagination
+      const pageInt = parseInt(page);
+      const limitInt = parseInt(limit);
+      const startIndex = (pageInt - 1) * limitInt;
+      const endIndex = pageInt * limitInt;
+  
+      const paginatedData = allApps.slice(startIndex, endIndex);
+  
+      const pagination = {
+        totalItems: allApps.length,
+        totalPages: Math.ceil(allApps.length / limitInt),
+        currentPage: pageInt,
+        itemsPerPage: limitInt,
+      };
+  
+      return ResponseHelper.success(200, "Fetched applications history", paginatedData, pagination);
+  
+    } catch (err) {
+      return ResponseHelper.error(500, "Failed to fetch applications history", err.message);
+    } finally {
+      client.release();
+    }
+  };
+  exports.getAllApplications = async (user, query) => {
+    const client = await dbService.getClient();
+    try {
+      const { user_role } = user;
+      const { award_type, search, page = 1, limit = 10 } = query;
+  
+      const profile = await AuthService.getProfile(user);
+      const unit = profile?.data?.unit;
+  
+      const ROLE_HIERARCHY = ["unit", "brigade", "division", "corps", "command"];
+      const currentRole = user_role.toLowerCase();
+  
+      let unitIds = [];
+      let allowedRoles = [];
+  
+      if (currentRole === "headquarter") {
+        const allUnitsRes = await client.query(`SELECT unit_id FROM Unit_tab`);
+        unitIds = allUnitsRes.rows.map(u => u.unit_id);
+        allowedRoles = ROLE_HIERARCHY;
+      } else {
+        const currentIndex = ROLE_HIERARCHY.indexOf(currentRole);
+        if (currentIndex === -1) throw new Error("Invalid user role");
+  
+        const subordinateFieldMap = {
+          brigade: "bde",
+          division: "div",
+          corps: "corps",
+          command: "comd",
+        };
+  
+        if (currentRole === "unit") {
+          unitIds = [unit.unit_id];
+        } else {
+          const matchField = subordinateFieldMap[currentRole];
+          const subUnitsRes = await client.query(
+            `SELECT unit_id FROM Unit_tab WHERE ${matchField} = $1`,
+            [unit.name]
+          );
+          unitIds = subUnitsRes.rows.map(u => u.unit_id);
+        }
+  
+        if (unitIds.length === 0) {
+          return ResponseHelper.success(200, "No applications found", [], { totalItems: 0 });
+        }
+  
+        allowedRoles = ROLE_HIERARCHY.slice(0, currentIndex + 1);
+      }
+      let baseFilters;
+      let queryParams = [unitIds];
+      
+      if (currentRole === 'headquarter') {
+        baseFilters = `unit_id = ANY($1)`;
+      } else {
+        baseFilters = `
+          unit_id = ANY($1) AND
+          status_flag IN ('approved', 'rejected') AND
+          last_approved_by_role = ANY($2)
+        `;
+        queryParams.push(allowedRoles);
+      }
+
+      const citationQuery = `
+        SELECT 
+          citation_id AS id,
+          'citation' AS type,
+          unit_id,
+          date_init,
+          citation_fds AS fds,
+          status_flag,
+          is_mo_ol_approved,
+          last_approved_by_role,
+          last_approved_at
+        FROM Citation_tab
+        WHERE ${baseFilters}
+      `;
+  
+      const appreQuery = `
+        SELECT 
+          appreciation_id AS id,
+          'appreciation' AS type,
+          unit_id,
+          date_init,
+          appre_fds AS fds,
+          status_flag,
+          is_mo_ol_approved,
+          last_approved_by_role,
+          last_approved_at
+        FROM Appre_tab
+        WHERE ${baseFilters}
+      `;
+  
+      const [citations, appreciations] = await Promise.all([
+        client.query(citationQuery, queryParams),
+        client.query(appreQuery, queryParams)
+      ]);
+  
+      let allApps = [...citations.rows, ...appreciations.rows];
+  
+      // Award type filter
+      if (award_type) {
+        allApps = allApps.filter(app =>
+          app.fds?.award_type?.toLowerCase() === award_type.toLowerCase()
+        );
+      }
+  
+      // Search filter
+      if (search) {
+        const normalize = s => s?.toLowerCase().replace(/[\s\-]/g, "");
+        const searchNorm = normalize(search);
+        allApps = allApps.filter(app =>
+          app.id.toString().toLowerCase().includes(searchNorm) ||
+          normalize(app.fds?.cycle_period || "").includes(searchNorm)
+        );
+      }
+  
+      // Clarifications linking
+      const clarificationIds = [];
+      allApps.forEach(app => {
+        app.fds?.parameters?.forEach(param => {
+          if (param.clarification_id) {
+            clarificationIds.push(param.clarification_id);
+          }
+        });
+      });
+  
+      let clarificationMap = {};
+      if (clarificationIds.length > 0) {
+        const clarificationsRes = await client.query(
+          `SELECT * FROM Clarification_tab WHERE clarification_id = ANY($1)`,
+          [clarificationIds]
+        );
+        clarificationMap = clarificationsRes.rows.reduce((acc, cur) => {
+          acc[cur.clarification_id] = cur;
+          return acc;
+        }, {});
+      }
+  
+      // Attach clarifications
+      allApps = allApps.map(app => {
+        const updatedParams = app.fds?.parameters?.map(param => {
+          if (param.clarification_id) {
+            return {
+              ...param,
+              clarification: clarificationMap[param.clarification_id] || null,
+            };
+          }
+          return param;
+        }) || [];
+  
+        return {
+          ...app,
+          fds: {
+            ...app.fds,
+            parameters: updatedParams,
+          }
+        };
+      });
+  
+      // Marks calculation
+      const allParameterNames = Array.from(
+        new Set(allApps.flatMap(app => app.fds?.parameters?.map(p => p.name?.trim().toLowerCase()) || []))
+      );
+  
+      const parameterMasterRes = await client.query(
+        `SELECT name, negative FROM Parameter_Master WHERE LOWER(TRIM(name)) = ANY($1)`,
+        [allParameterNames]
+      );
+  
+      const negativeParamMap = parameterMasterRes.rows.reduce((acc, row) => {
+        acc[row.name.trim().toLowerCase()] = row.negative;
+        return acc;
+      }, {});
+  
+      allApps = allApps.map(app => {
+        const parameters = app.fds?.parameters || [];
+        const totalMarks = parameters.reduce((sum, param) => sum + (param.marks || 0), 0);
+        const totalNegativeMarks = parameters.reduce((sum, param) => {
+          const isNegative = negativeParamMap[param.name?.trim().toLowerCase()];
+          return isNegative ? sum + (param.marks || 0) : sum;
+        }, 0);
+        const netMarks = totalMarks - totalNegativeMarks;
+  
+        return {
+          ...app,
+          totalMarks,
+          totalNegativeMarks,
+          netMarks,
+          fds: {
+            ...app.fds,
+            parameters: parameters.map(p => {
+              const param = { ...p };
+              delete param.clarification;
+              return param;
+            })
+          }
+        };
+      });
+  
+      // Sort by date descending
+      allApps.sort((a, b) => new Date(b.date_init) - new Date(a.date_init));
+  
+      // Pagination
+      const pageInt = parseInt(page);
+      const limitInt = parseInt(limit);
+      const startIndex = (pageInt - 1) * limitInt;
+      const endIndex = pageInt * limitInt;
+  
+      const paginatedData = allApps.slice(startIndex, endIndex);
+  
+      const pagination = {
+        totalItems: allApps.length,
+        totalPages: Math.ceil(allApps.length / limitInt),
+        currentPage: pageInt,
+        itemsPerPage: limitInt,
+      };
+  
+      return ResponseHelper.success(200, "Fetched all applications", paginatedData, pagination);
+  
+    } catch (err) {
+      return ResponseHelper.error(500, "Failed to fetch all applications", err.message);
     } finally {
       client.release();
     }

@@ -17,5 +17,7 @@ router.post("/approve-marks", ApplicationController.approveApplicationMarks);
 router.post("/add-signature", ApplicationController.addApplicationSignature);
 router.post("/add-comment", ApplicationController.addApplicationComment);
 router.post("/upload-doc",upload.any(),  ApplicationController.uploadDoc);
+router.get("/history",  ApplicationController.getApplicationsHistory);
+router.get("/all",  ApplicationController.getAllApplications);
 
 module.exports = router;

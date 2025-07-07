@@ -24,6 +24,17 @@ const ApplicationsList = () => {
   const [page, setPage] = useState<number>(1);
   const [limit, setLimit] = useState<number>(10);
   const role = profile?.user?.user_role?.toLowerCase() ?? "";
+  const isCW2Role = profile?.user?.user_role === "cw2";
+  const cw2_type = profile?.user?.cw2_type?.toLowerCase() ?? "";
+  useEffect(() => {
+    if (isCW2Role) {
+      if (cw2_type === "mo") {
+        setAwardType("citations");
+      } else if (cw2_type === "ol") {
+        setAwardType("appreciations");
+      }
+    }
+  }, [isCW2Role, cw2_type]);
 
   useEffect(() => {
     const handler = setTimeout(() => {
@@ -39,23 +50,28 @@ const ApplicationsList = () => {
     if (!profile?.user?.user_role) return;
 
     const fetchData = () => {
-      const params = {
-        award_type: awardType || '',
-        search: debouncedSearch,
-        page,
-        limit,
-      };
+  const role = profile.user.user_role;
 
-      const role = profile.user.user_role;
+  const effectiveAwardType =
+    isCW2Role
+      ? (cw2_type === "mo" ? "citation" : cw2_type === "ol" ? "appreciation" : '')
+      : awardType || '';
 
-      if (role === 'cw2' || role === 'headquarter') {
-        dispatch(fetchApplicationsForHQ(params));
-      } else if (role !== 'unit') {
-        dispatch(fetchSubordinates(params));
-      } else {
-        dispatch(fetchApplicationUnits(params));
-      }
-    };
+  const params = {
+    award_type: effectiveAwardType,
+    search: debouncedSearch,
+    page,
+    limit,
+  };
+
+  if (role === 'cw2' || role === 'headquarter') {
+    dispatch(fetchApplicationsForHQ(params));
+  } else if (role !== 'unit') {
+    dispatch(fetchSubordinates(params));
+  } else {
+    dispatch(fetchApplicationUnits(params));
+  }
+};
 
     fetchData();
   }, [awardType, debouncedSearch, profile, page, limit]);
@@ -85,13 +101,15 @@ const ApplicationsList = () => {
             onChange={(e) => setSearchTerm(e.target.value)}
           />
         </div>
-        <FormSelect
-          name="awardType"
-          options={awardTypeOptions}
-          value={awardType}
-          placeholder="Select Type"
-          onChange={(option: OptionType | null) => setAwardType(option ? option.value : null)}
-        />
+        {!isCW2Role && (
+  <FormSelect
+    name="awardType"
+    options={awardTypeOptions}
+    value={awardType}
+    placeholder="Select Type"
+    onChange={(option: OptionType | null) => setAwardType(option ? option.value : null)}
+  />
+)}
       </div>
 
       <div className="table-responsive">

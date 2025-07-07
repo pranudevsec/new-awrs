@@ -243,11 +243,12 @@ export const hierarchicalStructure2 = {
 // ];
 export const roleOptions = [
   { label: "Unit", value: "unit" },
+  { label: "Special Unit", value: "special_unit" },
   { label: "Brigade", value: "brigade" },
   { label: "Division", value: "division" },
   { label: "Corps", value: "corps" },
   { label: "Command", value: "command" },
-  { label: "AGs Br/CW2/IHQ (Army)", value: "headquarter" }, 
+  { label: "AGs Br/CW2/IHQ (Army)", value: "headquarter" },
   { label: "MO", value: "cw2_mo" },
   { label: "OL", value: "cw2_ol" },
   { label: "HR", value: "cw2_hr" },
@@ -265,15 +266,31 @@ export const roleOptions2: OptionType[] = [
 ];
 
 export const unitTypeOptions = [
-  { label: "AC – Armoured Corps", value: "AC" },
-  { label: "Arty – Artillery", value: "ARTY" },
-  { label: "Army Avn – Army Aviation", value: "Army Avn" },
-  { label: "Egrs – Engineers", value: "ENGRS" },
-  { label: "Guards – Brigade of the Guards", value: "Guards" },
-  { label: "Inf – Infantry", value: "Inf" },
-  { label: "Int Corps – Intelligence Corps", value: "Int Corps" },
-  { label: "AMC – Army Medical Corps", value: "AMC" },
-  { label: "AAD", value: "AAD" }
+  { label: "RR", value: "RR" },
+  { label: "SF", value: "SF" },
+  { label: "ARTY", value: "ARTY" },
+  { label: "INFANTRY", value: "INFANTRY" },
+  { label: "ARMD", value: "ARMD" },
+  { label: "MECH INF", value: "MECH INF" },
+  { label: "SATA", value: "SATA" },
+  { label: "ENGRS", value: "ENGRS" },
+  { label: "SIGS", value: "SIGS" },
+  { label: "EW", value: "EW" },
+  { label: "SI", value: "SI" },
+  { label: "AAD", value: "AAD" },
+  { label: "ARMY AVN", value: "ARMY AVN" },
+  { label: "INT", value: "INT" },
+  { label: "ASC (MT)", value: "ASC (MT)" },
+  { label: "ASC (AT)", value: "ASC (AT)" },
+  { label: "ASC (SUP/FOL)", value: "ASC (SUP/FOL)" },
+  { label: "MED", value: "MED" },
+  { label: "FD HOSP", value: "FD HOSP" },
+  { label: "ORD (FOD)", value: "ORD (FOD)" },
+  { label: "ORD (DOU)", value: "ORD (DOU)" },
+  { label: "ORD (FAD)", value: "ORD (FAD)" },
+  { label: "ORD (NVCD/VEH COY)", value: "ORD (NVCD/VEH COY)" },
+  { label: "EME", value: "EME" },
+  { label: "RVC", value: "RVC" },
 ];
 
 export const matrixUnitOptions = [
@@ -282,4 +299,5 @@ export const matrixUnitOptions = [
   { label: "LAC", value: "LAC" },
   { label: "IS", value: "IS" },
   { label: "NM", value: "NM" },
+  {label:"HAA",value:"LC/AIOS/LAC/HAA/AGPL"}
 ];

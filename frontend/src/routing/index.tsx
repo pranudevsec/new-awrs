@@ -3,6 +3,7 @@ import { Navigate } from "react-router-dom";
 
 import Login from "../screens/auth/Login";
 import SignUp from "../screens/auth/SignUp";
+import AllApplications from "../screens/all-applications/AllApplications";
 
 const Applications = lazy(() => import("../screens/applications/Applications"));
 const AcceptedApplicationsList = lazy(() => import("../screens/applications/modules/AcceptedApplicationsList"));
@@ -35,6 +36,8 @@ const AddParameters = lazy(() => import("../screens/parameters/AddParameters"));
 const EditParameters = lazy(() => import("../screens/parameters/EditParameters"));
 
 const Dashboard = lazy(() => import("../screens/dashboard/Dashboard"));
+
+const History = lazy(() => import("../screens/history/History"));
 
 interface RouteConfig {
   path: string;
@@ -88,4 +91,10 @@ export const authProtectedRoutes: RouteConfig[] = [
 
   // Dashboard
   { path: "/dashboard", element: <Dashboard /> },
+
+  // History
+  { path: "/history", element: <History /> },
+
+  // All Applications
+  { path: "/all-applications", element: <AllApplications /> },
 ];

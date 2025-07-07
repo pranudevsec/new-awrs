@@ -125,7 +125,7 @@ const handleShortlistToggle = (item: any) => {
     id: item.id,
     isShortlisted: !item.isShortlisted,
   };
-console.log(item.type)
+
   if (item.type === "citation") {
     dispatch(updateCitation(updatedPayload));
   } else if (item.type === "appreciation") {

@@ -3,6 +3,7 @@ export interface User {
   username: string;
   rank: string;
   user_role: string;
+  is_special_unit: boolean;
 }
 
 export interface LoginResponseData {
@@ -46,6 +47,7 @@ export interface ProfileUser {
   rank: string;
   user_role: string;
   cw2_type: string;
+  is_special_unit: boolean;
 }
 
 export interface ProfileUnit {
@@ -58,14 +60,11 @@ export interface ProfileUnit {
   div: string;
   corps: string;
   comd: string;
-  unit_type?: string | null;     
-  matrix_unit?: string | null;   
-  location?: string | null;  
-  goc_award?: string | null;        
-  coas_award?: string | null;        
-  goc_award_year?: string | null;    
-  coas_award_year?: string | null; 
+  unit_type?: string | null;
+  matrix_unit?: string | null;
+  location?: string | null;
   members?: any;
+  awards?: any;
 }
 
 export interface ProfileResponse {
@@ -84,16 +83,12 @@ export interface UpdateUnitProfileRequest {
   div: string | null;
   corps: string | null;
   comd: string | null;
-  unit_type?: string | null;      
-  matrix_unit?: string | null;     
-  location?: string | null;        
-  goc_award?: string | null;       
-  coas_award?: string | null;      
-  goc_award_year?: string | null;  
-  coas_award_year?: string | null; 
+  unit_type?: string | null;
+  matrix_unit?: string | null;
+  location?: string | null;
   members?: any;
+  awards?: any;
 }
-
 
 export interface UpdateUnitProfileResponse {
   statusCode: number;
