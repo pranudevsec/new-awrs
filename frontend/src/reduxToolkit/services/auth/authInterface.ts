@@ -61,7 +61,7 @@ export interface ProfileUnit {
   corps: string;
   comd: string;
   unit_type?: string | null;
-  matrix_unit?: string | null;
+  matrix_unit?: string[] | any;
   location?: string | null;
   members?: any;
   awards?: any;
@@ -84,7 +84,7 @@ export interface UpdateUnitProfileRequest {
   corps: string | null;
   comd: string | null;
   unit_type?: string | null;
-  matrix_unit?: string | null;
+  matrix_unit?: string[] | any;
   location?: string | null;
   members?: any;
   awards?: any;

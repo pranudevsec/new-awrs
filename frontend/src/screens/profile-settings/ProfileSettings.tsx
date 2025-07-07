@@ -2,6 +2,11 @@ import { useEffect, useState, type FormEvent } from "react";
 import { useFormik } from "formik";
 import { unwrapResult } from "@reduxjs/toolkit";
 import toast from "react-hot-toast";
+import type { UpdateUnitProfileRequest } from "../../reduxToolkit/services/auth/authInterface";
+import FormSelect from "../../components/form/FormSelect";
+import Breadcrumb from "../../components/ui/breadcrumb/Breadcrumb";
+import Loader from "../../components/ui/loader/Loader";
+import FormInput from "../../components/form/FormInput";
 import {
   unitOptions,
   brigadeOptions,
@@ -17,11 +22,6 @@ import {
   getProfile,
   reqToUpdateUnitProfile,
 } from "../../reduxToolkit/services/auth/authService";
-import type { UpdateUnitProfileRequest } from "../../reduxToolkit/services/auth/authInterface";
-import FormSelect from "../../components/form/FormSelect";
-import Breadcrumb from "../../components/ui/breadcrumb/Breadcrumb";
-import Loader from "../../components/ui/loader/Loader";
-import FormInput from "../../components/form/FormInput";
 
 type UserRole = "unit" | "brigade" | "division" | "corps" | "command" | string;
 
@@ -274,7 +274,7 @@ const ProfileSettings = () => {
         payload["adm_channel"] = values.adm_channel;
         payload["tech_channel"] = values.tech_channel;
         payload["unit_type"] = values.unit_type;
-        payload["matrix_unit"] = values.matrix_unit;
+        payload["matrix_unit"] = values.matrix_unit.join(",");
         payload["location"] = values.location;
         payload["awards"] = awards;
 
@@ -299,6 +299,7 @@ const ProfileSettings = () => {
       [field]: value,
     }));
   };
+
   // Show loader
   if (firstLoad) return <Loader />;
   const buildUnitPayload = (members?: UpdateUnitProfileRequest["members"]): UpdateUnitProfileRequest => ({
@@ -310,7 +311,9 @@ const ProfileSettings = () => {
     corps: profile?.unit?.corps ?? null,
     comd: profile?.unit?.comd ?? null,
     unit_type: profile?.unit?.unit_type ?? null,
-    matrix_unit: profile?.unit?.matrix_unit ?? null,
+    matrix_unit: typeof profile?.unit?.matrix_unit === "string"
+      ? profile.unit.matrix_unit.split(",").map((val: any) => val.trim())
+      : [],
     location: profile?.unit?.location ?? null,
     members
   });
@@ -357,6 +360,10 @@ const ProfileSettings = () => {
                 return "Arms / Services";
               }
 
+              if (field === "matrix_unit") {
+                return "Role / Deployment";
+              }
+
               return field
                 .split("_")
                 .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
@@ -397,142 +404,135 @@ const ProfileSettings = () => {
             return (
               <div className="col-sm-6 mb-3" key={field}>
                 <FormSelect
+                  isMulti={field === "matrix_unit"}
                   label={getDynamicLabel(profile?.user?.user_role ?? "", field)}
                   name={field}
                   options={optionsForField}
                   value={
-                    optionsForField.find(
-                      (opt: any) => opt.value === formik.values[field]
-                    ) || null
+                    field === "matrix_unit"
+                      ? optionsForField.filter((opt: any) =>
+                        formik.values[field]?.includes(opt.value)
+                      )
+                      : optionsForField.find(
+                        (opt: any) => opt.value === formik.values[field]
+                      ) || null
                   }
-                  onChange={(selectedOption) => {
-                    const selectedValue = selectedOption?.value || "";
+                  onChange={(selectedOption: any) => {
+                    const selectedValue =
+                      field === "matrix_unit"
+                        ? selectedOption.map((opt: any) => opt.value)
+                        : selectedOption?.value || "";
 
-                    if (selectedValue === "n/a") {
-                      formik.setFieldValue("corps", "");
-                      formik.setFieldValue("division", "");
-                      formik.setFieldValue("brigade", "");
-                      formik.setFieldValue("unit", "");
-                    }
-
-                    formik.setFieldValue(field, selectedValue);
-
-                    if (
-                      field === "command" &&
-                      selectedValue &&
-                      hierarchyMap[selectedValue]
-                    ) {
-                      const [corps, division, brigade] =
-                        hierarchyMap[selectedValue];
+                    if (field === "command" && selectedValue && hierarchyMap[selectedValue]) {
+                      const [corps, division, brigade] = hierarchyMap[selectedValue];
                       formik.setFieldValue("corps", corps);
                       formik.setFieldValue("division", division);
                       formik.setFieldValue("brigade", brigade);
                     }
+
+                    formik.setFieldValue(field, selectedValue);
                   }}
-                  placeholder={getPlaceholder(
-                    profile?.user?.user_role ?? "",
-                    field
-                  )}
+                  placeholder={getPlaceholder(profile?.user?.user_role ?? "", field)}
                   errors={formik.errors[field]}
                   touched={formik.touched[field]}
                 />
               </div>
             );
           })}
-  {role === "unit" && (
-  <>
-    <div className="col-12 mb-3">
-      <label className="form-label fw-6">Awards</label>
-      <table className="table table-bordered">
-        <thead>
-        {awards.length !== 0 && (  <tr>
-            <th>Type</th>
-            <th>Brigade</th>
-            <th>Year</th>
-            <th>Action</th>
-          </tr>)}
-        </thead>
-        <tbody>
-          {awards.map((award, idx) => (
-            <tr key={award.award_id ?? idx}>
-              <td>
-                <select
-                  className="form-select"
-                  value={award.award_type}
-                  onChange={(e) => {
-                    const updated = [...awards];
-                    updated[idx].award_type = e.target.value as "goc" | "coas";
-                    setAwards(updated);
-                  }}
-                >
-                  <option value="goc">GOC</option>
-                  <option value="coas">COAS</option>
-                </select>
-              </td>
-              <td>
-                <input
-                  type="text"
-                  className="form-control"
-                  value={award.award_title}
-                  onChange={(e) => {
-                    const updated = [...awards];
-                    updated[idx].award_title = e.target.value;
-                    setAwards(updated);
-                  }}
-                  placeholder="Award Title"
-                />
-              </td>
-              <td>
-                <select
-                  className="form-select"
-                  value={award.award_year}
-                  onChange={(e) => {
-                    const updated = [...awards];
-                    updated[idx].award_year = e.target.value;
-                    setAwards(updated);
-                  }}
-                >
-                  <option value="">Select Year</option>
-                  {yearOptions.map((year) => (
-                    <option key={year} value={year}>{year}</option>
-                  ))}
-                </select>
-              </td>
-              <td>
+          {role === "unit" && (
+            <>
+              <div className="col-12 mb-3">
+                <label className="form-label fw-6">Awards</label>
+                <table className="table table-bordered">
+                  <thead>
+                    {awards.length !== 0 && (<tr>
+                      <th>Type</th>
+                      <th>Brigade</th>
+                      <th>Year</th>
+                      <th>Action</th>
+                    </tr>)}
+                  </thead>
+                  <tbody>
+                    {awards.map((award, idx) => (
+                      <tr key={award.award_id ?? idx}>
+                        <td>
+                          <select
+                            className="form-select"
+                            value={award.award_type}
+                            onChange={(e) => {
+                              const updated = [...awards];
+                              updated[idx].award_type = e.target.value as "goc" | "coas";
+                              setAwards(updated);
+                            }}
+                          >
+                            <option value="goc">GOC</option>
+                            <option value="coas">COAS</option>
+                          </select>
+                        </td>
+                        <td>
+                          <input
+                            type="text"
+                            className="form-control"
+                            value={award.award_title}
+                            onChange={(e) => {
+                              const updated = [...awards];
+                              updated[idx].award_title = e.target.value;
+                              setAwards(updated);
+                            }}
+                            placeholder="Award Title"
+                          />
+                        </td>
+                        <td>
+                          <select
+                            className="form-select"
+                            value={award.award_year}
+                            onChange={(e) => {
+                              const updated = [...awards];
+                              updated[idx].award_year = e.target.value;
+                              setAwards(updated);
+                            }}
+                          >
+                            <option value="">Select Year</option>
+                            {yearOptions.map((year) => (
+                              <option key={year} value={year}>{year}</option>
+                            ))}
+                          </select>
+                        </td>
+                        <td>
+                          <button
+                            type="button"
+                            className="_btn danger btn-sm"
+                            onClick={() => {
+                              setAwards((prev) => prev.filter((_, i) => i !== idx));
+                            }}
+                          >
+                            Remove
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                    {awards.length === 0 && (
+                      <tr>
+                        <td colSpan={4} className="text-center text-muted">No awards added</td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
                 <button
                   type="button"
-                  className="_btn danger btn-sm"
+                  className="_btn success btn-sm"
                   onClick={() => {
-                    setAwards((prev) => prev.filter((_, i) => i !== idx));
+                    setAwards((prev) => [
+                      ...prev,
+                      { award_type: "goc", award_title: "", award_year: "" },
+                    ]);
                   }}
                 >
-                  Remove
+                  Add Award
                 </button>
-              </td>
-            </tr>
-          ))}
-          {awards.length === 0 && (
-            <tr>
-              <td colSpan={4} className="text-center text-muted">No awards added</td>
-            </tr>
+              </div>
+            </>
           )}
-        </tbody>
-      </table>
-      <button
-        type="button"
-        className="_btn success btn-sm"
-        onClick={() => {
-          setAwards((prev) => [
-            ...prev,
-            { award_type: "goc", award_title: "", award_year: "" },
-          ]);
-        }}
-      >
-        Add Award
-      </button>
-    </div>
-  </>
-)}
 
 
           {role !== "unit" && (
