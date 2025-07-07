@@ -339,7 +339,7 @@ const ApplyAppreciation = () => {
       try {
         const [configRes, paramsRes] = await Promise.all([
           dispatch(getConfig()).unwrap(),
-          dispatch(fetchParameters({ awardType: "appreciation", search: "" })).unwrap(),
+          dispatch(fetchParameters({ awardType: "appreciation", search: "", comd: profile?.unit?.comd ?? undefined, page: 1, limit: 500 })).unwrap(),
         ]);
 
         if (configRes?.success && configRes.data) {
@@ -431,7 +431,11 @@ const ApplyAppreciation = () => {
   if (loading) return <Loader />
 
   return (
+<<<<<<< Updated upstream
     <div className="apply-citation-section">
+=======
+    <div className="apply-citation-section" style={{ padding: "2rem", maxWidth: "85vw" }}>
+>>>>>>> Stashed changes
       <div className="d-flex flex-sm-row flex-column align-items-sm-center justify-content-between mb-4">
         <Breadcrumb
           title="Apply For Appreciation"

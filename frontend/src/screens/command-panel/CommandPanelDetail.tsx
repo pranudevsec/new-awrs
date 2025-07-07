@@ -50,6 +50,34 @@ const CommandPanelDetail = () => {
     }
   }, [unitDetail]);
 
+  const getParamDisplay = (param: any) => {
+    if (param.name != "no") {
+      return {
+        main: param.name,
+        header: param.subcategory || null,
+        subheader: param.subsubcategory || null,
+      };
+    } else if (param.subsubcategory) {
+      return {
+        main: param.subsubcategory,
+        header: param.subcategory || null,
+        subheader: null,
+      };
+    } else if (param.subcategory) {
+      return {
+        main: param.subcategory,
+        header: null,
+        subheader: null,
+      };
+    } else {
+      return {
+        main: param.category,
+        header: null,
+        subheader: null,
+      };
+    }
+  };
+
    // Show loader
    if (loading) return <Loader />;
   return (
@@ -117,30 +145,70 @@ const CommandPanelDetail = () => {
               </tr>
             </thead>
             <tbody>
-              {unitDetail?.fds?.parameters?.map((param: any, index: any) => (
-                <tr key={index}>
-                  <td style={{ width: 150 }}>
-                    <p className="fw-5">{param.name}</p>
-                  </td>
-                  <td style={{ width: 100 }}>
-                    <p className="fw-5">{param.count}</p>
-                  </td>
-                  <td style={{ width: 100 }}>
-                    <p className="fw-5">{param.marks}</p>
-                  </td>
-                  <td style={{ width: 200 }}>
-                    <a href={param.upload} target="_blank" rel="noopener noreferrer" style={{ fontSize: 18 }}>
-                      {/* {SVGICON.app.pdf} */}
-                       <span style={{ fontSize: 14, wordBreak: 'break-word' }}>
-          {param?.upload?.split("/").pop()}
-        </span>
-                    </a>
-                  </td>
-           
-                
-                </tr>
-              ))}
+              {(() => {
+                let prevHeader: string | null = null;
+                let prevSubheader: string | null = null;
+                const rows: any[] = [];
+
+                unitDetail?.fds?.parameters?.forEach((param: any, index: number) => {
+                  const display = getParamDisplay(param);
+
+                  const showHeader = display.header && display.header !== prevHeader;
+                  const showSubheader = display.subheader && display.subheader !== prevSubheader;
+
+                  if (showHeader) {
+                    rows.push(
+                      <tr key={`header-${display.header}-${index}`}>
+                        <td colSpan={4} style={{ fontWeight: 600, color: "#555", fontSize: 15, background: "#f5f5f5" }}>
+                          {display.header}
+                        </td>
+                      </tr>
+                    );
+                  }
+
+                  if (showSubheader) {
+                    rows.push(
+                      <tr key={`subheader-${display.subheader}-${index}`}>
+                        <td colSpan={4} style={{ color: display.header ? "#1976d2" : "#888", fontSize: 13, background: "#f8fafc" }}>
+                          {display.subheader}
+                        </td>
+                      </tr>
+                    );
+                  }
+
+                  prevHeader = display.header;
+                  prevSubheader = display.subheader;
+
+                  rows.push(
+                    <tr key={index}>
+                      <td style={{ width: 150 }}>
+                        <p className="fw-5">{display.main}</p>
+                      </td>
+                      <td style={{ width: 100 }}>
+                        <p className="fw-5">{param.count}</p>
+                      </td>
+                      <td style={{ width: 100 }}>
+                        <p className="fw-5">{param.marks}</p>
+                      </td>
+                      <td style={{ width: 200 }}>
+                        {param.upload ? (
+                          <a href={param.upload} target="_blank" rel="noopener noreferrer" style={{ fontSize: 18 }}>
+                            <span style={{ fontSize: 14, wordBreak: 'break-word' }}>
+                              {param?.upload?.split("/").pop()}
+                            </span>
+                          </a>
+                        ) : (
+                          <span className="text-muted">--</span>
+                        )}
+                      </td>
+                    </tr>
+                  );
+                });
+
+                return rows;
+              })()}
             </tbody>
+
           </table>
         </div>
         {!isUnitRole && (
