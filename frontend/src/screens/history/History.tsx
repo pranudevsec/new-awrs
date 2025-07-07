@@ -167,7 +167,10 @@ const History = () => {
                   </td>
                   <td style={{ width: 150, minWidth: 150, maxWidth: 150 }}>
                     <p className="fw-4">
-                      {unit.type.charAt(0).toUpperCase() + unit.type.slice(1)}
+                    {unit?.type
+  ? unit.type.charAt(0).toUpperCase() + unit.type.slice(1)
+  : "-"
+}
                     </p>
                   </td>
 
@@ -179,8 +182,10 @@ const History = () => {
                           unit?.status_flag === "approved" ? "green" : "red",
                       }}
                     >
-                      {unit.status_flag.charAt(0).toUpperCase() +
-                        unit.status_flag.slice(1)}
+                 {unit?.status_flag
+  ? unit.status_flag.charAt(0).toUpperCase() + unit.status_flag.slice(1)
+  : "-"
+}
                     </p>
                   </td>
 
@@ -195,7 +200,7 @@ const History = () => {
     {unit?.status_flag === "rejected"
       ? "N/A"
       : unit?.last_approved_by_role
-        ? unit.last_approved_by_role.charAt(0).toUpperCase() + unit.last_approved_by_role.slice(1)
+        ? unit.last_approved_by_role?.charAt(0).toUpperCase() + unit.last_approved_by_role.slice(1)
         : "-"
     }
   </p>

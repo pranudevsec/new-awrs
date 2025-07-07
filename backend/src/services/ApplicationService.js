@@ -1204,7 +1204,7 @@ const paginatedData = allApps.slice(offset, offset + limitInt);
   }
 };
 
-exports.updateApplicationStatus = async (id, type, status, user) => {
+exports.updateApplicationStatus = async (id, type, status, user, member = null) => {
   const client = await dbService.getClient();
 
   try {
@@ -1217,15 +1217,13 @@ exports.updateApplicationStatus = async (id, type, status, user) => {
     if (!config) throw new Error("Invalid application type");
 
     const allowedStatuses = ["in_review", "in_clarification", "approved", "rejected", "shortlisted_approved"];
-    const statusLower = status.toLowerCase();
-    if (!allowedStatuses.includes(statusLower)) {
-      throw new Error("Invalid status value");
-    }
+    const statusLower = status ? status.toLowerCase() : null;
+    const isStatusValid = statusLower && allowedStatuses.includes(statusLower);
 
     let updatedFds = null;
 
-    // Handle FDS parameter clarification resolution (only for 'approved')
-    if (statusLower === "approved") {
+    // If status is "approved" or member is provided, fetch FDS
+    if (statusLower === "approved" || member) {
       const fetchRes = await client.query(
         `SELECT ${config.fdsColumn} FROM ${config.table} WHERE ${config.column} = $1`,
         [id]
@@ -1235,7 +1233,8 @@ exports.updateApplicationStatus = async (id, type, status, user) => {
 
       const fds = fetchRes.rows[0][config.fdsColumn];
 
-      if (fds?.parameters && Array.isArray(fds.parameters)) {
+      // Handle FDS parameter clarifications if approved
+      if (statusLower === "approved" && fds?.parameters && Array.isArray(fds.parameters)) {
         const updatedParameters = fds.parameters.map((param) => {
           if (param.clarification_id) {
             const { clarification_id, ...rest } = param;
@@ -1248,62 +1247,85 @@ exports.updateApplicationStatus = async (id, type, status, user) => {
           }
           return param;
         });
-
-        updatedFds = {
-          ...fds,
-          parameters: updatedParameters,
-        };
-
-        await client.query(
-          `UPDATE ${config.table}
-           SET ${config.fdsColumn} = $1
-           WHERE ${config.column} = $2`,
-          [updatedFds, id]
-        );
+        fds.parameters = updatedParameters;
       }
+
+      // Handle adding member
+      if (member) {
+        if (!fds.accepted_members || !Array.isArray(fds.accepted_members)) {
+          fds.accepted_members = [];
+        }
+        fds.accepted_members.push({
+          ...member,
+          is_signature_added: false,
+        });
+      }
+
+      updatedFds = fds;
+
+      await client.query(
+        `UPDATE ${config.table}
+         SET ${config.fdsColumn} = $1
+         WHERE ${config.column} = $2`,
+        [updatedFds, id]
+      );
     }
 
-    // Determine which fields to update
-    let query, values;
-    const now = new Date();
+    // If status is valid, proceed with updating status_flag
+    if (isStatusValid) {
+      let query, values;
+      const now = new Date();
 
-    if (statusLower === "approved") {
-      query = `
-        UPDATE ${config.table}
-        SET 
-          status_flag = $1,
-          last_approved_by_role = $3,
-          last_approved_at = $4
-        WHERE ${config.column} = $2
-        RETURNING *;
-      `;
-      values = [statusLower, id, user.user_role, now];
+      if (statusLower === "approved") {
+        query = `
+          UPDATE ${config.table}
+          SET 
+            status_flag = $1,
+            last_approved_by_role = $3,
+            last_approved_at = $4
+          WHERE ${config.column} = $2
+          RETURNING *;
+        `;
+        values = [statusLower, id, user.user_role, now];
 
-    } else if (statusLower === "shortlisted_approved") {
-      query = `
-        UPDATE ${config.table}
-        SET 
-          status_flag = $1,
-          last_shortlisted_approved_role = $3
-        WHERE ${config.column} = $2
-        RETURNING *;
-      `;
-      values = [statusLower, id, user.user_role];
+      } else if (statusLower === "shortlisted_approved") {
+        query = `
+          UPDATE ${config.table}
+          SET 
+            status_flag = $1,
+            last_shortlisted_approved_role = $3
+          WHERE ${config.column} = $2
+          RETURNING *;
+        `;
+        values = [statusLower, id, user.user_role];
 
+      } else {
+        query = `
+          UPDATE ${config.table}
+          SET status_flag = $1
+          WHERE ${config.column} = $2
+          RETURNING *;
+        `;
+        values = [statusLower, id];
+      }
+
+      const result = await client.query(query, values);
+      if (result.rowCount === 0) throw new Error("Application not found or update failed");
+
+      return result.rows[0];
+
+    } else if (member) {
+      // If only member is updated without status change, fetch the current row for consistency
+      const result = await client.query(
+        `SELECT * FROM ${config.table} WHERE ${config.column} = $1`,
+        [id]
+      );
+      if (result.rowCount === 0) throw new Error("Application not found");
+
+      return result.rows[0];
     } else {
-      query = `
-        UPDATE ${config.table}
-        SET status_flag = $1
-        WHERE ${config.column} = $2
-        RETURNING *;
-      `;
-      values = [statusLower, id];
+      throw new Error("Invalid status value and no member provided");
     }
-
-    const result = await client.query(query, values);
-    if (result.rowCount === 0) throw new Error("Application not found or update failed");
-
-    return result.rows[0];
 
   } catch (err) {
     console.error("Error updating status:", err);
