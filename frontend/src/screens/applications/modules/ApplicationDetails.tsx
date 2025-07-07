@@ -19,6 +19,10 @@ import { baseURL } from "../../../reduxToolkit/helper/axios";
 import { useDebounce } from "../../../hooks/useDebounce";
 import ReviewCommentModal from "../../../modals/ReviewCommentModal";
 import ViewCreatedClarificationModal from "../../../modals/ViewCreatedClarificationModal";
+import toast from "react-hot-toast";
+import { updateCitation } from "../../../reduxToolkit/services/citation/citationService";
+import { updateAppreciation } from "../../../reduxToolkit/services/appreciation/appreciationService";
+import StepProgressBar from "../../../components/ui/stepProgressBar/StepProgressBar";
 
 const ApplicationDetails = () => {
   const navigate = useNavigate();
@@ -70,7 +74,23 @@ const ApplicationDetails = () => {
   const award_type = searchParams.get("award_type") || "";
   const numericAppId = Number(application_id);
   const [graceMarks, setGraceMarks] = useState("");
+  let userPriority = "";
 
+  if (role === "cw2" && Array.isArray(unitDetail?.fds?.applicationPriority)) {
+    const foundPriority = unitDetail.fds.applicationPriority.find(
+      (item: any) =>
+        item.role?.toLowerCase() === "cw2" &&
+        item.cw2_type?.toLowerCase() === cw2_type
+    );
+    if (foundPriority) {
+      userPriority = foundPriority.priority ?? "";
+    }
+  }
+  const [priority, setPriority] = useState(userPriority);
+
+  useEffect(() => {
+    setPriority(userPriority);
+  }, [userPriority]);
   useEffect(() => {
     if (award_type && numericAppId)
       dispatch(fetchApplicationUnitDetail({ award_type, numericAppId }));
@@ -83,14 +103,12 @@ const ApplicationDetails = () => {
     approvedMarks: 0,
     totalMarks: 0,
   });
-  const calculateParameterStats = (
-    parameters: any[],
-  ) => {
+
+  const calculateParameterStats = (parameters: any[]) => {
     const totalParams = parameters.length;
 
     const filledParams = parameters.filter(
-      (param) =>
-        (param.count ?? 0) > 0 || (param.marks ?? 0) > 0
+      (param) => (param.count ?? 0) > 0 || (param.marks ?? 0) > 0
     ).length;
 
     const marks = parameters.reduce((acc, param) => {
@@ -143,8 +161,12 @@ const ApplicationDetails = () => {
     setParamStats(stats);
   }, [unitDetail, graceMarks]);
 
-  const [commentsState, setCommentsState] = React.useState<Record<string, string>>({});
-const [localComment, setLocalComment] = useState(commentsState?.__application__ || "");
+  const [commentsState, setCommentsState] = React.useState<
+    Record<string, string>
+  >({});
+  const [localComment, setLocalComment] = useState(
+    commentsState?.__application__ || ""
+  );
 
   useEffect(() => {
     if (unitDetail?.fds?.parameters && profile) {
@@ -187,9 +209,7 @@ const [localComment, setLocalComment] = useState(commentsState?.__application__ 
     try {
       await dispatch(approveMarks(body)).unwrap();
       dispatch(fetchApplicationUnitDetail({ award_type, numericAppId }));
-      const updatedStats = calculateParameterStats(
-        unitDetail?.fds?.parameters
-      );
+      const updatedStats = calculateParameterStats(unitDetail?.fds?.parameters);
       setParamStats(updatedStats);
     } catch (err) {
       console.error("Failed to save approved marks:", err);
@@ -304,7 +324,31 @@ const [localComment, setLocalComment] = useState(commentsState?.__application__ 
 
     dispatch(addApplicationComment(body))
       .unwrap()
-      .catch(() => { });
+      .catch(() => {});
+  };
+
+  // Helper function to update priority
+  const handlePriorityChange = async (value: string) => {
+    const priorityPoints = parseInt(value);
+
+    if (isNaN(priorityPoints)) {
+      toast.error("Please enter a valid number");
+      return;
+    }
+
+    const body = {
+      type: unitDetail?.type || "citation",
+      application_id: unitDetail?.id || 0,
+      applicationPriorityPoints: priorityPoints,
+      parameters: [],
+    };
+
+    try {
+      await dispatch(approveMarks(body)).unwrap();
+      toast.success("Priority updated successfully");
+    } catch (error) {
+      toast.error("Failed to update priority");
+    }
   };
 
   const debouncedHandleSaveComment = useDebounce(handleSaveComment, 600);
@@ -324,7 +368,7 @@ const [localComment, setLocalComment] = useState(commentsState?.__application__ 
           ...prev,
           __application__: existingComment.comment,
         }));
-        setLocalComment(existingComment.comment)
+        setLocalComment(existingComment.comment);
       }
     }
   }, [unitDetail?.fds?.comments, role]);
@@ -355,7 +399,7 @@ const [localComment, setLocalComment] = useState(commentsState?.__application__ 
               <p className="fw-5 mb-0">
                 {unitDetail?.type
                   ? unitDetail.type.charAt(0).toUpperCase() +
-                  unitDetail.type.slice(1)
+                    unitDetail.type.slice(1)
                   : "--"}
               </p>
             </div>
@@ -445,7 +489,7 @@ const [localComment, setLocalComment] = useState(commentsState?.__application__ 
                         style={{ fontSize: 18 }}
                       >
                         {/* {SVGICON.app.pdf} */}
-                        <span style={{ fontSize: 14, wordBreak: 'break-word' }}>
+                        <span style={{ fontSize: 14, wordBreak: "break-word" }}>
                           {param?.upload?.split("/").pop()}
                         </span>
                       </a>
@@ -482,10 +526,10 @@ const [localComment, setLocalComment] = useState(commentsState?.__application__ 
                       {!isRaisedScreen && (
                         <td style={{ width: 120 }}>
                           {param?.clarification_id ||
-                            (param?.last_clarification_id &&
-                              [role, lowerRole].includes(
-                                param?.last_clarification_handled_by
-                              )) ? (
+                          (param?.last_clarification_id &&
+                            [role, lowerRole].includes(
+                              param?.last_clarification_handled_by
+                            )) ? (
                             <button
                               className="action-btn bg-transparent d-inline-flex align-items-center justify-content-center"
                               onClick={() => {
@@ -568,7 +612,7 @@ const [localComment, setLocalComment] = useState(commentsState?.__application__ 
                           </td>
                           <td style={{ width: 150 }}>
                             {param?.clarification_details?.clarification &&
-                              param?.clarification_details?.clarification_id ? (
+                            param?.clarification_details?.clarification_id ? (
                               param?.clarification_details
                                 ?.clarification_status === "pending" ? (
                                 <div className="d-flex gap-3">
@@ -663,7 +707,7 @@ const [localComment, setLocalComment] = useState(commentsState?.__application__ 
                 gap: "10px",
                 flexWrap: "wrap",
                 padding: 0,
-                marginBottom: "16px"
+                marginBottom: "16px",
               }}
             >
               {/* Unit Remark */}
@@ -675,7 +719,7 @@ const [localComment, setLocalComment] = useState(commentsState?.__application__ 
                     borderRadius: "6px",
                     boxShadow: "0 1px 2px rgba(0,0,0,0.05)",
                     fontSize: "14px",
-                    color: "#333"
+                    color: "#333",
                   }}
                 >
                   <strong>Unit:</strong> {unitDetail.fds.unitRemarks}
@@ -693,10 +737,11 @@ const [localComment, setLocalComment] = useState(commentsState?.__application__ 
                       borderRadius: "6px",
                       boxShadow: "0 1px 2px rgba(0,0,0,0.05)",
                       fontSize: "14px",
-                      color: "#333"
+                      color: "#333",
                     }}
                   >
-                    <strong>{item?.remark_added_by_role}:</strong> {item?.remarks}
+                    <strong>{item?.remark_added_by_role}:</strong>{" "}
+                    {item?.remarks}
                   </li>
                 ))}
             </ul>
@@ -704,7 +749,13 @@ const [localComment, setLocalComment] = useState(commentsState?.__application__ 
         )}
 
         {!isUnitRole && (
-          <div style={{ borderTop: "1px solid var(--gray-200)",paddingTop:'20px',paddingBottom:'20px' }}>
+          <div
+            style={{
+              borderTop: "1px solid var(--gray-200)",
+              paddingTop: "20px",
+              paddingBottom: "20px",
+            }}
+          >
             <div className="row text-center text-sm-start mb-3">
               <div className="col-6 col-sm-3">
                 <span className="fw-medium text-muted">Filled Params:</span>
@@ -748,61 +799,72 @@ const [localComment, setLocalComment] = useState(commentsState?.__application__ 
                 {remarksError && <p className="error-text">{remarksError}</p>}
               </div>
             )}
+       {  isHeadquarter &&   <StepProgressBar award_type={award_type} unitDetail={unitDetail}/>}
             {profile?.unit?.members &&
               Array.isArray(profile.unit.members) &&
-              profile.unit.members.filter(m => m.digital_sign && m.digital_sign.trim() !== "").length > 0 && (
+              profile.unit.members.filter(
+                (m) => m.digital_sign && m.digital_sign.trim() !== ""
+              ).length > 0 && (
                 <div className="table-responsive mb-3">
-                   <label
-                  className="fw-medium text-muted mb-2"
-                  style={{ whiteSpace: "nowrap" }}
-                >
-                  Submit Signatures:
-                </label>
-                <table className="table-style-1 w-100">
-  <thead className="table-light">
-    <tr>
-      <th style={{ width: "25%" }}>Member</th> 
-      <th style={{ width: "25%" }}>Name</th>
-      <th style={{ width: "25%" }}>Rank</th>
-      <th style={{ width: "25%" }}>Signature</th>
-    </tr>
-  </thead>
-  <tbody>
-    {[
-      ...profile.unit.members
-        .filter(
-          m => m.member_type === "member_officer" && m.digital_sign && m.digital_sign.trim() !== ""
-        )
-        .sort(
-          (a, b) => Number(a.member_order || 0) - Number(b.member_order || 0)
-        ),
-      ...profile.unit.members
-        .filter(
-          m => m.member_type === "presiding_officer" && m.digital_sign && m.digital_sign.trim() !== ""
-        )
-    ].map((member) => (
-      <tr key={member.id}>
-        <td>
-          {member.member_type === "presiding_officer"
-            ? "Presiding Officer"
-            : "Member Officer"}
-        </td>
-        <td>{member.name || "-"}</td>
-        <td>{member.rank || "-"}</td>
-        <td>
-          <button
-            type="button"
-            className="_btn success"
-            onClick={() => alert(`Signature clicked for ${member.name}`)}
-          >
-            Add Signature
-          </button>
-        </td>
-      </tr>
-    ))}
-  </tbody>
-</table>
-
+                  <label
+                    className="fw-medium text-muted mb-2"
+                    style={{ whiteSpace: "nowrap" }}
+                  >
+                    Submit Signatures:
+                  </label>
+                  <table className="table-style-1 w-100">
+                    <thead className="table-light">
+                      <tr>
+                        <th style={{ width: "25%" }}>Member</th>
+                        <th style={{ width: "25%" }}>Name</th>
+                        <th style={{ width: "25%" }}>Rank</th>
+                        <th style={{ width: "25%" }}>Signature</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {[
+                        ...profile.unit.members
+                          .filter(
+                            (m) =>
+                              m.member_type === "member_officer" &&
+                              m.digital_sign &&
+                              m.digital_sign.trim() !== ""
+                          )
+                          .sort(
+                            (a, b) =>
+                              Number(a.member_order || 0) -
+                              Number(b.member_order || 0)
+                          ),
+                        ...profile.unit.members.filter(
+                          (m) =>
+                            m.member_type === "presiding_officer" &&
+                            m.digital_sign &&
+                            m.digital_sign.trim() !== ""
+                        ),
+                      ].map((member) => (
+                        <tr key={member.id}>
+                          <td>
+                            {member.member_type === "presiding_officer"
+                              ? "Presiding Officer"
+                              : "Member Officer"}
+                          </td>
+                          <td>{member.name || "-"}</td>
+                          <td>{member.rank || "-"}</td>
+                          <td>
+                            <button
+                              type="button"
+                              className="_btn success"
+                              onClick={() =>
+                                alert(`Signature clicked for ${member.name}`)
+                              }
+                            >
+                              Add Signature
+                            </button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
                 </div>
               )}
             <div className="d-flex flex-sm-row flex-column gap-sm-3 gap-1 justify-content-end">
@@ -835,11 +897,6 @@ const [localComment, setLocalComment] = useState(commentsState?.__application__ 
                     type="button"
                     className="_btn success"
                     onClick={() => {
-                      // if (graceMarks === "" || graceMarks === null || isNaN(Number(graceMarks))) {
-                      //   toast.error("Please enter Discretionary Points before approving.");
-                      //   return;
-                      // }
-
                       dispatch(
                         updateApplication({
                           id: unitDetail?.id,
@@ -886,88 +943,165 @@ const [localComment, setLocalComment] = useState(commentsState?.__application__ 
                   </button>
                 </>
               )}
-
             </div>
           </div>
         )}
-        {isCW2Role && (
-          <div style={{ borderTop: "1px solid var(--gray-200)",paddingTop:'20px',paddingBottom:'20px' }}>
-            {!isHeadquarter && (
-              <form   onSubmit={(e) => {
-          e.preventDefault();
-          handleCommentChange("__application__", localComment);
-        }}>
-                <label className="form-label mb-1">Drop Comment:</label>
-                <textarea
-                  className="form-control"
-                  placeholder="Enter comment"
-                  rows={4}
-                  value={localComment}
-          onChange={(e) => setLocalComment(e.target.value)}
-                />
-                <div className="d-flex align-items-center justify-content-end mt-2">
-                  <button type="submit" className="_btn success" >Submit</button>
-                </div>
-              </form>
-              
-            )}
-                {profile?.unit?.members &&
-              Array.isArray(profile.unit.members) &&
-              profile.unit.members.filter(m => m.digital_sign && m.digital_sign.trim() !== "").length > 0 && (
-                <div className="table-responsive mb-3">
-                   <label
-                  className="fw-medium text-muted mb-2"
-                  style={{ whiteSpace: "nowrap" }}
-                >
-                  Submit Signatures:
-                </label>
-                <table className="table-style-1 w-100">
-  <thead className="table-light">
-    <tr>
-      <th style={{ width: "25%" }}>Member</th> 
-      <th style={{ width: "25%" }}>Name</th>
-      <th style={{ width: "25%" }}>Rank</th>
-      <th style={{ width: "25%" }}>Signature</th>
-    </tr>
-  </thead>
-  <tbody>
-    {[
-      ...profile.unit.members
-        .filter(
-          m => m.member_type === "member_officer" && m.digital_sign && m.digital_sign.trim() !== ""
-        )
-        .sort(
-          (a, b) => Number(a.member_order || 0) - Number(b.member_order || 0)
-        ),
-      ...profile.unit.members
-        .filter(
-          m => m.member_type === "presiding_officer" && m.digital_sign && m.digital_sign.trim() !== ""
-        )
-    ].map((member) => (
-      <tr key={member.id}>
-        <td>
-          {member.member_type === "presiding_officer"
-            ? "Presiding Officer"
-            : "Member Officer"}
-        </td>
-        <td>{member.name || "-"}</td>
-        <td>{member.rank || "-"}</td>
-        <td>
-          <button
-            type="button"
-            className="_btn success"
-            onClick={() => alert(`Signature clicked for ${member.name}`)}
-          >
-            Add Signature
-          </button>
-        </td>
-      </tr>
-    ))}
-  </tbody>
-</table>
 
+        {isCW2Role && (
+          <div
+            style={{
+              borderTop: "1px solid var(--gray-200)",
+              paddingTop: "20px",
+              paddingBottom: "20px",
+            }}
+          >
+            {!isHeadquarter && (
+              <>
+                <div className="mb-2">
+                  <label className="form-label mb-1">Priority:</label>
+                  <input
+                    type="text"
+                    className="form-control"
+                    name="priority"
+                    value={priority}
+                    onChange={(e) => {
+                      const value = e.target.value;
+                      setPriority(value);
+                      handlePriorityChange(value);
+                    }}
+                  />
+                </div>
+                <form
+                  onSubmit={(e) => {
+                    e.preventDefault();
+                    handleCommentChange("__application__", localComment);
+                  }}
+                >
+                  <label className="form-label mb-1">Drop Comment:</label>
+                  <textarea
+                    className="form-control"
+                    placeholder="Enter comment"
+                    rows={4}
+                    value={localComment}
+                    onChange={(e) => setLocalComment(e.target.value)}
+                  />
+                  <div className="d-flex align-items-center justify-content-end mt-2">
+                    <button type="submit" className="_btn success">
+                      Submit
+                    </button>
+                  </div>
+                </form>
+              </>
+            )}
+            {(profile?.unit?.members && !unitDetail?.is_mo_ol_approved) &&
+              Array.isArray(profile.unit.members) &&
+              profile.unit.members.filter(
+                (m) => m.digital_sign && m.digital_sign.trim() !== ""
+              ).length > 0 && (
+                <div className="table-responsive mb-3">
+                  <label
+                    className="fw-medium text-muted mb-2"
+                    style={{ whiteSpace: "nowrap" }}
+                  >
+                    Submit Signatures:
+                  </label>
+                  <table className="table-style-1 w-100">
+                    <thead className="table-light">
+                      <tr>
+                        <th style={{ width: "25%" }}>Member</th>
+                        <th style={{ width: "25%" }}>Name</th>
+                        <th style={{ width: "25%" }}>Rank</th>
+                        <th style={{ width: "25%" }}>Signature</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {[
+                        ...profile.unit.members
+                          .filter(
+                            (m) =>
+                              m.member_type === "member_officer" &&
+                              m.digital_sign &&
+                              m.digital_sign.trim() !== ""
+                          )
+                          .sort(
+                            (a, b) =>
+                              Number(a.member_order || 0) -
+                              Number(b.member_order || 0)
+                          ),
+                        ...profile.unit.members.filter(
+                          (m) =>
+                            m.member_type === "presiding_officer" &&
+                            m.digital_sign &&
+                            m.digital_sign.trim() !== ""
+                        ),
+                      ].map((member) => (
+                        <tr key={member.id}>
+                          <td>
+                            {member.member_type === "presiding_officer"
+                              ? "Presiding Officer"
+                              : "Member Officer"}
+                          </td>
+                          <td>{member.name || "-"}</td>
+                          <td>{member.rank || "-"}</td>
+                          <td>
+                            <button
+                              type="button"
+                              className="_btn success"
+                              onClick={() =>
+                                alert(`Signature clicked for ${member.name}`)
+                              }
+                            >
+                              Add Signature
+                            </button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
                 </div>
               )}
+            {isCW2Role && !unitDetail?.is_mo_ol_approved && (
+              <div className="d-flex flex-sm-row flex-column gap-sm-3 gap-1 justify-content-end">
+                {" "}
+                <button
+                  type="button"
+                  className="_btn success"
+                  onClick={() => {
+                    const payload = {
+                      id: unitDetail?.id,
+                      is_mo_ol_approved: true,
+                    };
+
+                    if (unitDetail?.type === "citation") {
+                      dispatch(updateCitation(payload));
+                    } else if (unitDetail?.type === "appreciation") {
+                      dispatch(updateAppreciation(payload));
+                    }
+
+                    navigate("/applications/list");
+                  }}
+                >
+                  Accept
+                </button>
+                <button
+                  type="button"
+                  className="_btn danger"
+                  onClick={() => {
+                    dispatch(
+                      updateApplication({
+                        id: unitDetail?.id,
+                        type: unitDetail?.type,
+                        status: "rejected",
+                      })
+                    ).then(() => {
+                      navigate("/applications/list");
+                    });
+                  }}
+                >
+                  Reject
+                </button>
+              </div>
+            )}
           </div>
         )}
       </div>

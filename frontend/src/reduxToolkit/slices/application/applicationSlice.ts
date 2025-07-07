@@ -1,5 +1,6 @@
 import { createSlice, type PayloadAction } from "@reduxjs/toolkit";
 import {
+  fetchApplicationHistory,fetchAllApplications,
   fetchApplicationsForHQ,
   fetchApplicationUnitDetail,
   fetchApplicationUnits,
@@ -142,6 +143,56 @@ const applicationSlice = createSlice({
           action.payload || "Failed to fetch HQ applications";
       }
     );
+
+    builder.addCase(fetchApplicationHistory.pending, (state) => {
+      state.loading = true;
+      state.success = false;
+      state.error = null;
+    });
+    builder.addCase(
+      fetchApplicationHistory.fulfilled,
+      (state, action: PayloadAction<FetchApplicationUnitsResponse>) => {
+        state.loading = false;
+        state.success = action.payload.success;
+        state.units = action.payload.data;
+        state.meta = action.payload.meta;
+      }
+    );
+    builder.addCase(
+      fetchApplicationHistory.rejected,
+      (state, action: PayloadAction<any>) => {
+        state.loading = false;
+        state.success = false;
+        state.error =
+          action.payload || "Failed to fetch application history";
+      }
+    )
+
+
+    builder.addCase(fetchAllApplications.pending, (state) => {
+      state.loading = true;
+      state.success = false;
+      state.error = null;
+    });
+    builder.addCase(
+      fetchAllApplications.fulfilled,
+      (state, action: PayloadAction<FetchApplicationUnitsResponse>) => {
+        state.loading = false;
+        state.success = action.payload.success;
+        state.units = action.payload.data;
+        state.meta = action.payload.meta;
+      }
+    );
+    builder.addCase(
+      fetchAllApplications.rejected,
+      (state, action: PayloadAction<any>) => {
+        state.loading = false;
+        state.success = false;
+        state.error =
+          action.payload || "Failed to fetch application history";
+      }
+    )
+
   },
 });
 

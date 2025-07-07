@@ -66,16 +66,31 @@ const SidebarMenu = () => {
     icon: SVGICON.sidebar.profile,
     to: "/application/accepted",
   };
-  
+  const historyItem = {
+    label: "History",
+    icon: SVGICON.sidebar.history,
+    to: "/history",
+  };
+  const allApplicationsItem = {
+    label: "All Applications",
+    icon: SVGICON.sidebar.history,
+    to: "/all-applications",
+  };
   if (
     userRole === "brigade" ||
     userRole === "division" ||
-    userRole === "corps"||
+    userRole === "corps" ||
     userRole === "command"
   ) {
     filteredStructure.push(acceptedApplicationItem);
+    filteredStructure.push(historyItem);
+    filteredStructure.push(allApplicationsItem);
   }
-
+  if (
+    userRole === "headquarter"
+  ) {
+    filteredStructure.push(allApplicationsItem);
+  }
   return (
     <aside className="sidebar-menu flex-shrink-0 d-xl-block d-none">
       <div className="position-sticky top-0">

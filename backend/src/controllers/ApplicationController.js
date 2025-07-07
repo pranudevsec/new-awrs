@@ -171,3 +171,23 @@ exports.getApplicationsScoreboard = async (req, res) => {
       );
     }
   };
+  exports.getApplicationsHistory = async (req, res) => {
+    try {
+      const result = await ApplicationService.getApplicationsHistory(req.user, req.query);
+      res.status(StatusCodes.OK).send(result);
+    } catch (error) {
+      res.status(StatusCodes.INTERNAL_SERVER_ERROR).send(
+        ResponseHelper.error(StatusCodes.INTERNAL_SERVER_ERROR, "Internal Server Error", error.message)
+      );
+    }
+  };
+  exports.getAllApplications = async (req, res) => {
+    try {
+      const result = await ApplicationService.getAllApplications(req.user, req.query);
+      res.status(StatusCodes.OK).send(result);
+    } catch (error) {
+      res.status(StatusCodes.INTERNAL_SERVER_ERROR).send(
+        ResponseHelper.error(StatusCodes.INTERNAL_SERVER_ERROR, "Internal Server Error", error.message)
+      );
+    }
+  };

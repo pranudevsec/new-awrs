@@ -47,13 +47,20 @@ exports.login = async (credentials) => {
       return ResponseHelper.error(400, "Missing credentials");
     }
 
-    const { user_role, username, password } = credentials;
+    let { user_role, username, password } = credentials;
 
-    // Step 1: Find the user by role and username
-    const userQuery = await db.query(
-      "SELECT * FROM User_tab WHERE user_role = $1 AND username = $2",
-      [user_role, username]
-    );
+    let queryText = "SELECT * FROM User_tab WHERE user_role = $1 AND username = $2";
+    let queryParams = [user_role, username];
+
+    // 🚩 Check if the user_role is 'special_unit'
+    if (user_role === "special_unit") {
+      user_role = "unit"; // treat as 'unit'
+      queryText += " AND is_special_unit = TRUE"; // enforce special unit check
+      queryParams = [user_role, username];
+    }
+
+    // Step 1: Find the user by role and username (+ is_special_unit if needed)
+    const userQuery = await db.query(queryText, queryParams);
 
     if (userQuery.rows.length === 0) {
       return ResponseHelper.error(404, MSG.USER_NOT_FOUND);
@@ -94,10 +101,10 @@ exports.getProfile = async ({ user_id }) => {
       `
 SELECT 
   u.user_id, u.name AS user_name, u.username, u.pers_no, u.rank, u.user_role, u.cw2_type,
-  u.unit_id,
+  u.unit_id, u.is_special_unit,  -- added here
   ut.sos_no, ut.name AS unit_name, ut.adm_channel, ut.tech_channel, ut.bde, ut.div, ut.corps, ut.comd,
   ut.unit_type, ut.matrix_unit, ut.location,
-  ut.goc_award, ut.coas_award, ut.goc_award_year, ut.coas_award_year,
+  ut.awards,
   ut.members
 FROM User_tab u
 LEFT JOIN Unit_tab ut ON u.unit_id = ut.unit_id
@@ -105,6 +112,7 @@ WHERE u.user_id = $1
       `,
       [userId]
     );
+
     if (result.rows.length === 0) {
       return ResponseHelper.error(404, MSG.USER_NOT_FOUND);
     }
@@ -120,6 +128,7 @@ WHERE u.user_id = $1
         rank: user.rank,
         user_role: user.user_role,
         cw2_type: user.cw2_type,
+        is_special_unit: user.is_special_unit,  // added here
       },
       unit: user.unit_id
         ? {
@@ -135,11 +144,8 @@ WHERE u.user_id = $1
             unit_type: user.unit_type,
             matrix_unit: user.matrix_unit,
             location: user.location,
-            goc_award: user.goc_award,
-            coas_award: user.coas_award,
-            goc_award_year: user.goc_award_year,
-            coas_award_year: user.coas_award_year,
-            members: user.members
+            awards: user.awards,
+            members: user.members,
           }
         : null,
     });

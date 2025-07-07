@@ -85,11 +85,12 @@ export const hierarchicalStructure = [
 // ];
 export const roleOptions = [
   { label: "Unit", value: "unit" },
+  { label: "Special Unit", value: "special_unit" },
   { label: "Brigade", value: "brigade" },
   { label: "Division", value: "division" },
   { label: "Corps", value: "corps" },
   { label: "Command", value: "command" },
-  { label: "AGs Br/CW2/IHQ (Army)", value: "headquarter" }, 
+  { label: "AGs Br/CW2/IHQ (Army)", value: "headquarter" },
   { label: "MO", value: "cw2_mo" },
   { label: "OL", value: "cw2_ol" },
   { label: "HR", value: "cw2_hr" },
@@ -124,4 +125,5 @@ export const matrixUnitOptions = [
   { label: "LAC", value: "LAC" },
   { label: "IS", value: "IS" },
   { label: "NM", value: "NM" },
+  {label:"HAA",value:"LC/AIOS/LAC/HAA/AGPL"}
 ];

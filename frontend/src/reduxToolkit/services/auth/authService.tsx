@@ -50,6 +50,7 @@ export const getProfile = createAsyncThunk<ProfileResponse>(
   async (_, { rejectWithValue }) => {
     try {
       const response = await Axios.get(apiEndPoints.getProfile);
+      console.log(response.data);
       if (response.data.success) {
         return response.data;
       } else {

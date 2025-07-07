@@ -1,6 +1,7 @@
 import { useEffect, useState, type FormEvent } from "react";
 import { useFormik } from "formik";
 import { unwrapResult } from "@reduxjs/toolkit";
+import toast from "react-hot-toast";
 import {
   unitOptions,
   brigadeOptions,
@@ -16,12 +17,11 @@ import {
   getProfile,
   reqToUpdateUnitProfile,
 } from "../../reduxToolkit/services/auth/authService";
+import type { UpdateUnitProfileRequest } from "../../reduxToolkit/services/auth/authInterface";
 import FormSelect from "../../components/form/FormSelect";
 import Breadcrumb from "../../components/ui/breadcrumb/Breadcrumb";
 import Loader from "../../components/ui/loader/Loader";
 import FormInput from "../../components/form/FormInput";
-import toast from "react-hot-toast";
-import type { UpdateUnitProfileRequest } from "../../reduxToolkit/services/auth/authInterface";
 
 type UserRole = "unit" | "brigade" | "division" | "corps" | "command" | string;
 
@@ -34,7 +34,12 @@ interface Officer {
   appointment: string;
   digitalSign: string;
 }
-
+interface Award {
+  award_id?: string;
+  award_type: "goc" | "coas";
+  award_title: string;
+  award_year: string;
+}
 const hierarchyMap: Record<string, string[]> = {};
 hierarchicalStructure.forEach(([command, corps, division, brigade, unit]) => {
   hierarchyMap[command] = [corps, division, brigade, unit];
@@ -67,15 +72,29 @@ const ProfileSettings = () => {
       digitalSign: "",
     },
   ]);
-  const role = profile?.user?.user_role?.toLowerCase() ?? "";
+  const [awards, setAwards] = useState<Award[]>(profile?.unit?.awards ?? []);
 
+  const role = profile?.user?.user_role?.toLowerCase() ?? "";
+  useEffect(() => {
+    if (profile?.unit?.awards && Array.isArray(profile.unit.awards)) {
+      const processedAwards = profile.unit.awards.map((award) => ({
+        award_id: award.award_id ?? undefined,
+        award_type: award.award_type ?? "goc",
+        award_title: award.award_title ?? "",
+        award_year: award.award_year ?? "",
+      }));
+      setAwards(processedAwards);
+    } else {
+      setAwards([]);
+    }
+  }, [profile?.unit?.awards]);
   useEffect(() => {
     if (profile?.unit?.members && Array.isArray(profile.unit.members)) {
       // Extract presiding officer
       const presiding = profile.unit.members.find(
         (member) => member.member_type === "presiding_officer"
       );
-  
+
       if (presiding) {
         setPresidingOfficer({
           id: presiding.id ?? undefined,
@@ -87,7 +106,7 @@ const ProfileSettings = () => {
           digitalSign: presiding.digital_sign ?? "",
         });
       }
-  
+
       // Extract other officers
       const otherOfficers = profile.unit.members
         .filter((member) => member.member_type !== "presiding_officer")
@@ -100,7 +119,7 @@ const ProfileSettings = () => {
           appointment: member.appointment ?? "",
           digitalSign: member.digital_sign ?? "",
         }));
-  
+
       if (otherOfficers.length > 0) {
         setOfficers(otherOfficers);
       } else {
@@ -118,12 +137,27 @@ const ProfileSettings = () => {
       }
     }
   }, [profile?.unit?.members]);
-  
+
   useEffect(() => {
     if (profile) setFirstLoad(false);
   }, [profile]);
 
-  const getVisibleFields = (role: UserRole): string[] => {
+  const getVisibleFields = (role: UserRole, isSpecialUnit?: boolean): string[] => {
+    if (isSpecialUnit) {
+      // If it's a special unit, exclude brigade, division, corps
+      switch (role) {
+        case "unit":
+          return ["command", "location", "matrix_unit", "unit_type", "unit"].reverse();
+        case "brigade":
+        case "division":
+        case "corps":
+        case "command":
+          return ["unit"].reverse();
+        default:
+          return [];
+      }
+    }
+
     switch (role) {
       case "unit":
         return [
@@ -151,7 +185,7 @@ const ProfileSettings = () => {
     }
   };
 
-  const visibleFields = getVisibleFields(profile?.user?.user_role ?? "");
+  const visibleFields = getVisibleFields(profile?.user?.user_role ?? "", profile?.user?.is_special_unit);
 
   const optionsMap: Record<string, any> = {
     unit: unitOptions,
@@ -208,10 +242,6 @@ const ProfileSettings = () => {
       unit_type: profile?.unit?.unit_type || "",
       matrix_unit: profile?.unit?.matrix_unit || "",
       location: profile?.unit?.location || "",
-      goc_award: profile?.unit?.goc_award || "",
-      coas_award: profile?.unit?.coas_award || "",
-      goc_award_year: profile?.unit?.goc_award_year || "",
-      coas_award_year: profile?.unit?.coas_award_year || "",
     },
     enableReinitialize: true,
     onSubmit: async (values: any, { resetForm }) => {
@@ -246,10 +276,7 @@ const ProfileSettings = () => {
         payload["unit_type"] = values.unit_type;
         payload["matrix_unit"] = values.matrix_unit;
         payload["location"] = values.location;
-        payload["goc_award"] = values.goc_award;
-        payload["coas_award"] = values.coas_award;
-        payload["goc_award_year"] = values.goc_award_year;
-        payload["coas_award_year"] = values.coas_award_year;
+        payload["awards"] = awards;
 
         const resultAction = await dispatch(reqToUpdateUnitProfile(payload));
         const result = unwrapResult(resultAction);
@@ -264,14 +291,8 @@ const ProfileSettings = () => {
     },
   });
   const currentYear = new Date().getFullYear();
-  const yearOptions = Array.from({ length: 50 }, (_, i) => {
-    const year = currentYear - i;
-    return (
-      <option key={year} value={year}>
-        {year}
-      </option>
-    );
-  });
+  const yearOptions = Array.from({ length: 50 }, (_, i) => `${currentYear - i}`);
+
   const handlePresidingChange = (field: keyof Officer, value: string) => {
     setPresidingOfficer((prev) => ({
       ...prev,
@@ -291,13 +312,9 @@ const ProfileSettings = () => {
     unit_type: profile?.unit?.unit_type ?? null,
     matrix_unit: profile?.unit?.matrix_unit ?? null,
     location: profile?.unit?.location ?? null,
-    goc_award: profile?.unit?.goc_award ?? null,
-    coas_award: profile?.unit?.coas_award ?? null,
-    goc_award_year: profile?.unit?.goc_award_year ?? null,
-    coas_award_year: profile?.unit?.coas_award_year ?? null,
     members
   });
-  
+
   return (
     <div className="profile-settings-section">
       <div className="d-flex flex-sm-row flex-column align-items-sm-center justify-content-between mb-4">
@@ -311,12 +328,12 @@ const ProfileSettings = () => {
             const optionsForField =
               field === "unit"
                 ? {
-                    unit: unitOptions,
-                    brigade: brigadeOptions,
-                    division: divisionOptions,
-                    corps: corpsOptions,
-                    command: commandOptions,
-                  }[profile?.user?.user_role ?? "unit"] || []
+                  unit: unitOptions,
+                  brigade: brigadeOptions,
+                  division: divisionOptions,
+                  corps: corpsOptions,
+                  command: commandOptions,
+                }[profile?.user?.user_role ?? "unit"] || []
                 : optionsMap[field] || [];
 
             const getDynamicLabel = (
@@ -356,11 +373,10 @@ const ProfileSettings = () => {
                     id={field}
                     name={field}
                     type="text"
-                    className={`form-control ${
-                      formik.touched[field] && formik.errors[field]
-                        ? "is-invalid"
-                        : ""
-                    }`}
+                    className={`form-control ${formik.touched[field] && formik.errors[field]
+                      ? "is-invalid"
+                      : ""
+                      }`}
                     value={formik.values[field]}
                     onChange={formik.handleChange}
                     onBlur={formik.handleBlur}
@@ -423,115 +439,101 @@ const ProfileSettings = () => {
               </div>
             );
           })}
-          {role === "unit" && (
-            <>
-              <div className="col-sm-6 mb-3">
-                <label htmlFor="goc_award" className="form-label mb-1">
-                  GOC Award
-                </label>
-                <input
-                  id="goc_award"
-                  name="goc_award"
-                  type="text"
-                  className={`form-control ${
-                    formik.touched.goc_award && formik.errors.goc_award
-                      ? "is-invalid"
-                      : ""
-                  }`}
-                  value={formik.values.goc_award}
-                  onChange={formik.handleChange}
-                  onBlur={formik.handleBlur}
-                  placeholder="Enter GOC Award"
-                />
-                {formik.touched.goc_award && formik.errors.goc_award && (
-                  <div className="invalid-feedback">
-                    {formik.errors.goc_award}
-                  </div>
-                )}
-              </div>
-
-              <div className="col-sm-6 mb-3">
-                <label htmlFor="goc_award_year" className="form-label mb-1">
-                  GOC Award Year
-                </label>
+  {role === "unit" && (
+  <>
+    <div className="col-12 mb-3">
+      <label className="form-label fw-6">Awards</label>
+      <table className="table table-bordered">
+        <thead>
+        {awards.length !== 0 && (  <tr>
+            <th>Type</th>
+            <th>Brigade</th>
+            <th>Year</th>
+            <th>Action</th>
+          </tr>)}
+        </thead>
+        <tbody>
+          {awards.map((award, idx) => (
+            <tr key={award.award_id ?? idx}>
+              <td>
                 <select
-                  id="goc_award_year"
-                  name="goc_award_year"
-                  className={`form-select ${
-                    formik.touched.goc_award_year &&
-                    formik.errors.goc_award_year
-                      ? "is-invalid"
-                      : ""
-                  }`}
-                  value={formik.values.goc_award_year}
-                  onChange={formik.handleChange}
-                  onBlur={formik.handleBlur}
+                  className="form-select"
+                  value={award.award_type}
+                  onChange={(e) => {
+                    const updated = [...awards];
+                    updated[idx].award_type = e.target.value as "goc" | "coas";
+                    setAwards(updated);
+                  }}
+                >
+                  <option value="goc">GOC</option>
+                  <option value="coas">COAS</option>
+                </select>
+              </td>
+              <td>
+                <input
+                  type="text"
+                  className="form-control"
+                  value={award.award_title}
+                  onChange={(e) => {
+                    const updated = [...awards];
+                    updated[idx].award_title = e.target.value;
+                    setAwards(updated);
+                  }}
+                  placeholder="Award Title"
+                />
+              </td>
+              <td>
+                <select
+                  className="form-select"
+                  value={award.award_year}
+                  onChange={(e) => {
+                    const updated = [...awards];
+                    updated[idx].award_year = e.target.value;
+                    setAwards(updated);
+                  }}
                 >
                   <option value="">Select Year</option>
-                  {yearOptions}
+                  {yearOptions.map((year) => (
+                    <option key={year} value={year}>{year}</option>
+                  ))}
                 </select>
-                {formik.touched.goc_award_year &&
-                  formik.errors.goc_award_year && (
-                    <div className="invalid-feedback">
-                      {formik.errors.goc_award_year}
-                    </div>
-                  )}
-              </div>
-
-              <div className="col-sm-6 mb-3">
-                <label htmlFor="coas_award" className="form-label mb-1">
-                  COAS Award
-                </label>
-                <input
-                  id="coas_award"
-                  name="coas_award"
-                  type="text"
-                  className={`form-control ${
-                    formik.touched.coas_award && formik.errors.coas_award
-                      ? "is-invalid"
-                      : ""
-                  }`}
-                  value={formik.values.coas_award}
-                  onChange={formik.handleChange}
-                  onBlur={formik.handleBlur}
-                  placeholder="Enter COAS Award"
-                />
-                {formik.touched.coas_award && formik.errors.coas_award && (
-                  <div className="invalid-feedback">
-                    {formik.errors.coas_award}
-                  </div>
-                )}
-              </div>
-
-              <div className="col-sm-6 mb-3">
-                <label htmlFor="coas_award_year" className="form-label mb-1">
-                  COAS Award Year
-                </label>
-                <select
-                  id="coas_award_year"
-                  name="coas_award_year"
-                  className={`form-select ${
-                    formik.touched.coas_award_year &&
-                    formik.errors.coas_award_year
-                      ? "is-invalid"
-                      : ""
-                  }`}
-                  value={formik.values.coas_award_year}
-                  onChange={formik.handleChange}
-                  onBlur={formik.handleBlur}
+              </td>
+              <td>
+                <button
+                  type="button"
+                  className="_btn danger btn-sm"
+                  onClick={() => {
+                    setAwards((prev) => prev.filter((_, i) => i !== idx));
+                  }}
                 >
-                  <option value="">Select Year</option>
-                  {yearOptions}
-                </select>
-                {formik.touched.coas_award_year &&
-                  formik.errors.coas_award_year && (
-                    <div className="invalid-feedback">
-                      {formik.errors.coas_award_year}
-                    </div>
-                  )}
-              </div>
-            </>
+                  Remove
+                </button>
+              </td>
+            </tr>
+          ))}
+          {awards.length === 0 && (
+            <tr>
+              <td colSpan={4} className="text-center text-muted">No awards added</td>
+            </tr>
           )}
+        </tbody>
+      </table>
+      <button
+        type="button"
+        className="_btn success btn-sm"
+        onClick={() => {
+          setAwards((prev) => [
+            ...prev,
+            { award_type: "goc", award_title: "", award_year: "" },
+          ]);
+        }}
+      >
+        Add Award
+      </button>
+    </div>
+  </>
+)}
+
 
           {role !== "unit" && (
             <>
@@ -544,11 +546,10 @@ const ProfileSettings = () => {
                   id="adm_channel"
                   name="adm_channel"
                   type="text"
-                  className={`form-control ${
-                    formik.touched.adm_channel && formik.errors.adm_channel
-                      ? "is-invalid"
-                      : ""
-                  }`}
+                  className={`form-control ${formik.touched.adm_channel && formik.errors.adm_channel
+                    ? "is-invalid"
+                    : ""
+                    }`}
                   value={formik.values.adm_channel}
                   onChange={formik.handleChange}
                   onBlur={formik.handleBlur}
@@ -568,11 +569,10 @@ const ProfileSettings = () => {
                   id="tech_channel"
                   name="tech_channel"
                   type="text"
-                  className={`form-control ${
-                    formik.touched.tech_channel && formik.errors.tech_channel
-                      ? "is-invalid"
-                      : ""
-                  }`}
+                  className={`form-control ${formik.touched.tech_channel && formik.errors.tech_channel
+                    ? "is-invalid"
+                    : ""
+                    }`}
                   value={formik.values.tech_channel}
                   onChange={formik.handleChange}
                   onBlur={formik.handleBlur}
@@ -683,204 +683,204 @@ const ProfileSettings = () => {
             <Breadcrumb title="Presiding Officer" />
           </div>
           <form
-  className="mb-5"
-  onSubmit={async (e) => {
-    e.preventDefault();
+            className="mb-5"
+            onSubmit={async (e) => {
+              e.preventDefault();
 
-    if (!presidingOfficer.icNumber || !presidingOfficer.rank || !presidingOfficer.name) {
-      toast.error("Please fill IC Number, Rank, and Name for Presiding Officer.");
-      return;
-    }
+              if (!presidingOfficer.icNumber || !presidingOfficer.rank || !presidingOfficer.name) {
+                toast.error("Please fill IC Number, Rank, and Name for Presiding Officer.");
+                return;
+              }
 
-    const presidingPayload = [{
-      ...(presidingOfficer.id ? { id: presidingOfficer.id } : {}),
-      member_type: "presiding_officer",
-      member_order: "",
-      ic_number: presidingOfficer.icNumber,
-      rank: presidingOfficer.rank,
-      name: presidingOfficer.name,
-      appointment: presidingOfficer.appointment,
-      digital_sign: presidingOfficer.digitalSign,
-    }];
+              const presidingPayload = [{
+                ...(presidingOfficer.id ? { id: presidingOfficer.id } : {}),
+                member_type: "presiding_officer",
+                member_order: "",
+                ic_number: presidingOfficer.icNumber,
+                rank: presidingOfficer.rank,
+                name: presidingOfficer.name,
+                appointment: presidingOfficer.appointment,
+                digital_sign: presidingOfficer.digitalSign,
+              }];
 
-    try {
-      const payload = buildUnitPayload(presidingPayload);
-      const resultAction = await dispatch(reqToUpdateUnitProfile(payload));      const result = unwrapResult(resultAction);
+              try {
+                const payload = buildUnitPayload(presidingPayload);
+                const resultAction = await dispatch(reqToUpdateUnitProfile(payload)); const result = unwrapResult(resultAction);
 
-      if (result.success) {
-        await dispatch(getProfile());
-      }
-    } catch (error) {
-      toast.error("Failed to add Presiding Officer.");
-      console.error(error);
-    }
-  }}
->
-  <div className="row">
-    <div className="col-sm-6 mb-3">
-      <FormInput
-        label="IC Number"
-        name="icNumber"
-        placeholder="Enter IC Number"
-        value={presidingOfficer.icNumber}
-        onChange={(e) => handlePresidingChange("icNumber", e.target.value)}
-      />
-    </div>
-    <div className="col-sm-6 mb-3">
-      <FormInput
-        label="Rank"
-        name="rank"
-        placeholder="Enter Rank"
-        value={presidingOfficer.rank}
-        onChange={(e) => handlePresidingChange("rank", e.target.value)}
-      />
-    </div>
-    <div className="col-sm-6 mb-3">
-      <FormInput
-        label="Name"
-        name="name"
-        placeholder="Enter Name"
-        value={presidingOfficer.name}
-        onChange={(e) => handlePresidingChange("name", e.target.value)}
-      />
-    </div>
-    <div className="col-sm-6 mb-3">
-      <FormInput
-        label="Appointment"
-        name="appointment"
-        placeholder="Enter Appointment"
-        value={presidingOfficer.appointment}
-        onChange={(e) => handlePresidingChange("appointment", e.target.value)}
-      />
-    </div>
-    <div className="col-sm-6 mb-3">
-      <FormInput
-        label="Digital Sign"
-        name="digitalSign"
-        placeholder="Enter Digital Sign"
-        value={presidingOfficer.digitalSign}
-        onChange={(e) => handlePresidingChange("digitalSign", e.target.value)}
-      />
-    </div>
-    <div className="col-12 mt-2">
-      <button type="submit" className="_btn _btn-lg primary">
-        Add Presiding Officer
-      </button>
-    </div>
-  </div>
-</form>
+                if (result.success) {
+                  await dispatch(getProfile());
+                }
+              } catch (error) {
+                toast.error("Failed to add Presiding Officer.");
+                console.error(error);
+              }
+            }}
+          >
+            <div className="row">
+              <div className="col-sm-6 mb-3">
+                <FormInput
+                  label="IC Number"
+                  name="icNumber"
+                  placeholder="Enter IC Number"
+                  value={presidingOfficer.icNumber}
+                  onChange={(e) => handlePresidingChange("icNumber", e.target.value)}
+                />
+              </div>
+              <div className="col-sm-6 mb-3">
+                <FormInput
+                  label="Rank"
+                  name="rank"
+                  placeholder="Enter Rank"
+                  value={presidingOfficer.rank}
+                  onChange={(e) => handlePresidingChange("rank", e.target.value)}
+                />
+              </div>
+              <div className="col-sm-6 mb-3">
+                <FormInput
+                  label="Name"
+                  name="name"
+                  placeholder="Enter Name"
+                  value={presidingOfficer.name}
+                  onChange={(e) => handlePresidingChange("name", e.target.value)}
+                />
+              </div>
+              <div className="col-sm-6 mb-3">
+                <FormInput
+                  label="Appointment"
+                  name="appointment"
+                  placeholder="Enter Appointment"
+                  value={presidingOfficer.appointment}
+                  onChange={(e) => handlePresidingChange("appointment", e.target.value)}
+                />
+              </div>
+              <div className="col-sm-6 mb-3">
+                <FormInput
+                  label="Digital Sign"
+                  name="digitalSign"
+                  placeholder="Enter Digital Sign"
+                  value={presidingOfficer.digitalSign}
+                  onChange={(e) => handlePresidingChange("digitalSign", e.target.value)}
+                />
+              </div>
+              <div className="col-12 mt-2">
+                <button type="submit" className="_btn _btn-lg primary">
+                  Add Presiding Officer
+                </button>
+              </div>
+            </div>
+          </form>
 
 
           {/* Officers */}
           <form
-  className="mb-5"
-  onSubmit={async (e) => {
-    e.preventDefault();
+            className="mb-5"
+            onSubmit={async (e) => {
+              e.preventDefault();
 
-    if (officers.length === 0) {
-      toast.error("Please add at least one Member Officer.");
-      return;
-    }
+              if (officers.length === 0) {
+                toast.error("Please add at least one Member Officer.");
+                return;
+              }
 
-    const officersPayload: UpdateUnitProfileRequest["members"] = officers.map((officer, index) => ({
-      ...(officer.id ? { id: officer.id } : {}), 
-      member_type: "member_officer", // narrowed type
-      member_order: String(index + 1),
-      ic_number: officer.icNumber,
-      rank: officer.rank,
-      name: officer.name,
-      appointment: officer.appointment,
-      digital_sign: officer.digitalSign,
-    }));
+              const officersPayload: UpdateUnitProfileRequest["members"] = officers.map((officer, index) => ({
+                ...(officer.id ? { id: officer.id } : {}),
+                member_type: "member_officer", // narrowed type
+                member_order: String(index + 1),
+                ic_number: officer.icNumber,
+                rank: officer.rank,
+                name: officer.name,
+                appointment: officer.appointment,
+                digital_sign: officer.digitalSign,
+              }));
 
-    try {
-      const payload = buildUnitPayload(officersPayload);
-      const resultAction = await dispatch(reqToUpdateUnitProfile(payload));
-      const result = unwrapResult(resultAction);
+              try {
+                const payload = buildUnitPayload(officersPayload);
+                const resultAction = await dispatch(reqToUpdateUnitProfile(payload));
+                const result = unwrapResult(resultAction);
 
-      if (result.success) {
-        await dispatch(getProfile());
-      }
-    } catch (error) {
-      toast.error("Failed to add Member Officers.");
-      console.error(error);
-    }
-  }}
->
-  {officers.map((officer, index) => (
-    <div key={index} className="mb-4">
-      <div className="d-flex flex-sm-row flex-column align-items-sm-center justify-content-between mb-3">
-        <Breadcrumb title={`Member Officer ${index + 1}`} />
-      </div>
-      <div className="row">
-        <div className="col-sm-6 mb-3">
-          <FormInput
-            label="IC Number"
-            name={`icNumber-${index}`}
-            placeholder="Enter IC Number"
-            value={officer.icNumber}
-            onChange={(e) =>
-              handleChange(index, "icNumber", e.target.value)
-            }
-          />
-        </div>
-        <div className="col-sm-6 mb-3">
-          <FormInput
-            label="Rank"
-            name={`rank-${index}`}
-            placeholder="Enter Rank"
-            value={officer.rank}
-            onChange={(e) =>
-              handleChange(index, "rank", e.target.value)
-            }
-          />
-        </div>
-        <div className="col-sm-6 mb-3">
-          <FormInput
-            label="Name"
-            name={`name-${index}`}
-            placeholder="Enter Name"
-            value={officer.name}
-            onChange={(e) =>
-              handleChange(index, "name", e.target.value)
-            }
-          />
-        </div>
-        <div className="col-sm-6 mb-3">
-          <FormInput
-            label="Appointment"
-            name={`appointment-${index}`}
-            placeholder="Enter Appointment"
-            value={officer.appointment}
-            onChange={(e) =>
-              handleChange(index, "appointment", e.target.value)
-            }
-          />
-        </div>
-        <div className="col-sm-6 mb-3">
-          <FormInput
-            label="Digital Sign"
-            name={`digitalSign-${index}`}
-            placeholder="Enter Digital Sign"
-            value={officer.digitalSign}
-            onChange={(e) =>
-              handleChange(index, "digitalSign", e.target.value)
-            }
-          />
-        </div>
-      </div>
-    </div>
-  ))}
+                if (result.success) {
+                  await dispatch(getProfile());
+                }
+              } catch (error) {
+                toast.error("Failed to add Member Officers.");
+                console.error(error);
+              }
+            }}
+          >
+            {officers.map((officer, index) => (
+              <div key={index} className="mb-4">
+                <div className="d-flex flex-sm-row flex-column align-items-sm-center justify-content-between mb-3">
+                  <Breadcrumb title={`Member Officer ${index + 1}`} />
+                </div>
+                <div className="row">
+                  <div className="col-sm-6 mb-3">
+                    <FormInput
+                      label="IC Number"
+                      name={`icNumber-${index}`}
+                      placeholder="Enter IC Number"
+                      value={officer.icNumber}
+                      onChange={(e) =>
+                        handleChange(index, "icNumber", e.target.value)
+                      }
+                    />
+                  </div>
+                  <div className="col-sm-6 mb-3">
+                    <FormInput
+                      label="Rank"
+                      name={`rank-${index}`}
+                      placeholder="Enter Rank"
+                      value={officer.rank}
+                      onChange={(e) =>
+                        handleChange(index, "rank", e.target.value)
+                      }
+                    />
+                  </div>
+                  <div className="col-sm-6 mb-3">
+                    <FormInput
+                      label="Name"
+                      name={`name-${index}`}
+                      placeholder="Enter Name"
+                      value={officer.name}
+                      onChange={(e) =>
+                        handleChange(index, "name", e.target.value)
+                      }
+                    />
+                  </div>
+                  <div className="col-sm-6 mb-3">
+                    <FormInput
+                      label="Appointment"
+                      name={`appointment-${index}`}
+                      placeholder="Enter Appointment"
+                      value={officer.appointment}
+                      onChange={(e) =>
+                        handleChange(index, "appointment", e.target.value)
+                      }
+                    />
+                  </div>
+                  <div className="col-sm-6 mb-3">
+                    <FormInput
+                      label="Digital Sign"
+                      name={`digitalSign-${index}`}
+                      placeholder="Enter Digital Sign"
+                      value={officer.digitalSign}
+                      onChange={(e) =>
+                        handleChange(index, "digitalSign", e.target.value)
+                      }
+                    />
+                  </div>
+                </div>
+              </div>
+            ))}
 
-  <div className="d-flex align-items-center gap-2">
-    <button type="submit" className="_btn _btn-lg primary">
-      Add Member Officers
-    </button>
-    <button type="button" className="_btn _btn-lg success" onClick={handleAdd}>
-      Add
-    </button>
-  </div>
-</form>
+            <div className="d-flex align-items-center gap-2">
+              <button type="submit" className="_btn _btn-lg primary">
+                Add Member Officers
+              </button>
+              <button type="button" className="_btn _btn-lg success" onClick={handleAdd}>
+                Add
+              </button>
+            </div>
+          </form>
 
         </>
       )}
