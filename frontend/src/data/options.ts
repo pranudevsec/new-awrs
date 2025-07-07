@@ -54,13 +54,13 @@ export const corpsOptions: OptionType[] = [
 ];
 
 export const commandOptions: OptionType[] = [
-  { value: "northern", label: "Northern Command" },
-  { value: "western", label: "Western Command" },
-  { value: "central", label: "Central Command" },
-  { value: "eastern", label: "Eastern Command" },
-  { value: "southern", label: "Southern Command" },
-  { value: "south-western", label: "South Western Command" },
-  { value: "training", label: "Training Command" },
+  { value: "NC", label: "Northern Command" },
+  { value: "WC", label: "Western Command" },
+  { value: "CC", label: "Central Command" },
+  { value: "EC", label: "Eastern Command" },
+  { value: "SC", label: "Southern Command" },
+  { value: "SWC", label: "South Western Command" },
+  { value: "TC", label: "Training Command" },
 ];
 
 export const hierarchicalStructure = [
@@ -107,6 +107,7 @@ export const roleOptions2: OptionType[] = [
 ];
 
 export const unitTypeOptions = [
+<<<<<<< Updated upstream
   { label: "AC – Armoured Corps", value: "AC" },
   { label: "Arty – Artillery", value: "ARTY" },
   { label: "Army Avn – Army Aviation", value: "Army Avn" },
@@ -116,6 +117,33 @@ export const unitTypeOptions = [
   { label: "Int Corps – Intelligence Corps", value: "Int Corps" },
   { label: "AMC – Army Medical Corps", value: "AMC" },
   { label: "AAD", value: "AAD" }
+=======
+  { label: "RR", value: "RR" },
+  { label: "SF", value: "SF" },
+  { label: "ARTY", value: "ARTY" },
+  { label: "INFANTRY", value: "INFANTRY" },
+  { label: "ARMD", value: "ARMD" },
+  { label: "MECH INF", value: "MECH INF" },
+  { label: "SATA", value: "SATA" },
+  { label: "ENGRS", value: "ENGRS" },
+  { label: "SIGS", value: "SIGS" },
+  { label: "EW", value: "EW" },
+  { label: "SI", value: "SI" },
+  { label: "AAD", value: "AAD" },
+  { label: "ARMY AVN", value: "ARMY AVN" },
+  { label: "INT", value: "INT" },
+  { label: "ASC (MT)", value: "ASC (MT)" },
+  { label: "ASC (AT)", value: "ASC (AT)" },
+  { label: "ASC (SUP/FOL)", value: "ASC (SUP/FOL)" },
+  { label: "MED", value: "MED" },
+  { label: "FD HOSP", value: "FD HOSP" },
+  { label: "ORD (FOD)", value: "ORD (FOD)" },
+  { label: "ORD (DOU)", value: "ORD (DOU)" },
+  { label: "ORD (FAD)", value: "ORD (FAD)" },
+  { label: "ORD (NVCD/VEH COY)", value: "ORD (NVCD/VEH COY)" },
+  { label: "EME", value: "EME" },
+  { label: "RVC", value: "RVC" },
+>>>>>>> Stashed changes
 ];
 
 export const matrixUnitOptions = [

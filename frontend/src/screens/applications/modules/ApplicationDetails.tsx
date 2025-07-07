@@ -329,12 +329,44 @@ const [localComment, setLocalComment] = useState(commentsState?.__application__ 
     }
   }, [unitDetail?.fds?.comments, role]);
 
+  const getParamDisplay = (param: any) => {
+    if (param.name != "no") {
+      return {
+        main: param.name,
+        header: param.subcategory || null,
+        subheader: param.subsubcategory || null,
+      };
+    } else if (param.subsubcategory) {
+      return {
+        main: param.subsubcategory,
+        header: param.subcategory || null,
+        subheader: null,
+      };
+    } else if (param.subcategory) {
+      return {
+        main: param.subcategory,
+        header: null,
+        subheader: null,
+      };
+    } else {
+      return {
+        main: param.category,
+        header: null,
+        subheader: null,
+      };
+    }
+  };
+
   // Show loader
   if (loading) return <Loader />;
 
   return (
     <>
+<<<<<<< Updated upstream
       <div className="apply-citation-section">
+=======
+      <div className="apply-citation-section"style={{ padding: "2rem", maxWidth: "85vw" }}>
+>>>>>>> Stashed changes
         <div className="d-flex flex-sm-row flex-column align-items-sm-center justify-content-between mb-4">
           <Breadcrumb
             title={`Application ID: #${unitDetail?.id}`}
@@ -425,231 +457,194 @@ const [localComment, setLocalComment] = useState(commentsState?.__application__ 
               </tr>
             </thead>
             <tbody>
-              {unitDetail?.fds?.parameters?.map((param: any, index: any) => (
-                <tr key={index}>
-                  <td style={{ width: 150 }}>
-                    <p className="fw-5">{param.name}</p>
-                  </td>
-                  <td style={{ width: 100 }}>
-                    <p className="fw-5">{param.count}</p>
-                  </td>
-                  <td style={{ width: 100 }}>
-                    <p className="fw-5">{param.marks}</p>
-                  </td>
-                  <td style={{ width: 200 }}>
-                    {param.upload ? (
-                      <a
-                        href={`${baseURL}${param.upload}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        style={{ fontSize: 18 }}
-                      >
-                        {/* {SVGICON.app.pdf} */}
-                        <span style={{ fontSize: 14, wordBreak: 'break-word' }}>
-                          {param?.upload?.split("/").pop()}
-                        </span>
-                      </a>
-                    ) : (
-                      ""
-                    )}
-                  </td>
-                  {/* <td style={{ width: 200 }}>
-                        <input
-                            type="text"
-                            className="form-control"
-                            placeholder="Enter approved marks"
-                            autoComplete="off"
-                            value={param.marks}
-                            readOnly
-                        />
-                    </td> */}
-                  {/* {isCW2Role && (
-                    <td style={{ width: 200 }}>
-                      <input
-                        type="text"
-                        className="form-control"
-                        placeholder="Enter comment"
-                        autoComplete="off"
-                        value={commentsState[param.name] ?? ""}
-                        onChange={(e) =>
-                          handleCommentChange(param.name, e.target.value)
-                        }
-                      />
-                    </td>
-                  )} */}
-                  {!isUnitRole && !isHeadquarter && (
-                    <>
-                      {!isRaisedScreen && (
-                        <td style={{ width: 120 }}>
-                          {param?.clarification_id ||
-                            (param?.last_clarification_id &&
-                              [role, lowerRole].includes(
-                                param?.last_clarification_handled_by
-                              )) ? (
-                            <button
-                              className="action-btn bg-transparent d-inline-flex align-items-center justify-content-center"
-                              onClick={() => {
-                                setReqViewCreatedClarificationShow(true);
-                                setReviewerClarificationForView(
-                                  param?.clarification_details?.reviewer_comment
-                                );
-                              }}
-                            >
-                              {SVGICON.app.eye}
-                            </button>
-                          ) : (
-                            <button
-                              onClick={() => {
-                                setClarificationType(unitDetail?.type); // or get dynamically from your data
-                                setClarificationApplicationId(unitDetail?.id); // or appropriate id
-                                setClarificationParameterName(param.name);
-                                setClarificationDocForView(
-                                  param?.clarification_details
-                                    ?.clarification_doc
-                                );
-                                setClarificationClarificationForView(
-                                  param?.clarification_details?.clarification
-                                );
-                                setClarificationShow(true);
-                              }}
-                              className="fw-5 text-decoration-underline bg-transparent border-0 "
-                              style={{ fontSize: 14, color: "#0d6efd" }}
-                            >
-                              Ask Clarification
-                            </button>
-                          )}
+              {(() => {
+                let prevHeader: string | null = null;
+                let prevSubheader: string | null = null;
+                const rows: any[] = [];
+
+                unitDetail?.fds?.parameters?.forEach((param: any, index: number) => {
+                  const display = getParamDisplay(param);
+
+                  const showHeader = display.header && display.header !== prevHeader;
+                  const showSubheader = display.subheader && display.subheader !== prevSubheader;
+
+                  if (showHeader) {
+                    rows.push(
+                      <tr key={`header-${display.header}-${index}`}>
+                        <td colSpan={6} style={{ fontWeight: 600, color: "#555", fontSize: 15, background: "#f5f5f5" }}>
+                          {display.header}
                         </td>
-                      )}
+                      </tr>
+                    );
+                  }
 
-                      {isRaisedScreen && (
+                  if (showSubheader) {
+                    rows.push(
+                      <tr key={`subheader-${display.subheader}-${index}`}>
+                        <td colSpan={6} style={{ color: display.header ? "#1976d2" : "#888", fontSize: 13, background: "#f8fafc" }}>
+                          {display.subheader}
+                        </td>
+                      </tr>
+                    );
+                  }
+
+                  prevHeader = display.header;
+                  prevSubheader = display.subheader;
+
+                  rows.push(
+                    <tr key={index}>
+                      <td style={{ width: 150 }}>
+                        <p className="fw-5 mb-0">{display.main}</p>
+                      </td>
+                      <td style={{ width: 100 }}>
+                        <p className="fw-5">{param.count}</p>
+                      </td>
+                      <td style={{ width: 100 }}>
+                        <p className="fw-5">{param.marks}</p>
+                      </td>
+                      <td style={{ width: 200 }}>
+                        {param.upload ? (
+                          <a
+                            href={`${baseURL}${param.upload}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            style={{ fontSize: 18 }}
+                          >
+                            <span style={{ fontSize: 14, wordBreak: 'break-word' }}>
+                              {param?.upload?.split("/").pop()}
+                            </span>
+                          </a>
+                        ) : (
+                          ""
+                        )}
+                      </td>
+
+                      {/* Your logic for conditional clarification/approval UI below */}
+                      {!isUnitRole && !isHeadquarter && (
                         <>
-                          {" "}
-                          <td style={{ width: 200 }}>
-                            <input
-                              type="text"
-                              className="form-control"
-                              placeholder="Enter approved marks"
-                              autoComplete="off"
-                              value={
-                                param?.clarification_details
-                                  ?.clarification_status === "rejected"
-                                  ? "0"
-                                  : approvedMarksState[param.name] ?? ""
-                              }
-                              disabled={
-                                param?.clarification_details
-                                  ?.clarification_status === "rejected"
-                              }
-                              onChange={(e) =>
-                                handleInputChange(param.name, e.target.value)
-                              }
-                            />
-                          </td>
-                          <td style={{ width: 200 }}>
-                            {param?.clarification_details?.clarification ? (
-                              <button
-                                className="action-btn bg-transparent d-inline-flex align-items-center justify-content-center"
-                                onClick={() => {
-                                  setReqClarificationShow(true);
-                                  setClarificationDocForView(
-                                    param?.clarification_details
-                                      ?.clarification_doc
-                                  );
-                                  setClarificationClarificationForView(
-                                    param?.clarification_details?.clarification
-                                  );
-                                }}
-                              >
-                                {SVGICON.app.eye}
-                              </button>
-                            ) : (
-                              ""
-                            )}
-                          </td>
-                          <td style={{ width: 150 }}>
-                            {param?.clarification_details?.clarification &&
-                              param?.clarification_details?.clarification_id ? (
-                              param?.clarification_details
-                                ?.clarification_status === "pending" ? (
-                                <div className="d-flex gap-3">
-                                  {/* APPROVE */}
-                                  <button
-                                    className="action-btn bg-transparent d-flex align-items-center justify-content-center"
-                                    style={{ color: "var(--green-default)" }}
-                                    onClick={() => {
-                                      dispatch(
-                                        updateClarification({
-                                          id: param?.clarification_details
-                                            ?.clarification_id,
-                                          clarification_status: "clarified",
-                                        })
-                                      ).then(() => {
-                                        setIsRefreshData((prev) => !prev);
-                                      });
-                                    }}
-                                  >
-                                    <IoMdCheckmark />
-                                  </button>
-
-                                  {/* REJECT */}
-                                  <button
-                                    className="action-btn bg-transparent d-flex align-items-center justify-content-center"
-                                    style={{ color: "var(--red-default)" }}
-                                    onClick={() => {
-                                      dispatch(
-                                        updateClarification({
-                                          id: param?.clarification_details
-                                            ?.clarification_id,
-                                          clarification_status: "rejected",
-                                        })
-                                      ).then(() => {
-                                        setIsRefreshData((prev) => !prev);
-                                      });
-                                    }}
-                                  >
-                                    <MdClose />
-                                  </button>
-                                </div>
+                          {!isRaisedScreen && (
+                            <td style={{ width: 120 }}>
+                              {param?.clarification_id ||
+                              (param?.last_clarification_id &&
+                                [role, lowerRole].includes(param?.last_clarification_handled_by)) ? (
+                                <button
+                                  className="action-btn bg-transparent d-inline-flex align-items-center justify-content-center"
+                                  onClick={() => {
+                                    setReqViewCreatedClarificationShow(true);
+                                    setReviewerClarificationForView(param?.clarification_details?.reviewer_comment);
+                                  }}
+                                >
+                                  {SVGICON.app.eye}
+                                </button>
                               ) : (
-                                // Show status text with first letter capitalized
-                                <span className="text-capitalize">
-                                  <p className="fw-5">
-                                    {" "}
-                                    {param?.clarification_details?.clarification_status.toUpperCase()}
-                                  </p>
-                                </span>
-                              )
-                            ) : (
-                              ""
-                            )}
-                          </td>{" "}
+                                <button
+                                  onClick={() => {
+                                    setClarificationType(unitDetail?.type);
+                                    setClarificationApplicationId(unitDetail?.id);
+                                    setClarificationParameterName(param.name);
+                                    setClarificationDocForView(param?.clarification_details?.clarification_doc);
+                                    setClarificationClarificationForView(param?.clarification_details?.clarification);
+                                    setClarificationShow(true);
+                                  }}
+                                  className="fw-5 text-decoration-underline bg-transparent border-0"
+                                  style={{ fontSize: 14, color: "#0d6efd" }}
+                                >
+                                  Ask Clarification
+                                </button>
+                              )}
+                            </td>
+                          )}
+
+                          {isRaisedScreen && (
+                            <>
+                              <td style={{ width: 200 }}>
+                                <input
+                                  type="text"
+                                  className="form-control"
+                                  placeholder="Enter approved marks"
+                                  autoComplete="off"
+                                  value={
+                                    param?.clarification_details?.clarification_status === "rejected"
+                                      ? "0"
+                                      : approvedMarksState[param.name] ?? ""
+                                  }
+                                  disabled={param?.clarification_details?.clarification_status === "rejected"}
+                                  onChange={(e) => handleInputChange(param.name, e.target.value)}
+                                />
+                              </td>
+                              <td style={{ width: 200 }}>
+                                {param?.clarification_details?.clarification ? (
+                                  <button
+                                    className="action-btn bg-transparent d-inline-flex align-items-center justify-content-center"
+                                    onClick={() => {
+                                      setReqClarificationShow(true);
+                                      setClarificationDocForView(param?.clarification_details?.clarification_doc);
+                                      setClarificationClarificationForView(param?.clarification_details?.clarification);
+                                    }}
+                                  >
+                                    {SVGICON.app.eye}
+                                  </button>
+                                ) : (
+                                  ""
+                                )}
+                              </td>
+                              <td style={{ width: 150 }}>
+                                {param?.clarification_details?.clarification &&
+                                param?.clarification_details?.clarification_id ? (
+                                  param?.clarification_details?.clarification_status === "pending" ? (
+                                    <div className="d-flex gap-3">
+                                      <button
+                                        className="action-btn bg-transparent d-flex align-items-center justify-content-center"
+                                        style={{ color: "var(--green-default)" }}
+                                        onClick={() => {
+                                          dispatch(
+                                            updateClarification({
+                                              id: param?.clarification_details?.clarification_id,
+                                              clarification_status: "clarified",
+                                            })
+                                          ).then(() => {
+                                            setIsRefreshData((prev) => !prev);
+                                          });
+                                        }}
+                                      >
+                                        <IoMdCheckmark />
+                                      </button>
+                                      <button
+                                        className="action-btn bg-transparent d-flex align-items-center justify-content-center"
+                                        style={{ color: "var(--red-default)" }}
+                                        onClick={() => {
+                                          dispatch(
+                                            updateClarification({
+                                              id: param?.clarification_details?.clarification_id,
+                                              clarification_status: "rejected",
+                                            })
+                                          ).then(() => {
+                                            setIsRefreshData((prev) => !prev);
+                                          });
+                                        }}
+                                      >
+                                        <MdClose />
+                                      </button>
+                                    </div>
+                                  ) : (
+                                    <p className="fw-5 text-capitalize">
+                                      {param?.clarification_details?.clarification_status}
+                                    </p>
+                                  )
+                                ) : (
+                                  ""
+                                )}
+                              </td>
+                            </>
+                          )}
                         </>
                       )}
-                    </>
-                  )}
-                  {/* {isHeadquarter && (
-                    <td style={{ width: 150 }}>
-                      {Array.isArray(param?.comments) &&
-                      param.comments.length > 0 ? (
-                        <div className="d-flex gap-3">
-                          <button
-                            className="action-btn bg-transparent d-flex align-items-center justify-content-center"
-                            style={{ color: "var(--green-default)" }}
-                            onClick={() => {
-                              setReviewCommentsShow(true);
-                              setReviewCommentsData(param?.comments);
-                            }}
-                          >
-                            {SVGICON.app.eye}
-                          </button>
-                        </div>
-                      ) : (
-                        <span className="text-muted">--</span>
-                      )}
-                    </td>
-                  )} */}
-                </tr>
-              ))}
+                    </tr>
+                  );
+                });
+
+                return rows;
+              })()}
             </tbody>
           </table>
         </div>

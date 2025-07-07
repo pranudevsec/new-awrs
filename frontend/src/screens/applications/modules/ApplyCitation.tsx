@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useFormik } from "formik";
 import { Tabs, Tab } from "react-bootstrap";
@@ -269,13 +269,15 @@ const ApplyCitation = () => {
       try {
         const formattedParameters = parameters
           .map((param: any) => {
-            const trimmedName = param.name.trim();
+            const display = getParamDisplay(param);
             const count = Number(counts[param.param_id] ?? 0);
             const calculatedMarks = marks[param.param_id] ?? 0;
             const uploadPath = uploadedFiles[param.param_id] || "";
 
             return {
-              name: trimmedName,
+              name: display.main,
+              subcategory: display.header,
+              subsubcategory: display.subheader,
               count,
               marks: calculatedMarks,
               upload: uploadPath,
@@ -353,6 +355,10 @@ const ApplyCitation = () => {
         }
 
         if (paramsRes.success && paramsRes.data) {
+<<<<<<< Updated upstream
+=======
+          console.log(paramsRes.data);
+>>>>>>> Stashed changes
           setParameters(paramsRes.data);
         }
       } catch (err) {
@@ -412,6 +418,34 @@ const ApplyCitation = () => {
 
     // If all good, navigate
     navigate('/applications/citation-review');
+  };
+
+  const getParamDisplay = (param: any) => {
+    if (param.name != "no") {
+      return {
+        main: param.name,
+        header: param.subcategory || null,
+        subheader: param.subsubcategory || null,
+      };
+    } else if (param.subsubcategory) {
+      return {
+        main: param.subsubcategory,
+        header: param.subcategory || null,
+        subheader: null,
+      };
+    } else if (param.subcategory) {
+      return {
+        main: param.subcategory,
+        header: null,
+        subheader: null,
+      };
+    } else {
+      return {
+        main: param.category,
+        header: null,
+        subheader: null,
+      };
+    }
   };
 
   const handleDeleteDraft = async () => {
@@ -583,77 +617,113 @@ const ApplyCitation = () => {
                 </h5>
                 <table className="table-style-1 w-100">
                   <thead>
-                    <tr>
-                      <th style={{ width: 250, minWidth: 250, maxWidth: 250 }}>Parameter</th>
-                      <th style={{ width: 300, minWidth: 300, maxWidth: 300 }}>Count</th>
-                      <th style={{ width: 300, minWidth: 300, maxWidth: 300 }}>Marks</th>
-                      <th style={{ width: 300, minWidth: 300, maxWidth: 300 }}>Upload</th>
+                    <tr  style={{ backgroundColor: "#68aef2"}}>
+                      <th style={{ width: 250, minWidth: 250, maxWidth: 250, fontSize: "17", color: "white" }}>Parameter</th>
+                      <th style={{ width: 300, minWidth: 300, maxWidth: 300, fontSize: "17", color: "white" }}>Count</th>
+                      <th style={{ width: 300, minWidth: 300, maxWidth: 300, fontSize: "17", color: "white" }}>Marks</th>
+                      <th style={{ width: 300, minWidth: 300, maxWidth: 300, fontSize: "17", color: "white" }}>Upload</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {params.map((param: any) => (
-                      <tr key={param.param_id}>
-                        <td style={{ width: 250, minWidth: 250, maxWidth: 250 }}><p className="fw-5">{param.name}</p></td>
-                        <td style={{ width: 300, minWidth: 300, maxWidth: 300 }}>
-                          <input
-                            type="text"
-                            className="form-control"
-                            placeholder="Enter count"
-                            autoComplete="off"
-                            value={counts[param.param_id] ?? ""}
-                            onChange={(e) => handleCountChange(param.param_id, e.target.value)}
-                            inputMode="numeric"
-                            pattern="[0-9]*"
-                          />
-                        </td>
-                        <td style={{ width: 300, minWidth: 300, maxWidth: 300 }}>
-                          <div className="input-with-tooltip">
-                            <input
-                              type="number"
-                              className="form-control"
-                              placeholder="Marks"
-                              value={marks[param.param_id] ?? 0}
-                              readOnly
-                            />
-                            <div className="tooltip-icon">
-                              <i className="info-circle">i</i>
-                              <span className="tooltip-text">
-                                {`1 unit = ${param.per_unit_mark} marks, max ${param.max_marks} marks`}
-                              </span>
-                            </div>
-                          </div>
-                        </td>
-                        <td style={{ width: 300, minWidth: 300, maxWidth: 300 }}>
-                          {param.proof_reqd ? (
-                            uploadedFiles[param.param_id] ? (
-                              <a
-                                href={`${baseURL}${uploadedFiles[param.param_id]}`}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                style={{ fontSize: 18, display: "flex", alignItems: "center", gap: "8px" }}
-                              >
-                                {/* {SVGICON.app.pdf} */}
-                                <span style={{ fontSize: 14, wordBreak: 'break-word' }}>
-                                  {uploadedFiles[param.param_id]?.split("/").pop()}
-                                </span>
-                              </a>
-                            ) : (
+                    {(() => {
+                      let prevHeader: string | null = null;
+                      let prevSubheader: string | null = null;
+                      const rows: any = [];
+                      params.forEach((param: any, idx: number) => {
+                        const display = getParamDisplay(param);
+                        const showHeader = display.header && display.header !== prevHeader;
+                        const showSubheader = display.subheader && display.subheader !== prevSubheader;
+
+                        if (showHeader) {
+                          rows.push(
+                            <tr key={`header-${display.header}-${idx}`}>
+                              <td colSpan={4} style={{ fontWeight: 400, fontSize: 14, background: "#ccdde8" }}>
+                                {display.header}
+                              </td>
+                            </tr>
+                          );
+                        }
+                        if (showSubheader) {
+                          rows.push(
+                            <tr key={`subheader-${display.subheader}-${idx}`}>
+                              <td colSpan={4} style={{ color: display.header ? "black" : "#888", fontSize: 14, background: "#e1e3e6" }}>
+                                {display.subheader}
+                              </td>
+                            </tr>
+                          );
+                        }
+
+                        prevHeader = display.header;
+                        prevSubheader = display.subheader;
+
+                        rows.push(
+                          <tr key={param.param_id}>
+                            <td style={{ width: 250, minWidth: 250, maxWidth: 250 }}>
+                              <p className="fw-5 mb-0">{display.main}</p>
+                            </td>
+                            <td style={{ width: 300, minWidth: 300, maxWidth: 300 }}>
                               <input
-                                type="file"
+                                type="text"
                                 className="form-control"
+                                placeholder="Enter count"
                                 autoComplete="off"
-                                onChange={(e) => handleFileChange(e, param.param_id, param.name)}
+                                value={counts[param.param_id] ?? ""}
+                                onChange={(e) => handleCountChange(param.param_id, e.target.value)}
+                                inputMode="numeric"
+                                pattern="[0-9]*"
                               />
-                            )
-                          ) : (
-                            <span>Not required</span>
-                          )}
-                        </td>
-
-
-
-                      </tr>
-                    ))}
+                            </td>
+                            <td style={{ width: 300, minWidth: 300, maxWidth: 300 }}>
+                              <div className="input-with-tooltip">
+                                <input
+                                  type="number"
+                                  className="form-control"
+                                  placeholder="Marks"
+                                  value={marks[param.param_id] ?? 0}
+                                  readOnly
+                                />
+                                <div className="tooltip-icon">
+                                  <i className="info-circle">i</i>
+                                  <span className="tooltip-text">
+                                    {`1 unit = ${param.per_unit_mark} marks, max ${param.max_marks} marks`}
+                                  </span>
+                                </div>
+                              </div>
+                            </td>
+                            <td style={{ width: 300, minWidth: 300, maxWidth: 300 }}>
+                              {param.proof_reqd ? (
+                                uploadedFiles[param.param_id] ? (
+                                  <a
+                                    href={`${baseURL}${uploadedFiles[param.param_id]}`}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    style={{ fontSize: 18, display: "flex", alignItems: "center", gap: "8px" }}
+                                  >
+                                    {/* {SVGICON.app.pdf} */}
+                                    <span style={{ fontSize: 14, wordBreak: 'break-word' }}>
+                                      {uploadedFiles[param.param_id]?.split("/").pop()}
+                                    </span>
+                                  </a>
+                                ) : (
+                                  <input
+                                    type="file"
+                                    className="form-control"
+                                    autoComplete="off"
+                                    onChange={(e) => {
+                                      const display = getParamDisplay(param);
+                                      handleFileChange(e, param.param_id, display.main);
+                                    }}
+                                  />
+                                )
+                              ) : (
+                                <span>Not required</span>
+                              )}
+                            </td>
+                          </tr>
+                        );
+                      });
+                      return rows;
+                    })()}
                   </tbody>
                 </table>
               </div>
