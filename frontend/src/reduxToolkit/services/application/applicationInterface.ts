@@ -50,6 +50,7 @@ export interface UpdateApplicationParams {
   type?: string;
   status?: string;
   is_mo_ol_approved?: boolean;
+  member?:any;
 }
 export interface UpdateApplicationResponse {
   success: boolean;

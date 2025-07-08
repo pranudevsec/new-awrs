@@ -79,7 +79,7 @@ const ApplicationsList = () => {
   return (
     <div className="clarification-section" style={{ padding: "2rem"}}>
       <div className="d-flex flex-sm-row flex-column align-items-sm-center justify-content-between mb-4">
-        <Breadcrumb
+      <Breadcrumb
           title="Applications"
           paths={[
             { label: "Home", href: "/applications" },
@@ -89,9 +89,9 @@ const ApplicationsList = () => {
       </div>
 
       <div className="filter-wrapper d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
-        <div className="search-wrapper position-relative">
-          <button className="border-0 bg-transparent position-absolute translate-middle-y top-50">
-            {SVGICON.app.search}
+      <div className="search-wrapper position-relative">
+      <button className="border-0 bg-transparent position-absolute translate-middle-y top-50">
+      {SVGICON.app.search}
           </button>
           <input
             type="text"

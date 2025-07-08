@@ -55,7 +55,7 @@ const ApplyCitation = () => {
   const [command, setCommand] = useState("");
   const groupedParams = groupParametersByCategory(parameters);
   const [activeTab, setActiveTab] = useState(Object.keys(groupedParams)[0] || "");
-  const [uploadedFiles, setUploadedFiles] = useState<Record<number, string>>(() => {
+  const [uploadedFiles, setUploadedFiles] = useState<Record<number, string[]>>(() => {
     try {
       return JSON.parse(localStorage.getItem(DRAFT_FILE_UPLOAD_KEY) || "{}");
     } catch {
@@ -107,40 +107,61 @@ const ApplyCitation = () => {
     if (draftData?.citation_fds?.parameters && parameters?.length > 0) {
       const newCounts: Record<string, string> = {};
       const newMarks: Record<string, number> = {};
-      const newUploads: Record<number, string> = {};
-
+      const newUploads: Record<number, string[]> = {};
+  
       const nameToIdMap = parameters.reduce((acc: Record<string, string>, param: any) => {
         acc[param.name.trim()] = String(param.param_id);
         return acc;
       }, {});
-
+  
       draftData.citation_fds.parameters.forEach((param: any) => {
         const paramId = nameToIdMap[param.name.trim()];
         if (paramId) {
           newCounts[paramId] = String(param.count);
           newMarks[paramId] = param.marks;
+  
           if (param.upload) {
-            newUploads[Number(paramId)] = param.upload;
+            if (Array.isArray(param.upload)) {
+              // If already stored as array
+              newUploads[Number(paramId)] = param.upload;
+            } else if (typeof param.upload === "string") {
+              // If stored as CSV string, split into array
+              if (param.upload.includes(",")) {
+                newUploads[Number(paramId)] = param.upload.split(",").map((u:any) => u.trim());
+              } else {
+                newUploads[Number(paramId)] = [param.upload.trim()];
+              }
+            }
           }
         }
       });
-
+  
       setCounts(newCounts);
       setMarks(newMarks);
       setUploadedFiles(newUploads);
     }
   }, [draftData, parameters]);
+  
   useEffect(() => {
     if (id && draftData?.citation_fds?.parameters) {
-      const uploads: Record<number, string> = {};
+      const uploads: Record<number, string[]> = {};
       draftData.citation_fds.parameters.forEach((param: any, index: number) => {
         if (param.upload) {
-          uploads[param.param_id || index] = param.upload; // Prefer param_id
+          if (Array.isArray(param.upload)) {
+            uploads[param.param_id || index] = param.upload;
+          } else if (typeof param.upload === "string") {
+            if (param.upload.includes(",")) {
+              uploads[param.param_id || index] = param.upload.split(",").map((u:any) => u.trim());
+            } else {
+              uploads[param.param_id || index] = [param.upload.trim()];
+            }
+          }
         }
       });
       setUploadedFiles(uploads);
     }
   }, [id, draftData]);
+
   useEffect(() => {
     if (!initializedRef.current) {
       const firstCategory = Object.keys(groupedParams)[0];
@@ -238,24 +259,34 @@ const ApplyCitation = () => {
     paramId: number,
     paramName: string
   ) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    if (file.size > 5 * 1024 * 1024) {
-      toast.error("File size must be less than 5MB");
-      return;
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
+  
+    const uploadedUrls: string[] = [];
+    for (const file of files) {
+      if (file.size > 5 * 1024 * 1024) {
+        toast.error(`File ${file.name} exceeds 5MB`);
+        continue;
+      }
+      const uploadedUrl = await uploadFileToServer(file, paramName);
+      if (uploadedUrl) {
+        uploadedUrls.push(uploadedUrl);
+      }
     }
-
-    const uploadedUrl = await uploadFileToServer(file, paramName);
-    if (uploadedUrl) {
-      const newUploads = { ...uploadedFiles, [paramId]: uploadedUrl };
+  
+    if (uploadedUrls.length > 0) {
+      const newUploads = { 
+        ...uploadedFiles, 
+        [paramId]: [...(uploadedFiles[paramId] || []), ...uploadedUrls]
+      };
       setUploadedFiles(newUploads);
       localStorage.setItem(DRAFT_FILE_UPLOAD_KEY, JSON.stringify(newUploads));
-      toast.success("Upload successful");
+      toast.success(`Uploaded ${uploadedUrls.length} file(s)`);
     } else {
-      toast.error("Upload failed");
+      toast.error("No files uploaded");
     }
   };
+  
 
   // Formik form
   const formik = useFormik({
@@ -267,12 +298,13 @@ const ApplyCitation = () => {
     },
     onSubmit: async (values) => {
       try {
+
         const formattedParameters = parameters
           .map((param: any) => {
             const display = getParamDisplay(param);
             const count = Number(counts[param.param_id] ?? 0);
             const calculatedMarks = marks[param.param_id] ?? 0;
-            const uploadPath = uploadedFiles[param.param_id] || "";
+            const uploadPaths = uploadedFiles[param.param_id] || [];
 
             return {
               name: display.main,
@@ -280,7 +312,7 @@ const ApplyCitation = () => {
               subsubcategory: display.subheader,
               count,
               marks: calculatedMarks,
-              upload: uploadPath,
+              upload: uploadPaths,
             };
           })
           .filter((param) => param.count > 0 || param.marks > 0);
@@ -688,33 +720,37 @@ const ApplyCitation = () => {
                               </div>
                             </td>
                             <td style={{ width: 300, minWidth: 300, maxWidth: 300 }}>
-                              {param.proof_reqd ? (
-                                uploadedFiles[param.param_id] ? (
-                                  <a
-                                    href={`${baseURL}${uploadedFiles[param.param_id]}`}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    style={{ fontSize: 18, display: "flex", alignItems: "center", gap: "8px" }}
-                                  >
-                                    {/* {SVGICON.app.pdf} */}
-                                    <span style={{ fontSize: 14, wordBreak: 'break-word' }}>
-                                      {uploadedFiles[param.param_id]?.split("/").pop()}
-                                    </span>
-                                  </a>
-                                ) : (
-                                  <input
-                                    type="file"
-                                    className="form-control"
-                                    autoComplete="off"
-                                    onChange={(e) => {
-                                      const display = getParamDisplay(param);
-                                      handleFileChange(e, param.param_id, display.main);
-                                    }}
-                                  />
-                                )
-                              ) : (
-                                <span>Not required</span>
-                              )}
+                            {param.proof_reqd ? (
+  <>
+    {uploadedFiles[param.param_id]?.length > 0 && (
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+        {uploadedFiles[param.param_id].map((fileUrl, idx) => (
+          <a
+            key={idx}
+            href={`${baseURL}${fileUrl}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            style={{ fontSize: 14, wordBreak: 'break-all' }}
+          >
+            {fileUrl.split("/").pop()}
+          </a>
+        ))}
+      </div>
+    )}
+    <input
+      type="file"
+      className="form-control mt-1"
+      multiple
+      onChange={(e) => {
+        const display = getParamDisplay(param);
+        handleFileChange(e, param.param_id, display.main);
+      }}
+    />
+  </>
+) : (
+  <span>Not required</span>
+)}
+
                             </td>
                           </tr>
                         );

@@ -1,4 +1,4 @@
-import { Link, NavLink } from "react-router-dom";
+import {  NavLink } from "react-router-dom";
 import { sidebarStructure } from "./structure";
 import { useAppSelector } from "../../reduxToolkit/hooks";
 import { SVGICON } from "../../constants/iconsList";
@@ -66,7 +66,16 @@ const SidebarMenu = () => {
     icon: SVGICON.sidebar.profile,
     to: "/application/accepted",
   };
-
+  const historyItem = {
+    label: "History",
+    icon: SVGICON.sidebar.history,
+    to: "/history",
+  };
+  const allApplicationsItem = {
+    label: "All Applications",
+    icon: SVGICON.sidebar.history,
+    to: "/all-applications",
+  };
   if (
     userRole === "brigade" ||
     userRole === "division" ||
@@ -74,18 +83,14 @@ const SidebarMenu = () => {
     userRole === "command"
   ) {
     filteredStructure.push(acceptedApplicationItem);
-  }
-
-  const historyItem = {
-    label: "History",
-    icon: SVGICON.sidebar.history,
-    to: "/history",
-  };
-
-  if (userRole === "unit") {
     filteredStructure.push(historyItem);
+    filteredStructure.push(allApplicationsItem);
   }
-
+  if (
+    userRole === "headquarter"
+  ) {
+    filteredStructure.push(allApplicationsItem);
+  }
   return (
     <aside className="sidebar bg-dark text-white p-3" style={{ width: "300px" }}>
       <div className="d-flex flex-column justify-content-center align-items-center gap-2 mb-2">

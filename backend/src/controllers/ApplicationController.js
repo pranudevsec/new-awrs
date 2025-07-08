@@ -59,16 +59,17 @@ exports.getApplicationsScoreboard = async (req, res) => {
   
   exports.updateApplicationStatus = async (req, res) => {
     try {
-      const { type, status } = req.body;
+      const { type, status,member } = req.body;
       const id=req.params.id;
-  
-      if (!['approved', 'rejected',"shortlisted_approved"].includes(status)) {
-        return res.status(StatusCodes.BAD_REQUEST).send(
-          ResponseHelper.error(StatusCodes.BAD_REQUEST, "Invalid status value")
-        );
+
+      if (!member) {
+        if (!['approved', 'rejected', "shortlisted_approved"].includes(status)) {
+          return res.status(StatusCodes.BAD_REQUEST).send(
+            ResponseHelper.error(StatusCodes.BAD_REQUEST, "Invalid status value")
+          );
+        }
       }
-  
-      const result = await ApplicationService.updateApplicationStatus(id, type, status, req.user);
+      const result = await ApplicationService.updateApplicationStatus(id, type, status, req.user,member);
   
       res.status(StatusCodes.OK).send(
         ResponseHelper.success(StatusCodes.OK, "Application status updated", result)

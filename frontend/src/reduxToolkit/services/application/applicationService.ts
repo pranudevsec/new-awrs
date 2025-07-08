@@ -270,6 +270,7 @@ export const updateApplication = createAsyncThunk<
       {
         type: params.type,
         status: params.status,
+        member: params.member
       }
     );
 
