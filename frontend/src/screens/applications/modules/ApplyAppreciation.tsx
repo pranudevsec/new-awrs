@@ -109,12 +109,12 @@ const ApplyAppreciation = () => {
       const newCounts: Record<string, string> = {};
       const newMarks: Record<string, number> = {};
       const newUploads: Record<number, string[]> = {};
-  
+
       const nameToIdMap = parameters.reduce((acc: Record<string, string>, param: any) => {
         acc[param.name.trim()] = String(param.param_id);
         return acc;
       }, {});
-  
+
       draftData.appre_fds.parameters.forEach((param: any) => {
         const paramId = nameToIdMap[param.name.trim()];
         if (paramId) {
@@ -125,7 +125,7 @@ const ApplyAppreciation = () => {
               newUploads[Number(paramId)] = param.upload;
             } else if (typeof param.upload === "string") {
               if (param.upload.includes(",")) {
-                newUploads[Number(paramId)] = param.upload.split(",").map((u:any) => u.trim());
+                newUploads[Number(paramId)] = param.upload.split(",").map((u: any) => u.trim());
               } else {
                 newUploads[Number(paramId)] = [param.upload.trim()];
               }
@@ -133,13 +133,13 @@ const ApplyAppreciation = () => {
           }
         }
       });
-  
+
       setCounts(newCounts);
       setMarks(newMarks);
       setUploadedFiles(newUploads);
     }
   }, [draftData, parameters]);
-  
+
   useEffect(() => {
     if (id && draftData?.appre_fds?.parameters) {
       const uploads: Record<number, string[]> = {};
@@ -149,7 +149,7 @@ const ApplyAppreciation = () => {
             uploads[param.param_id || index] = param.upload;
           } else if (typeof param.upload === "string") {
             if (param.upload.includes(",")) {
-              uploads[param.param_id || index] = param.upload.split(",").map((u:any) => u.trim());
+              uploads[param.param_id || index] = param.upload.split(",").map((u: any) => u.trim());
             } else {
               uploads[param.param_id || index] = [param.upload.trim()];
             }
@@ -159,7 +159,7 @@ const ApplyAppreciation = () => {
       setUploadedFiles(uploads);
     }
   }, [id, draftData]);
-  
+
   useEffect(() => {
     if (!initializedRef.current) {
       const firstCategory = Object.keys(groupedParams)[0];
@@ -256,10 +256,12 @@ const ApplyAppreciation = () => {
     paramId: number,
     paramName: string
   ) => {
-    const files = e.target.files;
+    const input = e.target;
+    const files = input.files;
     if (!files || files.length === 0) return;
-  
+
     const uploadedUrls: string[] = [];
+
     for (const file of files) {
       if (file.size > 5 * 1024 * 1024) {
         toast.error(`File ${file.name} exceeds 5MB`);
@@ -270,17 +272,17 @@ const ApplyAppreciation = () => {
         uploadedUrls.push(uploadedUrl);
       }
     }
-  
+
     if (uploadedUrls.length > 0) {
-      const newUploads = { 
-        ...uploadedFiles, 
+      const newUploads = {
+        ...uploadedFiles,
         [paramId]: [...(uploadedFiles[paramId] || []), ...uploadedUrls]
       };
       setUploadedFiles(newUploads);
       localStorage.setItem(DRAFT_FILE_UPLOAD_KEY, JSON.stringify(newUploads));
       toast.success(`Uploaded ${uploadedUrls.length} file(s)`);
     } else {
-      toast.error("No files uploaded");
+      input.value = "";
     }
   };
 
@@ -485,7 +487,7 @@ const ApplyAppreciation = () => {
   if (loading) return <Loader />
 
   return (
-    <div className="apply-citation-section" style={{ padding: "2rem"}}>
+    <div className="apply-citation-section" style={{ padding: "2rem" }}>
       <div className="d-flex flex-sm-row flex-column align-items-sm-center justify-content-between mb-4">
         <Breadcrumb
           title="Apply For Appreciation"
@@ -627,36 +629,36 @@ const ApplyAppreciation = () => {
                           </div>
                         </td>
                         <td style={{ width: 300, minWidth: 300, maxWidth: 300 }}>
-                        {param.proof_reqd ? (
-  <>
-    {uploadedFiles[param.param_id]?.length > 0 && (
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-        {uploadedFiles[param.param_id].map((fileUrl, idx) => (
-          <a
-            key={idx}
-            href={`${baseURL}${fileUrl}`}
-            target="_blank"
-            rel="noopener noreferrer"
-            style={{ fontSize: 14, wordBreak: 'break-all' }}
-          >
-            {fileUrl.split("/").pop()}
-          </a>
-        ))}
-      </div>
-    )}
-    <input
-      type="file"
-      className="form-control mt-1"
-      multiple
-      onChange={(e) => {
-        const display = getParamDisplay(param);
-        handleFileChange(e, param.param_id, display.main);
-      }}
-    />
-  </>
-) : (
-  <span>Not required</span>
-)}
+                          {param.proof_reqd ? (
+                            <>
+                              {uploadedFiles[param.param_id]?.length > 0 && (
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                                  {uploadedFiles[param.param_id].map((fileUrl, idx) => (
+                                    <a
+                                      key={idx}
+                                      href={`${baseURL}${fileUrl}`}
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                      style={{ fontSize: 14, wordBreak: 'break-all' }}
+                                    >
+                                      {fileUrl.split("/").pop()}
+                                    </a>
+                                  ))}
+                                </div>
+                              )}
+                              <input
+                                type="file"
+                                className="form-control mt-1"
+                                multiple
+                                onChange={(e) => {
+                                  const display = getParamDisplay(param);
+                                  handleFileChange(e, param.param_id, display.main);
+                                }}
+                              />
+                            </>
+                          ) : (
+                            <span>Not required</span>
+                          )}
                         </td>
 
                       </tr>

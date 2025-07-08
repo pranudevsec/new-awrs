@@ -256,7 +256,7 @@ const AcceptedApplicationsList = () => {
   // };
 
   return (
-    <div className="clarification-section" style={{ padding: "2rem", maxWidth: "80vw"}}>
+    <div className="clarification-section" style={{ padding: "2rem", maxWidth: "80vw" }}>
       <div className="d-flex flex-sm-row flex-column align-items-sm-center justify-content-between mb-4">
         <Breadcrumb
           title="Accepted Applications"
@@ -531,7 +531,7 @@ const AcceptedApplicationsList = () => {
                       >
                         {unit?.status_flag === "approved"
                           ? "Approved"
-                          : "Not Approved"}
+                          : "Pending"}
                       </p>
                     </td>
                   )}
