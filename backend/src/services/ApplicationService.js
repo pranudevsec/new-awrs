@@ -177,7 +177,7 @@ exports.getAllApplicationsForHQ = async (user, query) => {
 
     const isMoOlCondition =
       user?.user_role === "cw2" ? "" : "AND is_mo_ol_approved = true";
-
+console.log(isMoOlCondition)
     const citations = await client.query(`
       SELECT 
         citation_id AS id,
@@ -191,7 +191,6 @@ exports.getAllApplicationsForHQ = async (user, query) => {
       WHERE 
         status_flag = 'approved' 
         AND last_approved_by_role = 'command'
-        ${isMoOlCondition}
     `);
 
     const appreciations = await client.query(`
@@ -207,7 +206,6 @@ exports.getAllApplicationsForHQ = async (user, query) => {
       WHERE 
         status_flag = 'approved' 
         AND last_approved_by_role = 'command'
-        ${isMoOlCondition}
     `);
 
     let allApps = [...citations.rows, ...appreciations.rows];
