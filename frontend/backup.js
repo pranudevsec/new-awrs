@@ -108,18 +108,18 @@ const ApplyCitation = () => {
       const newCounts: Record<string, string> = {};
       const newMarks: Record<string, number> = {};
       const newUploads: Record<number, string[]> = {};
-
+  
       const nameToIdMap = parameters.reduce((acc: Record<string, string>, param: any) => {
         acc[param.name.trim()] = String(param.param_id);
         return acc;
       }, {});
-
+  
       draftData.citation_fds.parameters.forEach((param: any) => {
         const paramId = nameToIdMap[param.name.trim()];
         if (paramId) {
           newCounts[paramId] = String(param.count);
           newMarks[paramId] = param.marks;
-
+  
           if (param.upload) {
             if (Array.isArray(param.upload)) {
               // If already stored as array
@@ -127,7 +127,7 @@ const ApplyCitation = () => {
             } else if (typeof param.upload === "string") {
               // If stored as CSV string, split into array
               if (param.upload.includes(",")) {
-                newUploads[Number(paramId)] = param.upload.split(",").map((u: any) => u.trim());
+                newUploads[Number(paramId)] = param.upload.split(",").map((u:any) => u.trim());
               } else {
                 newUploads[Number(paramId)] = [param.upload.trim()];
               }
@@ -135,13 +135,13 @@ const ApplyCitation = () => {
           }
         }
       });
-
+  
       setCounts(newCounts);
       setMarks(newMarks);
       setUploadedFiles(newUploads);
     }
   }, [draftData, parameters]);
-
+  
   useEffect(() => {
     if (id && draftData?.citation_fds?.parameters) {
       const uploads: Record<number, string[]> = {};
@@ -151,7 +151,7 @@ const ApplyCitation = () => {
             uploads[param.param_id || index] = param.upload;
           } else if (typeof param.upload === "string") {
             if (param.upload.includes(",")) {
-              uploads[param.param_id || index] = param.upload.split(",").map((u: any) => u.trim());
+              uploads[param.param_id || index] = param.upload.split(",").map((u:any) => u.trim());
             } else {
               uploads[param.param_id || index] = [param.upload.trim()];
             }
@@ -259,12 +259,10 @@ const ApplyCitation = () => {
     paramId: number,
     paramName: string
   ) => {
-    const input = e.target;
-    const files = input.files;
+    const files = e.target.files;
     if (!files || files.length === 0) return;
-
+  
     const uploadedUrls: string[] = [];
-
     for (const file of files) {
       if (file.size > 5 * 1024 * 1024) {
         toast.error(`File ${file.name} exceeds 5MB`);
@@ -275,18 +273,17 @@ const ApplyCitation = () => {
         uploadedUrls.push(uploadedUrl);
       }
     }
-
+  
     if (uploadedUrls.length > 0) {
-      const newUploads = {
-        ...uploadedFiles,
+      const newUploads = { 
+        ...uploadedFiles, 
         [paramId]: [...(uploadedFiles[paramId] || []), ...uploadedUrls]
       };
       setUploadedFiles(newUploads);
       localStorage.setItem(DRAFT_FILE_UPLOAD_KEY, JSON.stringify(newUploads));
       toast.success(`Uploaded ${uploadedUrls.length} file(s)`);
     } else {
-      // toast.error("No files uploaded");
-      input.value = "";
+      toast.error("No files uploaded");
     }
   };
   const handleRemoveUploadedFile = (paramId: number, index: number) => {
@@ -306,6 +303,7 @@ const ApplyCitation = () => {
     localStorage.setItem(DRAFT_FILE_UPLOAD_KEY, JSON.stringify(updatedFiles));
     toast.success("File removed");
   };
+  
 
   // Formik form
   const formik = useFormik({
@@ -385,14 +383,14 @@ const ApplyCitation = () => {
       try {
         const [configRes, paramsRes] = await Promise.all([
           dispatch(getConfig()).unwrap(),
-          dispatch(fetchParameters({
-            awardType: "citation",
+          dispatch(fetchParameters({ 
+            awardType: "citation", 
             search: "",
             matrix_unit: profile?.unit?.matrix_unit ?? undefined,
             comd: profile?.unit?.comd ?? undefined,
             unit_type: profile?.unit?.unit_type ?? undefined,
-            page: 1,
-            limit: 1000
+            page: 1, 
+            limit: 1000 
           })).unwrap(),
         ]);
 
@@ -523,7 +521,7 @@ const ApplyCitation = () => {
   if (loading) return <Loader />
 
   return (
-    <div className="apply-citation-section" style={{ padding: "2rem" }}>
+    <div className="apply-citation-section" style={{ padding: "2rem"}}>
       <div className="d-flex flex-sm-row flex-column align-items-sm-center justify-content-between mb-4">
         <Breadcrumb
           title="Apply For Citation"
@@ -579,7 +577,6 @@ const ApplyCitation = () => {
               </div>
             </div>
           </div>
-
           {profile?.unit?.awards?.length > 0 && (
   <div className="mt-4">
     <h5 className="mb-3">Awards</h5>
@@ -620,7 +617,8 @@ const ApplyCitation = () => {
               backgroundColor: 'white',
               zIndex: 10,
               paddingBottom: '1rem',
-              whiteSpace: 'nowrap',
+              overflowX: 'auto', // Enable horizontal scroll
+              whiteSpace: 'nowrap', // Prevent line breaks
             }}
           >
             <Tabs
@@ -629,10 +627,12 @@ const ApplyCitation = () => {
               id="category-tabs"
               className="mb-3 custom-tabs"
               style={{
-                display: "inline-flex",
+                display: "inline-flex", // Inline for horizontal scroll
+                flexWrap: "nowrap",
                 gap: "0.5rem",
+                minWidth: "max-content", // Prevent shrinking
               }}
-            >
+              >
               {Object.keys(groupedParams).map((category) => (
                 <Tab
                   eventKey={category}
@@ -669,9 +669,6 @@ const ApplyCitation = () => {
             </Tabs>
           </div>
 
-
-
-
           <div
             ref={scrollContainerRef}
             style={{
@@ -699,7 +696,7 @@ const ApplyCitation = () => {
                 </h5>
                 <table className="table-style-1 w-100">
                   <thead>
-                    <tr style={{ backgroundColor: "#68aef2" }}>
+                    <tr  style={{ backgroundColor: "#68aef2"}}>
                       <th style={{ width: 250, minWidth: 250, maxWidth: 250, fontSize: "17", color: "white" }}>Parameter</th>
                       <th style={{ width: 300, minWidth: 300, maxWidth: 300, fontSize: "17", color: "white" }}>Count</th>
                       <th style={{ width: 300, minWidth: 300, maxWidth: 300, fontSize: "17", color: "white" }}>Marks</th>
@@ -773,9 +770,9 @@ const ApplyCitation = () => {
                               </div>
                             </td>
                             <td style={{ width: 300, minWidth: 300, maxWidth: 300 }}>
-                              {param.proof_reqd ? (
-                                <>
-                               {uploadedFiles[param.param_id]?.length > 0 && (
+                            {param.proof_reqd ? (
+  <>
+{uploadedFiles[param.param_id]?.length > 0 && (
   <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
     {uploadedFiles[param.param_id].map((fileUrl, idx) => (
       <div
@@ -818,19 +815,20 @@ const ApplyCitation = () => {
     ))}
   </div>
 )}
-                                  <input
-                                    type="file"
-                                    className="form-control mt-1"
-                                    multiple
-                                    onChange={(e) => {
-                                      const display = getParamDisplay(param);
-                                      handleFileChange(e, param.param_id, display.main);
-                                    }}
-                                  />
-                                </>
-                              ) : (
-                                <span>Not required</span>
-                              )}
+
+    <input
+      type="file"
+      className="form-control mt-1"
+      multiple
+      onChange={(e) => {
+        const display = getParamDisplay(param);
+        handleFileChange(e, param.param_id, display.main);
+      }}
+    />
+  </>
+) : (
+  <span>Not required</span>
+)}
 
                             </td>
                           </tr>

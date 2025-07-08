@@ -475,7 +475,7 @@ exports.getApplicationsOfSubordinates = async (user, query) => {
 
   try {
     const { user_role } = user;
-    const { award_type, search, page = 1, limit = 10, isShortlisted } = query;
+    const { award_type, search, page = 1, limit = 10, isShortlisted ,isGetNotClarifications} = query;
 
     const profile = await AuthService.getProfile(user);
     const unit = profile?.data?.unit;
@@ -682,7 +682,12 @@ exports.getApplicationsOfSubordinates = async (user, query) => {
         },
       };
     });
-
+// Filter clarifications_count === 0 if isGetNotClarifications is true
+if (isGetNotClarifications) {
+  allApps = allApps.filter(
+    (app) => app.clarifications_count === 0
+  );
+}
     // Sort by date
     allApps.sort((a, b) => new Date(b.date_init) - new Date(a.date_init));
 

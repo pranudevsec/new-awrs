@@ -24,17 +24,17 @@ const ApplicationsList = () => {
   const [page, setPage] = useState<number>(1);
   const [limit, setLimit] = useState<number>(10);
   const role = profile?.user?.user_role?.toLowerCase() ?? "";
-  const isCW2Role = profile?.user?.user_role === "cw2";
-  const cw2_type = profile?.user?.cw2_type?.toLowerCase() ?? "";
-  useEffect(() => {
-    if (isCW2Role) {
-      if (cw2_type === "mo") {
-        setAwardType("citations");
-      } else if (cw2_type === "ol") {
-        setAwardType("appreciations");
-      }
-    }
-  }, [isCW2Role, cw2_type]);
+  // const isCW2Role = profile?.user?.user_role === "cw2";
+  // const cw2_type = profile?.user?.cw2_type?.toLowerCase() ?? "";
+  // useEffect(() => {
+  //   if (isCW2Role) {
+  //     if (cw2_type === "mo") {
+  //       setAwardType("citations");
+  //     } else if (cw2_type === "ol") {
+  //       setAwardType("appreciations");
+  //     }
+  //   }
+  // }, [isCW2Role, cw2_type]);
 
   useEffect(() => {
     const handler = setTimeout(() => {
@@ -52,13 +52,13 @@ const ApplicationsList = () => {
     const fetchData = () => {
   const role = profile.user.user_role;
 
-  const effectiveAwardType =
-    isCW2Role
-      ? (cw2_type === "mo" ? "citation" : cw2_type === "ol" ? "appreciation" : '')
-      : awardType || '';
+  // const effectiveAwardType =
+  //   isCW2Role
+  //     ? (cw2_type === "mo" ? "citation" : cw2_type === "ol" ? "appreciation" : '')
+  //     : awardType || '';
 
   const params = {
-    award_type: effectiveAwardType,
+    award_type: awardType || '',
     search: debouncedSearch,
     page,
     limit,
@@ -67,7 +67,11 @@ const ApplicationsList = () => {
   if (role === 'cw2' || role === 'headquarter') {
     dispatch(fetchApplicationsForHQ(params));
   } else if (role !== 'unit') {
-    dispatch(fetchSubordinates(params));
+    const updatedParams = {
+      ...params,
+      isGetNotClarifications: true,
+    };
+    dispatch(fetchSubordinates(updatedParams));
   } else {
     dispatch(fetchApplicationUnits(params));
   }
@@ -101,7 +105,7 @@ const ApplicationsList = () => {
             onChange={(e) => setSearchTerm(e.target.value)}
           />
         </div>
-        {!isCW2Role && (
+      
   <FormSelect
     name="awardType"
     options={awardTypeOptions}
@@ -109,7 +113,7 @@ const ApplicationsList = () => {
     placeholder="Select Type"
     onChange={(option: OptionType | null) => setAwardType(option ? option.value : null)}
   />
-)}
+
       </div>
 
       <div className="table-responsive">

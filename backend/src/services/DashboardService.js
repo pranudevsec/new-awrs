@@ -141,10 +141,13 @@ exports.getDashboardStats = async (user) => {
       const client = await dbService.getClient();
   
       try {
-        const query = { page: 1, limit: 10000 };
+        let query = { page: 1, limit: 10000 };
   
-        const applicationsResult = await ApplicationService.getApplicationsOfSubordinates(user, query);
-  
+        if (user_role !== 'unit') {
+          query.isGetNotClarifications = true;
+        }
+        
+        const applicationsResult = await ApplicationService.getApplicationsOfSubordinates(user, query);  
         const applicationsToReview = applicationsResult?.meta?.totalItems || 0;
   
         const clarificationsIRaised = Array.isArray(applicationsResult?.data)

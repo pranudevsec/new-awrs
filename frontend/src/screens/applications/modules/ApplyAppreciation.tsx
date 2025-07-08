@@ -285,6 +285,23 @@ const ApplyAppreciation = () => {
       input.value = "";
     }
   };
+  const handleRemoveUploadedFile = (paramId: number, index: number) => {
+    const updatedFiles = { ...uploadedFiles };
+  
+    if (!updatedFiles[paramId]) return;
+  
+    // Remove file at index
+    updatedFiles[paramId] = updatedFiles[paramId].filter((_, idx) => idx !== index);
+  
+    // If no files left, remove the paramId key
+    if (updatedFiles[paramId].length === 0) {
+      delete updatedFiles[paramId];
+    }
+  
+    setUploadedFiles(updatedFiles);
+    localStorage.setItem(DRAFT_FILE_UPLOAD_KEY, JSON.stringify(updatedFiles));
+    toast.success("File removed");
+  };
 
   useEffect(() => {
     const savedDraft = localStorage.getItem(DRAFT_STORAGE_KEY);
@@ -543,6 +560,38 @@ const ApplyAppreciation = () => {
               </div>
             </div>
           </div>
+          {profile?.unit?.awards?.length > 0 && (
+  <div className="mt-4">
+    <h5 className="mb-3">Awards</h5>
+    <div className="table-responsive">
+      <table className="table-style-2 w-100">
+        <thead>
+          <tr>
+            <th style={{ width: 150, minWidth: 150, maxWidth: 150 }}>Type</th>
+            <th style={{ width: 200, minWidth: 200, maxWidth: 200 }}>Year</th>
+            <th style={{ width: 300, minWidth: 300, maxWidth: 300 }}>Title</th>
+          </tr>
+        </thead>
+        <tbody>
+        {profile?.unit?.awards?.map((award:any) => (
+            <tr key={award.award_id}>
+    
+              <td style={{ width: 150, minWidth: 150, maxWidth: 150 }}>
+                <p className="fw-4 text-capitalize">{award.award_type}</p>
+              </td>
+              <td style={{ width: 200, minWidth: 200, maxWidth: 200 }}>
+                <p className="fw-4">{award.award_year}</p>
+              </td>
+              <td style={{ width: 300, minWidth: 300, maxWidth: 300 }}>
+                <p className="fw-4">{award.award_title}</p>
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  </div>
+)}
 
           <div style={{ position: 'sticky', top: 0, backgroundColor: 'white', zIndex: 10, paddingBottom: '1rem' }}>
             <Tabs
@@ -631,21 +680,49 @@ const ApplyAppreciation = () => {
                         <td style={{ width: 300, minWidth: 300, maxWidth: 300 }}>
                           {param.proof_reqd ? (
                             <>
-                              {uploadedFiles[param.param_id]?.length > 0 && (
-                                <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                                  {uploadedFiles[param.param_id].map((fileUrl, idx) => (
-                                    <a
-                                      key={idx}
-                                      href={`${baseURL}${fileUrl}`}
-                                      target="_blank"
-                                      rel="noopener noreferrer"
-                                      style={{ fontSize: 14, wordBreak: 'break-all' }}
-                                    >
-                                      {fileUrl.split("/").pop()}
-                                    </a>
-                                  ))}
-                                </div>
-                              )}
+                                     {uploadedFiles[param.param_id]?.length > 0 && (
+  <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+    {uploadedFiles[param.param_id].map((fileUrl, idx) => (
+      <div
+        key={idx}
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          gap: '0.5rem',
+          fontSize: 14,
+          wordBreak: 'break-all',
+          background: '#f1f5f9',
+          padding: '4px 8px',
+          borderRadius: 4,
+        }}
+      >
+        <a
+          href={`${baseURL}${fileUrl}`}
+          target="_blank"
+          rel="noopener noreferrer"
+          style={{ flex: 1, color: '#1d4ed8', textDecoration: 'underline' }}
+        >
+          {fileUrl.split("/").pop()}
+        </a>
+        <button
+          type="button"
+          onClick={() => handleRemoveUploadedFile(param.param_id, idx)}
+          style={{
+            background: 'transparent',
+            border: 'none',
+            color: '#dc2626',
+            cursor: 'pointer',
+            fontSize: 16,
+          }}
+          title="Remove file"
+        >
+          🗑️
+        </button>
+      </div>
+    ))}
+  </div>
+)}
                               <input
                                 type="file"
                                 className="form-control mt-1"

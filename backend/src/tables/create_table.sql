@@ -193,22 +193,23 @@ CREATE TABLE Clarification_tab (
 
 -- Insert dummy parameters
 INSERT INTO Parameter_Master (
-    comd, award_type, applicability, category, name, description, negative,
-    max_marks, proof_reqd, weightage, param_sequence, param_mark, per_unit_mark
+    comd, award_type, applicability, category, subcategory, subsubcategory, name,
+    arms_service, location, description, negative, max_marks, proof_reqd,
+    weightage, param_sequence, param_mark, per_unit_mark
 ) VALUES
-('NC', 'appreciation', 'ALL', 'recovery', 'Enemy Kills', 'Number of enemies neutralized', FALSE, 20, TRUE, 5, 1, 4, 4),
-('WC', 'appreciation', 'ARMY', 'terrorist', 'Rescue Ops', 'Rescue operations conducted', FALSE, 15, TRUE, 4, 2, 5, 5),
-('NC', 'citation', 'ALL', 'Tenure', 'Tenure', 'Number of Tenure', FALSE, 25, TRUE, 5, 1, 5, 5),
-('NC', 'citation', 'ALL', 'Kills', 'Kills', 'Number of Kills', FALSE, 25, TRUE, 5, 1, 5, 5),
-('NC', 'citation', 'ALL', 'surrendered', 'surrendered', 'Number of surrendered', FALSE, 25, TRUE, 5, 1, 5, 5),
-('NC', 'citation', 'ALL', 'terrorist', 'Terrorist Killed', 'Number of terrorists neutralized (killed)', FALSE, 25, TRUE, 5, 1, 5, 5),
-('NC', 'citation', 'ALL', 'terrorist', 'Terrorist Apprehended with Weapon', 'Number of terrorists apprehended with weapon', FALSE, 20, TRUE, 4, 2, 4, 4),
-('NC', 'citation', 'ALL', 'terrorist', 'Terrorist Surrendered with Weapon', 'Number of terrorists surrendered with weapon', FALSE, 15, TRUE, 3, 3, 3, 3),
-('NC', 'citation', 'ALL', 'recovery', 'Heavy Weapon Recovery', 'Number of heavy weapons recovered', FALSE, 20, TRUE, 5, 1, 5, 5),
-('NC', 'citation', 'ALL', 'recovery', 'UMG Recovery', 'Number of UMGs recovered', FALSE, 15, TRUE, 4, 2, 4, 4),
-('NC', 'citation', 'ALL', 'recovery', 'Pistol Recovery', 'Number of pistols recovered', FALSE, 10, TRUE, 3, 3, 3, 3),
-('NC', 'citation', 'ALL', 'recovery', 'Radioset Recovery', 'Number of radiosets recovered', FALSE, 10, TRUE, 2, 4, 2, 2),
-('NC', 'appreciation', 'ALL', 'recovery', 'Medical Camps', 'Organized medical camps', FALSE, 10, FALSE, 3, 3, 2, 2);
+('NC', 'appreciation', 'ALL', 'recovery', '', '', 'Enemy Kills', 'ALL', 'ALL', 'Number of enemies neutralized', FALSE, 20, TRUE, 5, 1, 4, 4),
+('WC', 'appreciation', 'ARMY', 'terrorist', '', '', 'Rescue Ops', 'ALL', 'ALL', 'Rescue operations conducted', FALSE, 15, TRUE, 4, 2, 5, 5),
+('NC', 'citation', 'ALL', 'Tenure', '', '', 'Tenure', 'ALL', 'ALL', 'Number of Tenure', FALSE, 25, TRUE, 5, 1, 5, 5),
+('NC', 'citation', 'ALL', 'Kills', '', '', 'Kills', 'ALL', 'ALL', 'Number of Kills', FALSE, 25, TRUE, 5, 1, 5, 5),
+('NC', 'citation', 'ALL', 'surrendered', '', '', 'surrendered', 'ALL', 'ALL', 'Number of surrendered', FALSE, 25, TRUE, 5, 1, 5, 5),
+('NC', 'citation', 'ALL', 'terrorist', '', '', 'Terrorist Killed', 'ALL', 'ALL', 'Number of terrorists neutralized (killed)', FALSE, 25, TRUE, 5, 1, 5, 5),
+('NC', 'citation', 'ALL', 'terrorist', '', '', 'Terrorist Apprehended with Weapon', 'ALL', 'ALL', 'Number of terrorists apprehended with weapon', FALSE, 20, TRUE, 4, 2, 4, 4),
+('NC', 'citation', 'ALL', 'terrorist', '', '', 'Terrorist Surrendered with Weapon', 'ALL', 'ALL', 'Number of terrorists surrendered with weapon', FALSE, 15, TRUE, 3, 3, 3, 3),
+('NC', 'citation', 'ALL', 'recovery', '', '', 'Heavy Weapon Recovery', 'ALL', 'ALL', 'Number of heavy weapons recovered', FALSE, 20, TRUE, 5, 1, 5, 5),
+('NC', 'citation', 'ALL', 'recovery', '', '', 'UMG Recovery', 'ALL', 'ALL', 'Number of UMGs recovered', FALSE, 15, TRUE, 4, 2, 4, 4),
+('NC', 'citation', 'ALL', 'recovery', '', '', 'Pistol Recovery', 'ALL', 'ALL', 'Number of pistols recovered', FALSE, 10, TRUE, 3, 3, 3, 3),
+('NC', 'citation', 'ALL', 'recovery', '', '', 'Radioset Recovery', 'ALL', 'ALL', 'Number of radiosets recovered', FALSE, 10, TRUE, 2, 4, 2, 2),
+('NC', 'appreciation', 'ALL', 'recovery', '', '', 'Medical Camps', 'ALL', 'ALL', 'Organized medical camps', FALSE, 10, FALSE, 3, 3, 2, 2);
 
 INSERT INTO Config_tab (deadline, docu_path_base, cycle_period, current_cycle_period)
 VALUES (

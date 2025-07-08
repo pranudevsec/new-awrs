@@ -36,7 +36,7 @@ interface Officer {
 }
 interface Award {
   award_id?: string;
-  award_type: "goc" | "coas";
+  award_type:string;
   award_title: string;
   award_year: string;
 }
@@ -274,7 +274,9 @@ const ProfileSettings = () => {
         payload["adm_channel"] = values.adm_channel;
         payload["tech_channel"] = values.tech_channel;
         payload["unit_type"] = values.unit_type;
-        payload["matrix_unit"] = values.matrix_unit.join(",");
+        payload["matrix_unit"] = Array.isArray(values.matrix_unit)
+        ? values.matrix_unit.join(",")
+        : values.matrix_unit || ""; 
         payload["location"] = values.location;
         payload["awards"] = awards;
 
@@ -447,7 +449,7 @@ const ProfileSettings = () => {
                   <thead>
                     {awards.length !== 0 && (<tr>
                       <th>Type</th>
-                      <th>Brigade</th>
+                      <th>Title</th>
                       <th>Year</th>
                       <th>Action</th>
                     </tr>)}
@@ -461,12 +463,13 @@ const ProfileSettings = () => {
                             value={award.award_type}
                             onChange={(e) => {
                               const updated = [...awards];
-                              updated[idx].award_type = e.target.value as "goc" | "coas";
+                              updated[idx].award_type = e.target.value as "goc" | "coas" | "cds";
                               setAwards(updated);
                             }}
                           >
                             <option value="goc">GOC</option>
                             <option value="coas">COAS</option>
+                            <option value="cds">CDS</option>
                           </select>
                         </td>
                         <td>
