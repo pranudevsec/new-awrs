@@ -60,17 +60,17 @@ exports.getApplicationsScoreboard = async (req, res) => {
   
   exports.updateApplicationStatus = async (req, res) => {
     try {
-      const { type, status,member,level } = req.body;
+      const { type, status,member ,withdrawRequested,withdraw_status,level} = req.body;
       const id=req.params.id;
 
-      if (!member) {
+      if (status) {
         if (!['approved', 'rejected', "shortlisted_approved"].includes(status)) {
           return res.status(StatusCodes.BAD_REQUEST).send(
             ResponseHelper.error(StatusCodes.BAD_REQUEST, "Invalid status value")
           );
         }
       }
-      const result = await ApplicationService.updateApplicationStatus(id, type, status, req.user,member);
+      const result = await ApplicationService.updateApplicationStatus(id, type, status, req.user,member,withdrawRequested,withdraw_status);
       await SignatureLogService.addSignatureLogs(id,status,member,level);
   
       res.status(StatusCodes.OK).send(

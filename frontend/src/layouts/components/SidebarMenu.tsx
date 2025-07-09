@@ -71,6 +71,11 @@ const SidebarMenu = () => {
     icon: SVGICON.sidebar.history,
     to: "/history",
   };
+  const withdrawItem = {
+    label: "Withdraws",
+    icon: SVGICON.sidebar.history,
+    to: "/withdraw-quests",
+  };
   const allApplicationsItem = {
     label: "All Applications",
     icon: SVGICON.sidebar.history,
@@ -85,6 +90,7 @@ const SidebarMenu = () => {
     filteredStructure.push(acceptedApplicationItem);
     filteredStructure.push(historyItem);
     filteredStructure.push(allApplicationsItem);
+    if(userRole !== "brigade"){filteredStructure.push(withdrawItem);}
   }
   if (
     userRole === "headquarter"

@@ -1105,7 +1105,10 @@ const ApplicationDetails = () => {
                 </form>
               </>
             )}
-            {(profile?.unit?.members && !unitDetail?.is_mo_ol_approved) &&
+            {(profile?.unit?.members && (
+  (cw2_type === "mo" && !unitDetail?.is_mo_approved) ||
+  (cw2_type === "ol" && !unitDetail?.is_ol_approved)
+)) &&
               Array.isArray(profile.unit.members) &&
               profile.unit.members.filter(
                 (m) => m.digital_sign && m.digital_sign.trim() !== ""
@@ -1172,18 +1175,109 @@ const ApplicationDetails = () => {
                   </table>
                 </div>
               )}
-            {isCW2Role && !unitDetail?.is_mo_ol_approved && (
-              <div className="d-flex flex-sm-row flex-column gap-sm-3 gap-1 justify-content-end">
-                {" "}
+{isCW2Role && (cw2_type === 'mo' || cw2_type === 'ol') && (
+  <div className="mt-4">
+    <h5 className="mb-3">Send for Review</h5>
+    <div className="table-responsive">
+      <table className="table-style-2 w-100">
+        <thead>
+          <tr>
+            <th style={{ width: 200, minWidth: 200 }}>Category</th>
+            <th style={{ width: 200, minWidth: 200 }}>Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          {['HR', 'DV', 'MP'].map((category) => {
+            let isAlreadySent :any= false;
+console.log(unitDetail)
+            if (category === 'HR') {
+              isAlreadySent = unitDetail?.is_hr_review;
+            } else if (category === 'DV') {
+              isAlreadySent = unitDetail?.is_dv_review;
+            } else if (category === 'MP') {
+              isAlreadySent = unitDetail?.is_mp_review;
+            }
+
+            return (
+              <tr key={category}>
+                <td>
+                  <p className="fw-4">{category}</p>
+                </td>
+                <td>
+  {isAlreadySent ? (
+    <span className="text-danger fw-semibold">Already Sent</span>
+  ) : (
+    <button
+      type="button"
+      className="_btn success"
+      onClick={() => {
+        const payload: {
+          id: number | undefined;
+          is_hr_review?: boolean;
+          is_dv_review?: boolean;
+          is_mp_review?: boolean;
+        } = {
+          id: unitDetail?.id,
+        };
+
+        if (category === 'HR') {
+          payload.is_hr_review = true;
+        } else if (category === 'DV') {
+          payload.is_dv_review = true;
+        } else if (category === 'MP') {
+          payload.is_mp_review = true;
+        }
+
+        if (unitDetail?.type === 'citation') {
+          dispatch(updateCitation(payload));
+        } else if (unitDetail?.type === 'appreciation') {
+          dispatch(updateAppreciation(payload));
+        }
+      }}
+    >
+      Send for Review
+    </button>
+  )}
+</td>
+
+              </tr>
+            );
+          })}
+        </tbody>
+      </table>
+    </div>
+  </div>
+)}
+
+
+
+            {isCW2Role&& (
+  (cw2_type === "mo" && !unitDetail?.is_mo_approved) ||
+  (cw2_type === "ol" && !unitDetail?.is_ol_approved)
+) && (
+              <div className="d-flex flex-sm-row flex-column gap-sm-3 gap-1 justify-content-end mt-2">
                 <button
                   type="button"
                   className="_btn success"
                   onClick={() => {
-                    const payload = {
+                    const payload: {
+                      id: number | undefined;
+                      is_mo_approved?: boolean;
+                      is_ol_approved?: boolean;
+                      mo_approved_at?: string;
+                      ol_approved_at?: string;
+                    } = {
                       id: unitDetail?.id,
-                      is_mo_ol_approved: true,
                     };
-
+                    
+                    if (cw2_type === "mo") {
+                      payload.is_mo_approved = true;
+                      payload.mo_approved_at = new Date().toISOString(); // send current date
+                    } else if (cw2_type === "ol") {
+                      payload.is_ol_approved = true;
+                      payload.ol_approved_at = new Date().toISOString(); // send current date
+                    }
+                    
                     if (unitDetail?.type === "citation") {
                       dispatch(updateCitation(payload));
                     } else if (unitDetail?.type === "appreciation") {

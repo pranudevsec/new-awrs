@@ -175,9 +175,6 @@ exports.getAllApplicationsForHQ = async (user, query) => {
   try {
     const { award_type, search, page = 1, limit = 10 } = query;
 
-    const isMoOlCondition =
-      user?.user_role === "cw2" ? "" : "AND is_mo_ol_approved = true";
-console.log(isMoOlCondition)
     const citations = await client.query(`
       SELECT 
         citation_id AS id,
@@ -358,7 +355,13 @@ exports.getSingleApplicationForUnit = async (
           c.last_approved_at,
           c.status_flag,
           c.isShortlisted,
-             c.is_mo_ol_approved,
+          c.is_mo_approved,
+          c.mo_approved_at,
+          c.is_ol_approved,
+          c.ol_approved_at,
+          c.is_hr_review,
+          c.is_dv_review,
+          c.is_mp_review,
           c.remarks
         FROM Citation_tab c
         JOIN Unit_tab u ON c.unit_id = u.unit_id
@@ -377,7 +380,13 @@ exports.getSingleApplicationForUnit = async (
           a.last_approved_at,
           a.status_flag,
           a.isShortlisted,
-          a.is_mo_ol_approved,
+          a.is_mo_approved,
+          a.mo_approved_at,
+          a.is_ol_approved,
+          a.ol_approved_at,
+          a.is_hr_review,
+          a.is_dv_review,
+          a.is_mp_review,
           a.remarks
         FROM Appre_tab a
         JOIN Unit_tab u ON a.unit_id = u.unit_id
@@ -386,7 +395,7 @@ exports.getSingleApplicationForUnit = async (
     } else {
       return ResponseHelper.error(400, "Invalid award_type provided");
     }
-
+    
     const res = await client.query(query, params);
     application = res.rows[0];
 
@@ -473,7 +482,15 @@ exports.getApplicationsOfSubordinates = async (user, query) => {
 
   try {
     const { user_role } = user;
-    const { award_type, search, page = 1, limit = 10, isShortlisted ,isGetNotClarifications} = query;
+    const {
+      award_type,
+      search,
+      page = 1,
+      limit = 10,
+      isShortlisted,
+      isGetNotClarifications,
+      isGetWithdrawRequests
+    } = query;
 
     const profile = await AuthService.getProfile(user);
     const unit = profile?.data?.unit;
@@ -529,7 +546,37 @@ exports.getApplicationsOfSubordinates = async (user, query) => {
     let baseFilters = "";
     const queryParams = [unitIds];
 
-    if (isShortlisted && user_role.toLowerCase() === "command") {
+    if (isGetWithdrawRequests) {
+      const ROLE_HIERARCHY = ["unit", "brigade", "division", "corps", "command"];
+
+const currentRole = user_role?.toLowerCase();
+const currentRoleIndex = ROLE_HIERARCHY.indexOf(currentRole);
+
+let lowerRole = null;
+
+if (currentRoleIndex > 0) {
+  lowerRole = ROLE_HIERARCHY[currentRoleIndex - 1];
+}
+      baseFilters = `
+        unit_id = ANY($1) AND (
+          (
+            is_withdraw_requested = TRUE AND withdraw_status = 'pending'
+          )
+          OR
+          (
+            withdraw_approved_by_role = $2 
+            AND withdraw_approved_by_user_id = $3 
+            AND (status_flag = 'approved' OR status_flag = 'rejected' OR status_flag = 'withdrawed')
+          )
+        )
+     AND status_flag IN ('approved', 'withdrawed')
+        AND last_approved_by_role = $4
+      `;
+      
+      queryParams.push(user_role);  // $2
+      queryParams.push(user.user_id); // $3Ù
+      queryParams.push(lowerRole); // $3Ù
+    }else if (isShortlisted && user_role.toLowerCase() === "command") {
       baseFilters = `
         unit_id = ANY($1)
         AND (
@@ -554,33 +601,41 @@ exports.getApplicationsOfSubordinates = async (user, query) => {
     }
 
     const citationQuery = `
-      SELECT 
-        citation_id AS id,
-        'citation' AS type,
-        unit_id,
-        date_init,
-        citation_fds AS fds,
-        status_flag,
-        last_approved_by_role,
-        last_approved_at
-      FROM Citation_tab
-      WHERE ${baseFilters}
-    `;
-
-    const appreQuery = `
-      SELECT 
-        appreciation_id AS id,
-        'appreciation' AS type,
-        unit_id,
-        date_init,
-        appre_fds AS fds,
-        status_flag,
-        last_approved_by_role,
-        last_approved_at
-      FROM Appre_tab
-      WHERE ${baseFilters}
-    `;
-
+    SELECT 
+      citation_id AS id,
+      'citation' AS type,
+      unit_id,
+      date_init,
+      citation_fds AS fds,
+      status_flag,
+      last_approved_by_role,
+      last_approved_at,
+      is_withdraw_requested,
+      withdraw_status,
+      withdraw_approved_by_role,
+      withdraw_approved_by_user_id
+    FROM Citation_tab
+    WHERE ${baseFilters}
+  `;
+  
+  const appreQuery = `
+    SELECT 
+      appreciation_id AS id,
+      'appreciation' AS type,
+      unit_id,
+      date_init,
+      appre_fds AS fds,
+      status_flag,
+      last_approved_by_role,
+      last_approved_at,
+      is_withdraw_requested,
+      withdraw_status,
+      withdraw_approved_by_role,
+      withdraw_approved_by_user_id
+    FROM Appre_tab
+    WHERE ${baseFilters}
+  `;
+  
     const [citations, appreciations] = await Promise.all([
       client.query(citationQuery, queryParams),
       client.query(appreQuery, queryParams),
@@ -680,12 +735,10 @@ exports.getApplicationsOfSubordinates = async (user, query) => {
         },
       };
     });
-// Filter clarifications_count === 0 if isGetNotClarifications is true
-if (isGetNotClarifications) {
-  allApps = allApps.filter(
-    (app) => app.clarifications_count === 0
-  );
-}
+    // Filter clarifications_count === 0 if isGetNotClarifications is true
+    if (isGetNotClarifications) {
+      allApps = allApps.filter((app) => app.clarifications_count === 0);
+    }
     // Sort by date
     allApps.sort((a, b) => new Date(b.date_init) - new Date(a.date_init));
 
@@ -1373,7 +1426,9 @@ exports.updateApplicationStatus = async (
   type,
   status,
   user,
-  member = null
+  member = null,
+  withdrawRequested = false,
+  withdraw_status = null
 ) => {
   const client = await dbService.getClient();
 
@@ -1394,6 +1449,100 @@ exports.updateApplicationStatus = async (
     const config = validTypes[type];
     if (!config) throw new Error("Invalid application type");
 
+    // If withdraw requested, handle it
+    if (withdrawRequested) {
+      const now = new Date();
+      const withdrawQuery = `
+      UPDATE ${config.table}
+      SET
+          is_withdraw_requested = TRUE,
+          withdraw_requested_by = $1,
+          withdraw_requested_at = $2,
+          withdraw_status = 'pending',
+          withdraw_requested_by_user_id = $3
+      WHERE ${config.column} = $4
+      RETURNING *;
+  `;
+      const withdrawValues = [user.user_role, now, user.user_id, id];
+      const withdrawResult = await client.query(withdrawQuery, withdrawValues);
+      if (withdrawResult.rowCount === 0)
+        throw new Error("Application not found or withdraw update failed");
+
+      return withdrawResult.rows[0];
+    }
+    if (withdraw_status === "approved" || withdraw_status === "rejected") {
+      const checkWithdrawQuery = `
+        SELECT is_withdraw_requested FROM ${config.table}
+        WHERE ${config.column} = $1
+      `;
+      const checkResult = await client.query(checkWithdrawQuery, [id]);
+    
+      if (checkResult.rowCount === 0) {
+        throw new Error("Application not found for withdraw status update");
+      }
+    
+      const { is_withdraw_requested } = checkResult.rows[0];
+    
+      if (is_withdraw_requested) {
+        const now = new Date();
+    
+        let updateWithdrawStatusQuery;
+        let updateValues;
+    
+        if (withdraw_status === "approved") {
+          updateWithdrawStatusQuery = `
+            UPDATE ${config.table}
+            SET
+              withdraw_status = $1,
+              withdraw_approved_by_role = $2,
+              withdraw_approved_by_user_id = $3,
+              withdraw_approved_at = $4,
+              status_flag = 'withdrawed'
+            WHERE ${config.column} = $5
+            RETURNING *;
+          `;
+          updateValues = [
+            withdraw_status,
+            user.user_role,
+            user.user_id,
+            now,
+            id,
+          ];
+        } else {
+          updateWithdrawStatusQuery = `
+            UPDATE ${config.table}
+            SET
+              withdraw_status = $1,
+              withdraw_approved_by_role = $2,
+              withdraw_approved_by_user_id = $3,
+              withdraw_approved_at = $4
+            WHERE ${config.column} = $5
+            RETURNING *;
+          `;
+          updateValues = [
+            withdraw_status,
+            user.user_role,
+            user.user_id,
+            now,
+            id,
+          ];
+        }
+    
+        const updateResult = await client.query(
+          updateWithdrawStatusQuery,
+          updateValues
+        );
+    
+        if (updateResult.rowCount === 0) {
+          throw new Error("Failed to update withdraw status");
+        }
+    
+        return updateResult.rows[0];
+      } else {
+        throw new Error("No withdraw request found on this application.");
+      }
+    }
+    
     const allowedStatuses = [
       "in_review",
       "in_clarification",
@@ -2100,13 +2249,14 @@ exports.getApplicationsHistory = async (user, query) => {
 
     // Construct filters
     const baseFilters = `
-      unit_id = ANY($1) AND
-      (
-        (status_flag = 'approved' AND last_approved_by_role = ANY($2)) OR
-        (status_flag = 'rejected' AND last_approved_by_role = ANY($3))
-      )
-    `;
-
+    unit_id = ANY($1) AND
+    (
+      (status_flag = 'approved' AND last_approved_by_role = ANY($2)) OR
+      (status_flag = 'shortlisted_approved' AND last_approved_by_role = ANY($2)) OR
+      (status_flag = 'rejected' AND last_approved_by_role = ANY($3)) OR
+      (status_flag = 'withdrawed' AND  withdraw_requested_by = ANY($4))
+    )
+  `;
     const getLowerRoles = (roles) => {
       return roles
         .map((role) => {
@@ -2118,36 +2268,59 @@ exports.getApplicationsHistory = async (user, query) => {
 
     const lowerRoles = getLowerRoles(allowedRoles);
 
-    const queryParams = [unitIds, allowedRoles, lowerRoles];
+    const queryParams = [unitIds, allowedRoles, lowerRoles,[user.user_role]];
 
     // Base Queries
     const citationQuery = `
-        SELECT 
-          citation_id AS id,
-          'citation' AS type,
-          unit_id,
-          date_init,
-          citation_fds AS fds,
-          status_flag,
-          last_approved_by_role,
-          last_approved_at
-        FROM Citation_tab
-        WHERE ${baseFilters}
-      `;
+    SELECT 
+      citation_id AS id,
+      'citation' AS type,
+      unit_id,
+      date_init,
+      citation_fds AS fds,
+      status_flag,
+      last_approved_by_role,
+      last_approved_at,
 
-    const appreQuery = `
-        SELECT 
-          appreciation_id AS id,
-          'appreciation' AS type,
-          unit_id,
-          date_init,
-          appre_fds AS fds,
-          status_flag,
-          last_approved_by_role,
-          last_approved_at
-        FROM Appre_tab
-        WHERE ${baseFilters}
-      `;
+      -- withdraw fields
+      is_withdraw_requested,
+      withdraw_requested_by,
+      withdraw_requested_at,
+      withdraw_status,
+      withdraw_requested_by_user_id,
+      withdraw_approved_by_role,
+      withdraw_approved_by_user_id,
+      withdraw_approved_at
+
+    FROM Citation_tab
+    WHERE ${baseFilters}
+`;
+
+const appreQuery = `
+    SELECT 
+      appreciation_id AS id,
+      'appreciation' AS type,
+      unit_id,
+      date_init,
+      appre_fds AS fds,
+      status_flag,
+      last_approved_by_role,
+      last_approved_at,
+
+      -- withdraw fields
+      is_withdraw_requested,
+      withdraw_requested_by,
+      withdraw_requested_at,
+      withdraw_status,
+      withdraw_requested_by_user_id,
+      withdraw_approved_by_role,
+      withdraw_approved_by_user_id,
+      withdraw_approved_at
+
+    FROM Appre_tab
+    WHERE ${baseFilters}
+`;
+
 
     const [citations, appreciations] = await Promise.all([
       client.query(citationQuery, queryParams),
@@ -2356,13 +2529,23 @@ exports.getAllApplications = async (user, query) => {
       baseFilters = `unit_id = ANY($1)`;
     } else {
       baseFilters = `
-          unit_id = ANY($1) AND
-          status_flag IN ('approved', 'rejected') AND
-          last_approved_by_role = ANY($2)
-        `;
+        (
+          (
+            unit_id = ANY($1) AND
+            status_flag IN ('approved', 'rejected') AND
+            last_approved_by_role = ANY($2)
+          )
+          OR
+          (
+            unit_id = ANY($1) AND
+            status_flag = 'in_review' AND
+            last_approved_by_role IS NULL AND
+            last_approved_at IS NULL
+          )
+        )
+      `;
       queryParams.push(allowedRoles);
     }
-
     const citationQuery = `
         SELECT 
           citation_id AS id,
@@ -2371,7 +2554,10 @@ exports.getAllApplications = async (user, query) => {
           date_init,
           citation_fds AS fds,
           status_flag,
-          is_mo_ol_approved,
+   is_mo_approved,
+      mo_approved_at,
+      is_ol_approved,
+      ol_approved_at,
           last_approved_by_role,
           last_approved_at
         FROM Citation_tab
@@ -2386,7 +2572,10 @@ exports.getAllApplications = async (user, query) => {
           date_init,
           appre_fds AS fds,
           status_flag,
-          is_mo_ol_approved,
+  is_mo_approved,
+      mo_approved_at,
+      is_ol_approved,
+      ol_approved_at,
           last_approved_by_role,
           last_approved_at
         FROM Appre_tab

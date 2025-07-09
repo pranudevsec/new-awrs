@@ -23,7 +23,14 @@ export interface ApplicationDetail {
   clarifications_count: number;
   total_pending_clarifications: number;
   unit_name: string;
-  is_mo_ol_approved:boolean;
+  is_mo_approved: boolean;
+  mo_approved_at: string | null; 
+
+  is_ol_approved: boolean;
+  ol_approved_at: string | null;
+  is_hr_review: boolean;
+  is_dv_review: boolean;
+  is_mp_review: boolean;
 }
 
 export interface FetchApplicationUnitDetailResponse {
@@ -49,7 +56,10 @@ export interface UpdateApplicationParams {
   id?: number;
   type?: string;
   status?: string;
-  is_mo_ol_approved?: boolean;
+  is_mo_approved?: boolean;
+  is_ol_approved?: boolean;
+  withdrawRequested?: boolean;
+  withdraw_status?: string;
   member?:any;
   level?:string
 }

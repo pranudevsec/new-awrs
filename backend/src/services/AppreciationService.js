@@ -61,36 +61,45 @@ exports.createAppre = async (data, user) => {
       parameters: enrichedParams,
     };
 
-    // If special unit, auto-approve and set is_mo_ol_approved = true
-    let isshortlisted = false;
-    let last_approved_at = null;
-    let last_approved_by_role = null;
-    let is_mo_ol_approved = false;
+let isshortlisted = false;
+let last_approved_at = null;
+let last_approved_by_role = null;
+let is_mo_approved = false;
+let mo_approved_at = null;
+let is_ol_approved = false;
+let ol_approved_at = null;
 
-    if (isSpecialUnit && !isDraft) {
-      isshortlisted = true;
-      last_approved_at = new Date().toISOString();
-      last_approved_by_role = 'command';
-      status_flag = "approved";
-      is_mo_ol_approved = true; 
-    }
+if (isSpecialUnit && !isDraft) {
+  isshortlisted = true;
+  last_approved_at = new Date().toISOString();
+  last_approved_by_role = 'command';
+  status_flag = "approved";
+  is_mo_approved = true;
+  mo_approved_at = new Date().toISOString();
+  is_ol_approved = true;
+  ol_approved_at = new Date().toISOString();
+}
 
-    const result = await client.query(
-      `INSERT INTO Appre_tab 
-       (unit_id, date_init, appre_fds, status_flag, isshortlisted, last_approved_at, last_approved_by_role, is_mo_ol_approved)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
-       RETURNING *`,
-      [
-        user.unit_id,
-        date_init,
-        JSON.stringify(finalFds),
-        status_flag,
-        isshortlisted,
-        last_approved_at,
-        last_approved_by_role,
-        is_mo_ol_approved
-      ]
-    );
+const result = await client.query(
+  `INSERT INTO Appre_tab 
+   (unit_id, date_init, appre_fds, status_flag, isshortlisted, last_approved_at, last_approved_by_role, 
+    is_mo_approved, mo_approved_at, is_ol_approved, ol_approved_at)
+   VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+   RETURNING *`,
+  [
+    user.unit_id,
+    date_init,
+    JSON.stringify(finalFds),
+    status_flag,
+    isshortlisted,
+    last_approved_at,
+    last_approved_by_role,
+    is_mo_approved,
+    mo_approved_at,
+    is_ol_approved,
+    ol_approved_at
+  ]
+);
 
     return ResponseHelper.success(201, "Appreciation created", result.rows[0]);
   } catch (err) {
@@ -137,7 +146,19 @@ exports.getAppreById = async (id) => {
 exports.updateAppre = async (id, data,user) => {
   const client = await dbService.getClient();
   try {
-    const allowedFields = [ "date_init", "appre_fds", "status_flag","isShortlisted","is_mo_ol_approved"];
+    const allowedFields = [
+      "date_init",
+      "appre_fds",
+      "status_flag",
+      "isShortlisted",
+      "is_mo_approved",
+      "mo_approved_at",
+      "is_ol_approved",
+      "ol_approved_at",
+      "is_hr_review",
+      "is_dv_review",
+      "is_mp_review"
+    ];    
     const keys = Object.keys(data).filter((key) => allowedFields.includes(key));
 
     if (keys.length === 0) {

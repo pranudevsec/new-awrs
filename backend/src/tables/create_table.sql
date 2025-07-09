@@ -118,6 +118,9 @@ CREATE TABLE Unit_tab (
     location VARCHAR,
     awards JSONB DEFAULT '[]',
     members JSONB DEFAULT '[]',
+    is_hr_review BOOLEAN DEFAULT FALSE,
+is_dv_review BOOLEAN DEFAULT FALSE,
+is_mp_review BOOLEAN DEFAULT FALSE,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
@@ -135,13 +138,27 @@ CREATE TABLE Citation_tab (
     last_approved_by_role VARCHAR(50),
 last_approved_at TIMESTAMP,
     status_flag VARCHAR(20) NOT NULL CHECK (
-        status_flag IN ( 'in_review', 'in_clarification', 'approved', 'rejected','draft','shortlisted_approved')
+        status_flag IN ( 'in_review', 'in_clarification', 'approved', 'rejected','draft','shortlisted_approved','withdrawed')
     ),
     isShortlisted BOOLEAN DEFAULT FALSE,
-    is_mo_ol_approved BOOLEAN DEFAULT FALSE,
+    is_mo_approved BOOLEAN DEFAULT FALSE,
+    mo_approved_at TIMESTAMP,
+    is_ol_approved BOOLEAN DEFAULT FALSE,
+    ol_approved_at TIMESTAMP,
     last_shortlisted_approved_role VARCHAR(50),
     unitRemarks TEXT, 
-     remarks JSON 
+     remarks JSON ,
+  is_hr_review BOOLEAN DEFAULT FALSE,
+is_dv_review BOOLEAN DEFAULT FALSE,
+is_mp_review BOOLEAN DEFAULT FALSE,
+    is_withdraw_requested BOOLEAN DEFAULT FALSE,
+    withdraw_requested_by VARCHAR(50),
+    withdraw_requested_at TIMESTAMP,
+    withdraw_status VARCHAR(20),
+    withdraw_requested_by_user_id INTEGER,
+    withdraw_approved_by_role VARCHAR(50),
+    withdraw_approved_by_user_id INTEGER,
+    withdraw_approved_at TIMESTAMP
 );
 --------------------------------------------------------------------------------------------Appre_tab-------------------------------------------------------------------------------------------------------------------------------
 -- Drop if exists
@@ -156,13 +173,25 @@ CREATE TABLE Appre_tab (
     last_approved_by_role VARCHAR(50),
 last_approved_at TIMESTAMP,
      status_flag VARCHAR(20) NOT NULL CHECK (
-        status_flag IN ('in_review','in_clarification', 'approved', 'rejected','draft','shortlisted_approved')
+        status_flag IN ('in_review','in_clarification', 'approved', 'rejected','draft','shortlisted_approved','withdrawed')
     ),
-    is_mo_ol_approved BOOLEAN DEFAULT FALSE,
+    is_mo_approved BOOLEAN DEFAULT FALSE,
+    mo_approved_at TIMESTAMP,
+    is_ol_approved BOOLEAN DEFAULT FALSE,
+    ol_approved_at TIMESTAMP,
     isShortlisted BOOLEAN DEFAULT FALSE ,
     last_shortlisted_approved_role VARCHAR(50),
     unitRemarks TEXT, 
-     remarks JSON 
+     remarks JSON ,
+
+    is_withdraw_requested BOOLEAN DEFAULT FALSE,
+    withdraw_requested_by VARCHAR(50),
+    withdraw_requested_at TIMESTAMP,
+    withdraw_status VARCHAR(20) ,
+    withdraw_requested_by_user_id INTEGER,
+    withdraw_approved_by_role VARCHAR(50),
+    withdraw_approved_by_user_id INTEGER,
+    withdraw_approved_at TIMESTAMP
 );
 
 --------------------------------------------------------------------------------------------Clarification_tab-------------------------------------------------------------------------------------------------------------------------------
