@@ -49,11 +49,11 @@ const AppreciationReviewPage = () => {
     const [command, setCommand] = useState("");
     const [uploadedFiles, setUploadedFiles] = useState<Record<number, string[]>>(() => {
         try {
-          return JSON.parse(localStorage.getItem(DRAFT_FILE_UPLOAD_KEY) || "{}");
+            return JSON.parse(localStorage.getItem(DRAFT_FILE_UPLOAD_KEY) || "{}");
         } catch {
-          return {};
+            return {};
         }
-      });
+    });
 
     const [unitRemarks, setUnitRemarks] = useState(() => {
         return localStorage.getItem("applyAppreciationUnitRemarks") || "";
@@ -63,8 +63,8 @@ const AppreciationReviewPage = () => {
         localStorage.setItem("applyAppreciationUnitRemarks", unitRemarks);
     }, [unitRemarks]);
 
-    const filteredParameters = parameters.filter((param: any) => counts[param.param_id] !== undefined && counts[param.param_id] !== "");
-    const groupedParams = groupParametersByCategory(filteredParameters);
+    // const filteredParameters = parameters.filter((param: any) => counts[param.param_id] !== undefined && counts[param.param_id] !== "");
+    const groupedParams = groupParametersByCategory(parameters);
 
     useEffect(() => {
         if (!initializedRef.current) {
@@ -123,35 +123,38 @@ const AppreciationReviewPage = () => {
         e: React.ChangeEvent<HTMLInputElement>,
         paramId: number,
         paramName: string
-      ) => {
-        const files = e.target.files;
+    ) => {
+        const input = e.target;
+        const files = input.files;
         if (!files || files.length === 0) return;
-      
+
         const uploadedUrls: string[] = [];
+
         for (const file of files) {
-          if (file.size > 5 * 1024 * 1024) {
-            toast.error(`File ${file.name} exceeds 5MB`);
-            continue;
-          }
-          const uploadedUrl = await uploadFileToServer(file, paramName);
-          if (uploadedUrl) {
-            uploadedUrls.push(uploadedUrl);
-          }
+            if (file.size > 5 * 1024 * 1024) {
+                toast.error(`File ${file.name} exceeds 5MB`);
+                continue;
+            }
+            const uploadedUrl = await uploadFileToServer(file, paramName);
+            if (uploadedUrl) {
+                uploadedUrls.push(uploadedUrl);
+            }
         }
-      
+
         if (uploadedUrls.length > 0) {
-          const newUploads = { 
-            ...uploadedFiles, 
-            [paramId]: [...(uploadedFiles[paramId] || []), ...uploadedUrls]
-          };
-          setUploadedFiles(newUploads);
-          localStorage.setItem(DRAFT_FILE_UPLOAD_KEY, JSON.stringify(newUploads));
-          toast.success(`Uploaded ${uploadedUrls.length} file(s)`);
+            const newUploads = {
+                ...uploadedFiles,
+                [paramId]: [...(uploadedFiles[paramId] || []), ...uploadedUrls]
+            };
+            setUploadedFiles(newUploads);
+            localStorage.setItem(DRAFT_FILE_UPLOAD_KEY, JSON.stringify(newUploads));
+            toast.success(`Uploaded ${uploadedUrls.length} file(s)`);
         } else {
-          toast.error("No files uploaded");
+            // toast.error("No files uploaded");
+            input.value = "";
         }
-      };
-    
+    };
+
 
     // Formik form
     const formik = useFormik({
@@ -213,7 +216,7 @@ const AppreciationReviewPage = () => {
                     },
                 };
 
-                const resultAction :any= await dispatch(createAppreciation(payload));
+                const resultAction: any = await dispatch(createAppreciation(payload));
                 const result = unwrapResult(resultAction);
 
                 if (result.success) {
@@ -222,10 +225,11 @@ const AppreciationReviewPage = () => {
                     const id = resultAction?.payload?.data?.appreciation_id;
 
                     if (id) {
-                      navigate(`/applications/thanks?id=${id}`);
+                        navigate(`/applications/thanks?id=${id}`);
                     } else {
-                      navigate("/applications/thanks");
-                    }                } else {
+                        navigate("/applications/thanks");
+                    }
+                } else {
                     toast.error("Failed to create appreciation.");
                 }
             } catch (err) {
@@ -279,31 +283,31 @@ const AppreciationReviewPage = () => {
     const totalParams = parameters.length;
     const getParamDisplay = (param: any) => {
         if (param.name != "no") {
-          return {
-            main: param.name,
-            header: param.subcategory || null,
-            subheader: param.subsubcategory || null,
-          };
+            return {
+                main: param.name,
+                header: param.subcategory || null,
+                subheader: param.subsubcategory || null,
+            };
         } else if (param.subsubcategory) {
-          return {
-            main: param.subsubcategory,
-            header: param.subcategory || null,
-            subheader: null,
-          };
+            return {
+                main: param.subsubcategory,
+                header: param.subcategory || null,
+                subheader: null,
+            };
         } else if (param.subcategory) {
-          return {
-            main: param.subcategory,
-            header: null,
-            subheader: null,
-          };
+            return {
+                main: param.subcategory,
+                header: null,
+                subheader: null,
+            };
         } else {
-          return {
-            main: param.category,
-            header: null,
-            subheader: null,
-          };
+            return {
+                main: param.category,
+                header: null,
+                subheader: null,
+            };
         }
-      };
+    };
     // Show loader
     if (loading) return <Loader />
 
@@ -365,6 +369,39 @@ const AppreciationReviewPage = () => {
                             </div>
                         </div>
                     </div>
+                    {profile?.unit?.awards?.length > 0 && (
+  <div className="mt-4">
+    <h5 className="mb-3">Awards</h5>
+    <div className="table-responsive">
+      <table className="table-style-2 w-100">
+        <thead>
+          <tr>
+            <th style={{ width: 150, minWidth: 150, maxWidth: 150 }}>Type</th>
+            <th style={{ width: 200, minWidth: 200, maxWidth: 200 }}>Year</th>
+            <th style={{ width: 300, minWidth: 300, maxWidth: 300 }}>Title</th>
+          </tr>
+        </thead>
+        <tbody>
+        {profile?.unit?.awards?.map((award:any) => (
+            <tr key={award.award_id}>
+    
+              <td style={{ width: 150, minWidth: 150, maxWidth: 150 }}>
+                <p className="fw-4 text-capitalize">{award.award_type}</p>
+              </td>
+              <td style={{ width: 200, minWidth: 200, maxWidth: 200 }}>
+                <p className="fw-4">{award.award_year}</p>
+              </td>
+              <td style={{ width: 300, minWidth: 300, maxWidth: 300 }}>
+                <p className="fw-4">{award.award_title}</p>
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  </div>
+)}
+
                     <div
                         ref={scrollContainerRef}
                         style={{
@@ -419,36 +456,36 @@ const AppreciationReviewPage = () => {
                                                         <span><p className="fw-5">{markValue !== undefined ? markValue : "--"}</p></span>
                                                     </td>
                                                     <td style={{ width: 200, minWidth: 200, maxWidth: 200 }}>
-                                                    {param.proof_reqd ? (
-  <>
-    {uploadedFiles[param.param_id]?.length > 0 && (
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-        {uploadedFiles[param.param_id].map((fileUrl, idx) => (
-          <a
-            key={idx}
-            href={`${baseURL}${fileUrl}`}
-            target="_blank"
-            rel="noopener noreferrer"
-            style={{ fontSize: 14, wordBreak: 'break-all' }}
-          >
-            {fileUrl.split("/").pop()}
-          </a>
-        ))}
-      </div>
-    )}
-    <input
-      type="file"
-      className="form-control mt-1"
-      multiple
-      onChange={(e) => {
-        const display = getParamDisplay(param);
-        handleFileChange(e, param.param_id, display.main);
-      }}
-    />
-  </>
-) : (
-  <span>Not required</span>
-)}
+                                                        {param.proof_reqd ? (
+                                                            <>
+                                                                {uploadedFiles[param.param_id]?.length > 0 && (
+                                                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                                                                        {uploadedFiles[param.param_id].map((fileUrl, idx) => (
+                                                                            <a
+                                                                                key={idx}
+                                                                                href={`${baseURL}${fileUrl}`}
+                                                                                target="_blank"
+                                                                                rel="noopener noreferrer"
+                                                                                style={{ fontSize: 14, wordBreak: 'break-all' }}
+                                                                            >
+                                                                                {fileUrl.split("/").pop()}
+                                                                            </a>
+                                                                        ))}
+                                                                    </div>
+                                                                )}
+                                                                <input
+                                                                    type="file"
+                                                                    className="form-control mt-1"
+                                                                    multiple
+                                                                    onChange={(e) => {
+                                                                        const display = getParamDisplay(param);
+                                                                        handleFileChange(e, param.param_id, display.main);
+                                                                    }}
+                                                                />
+                                                            </>
+                                                        ) : (
+                                                            <span>Not required</span>
+                                                        )}
                                                     </td>
                                                 </tr>
                                             );

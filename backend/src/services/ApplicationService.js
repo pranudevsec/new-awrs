@@ -177,7 +177,7 @@ exports.getAllApplicationsForHQ = async (user, query) => {
 
     const isMoOlCondition =
       user?.user_role === "cw2" ? "" : "AND is_mo_ol_approved = true";
-
+console.log(isMoOlCondition)
     const citations = await client.query(`
       SELECT 
         citation_id AS id,
@@ -191,7 +191,6 @@ exports.getAllApplicationsForHQ = async (user, query) => {
       WHERE 
         status_flag = 'approved' 
         AND last_approved_by_role = 'command'
-        ${isMoOlCondition}
     `);
 
     const appreciations = await client.query(`
@@ -207,7 +206,6 @@ exports.getAllApplicationsForHQ = async (user, query) => {
       WHERE 
         status_flag = 'approved' 
         AND last_approved_by_role = 'command'
-        ${isMoOlCondition}
     `);
 
     let allApps = [...citations.rows, ...appreciations.rows];
@@ -475,7 +473,7 @@ exports.getApplicationsOfSubordinates = async (user, query) => {
 
   try {
     const { user_role } = user;
-    const { award_type, search, page = 1, limit = 10, isShortlisted } = query;
+    const { award_type, search, page = 1, limit = 10, isShortlisted ,isGetNotClarifications} = query;
 
     const profile = await AuthService.getProfile(user);
     const unit = profile?.data?.unit;
@@ -682,7 +680,12 @@ exports.getApplicationsOfSubordinates = async (user, query) => {
         },
       };
     });
-
+// Filter clarifications_count === 0 if isGetNotClarifications is true
+if (isGetNotClarifications) {
+  allApps = allApps.filter(
+    (app) => app.clarifications_count === 0
+  );
+}
     // Sort by date
     allApps.sort((a, b) => new Date(b.date_init) - new Date(a.date_init));
 

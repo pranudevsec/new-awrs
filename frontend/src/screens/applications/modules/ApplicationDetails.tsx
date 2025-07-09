@@ -475,15 +475,17 @@ const ApplicationDetails = () => {
                 <th style={{ width: 100 }}>Count</th>
                 <th style={{ width: 100 }}>Marks</th>
                 <th style={{ width: 100 }}>Document</th>
+              
                 {/* {isCW2Role && <th style={{ width: 100 }}>Drop comment</th>} */}
                 {!isUnitRole && !isHeadquarter && (
                   <>
+                    <th style={{ width: 200 }}>Approved Marks</th>
                     {!isRaisedScreen && (
                       <th style={{ width: 150 }}>Ask Clarification</th>
                     )}
                     {isRaisedScreen && (
                       <>
-                        <th style={{ width: 200 }}>Approved Marks</th>
+                      
                         <th style={{ width: 200 }}>Requested Clarification</th>
                         <th style={{ width: 150 }}>Action</th>{" "}
                       </>
@@ -578,6 +580,21 @@ const ApplicationDetails = () => {
                       {/* Your logic for conditional clarification/approval UI below */}
                       {!isUnitRole && !isHeadquarter && (
                         <>
+                               <td style={{ width: 200 }}>
+                                <input
+                                  type="text"
+                                  className="form-control"
+                                  placeholder="Enter approved marks"
+                                  autoComplete="off"
+                                  value={
+                                    param?.clarification_details?.clarification_status === "rejected"
+                                      ? "0"
+                                      : approvedMarksState[param.name] ?? ""
+                                  }
+                                  disabled={param?.clarification_details?.clarification_status === "rejected"}
+                                  onChange={(e) => handleInputChange(param.name, e.target.value)}
+                                />
+                              </td>
                           {!isRaisedScreen && (
                             <td style={{ width: 120 }}>
                               {param?.clarification_id ||
@@ -613,21 +630,7 @@ const ApplicationDetails = () => {
 
                           {isRaisedScreen && (
                             <>
-                              <td style={{ width: 200 }}>
-                                <input
-                                  type="text"
-                                  className="form-control"
-                                  placeholder="Enter approved marks"
-                                  autoComplete="off"
-                                  value={
-                                    param?.clarification_details?.clarification_status === "rejected"
-                                      ? "0"
-                                      : approvedMarksState[param.name] ?? ""
-                                  }
-                                  disabled={param?.clarification_details?.clarification_status === "rejected"}
-                                  onChange={(e) => handleInputChange(param.name, e.target.value)}
-                                />
-                              </td>
+                       
                               <td style={{ width: 200 }}>
                                 {param?.clarification_details?.clarification ? (
                                   <button
@@ -1044,20 +1047,23 @@ const ApplicationDetails = () => {
           >
             {!isHeadquarter && (
               <>
-                <div className="mb-2">
-                  <label className="form-label mb-1">Priority:</label>
-                  <input
-                    type="text"
-                    className="form-control"
-                    name="priority"
-                    value={priority}
-                    onChange={(e) => {
-                      const value = e.target.value;
-                      setPriority(value);
-                      handlePriorityChange(value);
-                    }}
-                  />
-                </div>
+               {(cw2_type === "mo" || cw2_type === "ol") && (
+  <div className="mb-2">
+    <label className="form-label mb-1">Priority:</label>
+    <input
+      type="text"
+      className="form-control"
+      name="priority"
+      value={priority}
+      onChange={(e) => {
+        const value = e.target.value;
+        setPriority(value);
+        handlePriorityChange(value);
+      }}
+    />
+  </div>
+)}
+
                 <form
                   onSubmit={(e) => {
                     e.preventDefault();

@@ -21,6 +21,7 @@ interface FetchUnitsParams {
   page?: number;
   limit?: number;
   isShortlisted?: boolean;
+  isGetNotClarifications?: boolean;
 }
 
 interface FetchHQApplicationsParams {
@@ -236,7 +237,9 @@ export const fetchSubordinates = createAsyncThunk<
     if (params?.isShortlisted !== undefined) {
       queryParams.append("isShortlisted", String(params.isShortlisted));
     }
-    
+    if (params?.isGetNotClarifications !== undefined) {
+      queryParams.append("isGetNotClarifications", String(params.isGetNotClarifications));
+    }
     const response = await Axios.get(
       `${apiEndPoints.applicationSubordinates}?${queryParams.toString()}`
     );
