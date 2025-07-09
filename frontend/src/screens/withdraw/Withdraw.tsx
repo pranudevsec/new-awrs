@@ -2,17 +2,14 @@ import { useEffect, useState } from "react";
 import { awardTypeOptions } from "../../data/options";
 import { SVGICON } from "../../constants/iconsList";
 import { useAppDispatch, useAppSelector } from "../../reduxToolkit/hooks";
-import {
-  fetchApplicationHistory,
-  updateApplication,
-} from "../../reduxToolkit/services/application/applicationService";
+import { fetchSubordinates, updateApplication } from "../../reduxToolkit/services/application/applicationService";
 import Breadcrumb from "../../components/ui/breadcrumb/Breadcrumb";
 import FormSelect from "../../components/form/FormSelect";
 import EmptyTable from "../../components/ui/empty-table/EmptyTable";
 import Loader from "../../components/ui/loader/Loader";
 import Pagination from "../../components/ui/pagination/Pagination";
 
-const History = () => {
+const Withdraw = () => {
   const dispatch = useAppDispatch();
 
   const profile = useAppSelector((state) => state.admin.profile);
@@ -40,14 +37,18 @@ const History = () => {
     if (!profile?.user?.user_role) return;
 
     const fetchData = () => {
+      const role = profile.user.user_role;
+
       const params = {
         award_type: awardType || "",
         search: debouncedSearch,
         page,
         limit,
+        isGetWithdrawRequests: true,
       };
-
-      dispatch(fetchApplicationHistory(params));
+      if (role !== "unit") {
+        dispatch(fetchSubordinates(params));
+      }
     };
 
     fetchData();
@@ -57,10 +58,10 @@ const History = () => {
     <div className="clarification-section" style={{ padding: "2rem" }}>
       <div className="d-flex flex-sm-row flex-column align-items-sm-center justify-content-between mb-4">
         <Breadcrumb
-          title="History"
+          title="Withdraw Requests"
           paths={[
             { label: "Home", href: "/applications" },
-            { label: "History", href: "/history" },
+            { label: "Withdraw Requests", href: "/withdraw-quests" },
           ]}
         />
       </div>
@@ -78,26 +79,16 @@ const History = () => {
             onChange={(e) => setSearchTerm(e.target.value)}
           />
         </div>
-        <div className="d-flex gap-2">
-          <button
-            type="button"
-            className="_btn success"
-            onClick={() =>
-              alert(`Signature Submitted.Now you can view the history data`)
-            }
-          >
-            Add Signature
-          </button>
-          <FormSelect
-            name="awardType"
-            options={awardTypeOptions}
-            value={awardType}
-            placeholder="Select Type"
-            onChange={(option: OptionType | null) =>
-              setAwardType(option ? option.value : null)
-            }
-          />
-        </div>
+
+        <FormSelect
+          name="awardType"
+          options={awardTypeOptions}
+          value={awardType}
+          placeholder="Select Type"
+          onChange={(option: OptionType | null) =>
+            setAwardType(option ? option.value : null)
+          }
+        />
       </div>
 
       <div className="table-responsive">
@@ -122,14 +113,8 @@ const History = () => {
                 Dead Line
               </th>
               <th style={{ width: 150, minWidth: 150, maxWidth: 150 }}>Type</th>
-              <th style={{ width: 150, minWidth: 150, maxWidth: 150 }}>
-                Status
-              </th>
-              <th style={{ width: 150, minWidth: 150, maxWidth: 150 }}>
-                Approved By Stage
-              </th>
-              <th style={{ width: 150, minWidth: 150, maxWidth: 150 }}>
-                Action
+              <th style={{ width: 100, minWidth: 100, maxWidth: 100 }}>
+                Withdraw Actions
               </th>
             </tr>
           </thead>
@@ -146,7 +131,19 @@ const History = () => {
             ) : (
               units.length > 0 &&
               units.map((unit: any, idx) => (
-                <tr key={idx}>
+                <tr
+                  key={idx}
+                //   onClick={() => {
+                //     if (unit.status_flag === "draft") {
+                //       navigate(`/applications/${unit.type}?id=${unit.id}`);
+                //     } else {
+                //       navigate(
+                //         `/applications/list/${unit.id}?award_type=${unit.type}`
+                //       );
+                //     }
+                //   }}
+                //   style={{ cursor: "pointer" }}
+                >
                   <td style={{ width: 150, minWidth: 150, maxWidth: 150 }}>
                     <p className="fw-4">#{unit.id}</p>
                   </td>
@@ -173,81 +170,70 @@ const History = () => {
                   </td>
                   <td style={{ width: 150, minWidth: 150, maxWidth: 150 }}>
                     <p className="fw-4">
-                      {unit?.type
-                        ? unit.type.charAt(0).toUpperCase() + unit.type.slice(1)
-                        : "-"}
+                      {unit.type.charAt(0).toUpperCase() + unit.type.slice(1)}
                     </p>
                   </td>
 
-                  <td style={{ width: 150, minWidth: 150, maxWidth: 150 }}>
-                    <p
-                      className="fw-4"
-                      style={{
-                        color:
-                          unit?.status_flag === "approved" ? "green" : "red",
-                      }}
-                    >
-                      {unit?.status_flag
-                        ? unit.status_flag.charAt(0).toUpperCase() +
-                          unit.status_flag.slice(1)
-                        : "-"}
-                    </p>
-                  </td>
-
-                  {/* <td style={{ width: 200, minWidth: 200, maxWidth: 200 }}>
-                    <div className="status-content approved pending d-flex align-items-center gap-3">
-                      <span></span>
-                      <p className="text-capitalize fw-5">Accepted</p>
-                    </div>
-                  </td> */}
-                  <td style={{ width: 150, minWidth: 150, maxWidth: 150 }}>
-                    <p className="fw-4">
-                      {unit?.status_flag === "rejected"
-                        ? "N/A"
-                        : unit?.last_approved_by_role
-                        ? unit.last_approved_by_role?.charAt(0).toUpperCase() +
-                          unit.last_approved_by_role.slice(1)
-                        : "-"}
-                    </p>
-                  </td>
                   <td>
-  {unit?.is_withdraw_requested ? (
-    <>
-      {unit.withdraw_status === 'approved' && (
-        <span className="badge bg-success text-nowrap">Withdraw Approved</span>
-      )}
-      {unit.withdraw_status === 'rejected' && (
-        <span className="badge bg-danger text-nowrap">Withdraw Rejected</span>
-      )}
-      {unit.withdraw_status === 'pending' && (
-        <span className="badge bg-warning text-dark text-nowrap">Withdraw Pending</span>
-      )}
-    </>
-  ) : (
-    <button
-      type="button"
-      className="_btn success text-nowrap w-sm-auto"
-      onClick={() => {
-        dispatch(
-          updateApplication({
-            id: unit?.id,
-            type: unit?.type,
-            withdrawRequested: true,
-          })
-        ).then(() => {
-          const params = {
-            award_type: awardType || "",
-            search: debouncedSearch,
-            page,
-            limit,
-          };
-          dispatch(fetchApplicationHistory(params));
-        });
-      }}
-    >
-      Withdraw
-    </button>
-  )}
+  <div className="d-flex flex-sm-row flex-column gap-sm-3 gap-1">
+    {unit?.withdraw_status === 'approved' ? (
+      <span className="badge bg-success text-white text-nowrap">Approved</span>
+    ) : unit?.withdraw_status === 'rejected' ? (
+      <span className="badge bg-danger text-white text-nowrap">Rejected</span>
+    ) : (
+      <>
+        <button
+          type="button"
+          className="_btn success text-nowrap w-sm-auto"
+          onClick={() => {
+            dispatch(
+              updateApplication({
+                id: unit?.id,
+                type: unit?.type,
+                withdraw_status: 'approved',
+              })
+            ).then(() => {
+              const params = {
+                award_type: awardType || "",
+                search: debouncedSearch,
+                page,
+                limit,
+                isGetWithdrawRequests: true,
+              };
+              dispatch(fetchSubordinates(params));
+            });
+          }}
+        >
+          Accept
+        </button>
+
+        <button
+          type="button"
+          className="_btn danger text-nowrap w-sm-auto"
+          onClick={() => {
+            dispatch(
+              updateApplication({
+                id: unit?.id,
+                type: unit?.type,
+                withdraw_status: 'rejected',
+              })
+            ).then(() => {
+              const params = {
+                award_type: awardType || "",
+                search: debouncedSearch,
+                page,
+                limit,
+                isGetWithdrawRequests: true,
+              };
+              dispatch(fetchSubordinates(params));
+            });
+          }}
+        >
+          Reject
+        </button>
+      </>
+    )}
+  </div>
 </td>
 
                 </tr>
@@ -273,4 +259,4 @@ const History = () => {
   );
 };
 
-export default History;
+export default Withdraw;

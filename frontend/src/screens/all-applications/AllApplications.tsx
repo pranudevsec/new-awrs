@@ -199,13 +199,7 @@ const History = () => {
                       {unit?.status_flag === "rejected"
                         ? "N/A"
                         : unit?.last_approved_by_role
-                          ? unit.last_approved_by_role === "command" && unit.is_mo_ol_approved
-                            ? unit.type === "citation"
-                              ? "MO"
-                              : unit.type === "appreciation"
-                                ? "OL"
-                                : unit.last_approved_by_role.charAt(0).toUpperCase() + unit.last_approved_by_role.slice(1)
-                            : unit.last_approved_by_role.charAt(0).toUpperCase() + unit.last_approved_by_role.slice(1)
+                          ? unit.last_approved_by_role.charAt(0).toUpperCase() + unit.last_approved_by_role.slice(1)
                           : "Unit"
                       }
                     </p>

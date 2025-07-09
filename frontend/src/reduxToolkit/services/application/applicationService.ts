@@ -22,6 +22,7 @@ interface FetchUnitsParams {
   limit?: number;
   isShortlisted?: boolean;
   isGetNotClarifications?: boolean;
+  isGetWithdrawRequests?: boolean;
 }
 
 interface FetchHQApplicationsParams {
@@ -240,6 +241,9 @@ export const fetchSubordinates = createAsyncThunk<
     if (params?.isGetNotClarifications !== undefined) {
       queryParams.append("isGetNotClarifications", String(params.isGetNotClarifications));
     }
+    if (params?.isGetWithdrawRequests !== undefined) {
+      queryParams.append("isGetWithdrawRequests", String(params.isGetWithdrawRequests));
+    }
     const response = await Axios.get(
       `${apiEndPoints.applicationSubordinates}?${queryParams.toString()}`
     );
@@ -273,7 +277,9 @@ export const updateApplication = createAsyncThunk<
       {
         type: params.type,
         status: params.status,
-        member: params.member
+        member: params.member,
+        withdrawRequested:params.withdrawRequested,
+        withdraw_status:params.withdraw_status
       }
     );
 
@@ -283,11 +289,11 @@ export const updateApplication = createAsyncThunk<
       );
       return response.data;
     } else {
-      toast.error(response.data.message || "Failed to update application");
+      toast.error(response.data.errors||response.data.message || "Failed to update application");
       return rejectWithValue(response.data.message);
     }
   } catch (error: any) {
-    toast.error(error.response?.data?.message || "Error updating application");
+    toast.error( error.response?.data?.errors|| error.response?.data?.message || "Error updating application");
     return rejectWithValue(
       error.response?.data?.message || "Failed to update application"
     );

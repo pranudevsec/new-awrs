@@ -4,6 +4,7 @@ import { Navigate } from "react-router-dom";
 import Login from "../screens/auth/Login";
 import SignUp from "../screens/auth/SignUp";
 import AllApplications from "../screens/all-applications/AllApplications";
+import Withdraw from "../screens/withdraw/Withdraw";
 
 const Applications = lazy(() => import("../screens/applications/Applications"));
 const AcceptedApplicationsList = lazy(() => import("../screens/applications/modules/AcceptedApplicationsList"));
@@ -97,4 +98,7 @@ export const authProtectedRoutes: RouteConfig[] = [
 
   // All Applications
   { path: "/all-applications", element: <AllApplications /> },
+
+  // Withdraw Requests Applications
+  { path: "/withdraw-quests", element: <Withdraw /> },
 ];
