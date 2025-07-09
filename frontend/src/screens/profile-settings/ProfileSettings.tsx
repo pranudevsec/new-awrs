@@ -467,7 +467,7 @@ const ProfileSettings = () => {
                               setAwards(updated);
                             }}
                           >
-                            <option value="goc">GOC</option>
+                            <option value="goc">GOC_IN_C</option>
                             <option value="coas">COAS</option>
                             <option value="cds">CDS</option>
                           </select>

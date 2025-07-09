@@ -23,6 +23,8 @@ import toast from "react-hot-toast";
 import { updateCitation } from "../../../reduxToolkit/services/citation/citationService";
 import { updateAppreciation } from "../../../reduxToolkit/services/appreciation/appreciationService";
 import StepProgressBar from "../../../components/ui/stepProgressBar/StepProgressBar";
+import {TokenValidation} from "../../../reduxToolkit/services/application/applicationService"
+import { getSignedData } from "../../../reduxToolkit/services/application/applicationService";
 
 const ApplicationDetails = () => {
   const navigate = useNavigate();
@@ -74,6 +76,8 @@ const ApplicationDetails = () => {
   const award_type = searchParams.get("award_type") || "";
   const numericAppId = Number(application_id);
   const [graceMarks, setGraceMarks] = useState("");
+  const [decisions, setDecisions] = useState<{ [memberId: string]: string }>({});
+
   let userPriority = "";
 
   if (role === "cw2" && Array.isArray(unitDetail?.fds?.applicationPriority)) {
@@ -398,6 +402,67 @@ const ApplicationDetails = () => {
         header: null,
         subheader: null,
       };
+    }
+  };
+  const handleAddsignature = async (member:any) => {
+    //validation
+    const result = await dispatch(TokenValidation({ inputPersID: member.ic_number }));
+    const decision = decisions[member.id];
+    if (TokenValidation.fulfilled.match(result)) {
+      const isValid = result.payload.vaildId;
+      if (!isValid) {
+        toast.error("Token is not valid");
+        return;
+      }
+      //sign
+      
+      const SignPayload = {
+        data: {
+          application_id,
+          member,
+          type: unitDetail?.type
+        }
+      };      
+      const response = await dispatch(getSignedData(SignPayload));
+      
+      const updatePayload = {
+          id: unitDetail?.id,
+          type: unitDetail?.type,
+          member: {
+            name: member.name,
+            ic_number: member.ic_number,
+            member_type: member.member_type,
+            member_id: member.id,
+            is_signature_added: true,
+            sign_digest:response.payload
+          },
+          level:profile?.user?.user_role
+      }
+      if (decision === "accepted") {
+        dispatch(
+          updateApplication(updatePayload)
+        ).then(() => {
+          dispatch(fetchApplicationUnitDetail({ award_type, numericAppId }));
+          const allAccepted = profile?.unit?.members.every((m: any) => decisions[m.id] === "accepted");
+          if (allAccepted) {
+            navigate("/applications/list");
+          }
+        });
+      } else if (decision === "rejected") {
+        console.log(decision);
+        dispatch(
+          updateApplication({
+            ...updatePayload,
+            status: "rejected"
+          })
+        ).then(() => {
+          navigate("/applications/list");
+        });
+      }
+
+    } else {
+      toast.error(result.payload as string || "Token validation failed");
+      return;
     }
   };
 
@@ -856,7 +921,7 @@ const ApplicationDetails = () => {
                         const foundMember = acceptedMembers.find(
                           (m:any) => m.member_id === member.id
                         );
-                        const isMemberAdded = !!foundMember;
+                        // const isMemberAdded = !!foundMember;
                         const isSignatureAdded = foundMember?.is_signature_added === true;
               
                         return (
@@ -870,72 +935,26 @@ const ApplicationDetails = () => {
                             <td>{member.rank || "-"}</td>
                             <td>
                               <div className="d-flex flex-sm-row flex-column gap-sm-3 gap-1 ">
-                                {!isMemberAdded && (
-                                  <>
-                                   <button
-  type="button"
-  className="_btn success text-nowrap w-sm-auto"
-  onClick={() => {
-    dispatch(
-      updateApplication({
-        id: unitDetail?.id,
-        type: unitDetail?.type,
-        member: {
-          name: member.name,
-          ic_number: member.ic_number,
-          member_type: member.member_type,
-          member_id: member.id,
-        },
-      })
-    ).then(() => {
-      dispatch(fetchApplicationUnitDetail({ award_type, numericAppId }));
-    });
-  }}
->
-  Accept
-</button>
-
-              
-                                    <button
-                                      type="button"
-                                      className="_btn danger text-nowrap  w-sm-auto"
-                                      onClick={() => {
-                                        dispatch(
-                                          updateApplication({
-                                            id: unitDetail?.id,
-                                            type: unitDetail?.type,
-                                            status: "rejected",
-                                          })
-                                        ).then(() => {
-                                          navigate("/applications/list");
-                                        });
-                                      }}
-                                    >
-                                      Reject
-                                    </button>
-                                  </>
+                                 {(
+                                  <select
+                                    className="form-select w-sm-auto"
+                                    value={decisions[member?.id] || ""}
+                                    onChange={(e) =>{setDecisions((prev) => ({
+                                              ...prev,
+                                              [member.id]: e.target.value,
+                                            }))}}
+                                  >
+                                    <option value="">-- Select --</option>
+                                    <option value="accepted">Accept</option>
+                                    <option value="rejected">Reject</option>
+                                  </select>
                                 )}
-              
-                                {isMemberAdded && !isSignatureAdded && (
+                                {!isSignatureAdded && (
                                 <button
                                 type="button"
                                 className="_btn success text-nowrap w-sm-auto"
                                 onClick={() => {
-                                  dispatch(
-                                    updateApplication({
-                                      id: unitDetail?.id,
-                                      type: unitDetail?.type,
-                                      member: {
-                                        name: member.name,
-                                        ic_number: member.ic_number,
-                                        member_type: member.member_type,
-                                        member_id: member.id,
-                                        is_signature_added: true,
-                                      },
-                                    })
-                                  ).then(() => {
-                                    dispatch(fetchApplicationUnitDetail({ award_type, numericAppId }));
-                                  });
+                                  handleAddsignature(member);
                                 }}
                               >
                                 Add Signature
@@ -943,7 +962,7 @@ const ApplicationDetails = () => {
                               
                                 )}
               
-                                {isMemberAdded && isSignatureAdded && (
+                                {isSignatureAdded && (
                                   <span className="text-success fw-semibold text-nowrap">
                                     Signature Added
                                   </span>

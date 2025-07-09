@@ -51,6 +51,7 @@ export interface UpdateApplicationParams {
   status?: string;
   is_mo_ol_approved?: boolean;
   member?:any;
+  level?:string
 }
 export interface UpdateApplicationResponse {
   success: boolean;
@@ -99,4 +100,15 @@ export interface ApproveApplicationsResponse {
   success: boolean;
   message: string;
   data: any;
+}
+
+export interface TokenValidationParam {
+  inputPersID: string;
+}
+
+export interface TokenValidationResponse {
+  vaildId: boolean;
+  Remark?: string;
+  Expired?: boolean;
+  Status: string;
 }

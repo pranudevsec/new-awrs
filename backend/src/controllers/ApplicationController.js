@@ -1,6 +1,7 @@
 const ApplicationService = require("../services/ApplicationService");
 const ResponseHelper = require("../utils/responseHelper");
 const { StatusCodes } = require("http-status-codes");
+const SignatureLogService = require("../services/SignatureLogsService");
 
 exports.getAllApplicationsForUnit = async (req, res) => {
   try {
@@ -59,7 +60,7 @@ exports.getApplicationsScoreboard = async (req, res) => {
   
   exports.updateApplicationStatus = async (req, res) => {
     try {
-      const { type, status,member } = req.body;
+      const { type, status,member,level } = req.body;
       const id=req.params.id;
 
       if (!member) {
@@ -70,6 +71,7 @@ exports.getApplicationsScoreboard = async (req, res) => {
         }
       }
       const result = await ApplicationService.updateApplicationStatus(id, type, status, req.user,member);
+      await SignatureLogService.addSignatureLogs(id,status,member,level);
   
       res.status(StatusCodes.OK).send(
         ResponseHelper.success(StatusCodes.OK, "Application status updated", result)

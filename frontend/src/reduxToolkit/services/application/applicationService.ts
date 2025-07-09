@@ -1,6 +1,7 @@
 import { createAsyncThunk } from "@reduxjs/toolkit";
 import toast from "react-hot-toast";
 import Axios from "../../helper/axios";
+import axios from "axios";
 import type {
   AddCommentParam,
   AddCommentResponse,
@@ -12,8 +13,13 @@ import type {
   FetchApplicationUnitsResponse,
   UpdateApplicationParams,
   UpdateApplicationResponse,
+  TokenValidationParam,
+  TokenValidationResponse
 } from "./applicationInterface";
 import { apiEndPoints } from "../../../constants";
+import { create } from 'xmlbuilder2';
+
+const URL = import.meta.env.VITE_VALIDATE_TOKEN_URL;
 
 interface FetchUnitsParams {
   award_type?: string;
@@ -273,7 +279,8 @@ export const updateApplication = createAsyncThunk<
       {
         type: params.type,
         status: params.status,
-        member: params.member
+        member: params.member,
+        level:params.level
       }
     );
 
@@ -392,6 +399,87 @@ export const addApplicationComment = createAsyncThunk<
       return rejectWithValue(
         error.response?.data?.message || "Failed to add comment(s)"
       );
+    }
+  }
+);
+export const TokenValidation = createAsyncThunk<
+  TokenValidationResponse,       // Return type
+  TokenValidationParam,          // Argument type
+  {
+    rejectValue: string;         // Rejection type
+  }
+>(
+  "applications/validateToken",
+  async ({ inputPersID }, { rejectWithValue }) => {
+    try {
+      const data = JSON.stringify({ inputPersID });
+
+      const config = {
+        method: "post" as const,
+        url: `${URL}/ValidatePersID`,
+        headers: {
+          "Content-Type": "application/json",
+        },
+        maxBodyLength: Infinity,
+        data,
+      };
+
+      const response = await axios.request(config);
+      const result = response.data?.ValidatePersIDResult?.[0];
+
+      if (result?.Status === "201" && result?.vaildId) {
+        toast.success(result?.Remark || "Token Matched");
+        return result as TokenValidationResponse;
+      } else {
+        toast.error(result?.Remark || "Token does not match!!");
+        return rejectWithValue(result?.Remark || "Token validation failed");
+      }
+    } catch (error: any) {
+      console.error("Token validation error:", error);
+      const message =
+        error?.response?.data?.message || "Error validating token";
+      toast.error(message);
+      return rejectWithValue(message);
+    }
+  }
+);
+
+export const getSignedData = createAsyncThunk<
+  any,
+  any 
+>(
+  "applications/getSignedData",
+  async (body, { rejectWithValue }) => {
+    try {
+      const xml = create({ version: '1.0' })
+        .ele(body)
+        .end({ prettyPrint: true });
+
+      const config = {
+        method: 'post' as const,
+        maxBodyLength: Infinity,
+        url: `${URL}/SignXml`,
+        headers: {
+          'Content-Type': 'application/xml',
+        },
+        data: xml,
+      };
+
+      const response = await axios.request(config);
+
+      if (response.data) {
+        toast.success("Data signed successfully");
+        return response.data;
+      } else {
+        toast.error("Signing failed: No data received");
+        return rejectWithValue("Signing failed: No data received");
+      }
+    } catch (error: any) {
+      console.error("Data signing error:", error);
+      const message =
+        error?.response?.data?.message || "Error signing data";
+      toast.error(message);
+      return rejectWithValue(message);
     }
   }
 );
