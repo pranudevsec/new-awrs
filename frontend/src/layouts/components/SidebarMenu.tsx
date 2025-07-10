@@ -7,7 +7,6 @@ const SidebarMenu = () => {
   const profile = useAppSelector((state) => state.admin.profile);
   const userRole = profile?.user?.user_role;
   const isMember = profile?.user?.is_member ?? false;
-
   const alwaysVisible: string[] = [];
 
   if (
@@ -100,6 +99,12 @@ const SidebarMenu = () => {
     filteredStructure.push(allApplicationsItem);
     filteredStructure = filteredStructure.filter(item => item.label !== "Profile Settings");
   }
+//   if (
+//     userRole === "cw2" &&
+//     (cw2_type === "mo" || cw2_type === "ol")
+// ) {
+//     filteredStructure.push(historyItem);
+// }
 
   return (
     <aside className="sidebar bg-dark text-white p-3" style={{ width: "300px" }}>

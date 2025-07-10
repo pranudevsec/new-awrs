@@ -48,6 +48,7 @@ const ApplyCitation = () => {
 
   // States
   const [parameters, setParameters] = useState<Parameter[]>([]);
+  console.log(parameters)
   const [counts, setCounts] = useState<Record<number, string>>({});
   const [marks, setMarks] = useState<Record<number, number>>({});
   const [lastDate, setLastDate] = useState("");
@@ -386,8 +387,10 @@ const ApplyCitation = () => {
           dispatch(fetchParameters({
             awardType: "citation",
             search: "",
-            matrix_unit: profile?.unit?.matrix_unit ?? undefined,
-            comd: profile?.unit?.comd ?? undefined,
+            // matrix_unit: profile?.unit?.matrix_unit ?? undefined,
+            // comd: profile?.unit?.comd ?? undefined,
+            matrix_unit: "",
+            comd: "",
             unit_type: profile?.unit?.unit_type ?? undefined,
             page: 1,
             limit: 1000
@@ -402,7 +405,7 @@ const ApplyCitation = () => {
             setCommand(profile?.unit?.comd)
           }
         }
-
+console.log(paramsRes)
         if (paramsRes.success && paramsRes.data) {
           const revParams = [...paramsRes.data].reverse();
           setParameters(revParams);
@@ -519,7 +522,7 @@ const ApplyCitation = () => {
 
   // Show loader
   if (loading) return <Loader />
-
+console.log(groupedParams)
   return (
     <div className="apply-citation-section" style={{ padding: "2rem" }}>
       <div className="d-flex flex-sm-row flex-column align-items-sm-center justify-content-between mb-4">

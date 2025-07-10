@@ -9,6 +9,7 @@ import FormSelect from "../../../components/form/FormSelect";
 import EmptyTable from "../../../components/ui/empty-table/EmptyTable";
 import Loader from "../../../components/ui/loader/Loader";
 import Pagination from "../../../components/ui/pagination/Pagination";
+import toast from "react-hot-toast";
 
 const ApplicationsList = () => {
   const navigate = useNavigate();
@@ -49,7 +50,7 @@ const ApplicationsList = () => {
   useEffect(() => {
     if (!profile?.user?.user_role) return;
 
-    const fetchData = () => {
+    const fetchData = async () => {
   const role = profile.user.user_role;
 
   // const effectiveAwardType =
@@ -71,7 +72,19 @@ const ApplicationsList = () => {
       ...params,
       isGetNotClarifications: true,
     };
-    dispatch(fetchSubordinates(updatedParams));
+   
+    try {
+      await  dispatch(fetchSubordinates(updatedParams)).unwrap();
+    } catch (error: any) {    
+      const errorMessage = error?.errors || error?.message || "An error occurred.";
+    
+      if (error?.errors === "Please complete your unit profile before proceeding.") {
+        navigate("/profile-settings");
+        toast.error(errorMessage);
+      } else {
+        toast.error(errorMessage);
+      }
+    }
   } else {
     dispatch(fetchApplicationUnits(params));
   }

@@ -34,7 +34,6 @@ const ApplicationDetails = () => {
   const { application_id } = useParams();
 
   const profile = useAppSelector((state) => state.admin.profile);
-  const isMember = profile?.user?.is_member ?? false;
 
   const { loading, unitDetail } = useAppSelector((state) => state.application);
   function areAllClarificationsResolved(unitDetail: any): boolean {
@@ -430,116 +429,116 @@ const ApplicationDetails = () => {
     }
   };
   
-  // const handleAddsignature = async (member: any, memberdecision: string) => {
-  //   //validation
-  //   const newDecisions: { [memberId: string]: string } = {
-  //     ...decisions,
-  //     [member.id]: memberdecision,
-  //   };
-  //   setDecisions(newDecisions);
+  const handleAddsignature = async (member: any, memberdecision: string) => {
+    //validation
+    const newDecisions: { [memberId: string]: string } = {
+      ...decisions,
+      [member.id]: memberdecision,
+    };
+    setDecisions(newDecisions);
 
-  //   const result = await dispatch(
-  //     TokenValidation({ inputPersID: member.ic_number })
-  //   );
-  //   const decision = decisions[member.id];
-  //   console.log(decision);
-  //   if (TokenValidation.fulfilled.match(result)) {
-  //     const isValid = result.payload.vaildId;
-  //     if (!isValid) {
-  //       // toast.error("Token is not valid");
-  //       return;
-  //     }
-  //     //sign
+    const result = await dispatch(
+      TokenValidation({ inputPersID: member.ic_number })
+    );
+    const decision = decisions[member.id];
+    console.log(decision);
+    if (TokenValidation.fulfilled.match(result)) {
+      const isValid = result.payload.vaildId;
+      if (!isValid) {
+        // toast.error("Token is not valid");
+        return;
+      }
+      //sign
 
-  //     const SignPayload = {
-  //       data: {
-  //         application_id,
-  //         member,
-  //         type: unitDetail?.type,
-  //       },
-  //     };
-  //     const response = await dispatch(getSignedData(SignPayload));
+      const SignPayload = {
+        data: {
+          application_id,
+          member,
+          type: unitDetail?.type,
+        },
+      };
+      const response = await dispatch(getSignedData(SignPayload));
 
-  //     const updatePayload = {
-  //       id: unitDetail?.id,
-  //       type: unitDetail?.type,
-  //       member: {
-  //         name: member.name,
-  //         ic_number: member.ic_number,
-  //         member_type: member.member_type,
-  //         member_id: member.id,
-  //         is_signature_added: true,
-  //         sign_digest: response.payload,
-  //       },
-  //       level: profile?.user?.user_role,
-  //     };
-  //     if (memberdecision === "accepted") {
-  //       dispatch(updateApplication(updatePayload)).then(() => {
-  //         dispatch(fetchApplicationUnitDetail({ award_type, numericAppId }));
-  //         const allOthersAccepted = profile?.unit?.members
-  //           .filter((m: any) => m.id !== member.id)
-  //           .every((m: any) => decisions[m.id] === "accepted");
+      const updatePayload = {
+        id: unitDetail?.id,
+        type: unitDetail?.type,
+        member: {
+          name: member.name,
+          ic_number: member.ic_number,
+          member_type: member.member_type,
+          member_id: member.id,
+          is_signature_added: true,
+          sign_digest: response.payload,
+        },
+        level: profile?.user?.user_role,
+      };
+      if (memberdecision === "accepted") {
+        dispatch(updateApplication(updatePayload)).then(() => {
+          dispatch(fetchApplicationUnitDetail({ award_type, numericAppId }));
+          const allOthersAccepted = profile?.unit?.members
+            .filter((m: any) => m.id !== member.id)
+            .every((m: any) => decisions[m.id] === "accepted");
 
-  //         if (allOthersAccepted && memberdecision === "accepted") {
-  //           navigate("/applications/list");
-  //         }
-  //       });
-  //     } else if (memberdecision === "rejected") {
-  //       console.log(memberdecision);
-  //       dispatch(
-  //         updateApplication({
-  //           ...updatePayload,
-  //           status: "rejected",
-  //         })
-  //       ).then(() => {
-  //         navigate("/applications/list");
-  //       });
-  //     }
-  //   }
-  //   // } else {
-  //   //   toast.error(result.payload as string || "Token validation failed");
-  //   //   return;
-  //   // }
-  // };
+          if (allOthersAccepted && memberdecision === "accepted") {
+            navigate("/applications/list");
+          }
+        });
+      } else if (memberdecision === "rejected") {
+        console.log(memberdecision);
+        dispatch(
+          updateApplication({
+            ...updatePayload,
+            status: "rejected",
+          })
+        ).then(() => {
+          navigate("/applications/list");
+        });
+      }
+    }
+    // } else {
+    //   toast.error(result.payload as string || "Token validation failed");
+    //   return;
+    // }
+  };
 
   // Development handleAddsignature
-  const handleAddsignature = async (member: any, memberdecision: string) => {
-    const updatePayload = {
-      id: unitDetail?.id,
-      type: unitDetail?.type,
-      member: {
-        name: member.name,
-        ic_number: member.ic_number,
-        member_type: member.member_type,
-        member_id: member.id,
-        is_signature_added: true,
-        sign_digest: "something while developing",
-      },
-      level: profile?.user?.user_role,
-    };
-    if (memberdecision === "accepted") {
-      dispatch(updateApplication(updatePayload)).then(() => {
-        dispatch(fetchApplicationUnitDetail({ award_type, numericAppId }));
-        const allOthersAccepted = profile?.unit?.members
-          .filter((m: any) => m.id !== member.id)
-          .every((m: any) => decisions[m.id] === "accepted");
+  // const handleAddsignature = async (member: any, memberdecision: string) => {
+  //   const updatePayload = {
+  //     id: unitDetail?.id,
+  //     type: unitDetail?.type,
+  //     member: {
+  //       name: member.name,
+  //       ic_number: member.ic_number,
+  //       member_type: member.member_type,
+  //       member_id: member.id,
+  //       is_signature_added: true,
+  //       sign_digest: "something while developing",
+  //     },
+  //     level: profile?.user?.user_role,
+  //   };
+  //   if (memberdecision === "accepted") {
+  //     dispatch(updateApplication(updatePayload)).then(() => {
+  //       dispatch(fetchApplicationUnitDetail({ award_type, numericAppId }));
+  //       const allOthersAccepted = profile?.unit?.members
+  //         .filter((m: any) => m.id !== member.id)
+  //         .every((m: any) => decisions[m.id] === "accepted");
 
-        if (allOthersAccepted && memberdecision === "accepted") {
-          navigate("/applications/list");
-        }
-      });
-    } else if (memberdecision === "rejected") {
-      console.log(memberdecision);
-      dispatch(
-        updateApplication({
-          ...updatePayload,
-          status: "rejected",
-        })
-      ).then(() => {
-        navigate("/applications/list");
-      });
-    }
-  };
+  //       if (allOthersAccepted && memberdecision === "accepted") {
+  //         navigate("/applications/list");
+  //       }
+  //     });
+  //   } else if (memberdecision === "rejected") {
+  //     console.log(memberdecision);
+  //     dispatch(
+  //       updateApplication({
+  //         ...updatePayload,
+  //         status: "rejected",
+  //       })
+  //     ).then(() => {
+  //       navigate("/applications/list");
+  //     });
+  //   }
+  // };
 
   // Show loader
   if (loading) return <Loader />;
@@ -1258,7 +1257,104 @@ const ApplicationDetails = () => {
             </div>
           </div>
         )}
+         {isHeadquarter && (
+              <div className="mt-4">
+                <h5 className="mb-3">Send for Review</h5>
+                <div className="table-responsive">
+                  <table className="table-style-2 w-100">
+                    <thead>
+                      <tr>
+                        <th style={{ width: 200, minWidth: 200 }}>Category</th>
+                        <th style={{ width: 200, minWidth: 200 }}>Action</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {["HR", "DV", "MP"].map((category) => {
+                        let isAlreadySent: any = false;
+                        console.log(unitDetail);
+                        if (category === "HR") {
+                          isAlreadySent = unitDetail?.is_hr_review;
+                        } else if (category === "DV") {
+                          isAlreadySent = unitDetail?.is_dv_review;
+                        } else if (category === "MP") {
+                          isAlreadySent = unitDetail?.is_mp_review;
+                        }
 
+                        return (
+                          <tr key={category}>
+                            <td>
+                              <p className="fw-4">{category}</p>
+                            </td>
+                            <td>
+                              {isAlreadySent ? (
+                                <span className="text-danger fw-semibold">
+                                  Already Sent
+                                </span>
+                              ) : (
+                                <button
+                                  type="button"
+                                  className="_btn success"
+                                  onClick={() => {
+                                    const payload: {
+                                      id: number | undefined;
+                                      is_hr_review?: boolean;
+                                      is_dv_review?: boolean;
+                                      is_mp_review?: boolean;
+                                    } = {
+                                      id: unitDetail?.id,
+                                    };
+
+                                    if (category === "HR") {
+                                      payload.is_hr_review = true;
+                                    } else if (category === "DV") {
+                                      payload.is_dv_review = true;
+                                    } else if (category === "MP") {
+                                      payload.is_mp_review = true;
+                                    }
+
+                                    if (unitDetail?.type === "citation") {
+                                      dispatch(updateCitation(payload)).then(
+                                        () => {
+                                          if (award_type && numericAppId) {
+                                            dispatch(
+                                              fetchApplicationUnitDetail({
+                                                award_type,
+                                                numericAppId,
+                                              })
+                                            );
+                                          }
+                                        }
+                                      );
+                                    } else if (
+                                      unitDetail?.type === "appreciation"
+                                    ) {
+                                      dispatch(
+                                        updateAppreciation(payload)
+                                      ).then(() => {
+                                        if (award_type && numericAppId) {
+                                          dispatch(
+                                            fetchApplicationUnitDetail({
+                                              award_type,
+                                              numericAppId,
+                                            })
+                                          );
+                                        }
+                                      });
+                                    }
+                                  }}
+                                >
+                                  Send for Review
+                                </button>
+                              )}
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            )}
         {isCW2Role && (
           <div
             style={{
@@ -1367,104 +1463,7 @@ const ApplicationDetails = () => {
                   </table>
                 </div>
               )}
-            {isCW2Role && (cw2_type === "mo" || cw2_type === "ol") && (
-              <div className="mt-4">
-                <h5 className="mb-3">Send for Review</h5>
-                <div className="table-responsive">
-                  <table className="table-style-2 w-100">
-                    <thead>
-                      <tr>
-                        <th style={{ width: 200, minWidth: 200 }}>Category</th>
-                        <th style={{ width: 200, minWidth: 200 }}>Action</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {["HR", "DV", "MP"].map((category) => {
-                        let isAlreadySent: any = false;
-                        console.log(unitDetail);
-                        if (category === "HR") {
-                          isAlreadySent = unitDetail?.is_hr_review;
-                        } else if (category === "DV") {
-                          isAlreadySent = unitDetail?.is_dv_review;
-                        } else if (category === "MP") {
-                          isAlreadySent = unitDetail?.is_mp_review;
-                        }
-
-                        return (
-                          <tr key={category}>
-                            <td>
-                              <p className="fw-4">{category}</p>
-                            </td>
-                            <td>
-                              {isAlreadySent ? (
-                                <span className="text-danger fw-semibold">
-                                  Already Sent
-                                </span>
-                              ) : (
-                                <button
-                                  type="button"
-                                  className="_btn success"
-                                  onClick={() => {
-                                    const payload: {
-                                      id: number | undefined;
-                                      is_hr_review?: boolean;
-                                      is_dv_review?: boolean;
-                                      is_mp_review?: boolean;
-                                    } = {
-                                      id: unitDetail?.id,
-                                    };
-
-                                    if (category === "HR") {
-                                      payload.is_hr_review = true;
-                                    } else if (category === "DV") {
-                                      payload.is_dv_review = true;
-                                    } else if (category === "MP") {
-                                      payload.is_mp_review = true;
-                                    }
-
-                                    if (unitDetail?.type === "citation") {
-                                      dispatch(updateCitation(payload)).then(
-                                        () => {
-                                          if (award_type && numericAppId) {
-                                            dispatch(
-                                              fetchApplicationUnitDetail({
-                                                award_type,
-                                                numericAppId,
-                                              })
-                                            );
-                                          }
-                                        }
-                                      );
-                                    } else if (
-                                      unitDetail?.type === "appreciation"
-                                    ) {
-                                      dispatch(
-                                        updateAppreciation(payload)
-                                      ).then(() => {
-                                        if (award_type && numericAppId) {
-                                          dispatch(
-                                            fetchApplicationUnitDetail({
-                                              award_type,
-                                              numericAppId,
-                                            })
-                                          );
-                                        }
-                                      });
-                                    }
-                                  }}
-                                >
-                                  Send for Review
-                                </button>
-                              )}
-                            </td>
-                          </tr>
-                        );
-                      })}
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-            )}
+   
 
             {isCW2Role &&
               ((cw2_type === "mo" && !unitDetail?.is_mo_approved) ||

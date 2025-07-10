@@ -1648,7 +1648,9 @@ exports.updateApplicationStatus = async (
           });
 
           if (allSigned) {
-            statusLower = "shortlisted_approved";
+            if(status!=="rejected"){
+              statusLower = "shortlisted_approved";
+            }
             isMemberStatusUpdate = true;
           } else {
             console.log(
@@ -1672,7 +1674,7 @@ exports.updateApplicationStatus = async (
     if (isStatusValid || isMemberStatusUpdate) {
       let query, values;
       const now = new Date();
-
+      console.log('statusLower-------',statusLower)
       if (statusLower === "approved") {
         query = `
           UPDATE ${config.table}
@@ -1694,7 +1696,19 @@ exports.updateApplicationStatus = async (
           RETURNING *;
         `;
         values = [statusLower, id, user.user_role];
-      } else {
+      }else if (statusLower === "rejected") {
+        query = `
+          UPDATE ${config.table}
+          SET 
+            status_flag = $1,
+            last_rejected_by_role = $3,
+            last_rejected_at = $4
+          WHERE ${config.column} = $2
+          RETURNING *;
+        `;
+        values = [statusLower, id, user.user_role, now];
+      console.log('imhere-------')
+      }  else {
         query = `
           UPDATE ${config.table}
           SET status_flag = $1
@@ -2303,7 +2317,7 @@ exports.getApplicationsHistory = async (user, query) => {
       status_flag,
       last_approved_by_role,
       last_approved_at,
-
+  
       -- withdraw fields
       is_withdraw_requested,
       withdraw_requested_by,
@@ -2312,37 +2326,45 @@ exports.getApplicationsHistory = async (user, query) => {
       withdraw_requested_by_user_id,
       withdraw_approved_by_role,
       withdraw_approved_by_user_id,
-      withdraw_approved_at
-
+      withdraw_approved_at,
+  
+      -- rejection fields
+      last_rejected_by_role,
+      last_rejected_at
+  
     FROM Citation_tab
     WHERE ${baseFilters}
+  `;
+  
+
+  const appreQuery = `
+  SELECT 
+    appreciation_id AS id,
+    'appreciation' AS type,
+    unit_id,
+    date_init,
+    appre_fds AS fds,
+    status_flag,
+    last_approved_by_role,
+    last_approved_at,
+
+    -- withdraw fields
+    is_withdraw_requested,
+    withdraw_requested_by,
+    withdraw_requested_at,
+    withdraw_status,
+    withdraw_requested_by_user_id,
+    withdraw_approved_by_role,
+    withdraw_approved_by_user_id,
+    withdraw_approved_at,
+
+    -- rejection fields
+    last_rejected_by_role,
+    last_rejected_at
+
+  FROM Appre_tab
+  WHERE ${baseFilters}
 `;
-
-const appreQuery = `
-    SELECT 
-      appreciation_id AS id,
-      'appreciation' AS type,
-      unit_id,
-      date_init,
-      appre_fds AS fds,
-      status_flag,
-      last_approved_by_role,
-      last_approved_at,
-
-      -- withdraw fields
-      is_withdraw_requested,
-      withdraw_requested_by,
-      withdraw_requested_at,
-      withdraw_status,
-      withdraw_requested_by_user_id,
-      withdraw_approved_by_role,
-      withdraw_approved_by_user_id,
-      withdraw_approved_at
-
-    FROM Appre_tab
-    WHERE ${baseFilters}
-`;
-
 
     const [citations, appreciations] = await Promise.all([
       client.query(citationQuery, queryParams),
@@ -2504,6 +2526,21 @@ exports.getAllApplications = async (user, query) => {
     const profile = await AuthService.getProfile(user);
     const unit = profile?.data?.unit;
 
+    const roleFieldRequirements = {
+      unit: ["bde", "div", "corps", "comd", "name"],
+      brigade: ["div", "corps", "comd", "name"],
+      division: ["corps", "comd", "name"],
+      corps: ["comd", "name"],
+      command: ["name"],
+    };
+
+    const requiredFields = roleFieldRequirements[user_role.toLowerCase()] || [];
+    const missingFields = requiredFields.filter(
+      (field) => !unit?.[field] || unit[field] === ""
+    );
+    if (missingFields.length > 0) {
+      throw new Error("Please complete your unit profile before proceeding.");
+    }
     const ROLE_HIERARCHY = ["unit", "brigade", "division", "corps", "command"];
     const currentRole = user_role.toLowerCase();
 

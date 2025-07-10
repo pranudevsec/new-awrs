@@ -321,7 +321,7 @@ const ProfileSettings = () => {
     location: profile?.unit?.location ?? null,
     members
   });
-
+  const isDisabled = !!isMember;
   return (
     <div className="profile-settings-section" style={{ padding: "2rem", maxWidth: "80vw"}}>
       <div className="d-flex flex-sm-row flex-column align-items-sm-center justify-content-between mb-4">
@@ -395,6 +395,7 @@ const ProfileSettings = () => {
                       profile?.user?.user_role ?? "",
                       field
                     )}`}
+                    disabled={isDisabled}
                   />
                   {formik.touched[field] && formik.errors[field] && (
                     <div className="invalid-feedback">
@@ -439,6 +440,7 @@ const ProfileSettings = () => {
                   placeholder={getPlaceholder(profile?.user?.user_role ?? "", field)}
                   errors={formik.errors[field]}
                   touched={formik.touched[field]}
+                  isDisabled={isDisabled}
                 />
               </div>
             );
@@ -593,28 +595,30 @@ const ProfileSettings = () => {
             </>
           )} */}
 
-          <div className="col-12 mt-2">
-            <div className="d-flex align-items-center">
-              <button
-                type="submit"
-                className="_btn _btn-lg primary"
-                disabled={formik.isSubmitting}
-              >
-                {formik.isSubmitting ? (
-                  <span>
-                    <span
-                      className="spinner-border spinner-border-sm me-2"
-                      role="status"
-                      aria-hidden="true"
-                    ></span>
-                    Submiting...
-                  </span>
-                ) : (
-                  "Submit"
-                )}
-              </button>
-            </div>
-          </div>
+{!isDisabled && role !== "cw2" && (
+  <div className="col-12 mt-2">
+    <div className="d-flex align-items-center">
+      <button
+        type="submit"
+        className="_btn _btn-lg primary"
+        disabled={formik.isSubmitting}
+      >
+        {formik.isSubmitting ? (
+          <span>
+            <span
+              className="spinner-border spinner-border-sm me-2"
+              role="status"
+              aria-hidden="true"
+            ></span>
+            Submitting...
+          </span>
+        ) : (
+          "Submit"
+        )}
+      </button>
+    </div>
+  </div>
+)}
         </div>
       </form>
 

@@ -11,9 +11,12 @@ import FormSelect from "../../components/form/FormSelect";
 import EmptyTable from "../../components/ui/empty-table/EmptyTable";
 import Loader from "../../components/ui/loader/Loader";
 import Pagination from "../../components/ui/pagination/Pagination";
+import { useNavigate } from "react-router-dom";
+import toast from "react-hot-toast";
 
 const History = () => {
   const dispatch = useAppDispatch();
+  const navigate = useNavigate();
 
   const profile = useAppSelector((state) => state.admin.profile);
   const { units, loading, meta } = useAppSelector((state) => state.application);
@@ -47,7 +50,20 @@ const History = () => {
         limit,
       };
 
-      dispatch(fetchApplicationHistory(params));
+
+      try {
+        dispatch(fetchApplicationHistory(params)).unwrap();
+      } catch (error: any) {      
+        const errorMessage = error?.errors || error?.message || "An error occurred.";
+      
+        if (error?.errors === "Please complete your unit profile before proceeding.") {
+          navigate("/profile-settings");
+          toast.error(errorMessage);
+        } else {
+          toast.error(errorMessage);
+        }
+      }
+      
     };
 
     fetchData();
@@ -79,15 +95,6 @@ const History = () => {
           />
         </div>
         <div className="d-flex gap-2">
-          <button
-            type="button"
-            className="_btn success"
-            onClick={() =>
-              alert(`Signature Submitted.Now you can view the history data`)
-            }
-          >
-            Add Signature
-          </button>
           <FormSelect
             name="awardType"
             options={awardTypeOptions}
@@ -180,19 +187,23 @@ const History = () => {
                   </td>
 
                   <td style={{ width: 150, minWidth: 150, maxWidth: 150 }}>
-                    <p
-                      className="fw-4"
-                      style={{
-                        color:
-                          unit?.status_flag === "approved" ? "green" : "red",
-                      }}
-                    >
-                      {unit?.status_flag
-                        ? unit.status_flag.charAt(0).toUpperCase() +
-                          unit.status_flag.slice(1)
-                        : "-"}
-                    </p>
-                  </td>
+  <p
+    className="fw-4"
+    style={{
+      color: ['pending', 'in_review', 'shortlisted_approved'].includes(unit?.status_flag)
+        ? "orange"
+        : unit?.status_flag === "approved"
+        ? "green"
+        : "red",
+    }}
+  >
+    {unit?.status_flag
+      ? ['pending', 'in_review', 'shortlisted_approved'].includes(unit.status_flag)
+        ? 'Pending'
+        : unit.status_flag.charAt(0).toUpperCase() + unit.status_flag.slice(1)
+      : "-"}
+  </p>
+</td>
 
                   {/* <td style={{ width: 200, minWidth: 200, maxWidth: 200 }}>
                     <div className="status-content approved pending d-flex align-items-center gap-3">
@@ -200,30 +211,32 @@ const History = () => {
                       <p className="text-capitalize fw-5">Accepted</p>
                     </div>
                   </td> */}
-                  <td style={{ width: 150, minWidth: 150, maxWidth: 150 }}>
-                    <p className="fw-4">
-                      {unit?.status_flag === "rejected"
-                        ? "N/A"
-                        : unit?.last_approved_by_role
-                        ? unit.last_approved_by_role?.charAt(0).toUpperCase() +
-                          unit.last_approved_by_role.slice(1)
-                        : "-"}
-                    </p>
-                  </td>
+           <td style={{ width: 150, minWidth: 150, maxWidth: 150 }}>
+  <p className="fw-4">
+    {unit?.status_flag === "rejected"
+      ? unit?.last_rejected_by_role
+        ? unit.last_rejected_by_role.charAt(0).toUpperCase() + unit.last_rejected_by_role.slice(1)
+        : "-"
+      : unit?.last_approved_by_role
+      ? unit.last_approved_by_role.charAt(0).toUpperCase() + unit.last_approved_by_role.slice(1)
+      : "-"}
+  </p>
+</td>
                   <td>
-  {unit?.is_withdraw_requested ? (
-    <>
-      {unit.withdraw_status === 'approved' && (
-        <span className="badge bg-success text-nowrap">Withdraw Approved</span>
-      )}
-      {unit.withdraw_status === 'rejected' && (
-        <span className="badge bg-danger text-nowrap">Withdraw Rejected</span>
-      )}
-      {unit.withdraw_status === 'pending' && (
-        <span className="badge bg-warning text-dark text-nowrap">Withdraw Pending</span>
-      )}
-    </>
-  ) : (
+                  {unit?.is_withdraw_requested ? (
+  <>
+    {unit.withdraw_status === 'approved' && (
+      <span className="badge bg-success text-nowrap">Withdraw Approved</span>
+    )}
+    {unit.withdraw_status === 'rejected' && (
+      <span className="badge bg-danger text-nowrap">Withdraw Rejected</span>
+    )}
+    {['pending', 'in_review', 'shortlisted_approved'].includes(unit.withdraw_status) && (
+      <span className="badge bg-warning text-dark text-nowrap">Withdraw Pending</span>
+    )}
+  </>
+) : (
+  unit?.status_flag !== "rejected" ? (
     <button
       type="button"
       className="_btn success text-nowrap w-sm-auto"
@@ -247,7 +260,16 @@ const History = () => {
     >
       Withdraw
     </button>
-  )}
+  ):  <p
+  className="fw-4"
+  style={{
+    color: "red",
+  }}
+>
+  Rejected
+</p>
+)}
+
 </td>
 
                 </tr>

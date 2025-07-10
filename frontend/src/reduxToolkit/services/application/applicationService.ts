@@ -104,58 +104,66 @@ export const fetchApplicationHistory = createAsyncThunk<
     if (response.data.success) {
       return response.data;
     } else {
-      toast.error(response.data.message || "Failed to fetch application history");
-      return rejectWithValue(response.data.message);
+      return rejectWithValue({
+        message: response.data.message || "Failed to fetch all applications",
+        errors: response.data.errors,
+      });
     }
-  } catch (error: any) {
-    toast.error(
-      error.response?.data?.message || "Error fetching application history"
-    );
-    return rejectWithValue(
-      error.response?.data?.message || "Failed to fetch application history"
-    );
+  }  catch (error: any) {
+    return rejectWithValue({
+      message: error.response?.data?.message || "Failed to fetch all applications",
+      errors: error.response?.data?.errors,
+    });
   }
 });
 
 export const fetchAllApplications = createAsyncThunk<
   FetchApplicationUnitsResponse,
   FetchUnitsParams | undefined
->("applications/fetchAllApplications", async (params, { rejectWithValue }) => {
-  try {
-    const queryParams = new URLSearchParams();
+>(
+  "applications/fetchAllApplications",
+  async (params, { rejectWithValue }) => {
+    try {
+      const queryParams = new URLSearchParams();
 
-    if (params?.award_type) {
-      queryParams.append("award_type", params.award_type);
-    }
-    if (params?.search) {
-      queryParams.append("search", params.search);
-    }
-    if (params?.page) {
-      queryParams.append("page", String(params.page));
-    }
-    if (params?.limit) {
-      queryParams.append("limit", String(params.limit));
-    }
+      if (params?.award_type) {
+        queryParams.append("award_type", params.award_type);
+      }
+      if (params?.search) {
+        queryParams.append("search", params.search);
+      }
+      if (params?.page) {
+        queryParams.append("page", String(params.page));
+      }
+      if (params?.limit) {
+        queryParams.append("limit", String(params.limit));
+      }
 
-    const response = await Axios.get(
-      `${apiEndPoints.applicationAll}?${queryParams.toString()}`
-    );
+      const response = await Axios.get(
+        `${apiEndPoints.applicationAll}?${queryParams.toString()}`
+      );
 
-    if (response.data.success) {
-      return response.data;
-    } else {
-      toast.error(response.data.message || "Failed to fetch all application");
-      return rejectWithValue(response.data.message);
+      if (response.data.success) {
+        return response.data;
+      } else {
+        // toast.error(response.data.message || "Failed to fetch all applications");
+        return rejectWithValue({
+          message: response.data.message || "Failed to fetch all applications",
+          errors: response.data.errors,
+        });
+      }
+    } catch (error: any) {
+      // toast.error(
+      //   error.response?.data?.message || "Error fetching all applications"
+      // );
+      return rejectWithValue({
+        message: error.response?.data?.message || "Failed to fetch all applications",
+        errors: error.response?.data?.errors,
+      });
     }
-  } catch (error: any) {
-    toast.error(
-      error.response?.data?.message || "Error fetching all application"
-    );
-    return rejectWithValue(
-      error.response?.data?.message || "Failed to fetch all application"
-    );
   }
-});
+);
+
 
 export const fetchApplicationsForHQ = createAsyncThunk<
   FetchApplicationUnitsResponse, 
@@ -257,19 +265,16 @@ export const fetchSubordinates = createAsyncThunk<
     if (response.data.success) {
       return response.data;
     } else {
-      toast.error(
-        response.data.errors || "Failed to fetch subordinate applications"
-      );
-      return rejectWithValue(response.data.errors);
+      return rejectWithValue({
+        message: response.data.message || "Failed to fetch all applications",
+        errors: response.data.errors,
+      });
     }
-  } catch (error: any) {
-    toast.error(
-      error.response?.data?.message || "Error fetching subordinate applications"
-    );
-    return rejectWithValue(
-      error.response?.data?.message ||
-        "Failed to fetch subordinate applications"
-    );
+  }  catch (error: any) {
+    return rejectWithValue({
+      message: error.response?.data?.message || "Failed to fetch all applications",
+      errors: error.response?.data?.errors,
+    });
   }
 });
 

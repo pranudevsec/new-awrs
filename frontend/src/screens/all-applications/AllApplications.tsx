@@ -9,6 +9,7 @@ import EmptyTable from "../../components/ui/empty-table/EmptyTable";
 import Loader from "../../components/ui/loader/Loader";
 import Pagination from "../../components/ui/pagination/Pagination";
 import { useNavigate } from "react-router-dom";
+import toast from "react-hot-toast";
 
 const History = () => {
   const dispatch = useAppDispatch();
@@ -38,7 +39,7 @@ const History = () => {
   useEffect(() => {
     if (!profile?.user?.user_role) return;
 
-    const fetchData = () => {
+    const fetchData = async() => {
       const params = {
         award_type: awardType || "",
         search: debouncedSearch,
@@ -46,7 +47,19 @@ const History = () => {
         limit,
       };
 
-      dispatch(fetchAllApplications(params));
+      try {
+        await dispatch(fetchAllApplications(params)).unwrap();
+      } catch (error: any) {      
+        const errorMessage = error?.errors || error?.message || "An error occurred.";
+      
+        if (error?.errors === "Please complete your unit profile before proceeding.") {
+          navigate("/profile-settings");
+          toast.error(errorMessage);
+        } else {
+          toast.error(errorMessage);
+        }
+      }
+      
     };
 
     fetchData();
@@ -133,13 +146,8 @@ const History = () => {
             ) : (
               units.length > 0 &&
               units.map((unit: any, idx) => (
-                <tr onClick={() => {
-                  if (unit.status_flag === "draft") {
-                    navigate(`/applications/${unit.type}?id=${unit.id}`);
-                  } else {
-                    navigate(`/applications/list/${unit.id}?award_type=${unit.type}`);
-                  }
-                }}
+                <tr 
+      
                   style={{ cursor: "pointer" }} key={idx}>
                   <td style={{ width: 150, minWidth: 150, maxWidth: 150 }}>
                     <p className="fw-4">#{unit.id}</p>
