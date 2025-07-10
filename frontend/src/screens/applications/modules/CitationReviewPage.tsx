@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, use } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { useFormik } from "formik";
 import { unwrapResult } from "@reduxjs/toolkit";
@@ -192,26 +192,30 @@ const CitationReviewPage = () => {
           toast.error("Maximum 500 characters allowed in Unit Remarks");
           return;
         }
-
-        const requiredFields = [
-          { key: "bde", name: "Brigade" },
-          { key: "div", name: "Division" },
-          { key: "corps", name: "Corps" },
-          { key: "comd", name: "Command" },
-          { key: "name", name: "Unit Name" },
-        ];
-
-        const missingFields = requiredFields.filter(
-          (field) => !profile?.unit?.[field.key]
-        );
-
-        if (missingFields.length > 0) {
-          const missingNames = missingFields.map((f) => f.name).join(", ");
-          toast.error(`Please fill the following unit fields: ${missingNames}`);
-          navigate("/profile-settings");
-          return;
-        }
-        
+        const requiredFields = profile?.user?.is_special_unit
+        ? [
+            { key: "comd", name: "Command" },
+            { key: "name", name: "Unit Name" },
+          ]
+        : [
+            { key: "bde", name: "Brigade" },
+            { key: "div", name: "Division" },
+            { key: "corps", name: "Corps" },
+            { key: "comd", name: "Command" },
+            { key: "name", name: "Unit Name" },
+          ];
+      
+      const missingFields = requiredFields.filter(
+        (field) => !profile?.unit?.[field.key]
+      );
+      
+      if (missingFields.length > 0) {
+        const missingNames = missingFields.map((f) => f.name).join(", ");
+        toast.error(`Please fill the following unit fields: ${missingNames}`);
+        navigate("/profile-settings");
+        return;
+      }
+      
         const formattedParameters = parameters
           .map((param: any) => {
             const display = getParamDisplay(param);

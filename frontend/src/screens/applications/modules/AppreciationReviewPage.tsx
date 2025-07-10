@@ -199,24 +199,29 @@ const AppreciationReviewPage = () => {
                     toast.error("Maximum 500 characters allowed in Unit Remarks");
                     return;
                 }
-                const requiredFields = [
+                const requiredFields = profile?.user?.is_special_unit
+                ? [
+                    { key: "comd", name: "Command" },
+                    { key: "name", name: "Unit Name" },
+                  ]
+                : [
                     { key: "bde", name: "Brigade" },
                     { key: "div", name: "Division" },
                     { key: "corps", name: "Corps" },
                     { key: "comd", name: "Command" },
                     { key: "name", name: "Unit Name" },
-                ];
-
-                const missingFields = requiredFields.filter(
-                    (field) => !profile?.unit?.[field.key]
-                );
-
-                if (missingFields.length > 0) {
-                    const missingNames = missingFields.map((f) => f.name).join(", ");
-                    toast.error(`Please fill the following unit fields: ${missingNames}`);
-                    navigate("/profile-settings");
-                    return;
-                }
+                  ];
+              
+              const missingFields = requiredFields.filter(
+                (field) => !profile?.unit?.[field.key]
+              );
+              
+              if (missingFields.length > 0) {
+                const missingNames = missingFields.map((f) => f.name).join(", ");
+                toast.error(`Please fill the following unit fields: ${missingNames}`);
+                navigate("/profile-settings");
+                return;
+              }
 console.log("parameters", parameters);
 const formattedParameters = parameters
   .map((param: any) => {

@@ -10,11 +10,14 @@ exports.createCitation = async (data, user) => {
 
     const profile = await AuthService.getProfile(user);
     const unit = profile?.data?.unit;
-    const isSpecialUnit = profile?.data?.user?.is_special_unit === true; 
-
-    const requiredFields = ["name", "bde", "div", "corps", "comd"];
+    const isSpecialUnit = profile?.data?.user?.is_special_unit === true;
+    
+    const requiredFields = isSpecialUnit
+      ? ["name", "comd"]
+      : ["name", "bde", "div", "corps", "comd"];
+    
     const missingFields = requiredFields.filter((field) => !unit?.[field]);
-
+    
     if (missingFields.length > 0) {
       throw new Error(
         `Incomplete unit profile. Please update the following fields in unit settings: ${missingFields.join(", ")}`

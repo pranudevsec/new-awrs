@@ -2554,13 +2554,20 @@ exports.getAllApplications = async (user, query) => {
         (
           (
             unit_id = ANY($1) AND
-            status_flag IN ('approved', 'rejected') AND
+            status_flag IN ('approved', 'rejected','shortlisted_approved') AND
             last_approved_by_role = ANY($2)
           )
           OR
           (
             unit_id = ANY($1) AND
             status_flag = 'in_review' AND
+            last_approved_by_role IS NULL AND
+            last_approved_at IS NULL
+          )
+            OR
+          (
+            unit_id = ANY($1) AND
+            status_flag = 'rejected' AND
             last_approved_by_role IS NULL AND
             last_approved_at IS NULL
           )
