@@ -34,6 +34,8 @@ const ApplicationDetails = () => {
   const { application_id } = useParams();
 
   const profile = useAppSelector((state) => state.admin.profile);
+  const isMember = profile?.user?.is_member ?? false;
+
   const { loading, unitDetail } = useAppSelector((state) => state.application);
   function areAllClarificationsResolved(unitDetail: any): boolean {
     if (
@@ -428,116 +430,116 @@ const ApplicationDetails = () => {
     }
   };
   
-  const handleAddsignature = async (member: any, memberdecision: string) => {
-    //validation
-    const newDecisions: { [memberId: string]: string } = {
-      ...decisions,
-      [member.id]: memberdecision,
-    };
-    setDecisions(newDecisions);
+  // const handleAddsignature = async (member: any, memberdecision: string) => {
+  //   //validation
+  //   const newDecisions: { [memberId: string]: string } = {
+  //     ...decisions,
+  //     [member.id]: memberdecision,
+  //   };
+  //   setDecisions(newDecisions);
 
-    const result = await dispatch(
-      TokenValidation({ inputPersID: member.ic_number })
-    );
-    const decision = decisions[member.id];
-    console.log(decision);
-    if (TokenValidation.fulfilled.match(result)) {
-      const isValid = result.payload.vaildId;
-      if (!isValid) {
-        // toast.error("Token is not valid");
-        return;
-      }
-      //sign
+  //   const result = await dispatch(
+  //     TokenValidation({ inputPersID: member.ic_number })
+  //   );
+  //   const decision = decisions[member.id];
+  //   console.log(decision);
+  //   if (TokenValidation.fulfilled.match(result)) {
+  //     const isValid = result.payload.vaildId;
+  //     if (!isValid) {
+  //       // toast.error("Token is not valid");
+  //       return;
+  //     }
+  //     //sign
 
-      const SignPayload = {
-        data: {
-          application_id,
-          member,
-          type: unitDetail?.type,
-        },
-      };
-      const response = await dispatch(getSignedData(SignPayload));
+  //     const SignPayload = {
+  //       data: {
+  //         application_id,
+  //         member,
+  //         type: unitDetail?.type,
+  //       },
+  //     };
+  //     const response = await dispatch(getSignedData(SignPayload));
 
-      const updatePayload = {
-        id: unitDetail?.id,
-        type: unitDetail?.type,
-        member: {
-          name: member.name,
-          ic_number: member.ic_number,
-          member_type: member.member_type,
-          member_id: member.id,
-          is_signature_added: true,
-          sign_digest: response.payload,
-        },
-        level: profile?.user?.user_role,
-      };
-      if (memberdecision === "accepted") {
-        dispatch(updateApplication(updatePayload)).then(() => {
-          dispatch(fetchApplicationUnitDetail({ award_type, numericAppId }));
-          const allOthersAccepted = profile?.unit?.members
-            .filter((m: any) => m.id !== member.id)
-            .every((m: any) => decisions[m.id] === "accepted");
+  //     const updatePayload = {
+  //       id: unitDetail?.id,
+  //       type: unitDetail?.type,
+  //       member: {
+  //         name: member.name,
+  //         ic_number: member.ic_number,
+  //         member_type: member.member_type,
+  //         member_id: member.id,
+  //         is_signature_added: true,
+  //         sign_digest: response.payload,
+  //       },
+  //       level: profile?.user?.user_role,
+  //     };
+  //     if (memberdecision === "accepted") {
+  //       dispatch(updateApplication(updatePayload)).then(() => {
+  //         dispatch(fetchApplicationUnitDetail({ award_type, numericAppId }));
+  //         const allOthersAccepted = profile?.unit?.members
+  //           .filter((m: any) => m.id !== member.id)
+  //           .every((m: any) => decisions[m.id] === "accepted");
 
-          if (allOthersAccepted && memberdecision === "accepted") {
-            navigate("/applications/list");
-          }
-        });
-      } else if (memberdecision === "rejected") {
-        console.log(memberdecision);
-        dispatch(
-          updateApplication({
-            ...updatePayload,
-            status: "rejected",
-          })
-        ).then(() => {
-          navigate("/applications/list");
-        });
-      }
-    }
-    // } else {
-    //   toast.error(result.payload as string || "Token validation failed");
-    //   return;
-    // }
-  };
+  //         if (allOthersAccepted && memberdecision === "accepted") {
+  //           navigate("/applications/list");
+  //         }
+  //       });
+  //     } else if (memberdecision === "rejected") {
+  //       console.log(memberdecision);
+  //       dispatch(
+  //         updateApplication({
+  //           ...updatePayload,
+  //           status: "rejected",
+  //         })
+  //       ).then(() => {
+  //         navigate("/applications/list");
+  //       });
+  //     }
+  //   }
+  //   // } else {
+  //   //   toast.error(result.payload as string || "Token validation failed");
+  //   //   return;
+  //   // }
+  // };
 
   // Development handleAddsignature
-  // const handleAddsignature = async (member: any, memberdecision: string) => {
-  //   const updatePayload = {
-  //     id: unitDetail?.id,
-  //     type: unitDetail?.type,
-  //     member: {
-  //       name: member.name,
-  //       ic_number: member.ic_number,
-  //       member_type: member.member_type,
-  //       member_id: member.id,
-  //       is_signature_added: true,
-  //       sign_digest: "something while developing",
-  //     },
-  //     level: profile?.user?.user_role,
-  //   };
-  //   if (memberdecision === "accepted") {
-  //     dispatch(updateApplication(updatePayload)).then(() => {
-  //       dispatch(fetchApplicationUnitDetail({ award_type, numericAppId }));
-  //       const allOthersAccepted = profile?.unit?.members
-  //         .filter((m: any) => m.id !== member.id)
-  //         .every((m: any) => decisions[m.id] === "accepted");
+  const handleAddsignature = async (member: any, memberdecision: string) => {
+    const updatePayload = {
+      id: unitDetail?.id,
+      type: unitDetail?.type,
+      member: {
+        name: member.name,
+        ic_number: member.ic_number,
+        member_type: member.member_type,
+        member_id: member.id,
+        is_signature_added: true,
+        sign_digest: "something while developing",
+      },
+      level: profile?.user?.user_role,
+    };
+    if (memberdecision === "accepted") {
+      dispatch(updateApplication(updatePayload)).then(() => {
+        dispatch(fetchApplicationUnitDetail({ award_type, numericAppId }));
+        const allOthersAccepted = profile?.unit?.members
+          .filter((m: any) => m.id !== member.id)
+          .every((m: any) => decisions[m.id] === "accepted");
 
-  //       if (allOthersAccepted && memberdecision === "accepted") {
-  //         navigate("/applications/list");
-  //       }
-  //     });
-  //   } else if (memberdecision === "rejected") {
-  //     console.log(memberdecision);
-  //     dispatch(
-  //       updateApplication({
-  //         ...updatePayload,
-  //         status: "rejected",
-  //       })
-  //     ).then(() => {
-  //       navigate("/applications/list");
-  //     });
-  //   }
-  // };
+        if (allOthersAccepted && memberdecision === "accepted") {
+          navigate("/applications/list");
+        }
+      });
+    } else if (memberdecision === "rejected") {
+      console.log(memberdecision);
+      dispatch(
+        updateApplication({
+          ...updatePayload,
+          status: "rejected",
+        })
+      ).then(() => {
+        navigate("/applications/list");
+      });
+    }
+  };
 
   // Show loader
   if (loading) return <Loader />;
@@ -1081,93 +1083,99 @@ const ApplicationDetails = () => {
                       </tr>
                     </thead>
                     <tbody>
-                      {[
-                        // First: presiding officers
-                        ...profile.unit.members.filter(
-                          (m) => m.member_type === "presiding_officer"
-                        ),
-                        // Then: member officers
-                        ...profile.unit.members
-                          .filter((m) => m.member_type === "member_officer")
-                          .sort(
-                            (a, b) =>
-                              Number(a.member_order || 0) -
-                              Number(b.member_order || 0)
-                          ),
-                      ].map((member) => {
-                        const acceptedMembers =
-                          unitDetail?.fds?.accepted_members || [];
-                        const foundMember = acceptedMembers.find(
-                          (m: any) => m.member_id === member.id
-                        );
-                        const isSignatureAdded =
-                          foundMember?.is_signature_added === true;
+  {[
+    // If isMember: only member_officer
+    ...(profile?.user?.is_member
+      ? profile.unit.members
+          .filter((m) => m.member_type === "member_officer")
+          .sort(
+            (a, b) =>
+              Number(a.member_order || 0) - Number(b.member_order || 0)
+          )
+      :
+      // Else: presiding officer + member officers
+      [
+        ...profile.unit.members.filter(
+          (m) => m.member_type === "presiding_officer"
+        ),
+        ...profile.unit.members
+          .filter((m) => m.member_type === "member_officer")
+          .sort(
+            (a, b) =>
+              Number(a.member_order || 0) - Number(b.member_order || 0)
+          ),
+      ]
+    ),
+  ].map((member) => {
+    const acceptedMembers = unitDetail?.fds?.accepted_members || [];
+    const foundMember = acceptedMembers.find(
+      (m: any) => m.member_id === member.id
+    );
+    const isSignatureAdded = foundMember?.is_signature_added === true;
 
-                        return (
-                          <tr key={member.id}>
-                            <td>
-                              {member.member_type === "presiding_officer"
-                                ? "Presiding Officer"
-                                : "Member Officer"}
-                            </td>
-                            <td>{member.name || "-"}</td>
-                            <td>{member.rank || "-"}</td>
-                            <td>
-                              <div className="d-flex flex-sm-row flex-column gap-sm-3 gap-1 align-items-center">
-                                {member.member_type === "presiding_officer" &&
-                                  !isSignatureAdded && (
-                                    <>
-                                      {isReadyToSubmit && (
-                                        <button
-                                          type="button"
-                                          className="_btn success w-sm-auto"
-                                          onClick={() =>
-                                            handleAddsignature(
-                                              member,
-                                              "accepted"
-                                            )
-                                          }
-                                        >
-                                          Accept
-                                        </button>
-                                      )}
-                                      <button
-                                        type="button"
-                                        className="_btn danger w-sm-auto"
-                                        onClick={() =>
-                                          handleAddsignature(member, "rejected")
-                                        }
-                                      >
-                                        Decline
-                                      </button>
-                                    </>
-                                  )}
+    return (
+      <tr key={member.id}>
+        <td>
+          {member.member_type === "presiding_officer"
+            ? "Presiding Officer"
+            : "Member Officer"}
+        </td>
+        <td>{member.name || "-"}</td>
+        <td>{member.rank || "-"}</td>
+        <td>
+          <div className="d-flex flex-sm-row flex-column gap-sm-3 gap-1 align-items-center">
+            {member.member_type === "presiding_officer" &&
+              !profile?.user?.is_member && 
+              !isSignatureAdded && (
+                <>
+                  {isReadyToSubmit && (
+                    <button
+                      type="button"
+                      className="_btn success w-sm-auto"
+                      onClick={() =>
+                        handleAddsignature(member, "accepted")
+                      }
+                    >
+                      Accept
+                    </button>
+                  )}
+                  <button
+                    type="button"
+                    className="_btn danger w-sm-auto"
+                    onClick={() =>
+                      handleAddsignature(member, "rejected")
+                    }
+                  >
+                    Decline
+                  </button>
+                </>
+              )}
 
-                                {member.member_type !== "presiding_officer" &&
-                                  !isSignatureAdded && (
-                                    <button
-                                      type="button"
-                                      className="_btn success text-nowrap w-sm-auto"
-                                      onClick={() =>
-                                        handleAddsignature(member, "accepted")
-                                      }
-                                    >
-                                      Add Signature
-                                    </button>
-                                  )}
+            {member.member_type !== "presiding_officer" &&
+              !isSignatureAdded && (
+                <button
+                  type="button"
+                  className="_btn success text-nowrap w-sm-auto"
+                  onClick={() =>
+                    handleAddsignature(member, "accepted")
+                  }
+                >
+                  Add Signature
+                </button>
+              )}
 
-                                {isSignatureAdded && (
-                                  <span className="text-success fw-semibold text-nowrap d-flex align-items-center gap-1">
-                                    <FaCheckCircle className="fs-5" /> Signature
-                                    Added
-                                  </span>
-                                )}
-                              </div>
-                            </td>
-                          </tr>
-                        );
-                      })}
-                    </tbody>
+            {isSignatureAdded && (
+              <span className="text-success fw-semibold text-nowrap d-flex align-items-center gap-1">
+                <FaCheckCircle className="fs-5" /> Signature Added
+              </span>
+            )}
+          </div>
+        </td>
+      </tr>
+    );
+  })}
+</tbody>
+
                   </table>
                 </div>
               )}
