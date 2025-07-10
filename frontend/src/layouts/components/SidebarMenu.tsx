@@ -1,4 +1,4 @@
-import {  NavLink } from "react-router-dom";
+import { NavLink } from "react-router-dom";
 import { sidebarStructure } from "./structure";
 import { useAppSelector } from "../../reduxToolkit/hooks";
 import { SVGICON } from "../../constants/iconsList";
@@ -74,12 +74,12 @@ const SidebarMenu = () => {
   };
   const withdrawItem = {
     label: "Withdraws",
-    icon: SVGICON.sidebar.history,
+    icon: SVGICON.sidebar.withdraws,
     to: "/withdraw-quests",
   };
   const allApplicationsItem = {
     label: "All Applications",
-    icon: SVGICON.sidebar.history,
+    icon: SVGICON.sidebar.allApplications,
     to: "/all-applications",
   };
   if (
@@ -89,10 +89,10 @@ const SidebarMenu = () => {
     userRole === "command"
   ) {
     filteredStructure.push(acceptedApplicationItem);
-    
+
     filteredStructure.push(allApplicationsItem);
-    if(userRole !== "brigade"){filteredStructure.push(withdrawItem);}
-    if(!isMember){filteredStructure.push(historyItem);}
+    if (userRole !== "brigade") { filteredStructure.push(withdrawItem); }
+    if (!isMember) { filteredStructure.push(historyItem); }
   }
   if (
     userRole === "headquarter"

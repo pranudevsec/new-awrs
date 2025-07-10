@@ -94,9 +94,6 @@ const TopCandidates: React.FC<TopCandidatesProps> = ({ setReportCount, reportCou
       const graceMarks = candidate.fds?.applicationGraceMarks || [];
       const priorities = candidate.fds?.applicationPriority || [];
 
-      console.log("candidate -> ", candidate);
-      console.log("parameters -> ", parameters);
-
       const getParamMarks = (paramName: string) => {
         return (
           parameters.find((p: any) =>
@@ -117,6 +114,9 @@ const TopCandidates: React.FC<TopCandidatesProps> = ({ setReportCount, reportCou
         return acc;
       }, {});
 
+      const moPriority = priorities.find((p: any) => p.cw2_type === "mo")?.priority ?? "";
+      const olPriority = priorities.find((p: any) => p.cw2_type === "ol")?.priority ?? "";
+
       return {
         "S. No.": index + 1,
         "Unit": candidate.unit_name || "",
@@ -133,9 +133,10 @@ const TopCandidates: React.FC<TopCandidatesProps> = ({ setReportCount, reportCou
         "Pistol Recovery": getParamMarks("pistol"),
         "(-ve Marks)": candidate.totalNegativeMarks ?? 0,
         ...graceMarksByRole,
-        "Command Marks": getParamMarks("command"),
         "Total Marks": candidate.total_marks ?? 0,
         ...prioritiesByRole,
+        "MO_priority": moPriority,
+        "OL_priority": olPriority,
         "MO Remarks": "",
         "OL Remarks": "",
       };
@@ -191,4 +192,3 @@ const TopCandidates: React.FC<TopCandidatesProps> = ({ setReportCount, reportCou
 };
 
 export default TopCandidates;
-
