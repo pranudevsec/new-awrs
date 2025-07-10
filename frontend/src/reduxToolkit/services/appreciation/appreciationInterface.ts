@@ -1,4 +1,5 @@
 export interface AppreciationParameter {
+  id?: number; // Optional ID for existing parameters
   name: string;
   count: number;
   marks: number;

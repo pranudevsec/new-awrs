@@ -63,8 +63,8 @@ const AppreciationReviewPage = () => {
         localStorage.setItem("applyAppreciationUnitRemarks", unitRemarks);
     }, [unitRemarks]);
 
-    // const filteredParameters = parameters.filter((param: any) => counts[param.param_id] !== undefined && counts[param.param_id] !== "");
-    const groupedParams = groupParametersByCategory(parameters);
+    const filteredParameters = parameters.filter((param: any) => counts[param.param_id] !== undefined && counts[param.param_id] !== "");
+    const groupedParams = groupParametersByCategory(filteredParameters);
 
     useEffect(() => {
         if (!initializedRef.current) {
@@ -119,6 +119,34 @@ const AppreciationReviewPage = () => {
         }
     };
 
+    const getParamDisplay = (param: any) => {
+        if (param.name != "no") {
+        return {
+            main: param.name,
+            header: param.subcategory || null,
+            subheader: param.subsubcategory || null,
+        };
+        } else if (param.subsubcategory) {
+        return {
+            main: param.subsubcategory,
+            header: param.subcategory || null,
+            subheader: null,
+        };
+        } else if (param.subcategory) {
+        return {
+            main: param.subcategory,
+            header: null,
+            subheader: null,
+        };
+        } else {
+        return {
+            main: param.category,
+            header: null,
+            subheader: null,
+        };
+        }
+    };
+
     const handleFileChange = async (
         e: React.ChangeEvent<HTMLInputElement>,
         paramId: number,
@@ -157,7 +185,7 @@ const AppreciationReviewPage = () => {
 
 
     // Formik form
-    const formik = useFormik({
+    const formik = useFormik({ 
         enableReinitialize: true,
         initialValues: {
             cyclePeriod: cyclePerios || "",
@@ -189,27 +217,29 @@ const AppreciationReviewPage = () => {
                     navigate("/profile-settings");
                     return;
                 }
-
-                const formattedParameters = parameters.map((param: any) => {
-                    const trimmedName = param.name.trim();
-                    const count = Number(counts[param.param_id] ?? 0);
-                    const calculatedMarks = marks[param.param_id] ?? 0;
-                    const uploadPaths = uploadedFiles[param.param_id] || [];
-
-                    return {
-                        name: trimmedName,
-                        count,
-                        marks: calculatedMarks,
-                        upload: uploadPaths,
-                    };
-                });
+console.log("parameters", parameters);
+const formattedParameters = parameters
+  .map((param: any) => {
+    const display = getParamDisplay(param);
+    const count = Number(counts[param.param_id] ?? 0);
+    const calculatedMarks = marks[param.param_id] ?? 0;
+    const uploadPaths = uploadedFiles[param.param_id] || [];
+    return {
+      id: param.param_id,
+      name: display.main,
+      count,
+      marks: calculatedMarks,
+      upload: uploadPaths,
+    };
+  })
+  .filter((param) => param.count > 0 && param.upload.length > 0 && param.marks > 0);
 
                 const payload = {
                     date_init: new Date().toISOString().split("T")[0],
                     appre_fds: {
                         award_type: "appreciation",
                         cycle_period: values.cyclePeriod,
-                        last_date: values.lastDate,
+                        last_date: values.lastDate, 
                         command: values.command,
                         parameters: formattedParameters,
                         unitRemarks: unitRemarks
@@ -243,7 +273,7 @@ const AppreciationReviewPage = () => {
             try {
                 const [configRes, paramsRes] = await Promise.all([
                     dispatch(getConfig()).unwrap(),
-                    dispatch(fetchParameters({ awardType: "appreciation", search: "" })).unwrap(),
+                    dispatch(fetchParameters({ awardType: "appreciation", search: "", limit: 1000 })).unwrap(),
                 ]);
 
                 if (configRes?.success && configRes.data) {
@@ -256,6 +286,7 @@ const AppreciationReviewPage = () => {
                 }
 
                 if (paramsRes.success && paramsRes.data) {
+                    console.log("Parameters fetched:", paramsRes.data);
                     setParameters(paramsRes.data);
                 }
             } catch (err) {
@@ -281,33 +312,33 @@ const AppreciationReviewPage = () => {
 
     // Total Parameters
     const totalParams = parameters.length;
-    const getParamDisplay = (param: any) => {
-        if (param.name != "no") {
-            return {
-                main: param.name,
-                header: param.subcategory || null,
-                subheader: param.subsubcategory || null,
-            };
-        } else if (param.subsubcategory) {
-            return {
-                main: param.subsubcategory,
-                header: param.subcategory || null,
-                subheader: null,
-            };
-        } else if (param.subcategory) {
-            return {
-                main: param.subcategory,
-                header: null,
-                subheader: null,
-            };
-        } else {
-            return {
-                main: param.category,
-                header: null,
-                subheader: null,
-            };
-        }
-    };
+    // const getParamDisplay = (param: any) => {
+    //     if (param.name != "no") {
+    //         return {
+    //             main: param.name,
+    //             header: param.subcategory || null,
+    //             subheader: param.subsubcategory || null,
+    //         };
+    //     } else if (param.subsubcategory) {
+    //         return {
+    //             main: param.subsubcategory,
+    //             header: param.subcategory || null,
+    //             subheader: null,
+    //         };
+    //     } else if (param.subcategory) {
+    //         return {
+    //             main: param.subcategory,
+    //             header: null,
+    //             subheader: null,
+    //         };
+    //     } else {
+    //         return {
+    //             main: param.category,
+    //             header: null,
+    //             subheader: null,
+    //         };
+    //     }
+    // };
     // Show loader
     if (loading) return <Loader />
 
@@ -436,27 +467,57 @@ const AppreciationReviewPage = () => {
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        {params.map((param: any) => {
-                                            const countValue = counts[param.param_id];
-                                            const markValue = marks[param.param_id];
+                                        {(() => {
+                      let prevHeader: string | null = null;
+                      let prevSubheader: string | null = null;
+                      const rows: any = [];
+                      params.forEach((param: any, idx: number) => {
+                        const display = getParamDisplay(param);
+                        const countValue = counts[param.param_id];
+                        const markValue = marks[param.param_id];
 
-                                            if (countValue === undefined || countValue === "") return null;
+                        if (countValue === undefined || countValue === "") return;
 
-                                            return (
-                                                <tr key={param.param_id}>
-                                                    <td style={{ width: 300, minWidth: 300, maxWidth: 300 }}>
-                                                        <p className="fw-5">{param.name}</p>
-                                                    </td>
-                                                    <td style={{ width: 200, minWidth: 200, maxWidth: 200 }}>
-                                                        <p className="fw-5">{countValue !== undefined && countValue !== ""
-                                                            ? <span>{countValue}</span>
-                                                            : <span>--</span>}</p>
-                                                    </td>
-                                                    <td style={{ width: 200, minWidth: 200, maxWidth: 200 }}>
-                                                        <span><p className="fw-5">{markValue !== undefined ? markValue : "--"}</p></span>
-                                                    </td>
-                                                    <td style={{ width: 200, minWidth: 200, maxWidth: 200 }}>
-                                                        {param.proof_reqd ? (
+                        const showHeader = display.header && display.header !== prevHeader;
+                        const showSubheader = display.subheader && display.subheader !== prevSubheader;
+
+                        if (showHeader) {
+                          rows.push(
+                            <tr key={`header-${display.header}-${idx}`}>
+                              <td colSpan={4} style={{ fontWeight: 600, color: "#555", fontSize: 15, background: "#f5f5f5" }}>
+                                {display.header}
+                              </td>
+                            </tr>
+                          );
+                        }
+                        if (showSubheader) {
+                          rows.push(
+                            <tr key={`subheader-${display.subheader}-${idx}`}>
+                              <td colSpan={4} style={{ color: display.header ? "#1976d2" : "#888", fontSize: 13, background: "#f8fafc" }}>
+                                {display.subheader}
+                              </td>
+                            </tr>
+                          );
+                        }
+
+                        prevHeader = display.header;
+                        prevSubheader = display.subheader;
+
+                        rows.push(
+                          <tr key={param.param_id}>
+                            <td style={{ width: 300, minWidth: 300, maxWidth: 300 }}>
+                              <p className="fw-5">{display.main}</p>
+                            </td>
+                            <td style={{ width: 200, minWidth: 200, maxWidth: 200 }}>
+                              <p className="fw-5">{countValue !== undefined && countValue !== ""
+                                ? <span>{countValue}</span>
+                                : <span>--</span>}</p>
+                            </td>
+                            <td style={{ width: 200, minWidth: 200, maxWidth: 200 }}>
+                              <span><p className="fw-5">{markValue !== undefined ? markValue : "--"}</p></span>
+                            </td>
+                            <td style={{ width: 200, minWidth: 200, maxWidth: 200 }}>
+                            {param.proof_reqd ? (
                                                             <>
                                                                 {uploadedFiles[param.param_id]?.length > 0 && (
                                                                     <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
@@ -478,8 +539,7 @@ const AppreciationReviewPage = () => {
                                                                     className="form-control mt-1"
                                                                     multiple
                                                                     onChange={(e) => {
-                                                                        const display = getParamDisplay(param);
-                                                                        handleFileChange(e, param.param_id, display.main);
+                                                                        handleFileChange(e, param.param_id, param.name);
                                                                     }}
                                                                 />
                                                             </>
@@ -487,9 +547,11 @@ const AppreciationReviewPage = () => {
                                                             <span>Not required</span>
                                                         )}
                                                     </td>
-                                                </tr>
-                                            );
-                                        })}
+                          </tr>
+                        );
+                      });
+                      return rows;
+                    })()}
                                     </tbody>
                                 </table>
                             </div>

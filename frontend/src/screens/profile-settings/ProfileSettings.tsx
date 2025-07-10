@@ -275,8 +275,10 @@ const ProfileSettings = () => {
         payload["tech_channel"] = values.tech_channel;
         payload["unit_type"] = values.unit_type;
         payload["matrix_unit"] = Array.isArray(values.matrix_unit)
-        ? values.matrix_unit.join(",")
-        : values.matrix_unit || ""; 
+          ? values.matrix_unit.join(",")
+          : typeof values.matrix_unit === "string" && values.matrix_unit.length > 0
+            ? values.matrix_unit
+            : "";
         payload["location"] = values.location;
         payload["awards"] = awards;
 
@@ -321,7 +323,7 @@ const ProfileSettings = () => {
   });
 
   return (
-    <div className="profile-settings-section" style={{ padding: "2rem", maxWidth: "85vw"}}>
+    <div className="profile-settings-section" style={{ padding: "2rem", maxWidth: "80vw"}}>
       <div className="d-flex flex-sm-row flex-column align-items-sm-center justify-content-between mb-4">
         <Breadcrumb title="Profile Settings" />
       </div>
@@ -444,14 +446,14 @@ const ProfileSettings = () => {
           {role === "unit" && (
             <>
               <div className="col-12 mb-3">
-                <label className="form-label fw-6">Awards</label>
+                <label className="form-label fw-6">Awards Received</label>
                 <table className="table table-bordered">
                   <thead>
                     {awards.length !== 0 && (<tr>
-                      <th>Type</th>
-                      <th>Title</th>
+                      {/* <th>Type</th>
+                      <th>Brigade</th>
                       <th>Year</th>
-                      <th>Action</th>
+                      <th>Action</th> */}
                     </tr>)}
                   </thead>
                   <tbody>
@@ -467,23 +469,24 @@ const ProfileSettings = () => {
                               setAwards(updated);
                             }}
                           >
-                            <option value="goc">GOC_IN_C</option>
+                            <option value="goc">GOC-in-C</option>
                             <option value="coas">COAS</option>
                             <option value="cds">CDS</option>
                           </select>
                         </td>
                         <td>
-                          <input
-                            type="text"
+                          <select
                             className="form-control"
                             value={award.award_title}
                             onChange={(e) => {
                               const updated = [...awards];
-                              updated[idx].award_title = e.target.value;
+                              updated[idx].award_title = e.target.value as "citation" | "appreciation";
                               setAwards(updated);
                             }}
-                            placeholder="Award Title"
-                          />
+                          >
+                            <option value="citation">Citation</option>
+                            <option value="appreciation">Appreciation</option>
+                          </select>
                         </td>
                         <td>
                           <select

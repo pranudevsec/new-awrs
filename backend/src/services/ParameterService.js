@@ -53,6 +53,7 @@ exports.getAllParameters = async (query) => {
   const client = await dbService.getClient();
   try {
     const { awardType, search,matrix_unit,comd,unit_type, page = 1, limit = 10 } = query;
+    console.log( matrix_unit);
     let award_type = awardType;
     const pageInt = parseInt(page);
     const limitInt = parseInt(limit);
@@ -76,9 +77,12 @@ exports.getAllParameters = async (query) => {
       orConditions.push(`arms_service = $${values.length}`);
     }
     if (matrix_unit) {
-      values.push(matrix_unit);
-      orConditions.push(`location = $${values.length}`);
-    }
+    const matrixUnits = matrix_unit.split(',').map(u => u.trim()).filter(Boolean);
+    matrixUnits.forEach(unit => {
+      values.push(unit);
+      orConditions.push(`arms_service = $${values.length}`);
+    });
+  }
     if (search) {
       values.push(`%${search.toLowerCase()}%`);
       filters.push(`LOWER(name) LIKE $${values.length}`);
@@ -167,7 +171,7 @@ exports.updateParameter = async (id, data) => {
     } finally {
       client.release();
     }
-  };
+  };  
   
 // Delete Parameter
 exports.deleteParameter = async (id) => {
