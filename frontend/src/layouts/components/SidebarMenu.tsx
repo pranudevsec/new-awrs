@@ -18,9 +18,7 @@ const SidebarMenu = () => {
   ) {
     alwaysVisible.push("Clarification Received", "Home", "Profile Settings");
 
-    if (userRole !== "unit") {
-      alwaysVisible.push("Clarification Raised");
-    }
+    if (userRole !== "unit") alwaysVisible.push("Clarification Raised");
   }
 
   const dashboardItem = sidebarStructure.find(item => item.label === "Dashboard");
@@ -29,7 +27,7 @@ const SidebarMenu = () => {
   const headquarterExtraLabels = ["Dashboard", "Home", "Awards", "Scoreboard", "Profile Settings"];
 
   let filteredStructure = sidebarStructure.filter((item) => {
-    if (item.label === "Dashboard") return false; // Dashboard added manually
+    if (item.label === "Dashboard") return false;
 
     if (alwaysVisible.includes(item.label)) {
       return true;
@@ -67,21 +65,25 @@ const SidebarMenu = () => {
     icon: SVGICON.sidebar.profile,
     to: "/application/accepted",
   };
+
   const historyItem = {
     label: "History",
     icon: SVGICON.sidebar.history,
     to: "/history",
   };
+
   const withdrawItem = {
     label: "Withdraws",
     icon: SVGICON.sidebar.withdraws,
     to: "/withdraw-quests",
   };
+
   const allApplicationsItem = {
     label: "All Applications",
     icon: SVGICON.sidebar.allApplications,
     to: "/all-applications",
   };
+
   if (
     userRole === "brigade" ||
     userRole === "division" ||
@@ -89,16 +91,16 @@ const SidebarMenu = () => {
     userRole === "command"
   ) {
     filteredStructure.push(acceptedApplicationItem);
-
     filteredStructure.push(allApplicationsItem);
     if (userRole !== "brigade") { filteredStructure.push(withdrawItem); }
     if (!isMember) { filteredStructure.push(historyItem); }
   }
-  if (
-    userRole === "headquarter"
-  ) {
+
+  if (userRole === "headquarter") {
     filteredStructure.push(allApplicationsItem);
+    filteredStructure = filteredStructure.filter(item => item.label !== "Profile Settings");
   }
+
   return (
     <aside className="sidebar bg-dark text-white p-3" style={{ width: "300px" }}>
       <div className="d-flex flex-column justify-content-center align-items-center gap-2 mb-2">
