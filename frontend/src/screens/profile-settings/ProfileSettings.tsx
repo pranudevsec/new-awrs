@@ -32,7 +32,7 @@ interface Officer {
   rank: string;
   name: string;
   appointment: string;
-  digitalSign: string;
+  // digitalSign: string;
 }
 interface Award {
   award_id?: string;
@@ -58,7 +58,7 @@ const ProfileSettings = () => {
     rank: "",
     name: "",
     appointment: "",
-    digitalSign: "",
+    // digitalSign: "",
   });
 
   const [officers, setOfficers] = useState<Officer[]>([
@@ -69,7 +69,7 @@ const ProfileSettings = () => {
       rank: "",
       name: "",
       appointment: "",
-      digitalSign: "",
+      // digitalSign: "",
     },
   ]);
   const [awards, setAwards] = useState<Award[]>(profile?.unit?.awards ?? []);
@@ -103,7 +103,7 @@ const ProfileSettings = () => {
           rank: presiding.rank ?? "",
           name: presiding.name ?? "",
           appointment: presiding.appointment ?? "",
-          digitalSign: presiding.digital_sign ?? "",
+          // digitalSign: presiding.digital_sign ?? "",
         });
       }
 
@@ -117,7 +117,7 @@ const ProfileSettings = () => {
           rank: member.rank ?? "",
           name: member.name ?? "",
           appointment: member.appointment ?? "",
-          digitalSign: member.digital_sign ?? "",
+          // digitalSign: member.digital_sign ?? "",
         }));
 
       if (otherOfficers.length > 0) {
@@ -131,7 +131,7 @@ const ProfileSettings = () => {
             rank: "",
             name: "",
             appointment: "",
-            digitalSign: "",
+            // digitalSign: "",
           },
         ]);
       }
@@ -224,7 +224,7 @@ const ProfileSettings = () => {
         rank: "",
         name: "",
         appointment: "",
-        digitalSign: "",
+        // digitalSign: "",
       },
     ]);
   };
@@ -538,7 +538,7 @@ const ProfileSettings = () => {
           )}
 
 
-          {role !== "unit" && (
+          {/* {role !== "unit" && (
             <>
               {" "}
               <div className="col-sm-6 mb-3">
@@ -588,7 +588,7 @@ const ProfileSettings = () => {
                 )}
               </div>
             </>
-          )}
+          )} */}
 
           <div className="col-12 mt-2">
             <div className="d-flex align-items-center">
@@ -703,7 +703,7 @@ const ProfileSettings = () => {
                 rank: presidingOfficer.rank,
                 name: presidingOfficer.name,
                 appointment: presidingOfficer.appointment,
-                digital_sign: presidingOfficer.digitalSign,
+                // digital_sign: presidingOfficer.digitalSign,
               }];
 
               try {
@@ -756,7 +756,7 @@ const ProfileSettings = () => {
                   onChange={(e) => handlePresidingChange("appointment", e.target.value)}
                 />
               </div>
-              <div className="col-sm-6 mb-3">
+              {/* <div className="col-sm-6 mb-3">
                 <FormInput
                   label="Digital Sign"
                   name="digitalSign"
@@ -764,7 +764,7 @@ const ProfileSettings = () => {
                   value={presidingOfficer.digitalSign}
                   onChange={(e) => handlePresidingChange("digitalSign", e.target.value)}
                 />
-              </div>
+              </div> */}
               <div className="col-12 mt-2">
                 <button type="submit" className="_btn _btn-lg primary">
                   Add Presiding Officer
@@ -793,7 +793,7 @@ const ProfileSettings = () => {
                 rank: officer.rank,
                 name: officer.name,
                 appointment: officer.appointment,
-                digital_sign: officer.digitalSign,
+                // digital_sign: officer.digitalSign,
               }));
 
               try {
@@ -860,7 +860,7 @@ const ProfileSettings = () => {
                       }
                     />
                   </div>
-                  <div className="col-sm-6 mb-3">
+                  {/* <div className="col-sm-6 mb-3">
                     <FormInput
                       label="Digital Sign"
                       name={`digitalSign-${index}`}
@@ -870,7 +870,7 @@ const ProfileSettings = () => {
                         handleChange(index, "digitalSign", e.target.value)
                       }
                     />
-                  </div>
+                  </div> */}
                 </div>
               </div>
             ))}

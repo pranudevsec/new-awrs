@@ -19,7 +19,6 @@ exports.addSignatureLogs = async (
         status || 'approved',
         member.sign_digest
       ])
-      console.log(response)
     } catch (err) {
     console.error("Error updating status:", err);
     throw new Error(err.message);

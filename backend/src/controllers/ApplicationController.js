@@ -71,7 +71,9 @@ exports.getApplicationsScoreboard = async (req, res) => {
         }
       }
       const result = await ApplicationService.updateApplicationStatus(id, type, status, req.user,member,withdrawRequested,withdraw_status);
-      await SignatureLogService.addSignatureLogs(id,status,member,level);
+      if(member){
+        await SignatureLogService.addSignatureLogs(id,status,member,level);
+      }
   
       res.status(StatusCodes.OK).send(
         ResponseHelper.success(StatusCodes.OK, "Application status updated", result)

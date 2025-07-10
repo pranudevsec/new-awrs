@@ -441,7 +441,6 @@ export const TokenValidation = createAsyncThunk<
         return rejectWithValue(result?.Remark || "Token validation failed");
       }
     } catch (error: any) {
-      console.error("Token validation error:", error);
       const message =
         error?.response?.data?.message || "Error validating token";
       toast.error(message);

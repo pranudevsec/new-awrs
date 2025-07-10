@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { MdClose } from "react-icons/md";
 import { IoMdCheckmark } from "react-icons/io";
+import { FaCheckCircle } from "react-icons/fa";
 import { SVGICON } from "../../../constants/iconsList";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { useAppDispatch, useAppSelector } from "../../../reduxToolkit/hooks";
@@ -404,14 +405,21 @@ const ApplicationDetails = () => {
       };
     }
   };
-  const handleAddsignature = async (member:any) => {
+  const handleAddsignature = async (member:any,memberdecision:string) => {
     //validation
+    const newDecisions: { [memberId: string]: string }  = {
+      ...decisions,
+      [member.id]: memberdecision,
+    };
+    setDecisions(newDecisions);
+  
     const result = await dispatch(TokenValidation({ inputPersID: member.ic_number }));
     const decision = decisions[member.id];
+    console.log(decision)
     if (TokenValidation.fulfilled.match(result)) {
       const isValid = result.payload.vaildId;
       if (!isValid) {
-        toast.error("Token is not valid");
+        // toast.error("Token is not valid");
         return;
       }
       //sign
@@ -438,18 +446,21 @@ const ApplicationDetails = () => {
           },
           level:profile?.user?.user_role
       }
-      if (decision === "accepted") {
+      if (memberdecision === "accepted") {
         dispatch(
           updateApplication(updatePayload)
         ).then(() => {
           dispatch(fetchApplicationUnitDetail({ award_type, numericAppId }));
-          const allAccepted = profile?.unit?.members.every((m: any) => decisions[m.id] === "accepted");
-          if (allAccepted) {
+          const allOthersAccepted = profile?.unit?.members
+            .filter((m: any) => m.id !== member.id)
+            .every((m: any) => decisions[m.id] === "accepted");
+
+          if (allOthersAccepted && memberdecision === "accepted") {
             navigate("/applications/list");
           }
         });
-      } else if (decision === "rejected") {
-        console.log(decision);
+      } else if (memberdecision === "rejected") {
+        console.log(memberdecision);
         dispatch(
           updateApplication({
             ...updatePayload,
@@ -459,11 +470,11 @@ const ApplicationDetails = () => {
           navigate("/applications/list");
         });
       }
-
-    } else {
-      toast.error(result.payload as string || "Token validation failed");
-      return;
     }
+    // } else {
+    //   toast.error(result.payload as string || "Token validation failed");
+    //   return;
+    // }
   };
 
   // Show loader
@@ -877,9 +888,7 @@ const ApplicationDetails = () => {
        {  isHeadquarter &&   <StepProgressBar award_type={award_type} unitDetail={unitDetail}/>}
             {profile?.unit?.members &&
               Array.isArray(profile.unit.members) &&
-              profile.unit.members.filter(
-                (m) => m.digital_sign && m.digital_sign.trim() !== ""
-              ).length > 0 && (
+              profile.unit.members.length > 0 && (
                 <div className="table-responsive mb-3">
                   <label
                     className="fw-medium text-muted mb-2"
@@ -896,83 +905,79 @@ const ApplicationDetails = () => {
                         <th style={{ width: "25%" }}>Signature</th>
                       </tr>
                     </thead>
-                    <tbody>
-                      {[
-                        ...profile.unit.members
-                          .filter(
-                            (m) =>
-                              m.member_type === "member_officer" &&
-                              m.digital_sign &&
-                              m.digital_sign.trim() !== ""
-                          )
-                          .sort(
-                            (a, b) =>
-                              Number(a.member_order || 0) -
-                              Number(b.member_order || 0)
-                          ),
-                        ...profile.unit.members.filter(
-                          (m) =>
-                            m.member_type === "presiding_officer" &&
-                            m.digital_sign &&
-                            m.digital_sign.trim() !== ""
-                        ),
-                      ].map((member) => {
-                        const acceptedMembers = unitDetail?.fds?.accepted_members || [];
-                        const foundMember = acceptedMembers.find(
-                          (m:any) => m.member_id === member.id
-                        );
-                        // const isMemberAdded = !!foundMember;
-                        const isSignatureAdded = foundMember?.is_signature_added === true;
-              
-                        return (
-                          <tr key={member.id}>
-                            <td>
-                              {member.member_type === "presiding_officer"
-                                ? "Presiding Officer"
-                                : "Member Officer"}
-                            </td>
-                            <td>{member.name || "-"}</td>
-                            <td>{member.rank || "-"}</td>
-                            <td>
-                              <div className="d-flex flex-sm-row flex-column gap-sm-3 gap-1 ">
-                                 {(
-                                  <select
-                                    className="form-select w-sm-auto"
-                                    value={decisions[member?.id] || ""}
-                                    onChange={(e) =>{setDecisions((prev) => ({
-                                              ...prev,
-                                              [member.id]: e.target.value,
-                                            }))}}
-                                  >
-                                    <option value="">-- Select --</option>
-                                    <option value="accepted">Accept</option>
-                                    <option value="rejected">Reject</option>
-                                  </select>
-                                )}
-                                {!isSignatureAdded && (
-                                <button
-                                type="button"
-                                className="_btn success text-nowrap w-sm-auto"
-                                onClick={() => {
-                                  handleAddsignature(member);
-                                }}
-                              >
-                                Add Signature
-                              </button>
-                              
-                                )}
-              
-                                {isSignatureAdded && (
-                                  <span className="text-success fw-semibold text-nowrap">
-                                    Signature Added
-                                  </span>
-                                )}
-                              </div>
-                            </td>
-                          </tr>
-                        );
-                      })}
-                    </tbody>
+                      <tbody>
+                        {[
+                          // First: presiding officers
+                          ...profile.unit.members
+                            .filter(
+                              (m) =>
+                                m.member_type === "presiding_officer"
+                            ),
+                          // Then: member officers
+                          ...profile.unit.members
+                            .filter(
+                              (m) =>
+                                m.member_type === "member_officer"
+                            )
+                            .sort((a, b) => Number(a.member_order || 0) - Number(b.member_order || 0)),
+                        ].map((member) => {
+                          const acceptedMembers = unitDetail?.fds?.accepted_members || [];
+                          const foundMember = acceptedMembers.find((m: any) => m.member_id === member.id);
+                          const isSignatureAdded = foundMember?.is_signature_added === true;
+
+                          return (
+                            <tr key={member.id}>
+                              <td>
+                                {member.member_type === "presiding_officer"
+                                  ? "Presiding Officer"
+                                  : "Member Officer"}
+                              </td>
+                              <td>{member.name || "-"}</td>
+                              <td>{member.rank || "-"}</td>
+                              <td>
+                                <div className="d-flex flex-sm-row flex-column gap-sm-3 gap-1 align-items-center">
+                                  {member.member_type === "presiding_officer" && !isSignatureAdded && (
+                                    <>
+                                      <button
+                                        type="button"
+                                        className="_btn success w-sm-auto"
+                                        onClick={() =>handleAddsignature(member,"accepted")}
+                                      >
+                                        Accept
+                                      </button>
+                                      <button
+                                        type="button"
+                                        className="_btn danger w-sm-auto"
+                                        onClick={() =>handleAddsignature(member,"rejected")}
+                                      >
+                                        Decline
+                                      </button>
+                                    </>
+                                  )}
+
+                                  {member.member_type !== "presiding_officer" && !isSignatureAdded && (
+                                    <button
+                                      type="button"
+                                      className="_btn success text-nowrap w-sm-auto"
+                                        onClick={() =>handleAddsignature(member,"accepted")}
+                                    >
+                                      Add Signature
+                                    </button>
+                                  )}
+
+                                  {isSignatureAdded && (
+                                    <span className="text-success fw-semibold text-nowrap d-flex align-items-center gap-1">
+                                      <FaCheckCircle className="fs-5" /> Signature Added
+                                    </span>
+
+                                  )}
+                                </div>
+                              </td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+
                   </table>
                 </div>
               )}
@@ -1110,9 +1115,7 @@ const ApplicationDetails = () => {
   (cw2_type === "ol" && !unitDetail?.is_ol_approved)
 )) &&
               Array.isArray(profile.unit.members) &&
-              profile.unit.members.filter(
-                (m) => m.digital_sign && m.digital_sign.trim() !== ""
-              ).length > 0 && (
+              profile.unit.members.length > 0 && (
                 <div className="table-responsive mb-3">
                   <label
                     className="fw-medium text-muted mb-2"
@@ -1134,9 +1137,7 @@ const ApplicationDetails = () => {
                         ...profile.unit.members
                           .filter(
                             (m) =>
-                              m.member_type === "member_officer" &&
-                              m.digital_sign &&
-                              m.digital_sign.trim() !== ""
+                              m.member_type === "member_officer" 
                           )
                           .sort(
                             (a, b) =>
@@ -1145,9 +1146,7 @@ const ApplicationDetails = () => {
                           ),
                         ...profile.unit.members.filter(
                           (m) =>
-                            m.member_type === "presiding_officer" &&
-                            m.digital_sign &&
-                            m.digital_sign.trim() !== ""
+                            m.member_type === "presiding_officer"
                         ),
                       ].map((member) => (
                         <tr key={member.id}>
