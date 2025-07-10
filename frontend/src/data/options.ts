@@ -295,9 +295,7 @@ export const unitTypeOptions = [
 
 export const matrixUnitOptions = [
   { label: "CI/CT", value: "HINTERLAND" },
-  { label: "LC", value: "LC" },
-  { label: "LAC", value: "LAC" },
+  { label: "LC/AIOS/LAC/HAA/AGPL", value: "LC/AIOS/LAC/HAA/AGPL" },
   { label: "IS", value: "IS" },
   { label: "NM", value: "NM" },
-  {label:"HAA",value:"LC/AIOS/LAC/HAA/AGPL"}
 ];

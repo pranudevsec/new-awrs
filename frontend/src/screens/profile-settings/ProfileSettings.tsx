@@ -32,7 +32,7 @@ interface Officer {
   rank: string;
   name: string;
   appointment: string;
-  digitalSign: string;
+  // digitalSign: string;
 }
 interface Award {
   award_id?: string;
@@ -58,7 +58,7 @@ const ProfileSettings = () => {
     rank: "",
     name: "",
     appointment: "",
-    digitalSign: "",
+    // digitalSign: "",
   });
 
   const [officers, setOfficers] = useState<Officer[]>([
@@ -69,7 +69,7 @@ const ProfileSettings = () => {
       rank: "",
       name: "",
       appointment: "",
-      digitalSign: "",
+      // digitalSign: "",
     },
   ]);
   const [awards, setAwards] = useState<Award[]>(profile?.unit?.awards ?? []);
@@ -103,7 +103,7 @@ const ProfileSettings = () => {
           rank: presiding.rank ?? "",
           name: presiding.name ?? "",
           appointment: presiding.appointment ?? "",
-          digitalSign: presiding.digital_sign ?? "",
+          // digitalSign: presiding.digital_sign ?? "",
         });
       }
 
@@ -117,7 +117,7 @@ const ProfileSettings = () => {
           rank: member.rank ?? "",
           name: member.name ?? "",
           appointment: member.appointment ?? "",
-          digitalSign: member.digital_sign ?? "",
+          // digitalSign: member.digital_sign ?? "",
         }));
 
       if (otherOfficers.length > 0) {
@@ -131,7 +131,7 @@ const ProfileSettings = () => {
             rank: "",
             name: "",
             appointment: "",
-            digitalSign: "",
+            // digitalSign: "",
           },
         ]);
       }
@@ -224,7 +224,7 @@ const ProfileSettings = () => {
         rank: "",
         name: "",
         appointment: "",
-        digitalSign: "",
+        // digitalSign: "",
       },
     ]);
   };
@@ -275,8 +275,10 @@ const ProfileSettings = () => {
         payload["tech_channel"] = values.tech_channel;
         payload["unit_type"] = values.unit_type;
         payload["matrix_unit"] = Array.isArray(values.matrix_unit)
-        ? values.matrix_unit.join(",")
-        : values.matrix_unit || ""; 
+          ? values.matrix_unit.join(",")
+          : typeof values.matrix_unit === "string" && values.matrix_unit.length > 0
+            ? values.matrix_unit
+            : "";
         payload["location"] = values.location;
         payload["awards"] = awards;
 
@@ -321,7 +323,7 @@ const ProfileSettings = () => {
   });
 
   return (
-    <div className="profile-settings-section" style={{ padding: "2rem", maxWidth: "85vw"}}>
+    <div className="profile-settings-section" style={{ padding: "2rem", maxWidth: "80vw"}}>
       <div className="d-flex flex-sm-row flex-column align-items-sm-center justify-content-between mb-4">
         <Breadcrumb title="Profile Settings" />
       </div>
@@ -444,14 +446,14 @@ const ProfileSettings = () => {
           {role === "unit" && (
             <>
               <div className="col-12 mb-3">
-                <label className="form-label fw-6">Awards</label>
+                <label className="form-label fw-6">Awards Received</label>
                 <table className="table table-bordered">
                   <thead>
                     {awards.length !== 0 && (<tr>
-                      <th>Type</th>
-                      <th>Title</th>
+                      {/* <th>Type</th>
+                      <th>Brigade</th>
                       <th>Year</th>
-                      <th>Action</th>
+                      <th>Action</th> */}
                     </tr>)}
                   </thead>
                   <tbody>
@@ -467,23 +469,24 @@ const ProfileSettings = () => {
                               setAwards(updated);
                             }}
                           >
-                            <option value="goc">GOC</option>
+                            <option value="goc">GOC-in-C</option>
                             <option value="coas">COAS</option>
                             <option value="cds">CDS</option>
                           </select>
                         </td>
                         <td>
-                          <input
-                            type="text"
+                          <select
                             className="form-control"
                             value={award.award_title}
                             onChange={(e) => {
                               const updated = [...awards];
-                              updated[idx].award_title = e.target.value;
+                              updated[idx].award_title = e.target.value as "citation" | "appreciation";
                               setAwards(updated);
                             }}
-                            placeholder="Award Title"
-                          />
+                          >
+                            <option value="citation">Citation</option>
+                            <option value="appreciation">Appreciation</option>
+                          </select>
                         </td>
                         <td>
                           <select
@@ -538,7 +541,7 @@ const ProfileSettings = () => {
           )}
 
 
-          {role !== "unit" && (
+          {/* {role !== "unit" && (
             <>
               {" "}
               <div className="col-sm-6 mb-3">
@@ -588,7 +591,7 @@ const ProfileSettings = () => {
                 )}
               </div>
             </>
-          )}
+          )} */}
 
           <div className="col-12 mt-2">
             <div className="d-flex align-items-center">
@@ -703,7 +706,7 @@ const ProfileSettings = () => {
                 rank: presidingOfficer.rank,
                 name: presidingOfficer.name,
                 appointment: presidingOfficer.appointment,
-                digital_sign: presidingOfficer.digitalSign,
+                // digital_sign: presidingOfficer.digitalSign,
               }];
 
               try {
@@ -756,7 +759,7 @@ const ProfileSettings = () => {
                   onChange={(e) => handlePresidingChange("appointment", e.target.value)}
                 />
               </div>
-              <div className="col-sm-6 mb-3">
+              {/* <div className="col-sm-6 mb-3">
                 <FormInput
                   label="Digital Sign"
                   name="digitalSign"
@@ -764,7 +767,7 @@ const ProfileSettings = () => {
                   value={presidingOfficer.digitalSign}
                   onChange={(e) => handlePresidingChange("digitalSign", e.target.value)}
                 />
-              </div>
+              </div> */}
               <div className="col-12 mt-2">
                 <button type="submit" className="_btn _btn-lg primary">
                   Add Presiding Officer
@@ -793,7 +796,7 @@ const ProfileSettings = () => {
                 rank: officer.rank,
                 name: officer.name,
                 appointment: officer.appointment,
-                digital_sign: officer.digitalSign,
+                // digital_sign: officer.digitalSign,
               }));
 
               try {
@@ -860,7 +863,7 @@ const ProfileSettings = () => {
                       }
                     />
                   </div>
-                  <div className="col-sm-6 mb-3">
+                  {/* <div className="col-sm-6 mb-3">
                     <FormInput
                       label="Digital Sign"
                       name={`digitalSign-${index}`}
@@ -870,7 +873,7 @@ const ProfileSettings = () => {
                         handleChange(index, "digitalSign", e.target.value)
                       }
                     />
-                  </div>
+                  </div> */}
                 </div>
               </div>
             ))}

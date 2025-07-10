@@ -61,6 +61,7 @@ export interface UpdateApplicationParams {
   withdrawRequested?: boolean;
   withdraw_status?: string;
   member?:any;
+  level?:string
 }
 export interface UpdateApplicationResponse {
   success: boolean;
@@ -109,4 +110,15 @@ export interface ApproveApplicationsResponse {
   success: boolean;
   message: string;
   data: any;
+}
+
+export interface TokenValidationParam {
+  inputPersID: string;
+}
+
+export interface TokenValidationResponse {
+  vaildId: boolean;
+  Remark?: string;
+  Expired?: boolean;
+  Status: string;
 }

@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, use } from "react";
 import { useNavigate } from "react-router-dom";
 import { useFormik } from "formik";
 import { unwrapResult } from "@reduxjs/toolkit";
@@ -60,7 +60,6 @@ const CitationReviewPage = () => {
 
   const filteredParameters = parameters.filter((param: any) => counts[param.param_id] !== undefined && counts[param.param_id] !== "");
   const groupedParams = groupParametersByCategory(filteredParameters);
-  console.log(groupedParams)
   useEffect(() => {
     localStorage.setItem("applyCitationUnitRemarks", unitRemarks);
   }, [unitRemarks]);
@@ -221,13 +220,14 @@ const CitationReviewPage = () => {
             const uploadPaths = uploadedFiles[param.param_id] || [];
             // console.log(display.main)
             return {
+              id: param.param_id,
               name: display.main,
               count,
               marks: calculatedMarks,
               upload: uploadPaths,
             };
           })
-          .filter((param) => param.count > 0 || param.marks > 0);
+          .filter((param) => param.count > 0 || param.marks != 0);
 
 
         const payload = {
@@ -269,7 +269,7 @@ const CitationReviewPage = () => {
       try {
         const [configRes, paramsRes] = await Promise.all([
           dispatch(getConfig()).unwrap(),
-          dispatch(fetchParameters({ awardType: "citation", search: "" ,limit: 100})).unwrap(),
+          dispatch(fetchParameters({ awardType: "citation", search: "" ,limit: 1000})).unwrap(),
         ]);
 
         if (configRes?.success && configRes.data) {

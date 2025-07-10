@@ -122,10 +122,8 @@ const ApplyCitation = () => {
 
           if (param.upload) {
             if (Array.isArray(param.upload)) {
-              // If already stored as array
               newUploads[Number(paramId)] = param.upload;
             } else if (typeof param.upload === "string") {
-              // If stored as CSV string, split into array
               if (param.upload.includes(",")) {
                 newUploads[Number(paramId)] = param.upload.split(",").map((u: any) => u.trim());
               } else {
@@ -406,8 +404,8 @@ const ApplyCitation = () => {
         }
 
         if (paramsRes.success && paramsRes.data) {
-          console.log(paramsRes.data);
-          setParameters(paramsRes.data);
+          const revParams = [...paramsRes.data].reverse();
+          setParameters(revParams);
         }
       } catch (err) {
         console.error("Failed to fetch data", err);
@@ -615,9 +613,9 @@ const ApplyCitation = () => {
 
           <div
             style={{
-              position: 'sticky',
+              position: "sticky",
               top: 0,
-              backgroundColor: 'white',
+              backgroundColor: "white",
               zIndex: 10,
               paddingBottom: '1rem',
               whiteSpace: 'nowrap',
@@ -699,11 +697,11 @@ const ApplyCitation = () => {
                 </h5>
                 <table className="table-style-1 w-100">
                   <thead>
-                    <tr style={{ backgroundColor: "#68aef2" }}>
-                      <th style={{ width: 250, minWidth: 250, maxWidth: 250, fontSize: "17", color: "white" }}>Parameter</th>
-                      <th style={{ width: 300, minWidth: 300, maxWidth: 300, fontSize: "17", color: "white" }}>Count</th>
-                      <th style={{ width: 300, minWidth: 300, maxWidth: 300, fontSize: "17", color: "white" }}>Marks</th>
-                      <th style={{ width: 300, minWidth: 300, maxWidth: 300, fontSize: "17", color: "white" }}>Upload</th>
+                    <tr>
+                      <th style={{ width: 250, minWidth: 250, maxWidth: 250, fontSize: "17" }}>Parameter</th>
+                      <th style={{ width: 300, minWidth: 300, maxWidth: 300, fontSize: "17" }}>Count</th>
+                      <th style={{ width: 300, minWidth: 300, maxWidth: 300, fontSize: "17" }}>Marks</th>
+                      <th style={{ width: 300, minWidth: 300, maxWidth: 300, fontSize: "17" }}>Upload</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -719,7 +717,7 @@ const ApplyCitation = () => {
                         if (showHeader) {
                           rows.push(
                             <tr key={`header-${display.header}-${idx}`}>
-                              <td colSpan={4} style={{ fontWeight: 400, fontSize: 14, background: "#ccdde8" }}>
+                              <td colSpan={4} style={{ fontWeight: 500, fontSize: 15, backgroundColor: "#ebeae8", lineHeight: "1" }}>
                                 {display.header}
                               </td>
                             </tr>
@@ -728,7 +726,7 @@ const ApplyCitation = () => {
                         if (showSubheader) {
                           rows.push(
                             <tr key={`subheader-${display.subheader}-${idx}`}>
-                              <td colSpan={4} style={{ color: display.header ? "black" : "#888", fontSize: 14, background: "#e1e3e6" }}>
+                              <td colSpan={4} style={{ color: display.header ? "black" : "#888", fontSize: 15, fontWeight: 700 }}>
                                 {display.subheader}
                               </td>
                             </tr>
@@ -821,12 +819,13 @@ const ApplyCitation = () => {
                                   <input
                                     type="file"
                                     className="form-control mt-1"
+                                    placeholder="not more than 5 MB"
                                     multiple
                                     onChange={(e) => {
                                       const display = getParamDisplay(param);
                                       handleFileChange(e, param.param_id, display.main);
                                     }}
-                                  />
+                                  /><span style={{ fontSize: 12, color: 'red' }}>*File not more than 5 MB</span>
                                 </>
                               ) : (
                                 <span>Not required</span>

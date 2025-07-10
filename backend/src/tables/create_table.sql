@@ -116,7 +116,7 @@ CREATE TABLE Unit_tab (
     unit_type VARCHAR,
     matrix_unit VARCHAR,
     location VARCHAR,
-awards JSONB DEFAULT '[]',
+    awards JSONB DEFAULT '[]',
     members JSONB DEFAULT '[]',
     is_hr_review BOOLEAN DEFAULT FALSE,
 is_dv_review BOOLEAN DEFAULT FALSE,
@@ -183,7 +183,9 @@ last_approved_at TIMESTAMP,
     last_shortlisted_approved_role VARCHAR(50),
     unitRemarks TEXT, 
      remarks JSON ,
-
+      is_hr_review BOOLEAN DEFAULT FALSE,
+is_dv_review BOOLEAN DEFAULT FALSE,
+is_mp_review BOOLEAN DEFAULT FALSE,
     is_withdraw_requested BOOLEAN DEFAULT FALSE,
     withdraw_requested_by VARCHAR(50),
     withdraw_requested_at TIMESTAMP,
@@ -216,6 +218,21 @@ CREATE TABLE Clarification_tab (
 
     clarification_sent_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     clarified_at TIMESTAMP
+);
+
+-- Drop the signature_logs table if it exists
+DROP TABLE IF EXISTS signature_logs;
+-- Create the signature_logs table
+CREATE TABLE signature_logs (
+    id SERIAL PRIMARY KEY,
+    application_id INTEGER NOT NULL,
+    ic_number VARCHAR(100) NOT NULL,
+    member_level VARCHAR(50) NOT NULL,
+    status_flag VARCHAR(20) NOT NULL CHECK (
+        status_flag IN ('approved', 'rejected')
+    ),
+    sign_digest TEXT NOT NULL,
+    created_at TIMESTAMP default current_timestamp
 );
 
 --------------------------------------------------------------------------------------------Insert Data----------------------------------------------------------------------------------------------------------------------
