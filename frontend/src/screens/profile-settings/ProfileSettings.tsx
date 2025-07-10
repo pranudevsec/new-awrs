@@ -48,7 +48,7 @@ hierarchicalStructure.forEach(([command, corps, division, brigade, unit]) => {
 const ProfileSettings = () => {
   const dispatch = useAppDispatch();
   const { profile } = useAppSelector((state) => state.admin);
-
+  const isMember = profile?.user?.is_member ?? false;
   // States
   const [firstLoad, setFirstLoad] = useState(true);
   const [presidingOfficer, setPresidingOfficer] = useState<Officer>({
@@ -684,7 +684,7 @@ const ProfileSettings = () => {
         </div>
       </form> */}
 
-          {/* Presiding Officer */}
+         {!isMember&&<> {/* Presiding Officer */}
           <div className="d-flex flex-sm-row flex-column align-items-sm-center justify-content-between mb-4">
             <Breadcrumb title="Presiding Officer" />
           </div>
@@ -886,7 +886,7 @@ const ProfileSettings = () => {
                 Add
               </button>
             </div>
-          </form>
+          </form></>}
 
         </>
       )}

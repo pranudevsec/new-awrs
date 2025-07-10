@@ -6,6 +6,7 @@ import { SVGICON } from "../../constants/iconsList";
 const SidebarMenu = () => {
   const profile = useAppSelector((state) => state.admin.profile);
   const userRole = profile?.user?.user_role;
+  const isMember = profile?.user?.is_member ?? false;
 
   const alwaysVisible: string[] = [];
 
@@ -88,9 +89,10 @@ const SidebarMenu = () => {
     userRole === "command"
   ) {
     filteredStructure.push(acceptedApplicationItem);
-    filteredStructure.push(historyItem);
+    
     filteredStructure.push(allApplicationsItem);
     if(userRole !== "brigade"){filteredStructure.push(withdrawItem);}
+    if(!isMember){filteredStructure.push(historyItem);}
   }
   if (
     userRole === "headquarter"

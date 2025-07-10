@@ -238,7 +238,8 @@ const CitationReviewPage = () => {
             last_date: values.lastDate,
             command: values.command,
             parameters: formattedParameters,
-            unitRemarks: unitRemarks
+            unitRemarks: unitRemarks,
+            awards:profile?.unit?.awards
           },
         };
 

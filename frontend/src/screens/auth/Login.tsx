@@ -17,22 +17,25 @@ const cw2TypeOptions = [
     { label: "DV", value: "dv" },
     { label: "MP", value: "mp" },
 ];
-
 const roleCredentials: Record<string, { username: string; password: string }> = {
     unit: { username: "testuser1", password: "12345678" },
     special_unit: { username: "testspecialunit", password: "12345678" },
     brigade: { username: "testbrigade", password: "12345678" },
+    brigade_member: { username: "testbrigade_member", password: "12345678" },
     division: { username: "testdivision", password: "12345678" },
+    division_member: { username: "testdivision_member", password: "12345678" },
     corps: { username: "testcorps", password: "12345678" },
+    corps_member: { username: "testcorps_member", password: "12345678" },
     command: { username: "testcommand", password: "12345678" },
+    command_member: { username: "testcommand_member", password: "12345678" },
     admin: { username: "admin", password: "12345678" },
     headquarter: { username: "testheadquarter", password: "12345678" },
     // cw2_type with username or same password
-    "cw2_mo": { username: "testcw2_mo", password: "12345678" },
-    "cw2_ol": { username: "testcw2_ol", password: "12345678" },
-    "cw2_hr": { username: "testcw2_hr", password: "12345678" },
-    "cw2_dv": { username: "testcw2_dv", password: "12345678" },
-    "cw2_mp": { username: "testcw2_mp", password: "12345678" },
+    cw2_mo: { username: "testcw2_mo", password: "12345678" },
+    cw2_ol: { username: "testcw2_ol", password: "12345678" },
+    cw2_hr: { username: "testcw2_hr", password: "12345678" },
+    cw2_dv: { username: "testcw2_dv", password: "12345678" },
+    cw2_mp: { username: "testcw2_mp", password: "12345678" },
 };
 
 const Login = () => {
@@ -50,29 +53,38 @@ const Login = () => {
         },
         validationSchema: LoginSchema,
         onSubmit: async (values, { resetForm }) => {
-            const payload = { ...values };
-          
+            const payload: any = { ...values };
+        
+            // handle cw2 role
             if (payload.user_role.startsWith("cw2_")) {
-              payload.cw2_type = payload.user_role.split("cw2_")[1];
-              payload.user_role = "cw2";
+                payload.cw2_type = payload.user_role.split("cw2_")[1];
+                payload.user_role = "cw2";
             }
-          
+        
+            // handle member roles
+            if (payload.user_role.endsWith("_member")) {
+                payload.user_role = payload.user_role.replace("_member", "");
+                payload.is_member = true;
+            }
+        
             const resultAction = await dispatch(reqToLogin(payload));
             const result = unwrapResult(resultAction);
-          
+        
             if (result.success) {
-              resetForm();
-          
-              setTimeout(() => {
-                if (values.user_role === "admin") {
-                  navigate("/admin-settings");
-                } else if (values.user_role === "command") {
-                  navigate("/dashboard");
-                } else {
-                  navigate("/");
-                }
-              }, 400);
-            }}
+                resetForm();
+        
+                setTimeout(() => {
+                    if (payload.user_role === "admin") {
+                        navigate("/admin-settings");
+                    } else if (payload.user_role === "command") {
+                        navigate("/dashboard");
+                    } else {
+                        navigate("/");
+                    }
+                }, 400);
+            }
+        }
+        
     });
 
     const handleRoleChange = (selectedOption: any) => {

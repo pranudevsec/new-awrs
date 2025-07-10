@@ -183,7 +183,10 @@ exports.getAllApplicationsForHQ = async (user, query) => {
         date_init,
         citation_fds AS fds,
         status_flag,
-        last_approved_by_role
+        last_approved_by_role,
+        is_hr_review,
+        is_dv_review,
+        is_mp_review
       FROM Citation_tab
       WHERE 
         status_flag = 'approved' 
@@ -198,7 +201,10 @@ exports.getAllApplicationsForHQ = async (user, query) => {
         date_init,
         appre_fds AS fds,
         status_flag,
-        last_approved_by_role
+        last_approved_by_role,
+        is_hr_review,
+        is_dv_review,
+        is_mp_review
       FROM Appre_tab
       WHERE 
         status_flag = 'approved' 
@@ -207,28 +213,41 @@ exports.getAllApplicationsForHQ = async (user, query) => {
 
     let allApps = [...citations.rows, ...appreciations.rows];
 
+    // Filter by award_type if provided
     if (award_type) {
       allApps = allApps.filter(
         (app) => app.type?.toLowerCase() === award_type.toLowerCase()
       );
     }
 
+    // Normalize and filter by search if provided
     const normalize = (str) =>
-      str
-        ?.toString()
-        .toLowerCase()
-        .replace(/[\s\-]/g, "");
+      str?.toString().toLowerCase().replace(/[\s\-]/g, "");
+
     if (search) {
       const searchLower = normalize(search);
       allApps = allApps.filter((app) => {
         const idMatch = app.id.toString().toLowerCase().includes(searchLower);
-        const cycleMatch = normalize(app.fds?.cycle_period || "").includes(
-          searchLower
-        );
+        const cycleMatch = normalize(app.fds?.cycle_period || "").includes(searchLower);
         return idMatch || cycleMatch;
       });
     }
 
+    // ✅ Additional filtering based on CW2 role and type
+    if (user.user_role === 'cw2') {
+      const cw2TypeFieldMap = {
+        hr: 'is_hr_review',
+        dv: 'is_dv_review',
+        mp: 'is_mp_review'
+      };
+
+      const fieldToCheck = cw2TypeFieldMap[user.cw2_type];
+      if (fieldToCheck) {
+        allApps = allApps.filter((app) => app[fieldToCheck] === true);
+      }
+    }
+
+    // Gather clarification IDs
     const clarificationIdSet = new Set();
     allApps.forEach((app) => {
       app.fds?.parameters?.forEach((param) => {
@@ -241,7 +260,6 @@ exports.getAllApplicationsForHQ = async (user, query) => {
     const clarificationIds = Array.from(clarificationIdSet);
     let clarificationsMap = {};
 
-    // Fetch all related clarifications
     if (clarificationIds.length > 0) {
       const clarRes = await client.query(
         `SELECT * FROM Clarification_tab WHERE clarification_id = ANY($1)`,
@@ -254,6 +272,7 @@ exports.getAllApplicationsForHQ = async (user, query) => {
       }, {});
     }
 
+    // Attach clarifications to parameters
     allApps = allApps.map((app) => {
       const updatedParams = app.fds?.parameters?.map((param) => {
         if (param.clarification_id) {
@@ -274,6 +293,7 @@ exports.getAllApplicationsForHQ = async (user, query) => {
       };
     });
 
+    // Count and clean clarifications
     let total_pending_clarifications = 0;
     allApps = allApps.map((app) => {
       let clarifications_count = 0;
@@ -299,8 +319,10 @@ exports.getAllApplicationsForHQ = async (user, query) => {
       };
     });
 
+    // Sort descending by date_init
     allApps.sort((a, b) => new Date(b.date_init) - new Date(a.date_init));
 
+    // Pagination
     const pageInt = parseInt(page);
     const limitInt = parseInt(limit);
     const startIndex = (pageInt - 1) * limitInt;

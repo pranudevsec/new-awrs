@@ -24,7 +24,7 @@ import toast from "react-hot-toast";
 import { updateCitation } from "../../../reduxToolkit/services/citation/citationService";
 import { updateAppreciation } from "../../../reduxToolkit/services/appreciation/appreciationService";
 import StepProgressBar from "../../../components/ui/stepProgressBar/StepProgressBar";
-import {TokenValidation} from "../../../reduxToolkit/services/application/applicationService"
+import { TokenValidation } from "../../../reduxToolkit/services/application/applicationService";
 import { getSignedData } from "../../../reduxToolkit/services/application/applicationService";
 
 const ApplicationDetails = () => {
@@ -77,7 +77,9 @@ const ApplicationDetails = () => {
   const award_type = searchParams.get("award_type") || "";
   const numericAppId = Number(application_id);
   const [graceMarks, setGraceMarks] = useState("");
-  const [decisions, setDecisions] = useState<{ [memberId: string]: string }>({});
+  const [decisions, setDecisions] = useState<{ [memberId: string]: string }>(
+    {}
+  );
 
   let userPriority = "";
 
@@ -405,76 +407,80 @@ const ApplicationDetails = () => {
       };
     }
   };
-  const handleAddsignature = async (member:any,memberdecision:string) => {
-    //validation
-    const newDecisions: { [memberId: string]: string }  = {
-      ...decisions,
-      [member.id]: memberdecision,
-    };
-    setDecisions(newDecisions);
-  
-    const result = await dispatch(TokenValidation({ inputPersID: member.ic_number }));
-    const decision = decisions[member.id];
-    console.log(decision)
-    if (TokenValidation.fulfilled.match(result)) {
-      const isValid = result.payload.vaildId;
-      if (!isValid) {
-        // toast.error("Token is not valid");
-        return;
-      }
-      //sign
-      
-      const SignPayload = {
-        data: {
-          application_id,
-          member,
-          type: unitDetail?.type
-        }
-      };      
-      const response = await dispatch(getSignedData(SignPayload));
-      
-      const updatePayload = {
-          id: unitDetail?.id,
-          type: unitDetail?.type,
-          member: {
-            name: member.name,
-            ic_number: member.ic_number,
-            member_type: member.member_type,
-            member_id: member.id,
-            is_signature_added: true,
-            sign_digest:response.payload
-          },
-          level:profile?.user?.user_role
-      }
-      if (memberdecision === "accepted") {
-        dispatch(
-          updateApplication(updatePayload)
-        ).then(() => {
-          dispatch(fetchApplicationUnitDetail({ award_type, numericAppId }));
-          const allOthersAccepted = profile?.unit?.members
-            .filter((m: any) => m.id !== member.id)
-            .every((m: any) => decisions[m.id] === "accepted");
+  // const handleAddsignature = async (member: any, memberdecision: string) => {
+  //   //validation
+  //   const newDecisions: { [memberId: string]: string } = {
+  //     ...decisions,
+  //     [member.id]: memberdecision,
+  //   };
+  //   setDecisions(newDecisions);
 
-          if (allOthersAccepted && memberdecision === "accepted") {
-            navigate("/applications/list");
-          }
-        });
-      } else if (memberdecision === "rejected") {
-        console.log(memberdecision);
-        dispatch(
-          updateApplication({
-            ...updatePayload,
-            status: "rejected"
-          })
-        ).then(() => {
-          navigate("/applications/list");
-        });
-      }
-    }
-    // } else {
-    //   toast.error(result.payload as string || "Token validation failed");
-    //   return;
-    // }
+  //   const result = await dispatch(
+  //     TokenValidation({ inputPersID: member.ic_number })
+  //   );
+  //   const decision = decisions[member.id];
+  //   console.log(decision);
+  //   if (TokenValidation.fulfilled.match(result)) {
+  //     const isValid = result.payload.vaildId;
+  //     if (!isValid) {
+  //       // toast.error("Token is not valid");
+  //       return;
+  //     }
+  //     //sign
+
+  //     const SignPayload = {
+  //       data: {
+  //         application_id,
+  //         member,
+  //         type: unitDetail?.type,
+  //       },
+  //     };
+  //     const response = await dispatch(getSignedData(SignPayload));
+
+  //     const updatePayload = {
+  //       id: unitDetail?.id,
+  //       type: unitDetail?.type,
+  //       member: {
+  //         name: member.name,
+  //         ic_number: member.ic_number,
+  //         member_type: member.member_type,
+  //         member_id: member.id,
+  //         is_signature_added: true,
+  //         sign_digest: response.payload,
+  //       },
+  //       level: profile?.user?.user_role,
+  //     };
+  //     if (memberdecision === "accepted") {
+  //       dispatch(updateApplication(updatePayload)).then(() => {
+  //         dispatch(fetchApplicationUnitDetail({ award_type, numericAppId }));
+  //         const allOthersAccepted = profile?.unit?.members
+  //           .filter((m: any) => m.id !== member.id)
+  //           .every((m: any) => decisions[m.id] === "accepted");
+
+  //         if (allOthersAccepted && memberdecision === "accepted") {
+  //           navigate("/applications/list");
+  //         }
+  //       });
+  //     } else if (memberdecision === "rejected") {
+  //       console.log(memberdecision);
+  //       dispatch(
+  //         updateApplication({
+  //           ...updatePayload,
+  //           status: "rejected",
+  //         })
+  //       ).then(() => {
+  //         navigate("/applications/list");
+  //       });
+  //     }
+  //   }
+  //   // } else {
+  //   //   toast.error(result.payload as string || "Token validation failed");
+  //   //   return;
+  //   // }
+  // };
+  
+  const handleAddsignature = async (member: any, memberdecision: string) => {
+console.log(member,memberdecision)
   };
 
   // Show loader
@@ -482,7 +488,7 @@ const ApplicationDetails = () => {
 
   return (
     <>
-      <div className="apply-citation-section" style={{ padding: "2rem"}}>
+      <div className="apply-citation-section" style={{ padding: "2rem" }}>
         <div className="d-flex flex-sm-row flex-column align-items-sm-center justify-content-between mb-4">
           <Breadcrumb
             title={`Application ID: #${unitDetail?.id}`}
@@ -543,7 +549,46 @@ const ApplicationDetails = () => {
             </div>
           </div>
         </div>
-        <div className="table-responsive">
+        {unitDetail?.fds?.awards?.length > 0 && (
+          <div className="mt-4">
+            <h5 className="mb-3">Awards</h5>
+            <div className="table-responsive">
+              <table className="table-style-2 w-100">
+                <thead>
+                  <tr>
+                    <th style={{ width: 150, minWidth: 150, maxWidth: 150 }}>
+                      Type
+                    </th>
+                    <th style={{ width: 200, minWidth: 200, maxWidth: 200 }}>
+                      Year
+                    </th>
+                    <th style={{ width: 300, minWidth: 300, maxWidth: 300 }}>
+                      Title
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {unitDetail?.fds?.awards?.map((award: any) => (
+                    <tr key={award.award_id}>
+                      <td style={{ width: 150, minWidth: 150, maxWidth: 150 }}>
+                        <p className="fw-4 text-capitalize">
+                          {award.award_type}
+                        </p>
+                      </td>
+                      <td style={{ width: 200, minWidth: 200, maxWidth: 200 }}>
+                        <p className="fw-4">{award.award_year}</p>
+                      </td>
+                      <td style={{ width: 300, minWidth: 300, maxWidth: 300 }}>
+                        <p className="fw-4">{award.award_title}</p>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
+        <div className="table-responsive mt-4">
           <table className="table-style-1 w-100">
             <thead>
               <tr>
@@ -551,7 +596,7 @@ const ApplicationDetails = () => {
                 <th style={{ width: 100 }}>Count</th>
                 <th style={{ width: 100 }}>Marks</th>
                 <th style={{ width: 100 }}>Document</th>
-              
+
                 {/* {isCW2Role && <th style={{ width: 100 }}>Drop comment</th>} */}
                 {!isUnitRole && !isHeadquarter && (
                   <>
@@ -561,7 +606,6 @@ const ApplicationDetails = () => {
                     )}
                     {isRaisedScreen && (
                       <>
-                      
                         <th style={{ width: 200 }}>Requested Clarification</th>
                         <th style={{ width: 150 }}>Action</th>{" "}
                       </>
@@ -580,203 +624,273 @@ const ApplicationDetails = () => {
                 let prevSubheader: string | null = null;
                 const rows: any[] = [];
 
-                unitDetail?.fds?.parameters?.forEach((param: any, index: number) => {
-                  const display = getParamDisplay(param);
+                unitDetail?.fds?.parameters?.forEach(
+                  (param: any, index: number) => {
+                    const display = getParamDisplay(param);
 
-                  const showHeader = display.header && display.header !== prevHeader;
-                  const showSubheader = display.subheader && display.subheader !== prevSubheader;
+                    const showHeader =
+                      display.header && display.header !== prevHeader;
+                    const showSubheader =
+                      display.subheader && display.subheader !== prevSubheader;
 
-                  if (showHeader) {
-                    rows.push(
-                      <tr key={`header-${display.header}-${index}`}>
-                        <td colSpan={6} style={{ fontWeight: 600, color: "#555", fontSize: 15, background: "#f5f5f5" }}>
-                          {display.header}
-                        </td>
-                      </tr>
-                    );
-                  }
-
-                  if (showSubheader) {
-                    rows.push(
-                      <tr key={`subheader-${display.subheader}-${index}`}>
-                        <td colSpan={6} style={{ color: display.header ? "#1976d2" : "#888", fontSize: 13, background: "#f8fafc" }}>
-                          {display.subheader}
-                        </td>
-                      </tr>
-                    );
-                  }
-
-                  prevHeader = display.header;
-                  prevSubheader = display.subheader;
-
-                  rows.push(
-                    <tr key={index}>
-                      <td style={{ width: 150 }}>
-                        <p className="fw-5 mb-0">{display.main}</p>
-                      </td>
-                      <td style={{ width: 100 }}>
-                        <p className="fw-5">{param.count}</p>
-                      </td>
-                      <td style={{ width: 100 }}>
-                        <p className="fw-5">{param.marks}</p>
-                      </td>
-                      <td style={{ width: 200 }}>
-                        {param.upload ? (
-                          <a
-                            href={`${baseURL}${param.upload}`}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            style={{ fontSize: 18 }}
+                    if (showHeader) {
+                      rows.push(
+                        <tr key={`header-${display.header}-${index}`}>
+                          <td
+                            colSpan={6}
+                            style={{
+                              fontWeight: 600,
+                              color: "#555",
+                              fontSize: 15,
+                              background: "#f5f5f5",
+                            }}
                           >
-                            <span style={{ fontSize: 14, wordBreak: 'break-word' }}>
-                            {Array.isArray(param?.upload)
-  ? param.upload.map((filePath:any, idx:any) => (
-      <span key={idx} style={{ display: "block" }}>
-        {filePath.split("/").pop()}
-      </span>
-    ))
-  : param?.upload
-    ? param.upload
-        .toString()
-        .split(",")
-        .map((filePath:any, idx:any) => (
-          <span key={idx} style={{ display: "block" }}>
-            {filePath.trim().split("/").pop()}
-          </span>
-        ))
-    : null}
+                            {display.header}
+                          </td>
+                        </tr>
+                      );
+                    }
 
-                            </span>
-                          </a>
-                        ) : (
-                          ""
-                        )}
-                      </td>
+                    if (showSubheader) {
+                      rows.push(
+                        <tr key={`subheader-${display.subheader}-${index}`}>
+                          <td
+                            colSpan={6}
+                            style={{
+                              color: display.header ? "#1976d2" : "#888",
+                              fontSize: 13,
+                              background: "#f8fafc",
+                            }}
+                          >
+                            {display.subheader}
+                          </td>
+                        </tr>
+                      );
+                    }
 
-                      {/* Your logic for conditional clarification/approval UI below */}
-                      {!isUnitRole && !isHeadquarter && (
-                        <>
-                               <td style={{ width: 200 }}>
-                                <input
-                                  type="text"
-                                  className="form-control"
-                                  placeholder="Enter approved marks"
-                                  autoComplete="off"
-                                  value={
-                                    param?.clarification_details?.clarification_status === "rejected"
-                                      ? "0"
-                                      : approvedMarksState[param.name] ?? ""
-                                  }
-                                  disabled={param?.clarification_details?.clarification_status === "rejected"}
-                                  onChange={(e) => handleInputChange(param.name, e.target.value)}
-                                />
-                              </td>
-                          {!isRaisedScreen && (
-                            <td style={{ width: 120 }}>
-                              {param?.clarification_id ||
-                              (param?.last_clarification_id &&
-                                [role, lowerRole].includes(param?.last_clarification_handled_by)) ? (
-                                <button
-                                  className="action-btn bg-transparent d-inline-flex align-items-center justify-content-center"
-                                  onClick={() => {
-                                    setReqViewCreatedClarificationShow(true);
-                                    setReviewerClarificationForView(param?.clarification_details?.reviewer_comment);
-                                  }}
-                                >
-                                  {SVGICON.app.eye}
-                                </button>
-                              ) : (
-                                <button
-                                  onClick={() => {
-                                    setClarificationType(unitDetail?.type);
-                                    setClarificationApplicationId(unitDetail?.id);
-                                    setClarificationParameterName(param.name);
-                                    setClarificationDocForView(param?.clarification_details?.clarification_doc);
-                                    setClarificationClarificationForView(param?.clarification_details?.clarification);
-                                    setClarificationShow(true);
-                                  }}
-                                  className="fw-5 text-decoration-underline bg-transparent border-0"
-                                  style={{ fontSize: 14, color: "#0d6efd" }}
-                                >
-                                  Ask Clarification
-                                </button>
-                              )}
-                            </td>
+                    prevHeader = display.header;
+                    prevSubheader = display.subheader;
+
+                    rows.push(
+                      <tr key={index}>
+                        <td style={{ width: 150 }}>
+                          <p className="fw-5 mb-0">{display.main}</p>
+                        </td>
+                        <td style={{ width: 100 }}>
+                          <p className="fw-5">{param.count}</p>
+                        </td>
+                        <td style={{ width: 100 }}>
+                          <p className="fw-5">{param.marks}</p>
+                        </td>
+                        <td style={{ width: 200 }}>
+                          {param.upload ? (
+                            <a
+                              href={`${baseURL}${param.upload}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              style={{ fontSize: 18 }}
+                            >
+                              <span
+                                style={{
+                                  fontSize: 14,
+                                  wordBreak: "break-word",
+                                }}
+                              >
+                                {Array.isArray(param?.upload)
+                                  ? param.upload.map(
+                                      (filePath: any, idx: any) => (
+                                        <span
+                                          key={idx}
+                                          style={{ display: "block" }}
+                                        >
+                                          {filePath.split("/").pop()}
+                                        </span>
+                                      )
+                                    )
+                                  : param?.upload
+                                  ? param.upload
+                                      .toString()
+                                      .split(",")
+                                      .map((filePath: any, idx: any) => (
+                                        <span
+                                          key={idx}
+                                          style={{ display: "block" }}
+                                        >
+                                          {filePath.trim().split("/").pop()}
+                                        </span>
+                                      ))
+                                  : null}
+                              </span>
+                            </a>
+                          ) : (
+                            ""
                           )}
+                        </td>
 
-                          {isRaisedScreen && (
-                            <>
-                       
-                              <td style={{ width: 200 }}>
-                                {param?.clarification_details?.clarification ? (
+                        {/* Your logic for conditional clarification/approval UI below */}
+                        {!isUnitRole && !isHeadquarter && (
+                          <>
+                            <td style={{ width: 200 }}>
+                              <input
+                                type="text"
+                                className="form-control"
+                                placeholder="Enter approved marks"
+                                autoComplete="off"
+                                value={
+                                  param?.clarification_details
+                                    ?.clarification_status === "rejected"
+                                    ? "0"
+                                    : approvedMarksState[param.name] ?? ""
+                                }
+                                disabled={
+                                  param?.clarification_details
+                                    ?.clarification_status === "rejected"
+                                }
+                                onChange={(e) =>
+                                  handleInputChange(param.name, e.target.value)
+                                }
+                              />
+                            </td>
+                            {!isRaisedScreen && (
+                              <td style={{ width: 120 }}>
+                                {param?.clarification_id ||
+                                (param?.last_clarification_id &&
+                                  [role, lowerRole].includes(
+                                    param?.last_clarification_handled_by
+                                  )) ? (
                                   <button
                                     className="action-btn bg-transparent d-inline-flex align-items-center justify-content-center"
                                     onClick={() => {
-                                      setReqClarificationShow(true);
-                                      setClarificationDocForView(param?.clarification_details?.clarification_doc);
-                                      setClarificationClarificationForView(param?.clarification_details?.clarification);
+                                      setReqViewCreatedClarificationShow(true);
+                                      setReviewerClarificationForView(
+                                        param?.clarification_details
+                                          ?.reviewer_comment
+                                      );
                                     }}
                                   >
                                     {SVGICON.app.eye}
                                   </button>
                                 ) : (
-                                  ""
+                                  <button
+                                    onClick={() => {
+                                      setClarificationType(unitDetail?.type);
+                                      setClarificationApplicationId(
+                                        unitDetail?.id
+                                      );
+                                      setClarificationParameterName(param.name);
+                                      setClarificationDocForView(
+                                        param?.clarification_details
+                                          ?.clarification_doc
+                                      );
+                                      setClarificationClarificationForView(
+                                        param?.clarification_details
+                                          ?.clarification
+                                      );
+                                      setClarificationShow(true);
+                                    }}
+                                    className="fw-5 text-decoration-underline bg-transparent border-0"
+                                    style={{ fontSize: 14, color: "#0d6efd" }}
+                                  >
+                                    Ask Clarification
+                                  </button>
                                 )}
                               </td>
-                              <td style={{ width: 150 }}>
-                                {param?.clarification_details?.clarification &&
-                                param?.clarification_details?.clarification_id ? (
-                                  param?.clarification_details?.clarification_status === "pending" ? (
-                                    <div className="d-flex gap-3">
-                                      <button
-                                        className="action-btn bg-transparent d-flex align-items-center justify-content-center"
-                                        style={{ color: "var(--green-default)" }}
-                                        onClick={() => {
-                                          dispatch(
-                                            updateClarification({
-                                              id: param?.clarification_details?.clarification_id,
-                                              clarification_status: "clarified",
-                                            })
-                                          ).then(() => {
-                                            setIsRefreshData((prev) => !prev);
-                                          });
-                                        }}
-                                      >
-                                        <IoMdCheckmark />
-                                      </button>
-                                      <button
-                                        className="action-btn bg-transparent d-flex align-items-center justify-content-center"
-                                        style={{ color: "var(--red-default)" }}
-                                        onClick={() => {
-                                          dispatch(
-                                            updateClarification({
-                                              id: param?.clarification_details?.clarification_id,
-                                              clarification_status: "rejected",
-                                            })
-                                          ).then(() => {
-                                            setIsRefreshData((prev) => !prev);
-                                          });
-                                        }}
-                                      >
-                                        <MdClose />
-                                      </button>
-                                    </div>
+                            )}
+
+                            {isRaisedScreen && (
+                              <>
+                                <td style={{ width: 200 }}>
+                                  {param?.clarification_details
+                                    ?.clarification ? (
+                                    <button
+                                      className="action-btn bg-transparent d-inline-flex align-items-center justify-content-center"
+                                      onClick={() => {
+                                        setReqClarificationShow(true);
+                                        setClarificationDocForView(
+                                          param?.clarification_details
+                                            ?.clarification_doc
+                                        );
+                                        setClarificationClarificationForView(
+                                          param?.clarification_details
+                                            ?.clarification
+                                        );
+                                      }}
+                                    >
+                                      {SVGICON.app.eye}
+                                    </button>
                                   ) : (
-                                    <p className="fw-5 text-capitalize">
-                                      {param?.clarification_details?.clarification_status}
-                                    </p>
-                                  )
-                                ) : (
-                                  ""
-                                )}
-                              </td>
-                            </>
-                          )}
-                        </>
-                      )}
-                    </tr>
-                  );
-                });
+                                    ""
+                                  )}
+                                </td>
+                                <td style={{ width: 150 }}>
+                                  {param?.clarification_details
+                                    ?.clarification &&
+                                  param?.clarification_details
+                                    ?.clarification_id ? (
+                                    param?.clarification_details
+                                      ?.clarification_status === "pending" ? (
+                                      <div className="d-flex gap-3">
+                                        <button
+                                          className="action-btn bg-transparent d-flex align-items-center justify-content-center"
+                                          style={{
+                                            color: "var(--green-default)",
+                                          }}
+                                          onClick={() => {
+                                            dispatch(
+                                              updateClarification({
+                                                id: param?.clarification_details
+                                                  ?.clarification_id,
+                                                clarification_status:
+                                                  "clarified",
+                                              })
+                                            ).then(() => {
+                                              setIsRefreshData((prev) => !prev);
+                                            });
+                                          }}
+                                        >
+                                          <IoMdCheckmark />
+                                        </button>
+                                        <button
+                                          className="action-btn bg-transparent d-flex align-items-center justify-content-center"
+                                          style={{
+                                            color: "var(--red-default)",
+                                          }}
+                                          onClick={() => {
+                                            dispatch(
+                                              updateClarification({
+                                                id: param?.clarification_details
+                                                  ?.clarification_id,
+                                                clarification_status:
+                                                  "rejected",
+                                              })
+                                            ).then(() => {
+                                              setIsRefreshData((prev) => !prev);
+                                            });
+                                          }}
+                                        >
+                                          <MdClose />
+                                        </button>
+                                      </div>
+                                    ) : (
+                                      <p className="fw-5 text-capitalize">
+                                        {
+                                          param?.clarification_details
+                                            ?.clarification_status
+                                        }
+                                      </p>
+                                    )
+                                  ) : (
+                                    ""
+                                  )}
+                                </td>
+                              </>
+                            )}
+                          </>
+                        )}
+                      </tr>
+                    );
+                  }
+                );
 
                 return rows;
               })()}
@@ -885,7 +999,12 @@ const ApplicationDetails = () => {
                 {remarksError && <p className="error-text">{remarksError}</p>}
               </div>
             )}
-       {  isHeadquarter &&   <StepProgressBar award_type={award_type} unitDetail={unitDetail}/>}
+            {isHeadquarter && (
+              <StepProgressBar
+                award_type={award_type}
+                unitDetail={unitDetail}
+              />
+            )}
             {profile?.unit?.members &&
               Array.isArray(profile.unit.members) &&
               profile.unit.members.length > 0 && (
@@ -905,79 +1024,89 @@ const ApplicationDetails = () => {
                         <th style={{ width: "25%" }}>Signature</th>
                       </tr>
                     </thead>
-                      <tbody>
-                        {[
-                          // First: presiding officers
-                          ...profile.unit.members
-                            .filter(
-                              (m) =>
-                                m.member_type === "presiding_officer"
-                            ),
-                          // Then: member officers
-                          ...profile.unit.members
-                            .filter(
-                              (m) =>
-                                m.member_type === "member_officer"
-                            )
-                            .sort((a, b) => Number(a.member_order || 0) - Number(b.member_order || 0)),
-                        ].map((member) => {
-                          const acceptedMembers = unitDetail?.fds?.accepted_members || [];
-                          const foundMember = acceptedMembers.find((m: any) => m.member_id === member.id);
-                          const isSignatureAdded = foundMember?.is_signature_added === true;
+                    <tbody>
+                      {[
+                        // First: presiding officers
+                        ...profile.unit.members.filter(
+                          (m) => m.member_type === "presiding_officer"
+                        ),
+                        // Then: member officers
+                        ...profile.unit.members
+                          .filter((m) => m.member_type === "member_officer")
+                          .sort(
+                            (a, b) =>
+                              Number(a.member_order || 0) -
+                              Number(b.member_order || 0)
+                          ),
+                      ].map((member) => {
+                        const acceptedMembers =
+                          unitDetail?.fds?.accepted_members || [];
+                        const foundMember = acceptedMembers.find(
+                          (m: any) => m.member_id === member.id
+                        );
+                        const isSignatureAdded =
+                          foundMember?.is_signature_added === true;
 
-                          return (
-                            <tr key={member.id}>
-                              <td>
-                                {member.member_type === "presiding_officer"
-                                  ? "Presiding Officer"
-                                  : "Member Officer"}
-                              </td>
-                              <td>{member.name || "-"}</td>
-                              <td>{member.rank || "-"}</td>
-                              <td>
-                                <div className="d-flex flex-sm-row flex-column gap-sm-3 gap-1 align-items-center">
-                                  {member.member_type === "presiding_officer" && !isSignatureAdded && (
+                        return (
+                          <tr key={member.id}>
+                            <td>
+                              {member.member_type === "presiding_officer"
+                                ? "Presiding Officer"
+                                : "Member Officer"}
+                            </td>
+                            <td>{member.name || "-"}</td>
+                            <td>{member.rank || "-"}</td>
+                            <td>
+                              <div className="d-flex flex-sm-row flex-column gap-sm-3 gap-1 align-items-center">
+                                {member.member_type === "presiding_officer" &&
+                                  !isSignatureAdded && (
                                     <>
                                       <button
                                         type="button"
                                         className="_btn success w-sm-auto"
-                                        onClick={() =>handleAddsignature(member,"accepted")}
+                                        onClick={() =>
+                                          handleAddsignature(member, "accepted")
+                                        }
                                       >
                                         Accept
                                       </button>
                                       <button
                                         type="button"
                                         className="_btn danger w-sm-auto"
-                                        onClick={() =>handleAddsignature(member,"rejected")}
+                                        onClick={() =>
+                                          handleAddsignature(member, "rejected")
+                                        }
                                       >
                                         Decline
                                       </button>
                                     </>
                                   )}
 
-                                  {member.member_type !== "presiding_officer" && !isSignatureAdded && (
+                                {member.member_type !== "presiding_officer" &&
+                                  !isSignatureAdded && (
                                     <button
                                       type="button"
                                       className="_btn success text-nowrap w-sm-auto"
-                                        onClick={() =>handleAddsignature(member,"accepted")}
+                                      onClick={() =>
+                                        handleAddsignature(member, "accepted")
+                                      }
                                     >
                                       Add Signature
                                     </button>
                                   )}
 
-                                  {isSignatureAdded && (
-                                    <span className="text-success fw-semibold text-nowrap d-flex align-items-center gap-1">
-                                      <FaCheckCircle className="fs-5" /> Signature Added
-                                    </span>
-
-                                  )}
-                                </div>
-                              </td>
-                            </tr>
-                          );
-                        })}
-                      </tbody>
-
+                                {isSignatureAdded && (
+                                  <span className="text-success fw-semibold text-nowrap d-flex align-items-center gap-1">
+                                    <FaCheckCircle className="fs-5" /> Signature
+                                    Added
+                                  </span>
+                                )}
+                              </div>
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
                   </table>
                 </div>
               )}
@@ -1071,22 +1200,22 @@ const ApplicationDetails = () => {
           >
             {!isHeadquarter && (
               <>
-               {(cw2_type === "mo" || cw2_type === "ol") && (
-  <div className="mb-2">
-    <label className="form-label mb-1">Priority:</label>
-    <input
-      type="text"
-      className="form-control"
-      name="priority"
-      value={priority}
-      onChange={(e) => {
-        const value = e.target.value;
-        setPriority(value);
-        handlePriorityChange(value);
-      }}
-    />
-  </div>
-)}
+                {(cw2_type === "mo" || cw2_type === "ol") && (
+                  <div className="mb-2">
+                    <label className="form-label mb-1">Priority:</label>
+                    <input
+                      type="text"
+                      className="form-control"
+                      name="priority"
+                      value={priority}
+                      onChange={(e) => {
+                        const value = e.target.value;
+                        setPriority(value);
+                        handlePriorityChange(value);
+                      }}
+                    />
+                  </div>
+                )}
 
                 <form
                   onSubmit={(e) => {
@@ -1110,10 +1239,9 @@ const ApplicationDetails = () => {
                 </form>
               </>
             )}
-            {(profile?.unit?.members && (
-  (cw2_type === "mo" && !unitDetail?.is_mo_approved) ||
-  (cw2_type === "ol" && !unitDetail?.is_ol_approved)
-)) &&
+            {profile?.unit?.members &&
+              ((cw2_type === "mo" && !unitDetail?.is_mo_approved) ||
+                (cw2_type === "ol" && !unitDetail?.is_ol_approved)) &&
               Array.isArray(profile.unit.members) &&
               profile.unit.members.length > 0 && (
                 <div className="table-responsive mb-3">
@@ -1135,18 +1263,14 @@ const ApplicationDetails = () => {
                     <tbody>
                       {[
                         ...profile.unit.members
-                          .filter(
-                            (m) =>
-                              m.member_type === "member_officer" 
-                          )
+                          .filter((m) => m.member_type === "member_officer")
                           .sort(
                             (a, b) =>
                               Number(a.member_order || 0) -
                               Number(b.member_order || 0)
                           ),
                         ...profile.unit.members.filter(
-                          (m) =>
-                            m.member_type === "presiding_officer"
+                          (m) => m.member_type === "presiding_officer"
                         ),
                       ].map((member) => (
                         <tr key={member.id}>
@@ -1174,139 +1298,161 @@ const ApplicationDetails = () => {
                   </table>
                 </div>
               )}
-{isCW2Role && (cw2_type === 'mo' || cw2_type === 'ol') && (
-  <div className="mt-4">
-    <h5 className="mb-3">Send for Review</h5>
-    <div className="table-responsive">
-      <table className="table-style-2 w-100">
-        <thead>
-          <tr>
-            <th style={{ width: 200, minWidth: 200 }}>Category</th>
-            <th style={{ width: 200, minWidth: 200 }}>Action</th>
-          </tr>
-        </thead>
-        <tbody>
-          {['HR', 'DV', 'MP'].map((category) => {
-            let isAlreadySent :any= false;
-console.log(unitDetail)
-            if (category === 'HR') {
-              isAlreadySent = unitDetail?.is_hr_review;
-            } else if (category === 'DV') {
-              isAlreadySent = unitDetail?.is_dv_review;
-            } else if (category === 'MP') {
-              isAlreadySent = unitDetail?.is_mp_review;
-            }
+            {isCW2Role && (cw2_type === "mo" || cw2_type === "ol") && (
+              <div className="mt-4">
+                <h5 className="mb-3">Send for Review</h5>
+                <div className="table-responsive">
+                  <table className="table-style-2 w-100">
+                    <thead>
+                      <tr>
+                        <th style={{ width: 200, minWidth: 200 }}>Category</th>
+                        <th style={{ width: 200, minWidth: 200 }}>Action</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {["HR", "DV", "MP"].map((category) => {
+                        let isAlreadySent: any = false;
+                        console.log(unitDetail);
+                        if (category === "HR") {
+                          isAlreadySent = unitDetail?.is_hr_review;
+                        } else if (category === "DV") {
+                          isAlreadySent = unitDetail?.is_dv_review;
+                        } else if (category === "MP") {
+                          isAlreadySent = unitDetail?.is_mp_review;
+                        }
 
-            return (
-              <tr key={category}>
-                <td>
-                  <p className="fw-4">{category}</p>
-                </td>
-                <td>
-  {isAlreadySent ? (
-    <span className="text-danger fw-semibold">Already Sent</span>
-  ) : (
-    <button
-      type="button"
-      className="_btn success"
-      onClick={() => {
-        const payload: {
-          id: number | undefined;
-          is_hr_review?: boolean;
-          is_dv_review?: boolean;
-          is_mp_review?: boolean;
-        } = {
-          id: unitDetail?.id,
-        };
+                        return (
+                          <tr key={category}>
+                            <td>
+                              <p className="fw-4">{category}</p>
+                            </td>
+                            <td>
+                              {isAlreadySent ? (
+                                <span className="text-danger fw-semibold">
+                                  Already Sent
+                                </span>
+                              ) : (
+                                <button
+                                  type="button"
+                                  className="_btn success"
+                                  onClick={() => {
+                                    const payload: {
+                                      id: number | undefined;
+                                      is_hr_review?: boolean;
+                                      is_dv_review?: boolean;
+                                      is_mp_review?: boolean;
+                                    } = {
+                                      id: unitDetail?.id,
+                                    };
 
-        if (category === 'HR') {
-          payload.is_hr_review = true;
-        } else if (category === 'DV') {
-          payload.is_dv_review = true;
-        } else if (category === 'MP') {
-          payload.is_mp_review = true;
-        }
+                                    if (category === "HR") {
+                                      payload.is_hr_review = true;
+                                    } else if (category === "DV") {
+                                      payload.is_dv_review = true;
+                                    } else if (category === "MP") {
+                                      payload.is_mp_review = true;
+                                    }
 
-        if (unitDetail?.type === 'citation') {
-          dispatch(updateCitation(payload));
-        } else if (unitDetail?.type === 'appreciation') {
-          dispatch(updateAppreciation(payload));
-        }
-      }}
-    >
-      Send for Review
-    </button>
-  )}
-</td>
-
-              </tr>
-            );
-          })}
-        </tbody>
-      </table>
-    </div>
-  </div>
-)}
-
-
-
-            {isCW2Role&& (
-  (cw2_type === "mo" && !unitDetail?.is_mo_approved) ||
-  (cw2_type === "ol" && !unitDetail?.is_ol_approved)
-) && (
-              <div className="d-flex flex-sm-row flex-column gap-sm-3 gap-1 justify-content-end mt-2">
-                <button
-                  type="button"
-                  className="_btn success"
-                  onClick={() => {
-                    const payload: {
-                      id: number | undefined;
-                      is_mo_approved?: boolean;
-                      is_ol_approved?: boolean;
-                      mo_approved_at?: string;
-                      ol_approved_at?: string;
-                    } = {
-                      id: unitDetail?.id,
-                    };
-                    
-                    if (cw2_type === "mo") {
-                      payload.is_mo_approved = true;
-                      payload.mo_approved_at = new Date().toISOString(); // send current date
-                    } else if (cw2_type === "ol") {
-                      payload.is_ol_approved = true;
-                      payload.ol_approved_at = new Date().toISOString(); // send current date
-                    }
-                    
-                    if (unitDetail?.type === "citation") {
-                      dispatch(updateCitation(payload));
-                    } else if (unitDetail?.type === "appreciation") {
-                      dispatch(updateAppreciation(payload));
-                    }
-
-                    navigate("/applications/list");
-                  }}
-                >
-                  Accept
-                </button>
-                <button
-                  type="button"
-                  className="_btn danger"
-                  onClick={() => {
-                    dispatch(
-                      updateApplication({
-                        id: unitDetail?.id,
-                        type: unitDetail?.type,
-                        status: "rejected",
-                      })
-                    ).then(() => {
-                      navigate("/applications/list");
-                    });
-                  }}
-                >
-                  Reject
-                </button>
+                                    if (unitDetail?.type === "citation") {
+                                      dispatch(updateCitation(payload)).then(
+                                        () => {
+                                          if (award_type && numericAppId) {
+                                            dispatch(
+                                              fetchApplicationUnitDetail({
+                                                award_type,
+                                                numericAppId,
+                                              })
+                                            );
+                                          }
+                                        }
+                                      );
+                                    } else if (
+                                      unitDetail?.type === "appreciation"
+                                    ) {
+                                      dispatch(
+                                        updateAppreciation(payload)
+                                      ).then(() => {
+                                        if (award_type && numericAppId) {
+                                          dispatch(
+                                            fetchApplicationUnitDetail({
+                                              award_type,
+                                              numericAppId,
+                                            })
+                                          );
+                                        }
+                                      });
+                                    }
+                                  }}
+                                >
+                                  Send for Review
+                                </button>
+                              )}
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
               </div>
             )}
+
+            {isCW2Role &&
+              ((cw2_type === "mo" && !unitDetail?.is_mo_approved) ||
+                (cw2_type === "ol" && !unitDetail?.is_ol_approved)) && (
+                <div className="d-flex flex-sm-row flex-column gap-sm-3 gap-1 justify-content-end mt-2">
+                  <button
+                    type="button"
+                    className="_btn success"
+                    onClick={() => {
+                      const payload: {
+                        id: number | undefined;
+                        is_mo_approved?: boolean;
+                        is_ol_approved?: boolean;
+                        mo_approved_at?: string;
+                        ol_approved_at?: string;
+                      } = {
+                        id: unitDetail?.id,
+                      };
+
+                      if (cw2_type === "mo") {
+                        payload.is_mo_approved = true;
+                        payload.mo_approved_at = new Date().toISOString(); // send current date
+                      } else if (cw2_type === "ol") {
+                        payload.is_ol_approved = true;
+                        payload.ol_approved_at = new Date().toISOString(); // send current date
+                      }
+
+                      if (unitDetail?.type === "citation") {
+                        dispatch(updateCitation(payload));
+                      } else if (unitDetail?.type === "appreciation") {
+                        dispatch(updateAppreciation(payload));
+                      }
+
+                      navigate("/applications/list");
+                    }}
+                  >
+                    Accept
+                  </button>
+                  <button
+                    type="button"
+                    className="_btn danger"
+                    onClick={() => {
+                      dispatch(
+                        updateApplication({
+                          id: unitDetail?.id,
+                          type: unitDetail?.type,
+                          status: "rejected",
+                        })
+                      ).then(() => {
+                        navigate("/applications/list");
+                      });
+                    }}
+                  >
+                    Reject
+                  </button>
+                </div>
+              )}
           </div>
         )}
       </div>

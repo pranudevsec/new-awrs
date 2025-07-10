@@ -34,7 +34,9 @@ const AcceptedApplicationsList = () => {
   const [limit, setLimit] = useState<number>(10);
   const role = profile?.user?.user_role?.toLowerCase() ?? "";
   const [priorityValues, setPriorityValues] = useState<{
-    [key: string]: string;
+    [key: string]: {
+      [type: string]: string;
+    };
   }>({});
   const hierarchy = ["unit", "brigade", "division", "corps", "command"];
   const allRoles = ["brigade", "division", "corps", "command"];
@@ -48,17 +50,27 @@ const AcceptedApplicationsList = () => {
     );
     return priorityEntry?.priority ?? "-";
   };
-
   useEffect(() => {
-    const initialValues: { [key: string]: string } = {};
+    const initialValues: { [key: string]: { [type: string]: string } } = {};
+  
     units.forEach((unit) => {
       const found = unit?.fds?.applicationPriority?.find(
         (p: any) => p.role?.toLowerCase() === role
       );
-      initialValues[unit.id] = found?.priority?.toString() || "";
+  
+      const unitId = String(unit.id);
+      const unitType = unit.type;
+  
+      if (!initialValues[unitId]) {
+        initialValues[unitId] = {};
+      }
+  
+      initialValues[unitId][unitType] = found?.priority?.toString() || "";
     });
+  
     setPriorityValues(initialValues);
   }, [units, role]);
+  
 
   useEffect(() => {
     const handler = setTimeout(() => {
@@ -204,37 +216,57 @@ const AcceptedApplicationsList = () => {
   };
 
   const [graceMarksValues, setGraceMarksValues] = useState<{
-    [key: string]: string;
+    [key: string]: {
+      [type: string]: string;
+    };
   }>({});
 
   useEffect(() => {
-    const initialGraceValues: { [key: string]: string } = {};
-
+    const initialGraceValues: { [key: string]: { [type: string]: string } } = {};
+  
     units.forEach((unit) => {
       const found = unit?.fds?.applicationGraceMarks?.find(
         (g: any) => g.role?.toLowerCase() === role
       );
-      initialGraceValues[unit.id] = found?.marks?.toString() || "";
+  
+      const unitId = String(unit.id);
+      const unitType = unit.type;
+  
+      if (!initialGraceValues[unitId]) {
+        initialGraceValues[unitId] = {};
+      }
+  
+      initialGraceValues[unitId][unitType] = found?.marks?.toString() || "";
     });
-
+  
     setGraceMarksValues(initialGraceValues);
   }, [units, role]);
-  const handleGraceMarksChange = (unitId: string, value: string, unitType: string) => {
+
+  const handleGraceMarksChange = (
+    unitId: string,
+    value: string,
+    unitType: string
+  ) => {
     setGraceMarksValues((prev) => ({
       ...prev,
-      [unitId]: value,
+      [unitId]: {
+        ...(prev[unitId] || {}),
+        [unitType]: value,
+      },
     }));
+  
     if (value === undefined || value === "") return;
-
+  
     const body: any = {
       type: unitType || "citation",
       application_id: unitId,
       applicationGraceMarks: Number(value),
       role,
     };
-
-    dispatch(approveMarks(body)).unwrap();
-    fetchData();
+  
+    dispatch(approveMarks(body)).unwrap().then(() => {
+      fetchData();
+    });
   };
 
   // const handleGraceMarksSave = (
@@ -494,16 +526,18 @@ const AcceptedApplicationsList = () => {
                     </td>
                   ))}
                   <td style={{ width: 200, minWidth: 200, maxWidth: 200 }}>
-                    <input
-                      type="number"
-                      className="form-control"
-                      placeholder="Enter discretionary points"
-                      autoComplete="off"
-                      value={graceMarksValues[unit.id] || ""}
-                      onChange={(e) =>
-                        handleGraceMarksChange(unit.id, e.target.value, unit.type)
-                      }
-                    />
+                  <input
+  type="number"
+  className="form-control"
+  placeholder="Enter discretionary points"
+  autoComplete="off"
+  value={
+    (graceMarksValues[String(unit.id)]?.[unit.type]) ?? ""
+  }
+  onChange={(e) =>
+    handleGraceMarksChange(String(unit.id), e.target.value, unit.type)
+  }
+/>
                   </td>
 
                   {role === "headquarter" && (
@@ -536,23 +570,26 @@ const AcceptedApplicationsList = () => {
                     </td>
                   )}
 
-                  <td style={{ width: 200, minWidth: 200, maxWidth: 200 }}>
-                    <input
-                      type="text"
-                      className="form-control"
-                      placeholder="Enter priority"
-                      autoComplete="off"
-                      value={priorityValues[unit.id] || ""}
-                      onChange={(e) => {
-                        const value = e.target.value;
-                        setPriorityValues((prev) => ({
-                          ...prev,
-                          [unit.id]: value,
-                        }));
-                        handlePriorityChange(unit, value);
-                      }}
-                    />
-                  </td>
+<td style={{ width: 200, minWidth: 200, maxWidth: 200 }}>
+  <input
+    type="text"
+    className="form-control"
+    placeholder="Enter priority"
+    autoComplete="off"
+    value={priorityValues[String(unit.id)]?.[unit.type] ?? ""}
+    onChange={(e) => {
+      const value = e.target.value;
+      setPriorityValues((prev) => ({
+        ...prev,
+        [String(unit.id)]: {
+          ...(prev[String(unit.id)] || {}),
+          [unit.type]: value,
+        },
+      }));
+      handlePriorityChange(unit, value);
+    }}
+  />
+</td>
                   <td style={{ maxWidth: "100%" }}>
                     {unit.status_flag === "approved" || unit.status_flag === "rejected" ? (
                       <div>

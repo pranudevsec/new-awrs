@@ -3,25 +3,28 @@ DROP TABLE IF EXISTS User_tab;
 
 -- Create the User_tab table
 CREATE TABLE User_tab (
-    user_id SERIAL PRIMARY KEY,
-    pers_no CHAR(8) NOT NULL,
-    rank CHAR(8) NOT NULL,
-    name VARCHAR NOT NULL,
-    user_role VARCHAR NOT NULL,
-    username VARCHAR UNIQUE NOT NULL,
-    password TEXT NOT NULL,
-    unit_id INTEGER,
-    cw2_type VARCHAR(2),
- is_special_unit BOOLEAN DEFAULT FALSE,
-
-    is_active BOOLEAN DEFAULT TRUE,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-
-    CONSTRAINT cw2_type_check CHECK (
-      cw2_type IS NULL OR cw2_type IN ('mo', 'ol', 'hr', 'dv', 'mp')
-    )
-);
+        user_id SERIAL PRIMARY KEY,
+        pers_no CHAR(8) NOT NULL,
+        rank CHAR(8) NOT NULL,
+        name VARCHAR NOT NULL,
+        user_role VARCHAR NOT NULL,
+        username VARCHAR UNIQUE NOT NULL,
+        password TEXT NOT NULL,
+        unit_id INTEGER,
+        cw2_type VARCHAR(2),
+        is_special_unit BOOLEAN DEFAULT FALSE,
+        is_member BOOLEAN DEFAULT FALSE, 
+        officer_id INTEGER,
+        is_officer BOOLEAN DEFAULT FALSE, 
+    
+        is_active BOOLEAN DEFAULT TRUE,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    
+        CONSTRAINT cw2_type_check CHECK (
+          cw2_type IS NULL OR cw2_type IN ('mo', 'ol', 'hr', 'dv', 'mp')
+        )
+    );
 
 -- Trigger function to update 'updated_at' column
 CREATE OR REPLACE FUNCTION update_user_tab_timestamp()
@@ -38,26 +41,64 @@ BEFORE UPDATE ON User_tab
 FOR EACH ROW
 EXECUTE FUNCTION update_user_tab_timestamp();
 
--- Insert a sample user
-INSERT INTO User_tab (pers_no, rank, name, user_role, username, password, is_special_unit)
-VALUES
-  ('12345678', 'some', 'John Doe', 'unit', 'testuser1', '$2b$10$FCHwKvPqS2IrJY2OZtJ2OemtfeFiz1Cj/ez8bv6NwTk5.Se.YaFwq', FALSE),
-  ('87654321', 'some', 'Jane Smith', 'brigade', 'testbrigade', '$2b$10$FCHwKvPqS2IrJY2OZtJ2OemtfeFiz1Cj/ez8bv6NwTk5.Se.YaFwq', FALSE),
-  ('56781234', 'some', 'Alex Johnson', 'division', 'testdivision', '$2b$10$FCHwKvPqS2IrJY2OZtJ2OemtfeFiz1Cj/ez8bv6NwTk5.Se.YaFwq', FALSE),
-  ('43218765', 'some', 'Maria Lee', 'corps', 'testcorps', '$2b$10$FCHwKvPqS2IrJY2OZtJ2OemtfeFiz1Cj/ez8bv6NwTk5.Se.YaFwq', FALSE),
-  ('34567812', 'some', 'David Brown', 'command', 'testcommand', '$2b$10$FCHwKvPqS2IrJY2OZtJ2OemtfeFiz1Cj/ez8bv6NwTk5.Se.YaFwq', FALSE),
-  ('34567812', 'some', 'Test Admin', 'admin', 'admin', '$2b$10$FCHwKvPqS2IrJY2OZtJ2OemtfeFiz1Cj/ez8bv6NwTk5.Se.YaFwq', FALSE),
-  ('34567813', 'some', 'Test Headquarter', 'headquarter', 'testheadquarter', '$2b$10$FCHwKvPqS2IrJY2OZtJ2OemtfeFiz1Cj/ez8bv6NwTk5.Se.YaFwq', FALSE),
-  -- special unit user
-  ('99999999', 'some', 'Special Unit User', 'unit', 'testspecialunit', '$2b$10$FCHwKvPqS2IrJY2OZtJ2OemtfeFiz1Cj/ez8bv6NwTk5.Se.YaFwq', TRUE);
-
-INSERT INTO User_tab (pers_no, rank, name, user_role, username, password, cw2_type)
-VALUES
-  ('11111111', 'some', 'CW2 MO User', 'cw2', 'testcw2_mo', '$2b$10$FCHwKvPqS2IrJY2OZtJ2OemtfeFiz1Cj/ez8bv6NwTk5.Se.YaFwq', 'mo'),
-  ('22222222', 'some', 'CW2 OL User', 'cw2', 'testcw2_ol', '$2b$10$FCHwKvPqS2IrJY2OZtJ2OemtfeFiz1Cj/ez8bv6NwTk5.Se.YaFwq', 'ol'),
-  ('33333333', 'some', 'CW2 HR User', 'cw2', 'testcw2_hr', '$2b$10$FCHwKvPqS2IrJY2OZtJ2OemtfeFiz1Cj/ez8bv6NwTk5.Se.YaFwq', 'hr'),
-  ('44444444', 'some', 'CW2 DV User', 'cw2', 'testcw2_dv', '$2b$10$FCHwKvPqS2IrJY2OZtJ2OemtfeFiz1Cj/ez8bv6NwTk5.Se.YaFwq', 'dv'),
-  ('55555555', 'some', 'CW2 MP User', 'cw2', 'testcw2_mp', '$2b$10$FCHwKvPqS2IrJY2OZtJ2OemtfeFiz1Cj/ez8bv6NwTk5.Se.YaFwq', 'mp');
+ -- Insert a sample user
+    INSERT INTO User_tab (
+        pers_no,
+        rank,
+        name,
+        user_role,
+        username,
+        password,
+        is_special_unit,
+        is_member,
+        is_officer
+    )
+    VALUES
+      ('12345678', 'some', 'John Doe', 'unit', 'testuser1', '$2b$10$FCHwKvPqS2IrJY2OZtJ2OemtfeFiz1Cj/ez8bv6NwTk5.Se.YaFwq', FALSE, FALSE, FALSE),
+      ('87654321', 'some', 'Jane Smith', 'brigade', 'testbrigade', '$2b$10$FCHwKvPqS2IrJY2OZtJ2OemtfeFiz1Cj/ez8bv6NwTk5.Se.YaFwq', FALSE, FALSE, TRUE),
+      ('56781234', 'some', 'Alex Johnson', 'division', 'testdivision', '$2b$10$FCHwKvPqS2IrJY2OZtJ2OemtfeFiz1Cj/ez8bv6NwTk5.Se.YaFwq', FALSE, FALSE, TRUE),
+      ('43218765', 'some', 'Maria Lee', 'corps', 'testcorps', '$2b$10$FCHwKvPqS2IrJY2OZtJ2OemtfeFiz1Cj/ez8bv6NwTk5.Se.YaFwq', FALSE, FALSE, TRUE),
+      ('34567812', 'some', 'David Brown', 'command', 'testcommand', '$2b$10$FCHwKvPqS2IrJY2OZtJ2OemtfeFiz1Cj/ez8bv6NwTk5.Se.YaFwq', FALSE, FALSE, TRUE),
+      ('34567812', 'some', 'Test Admin', 'admin', 'admin', '$2b$10$FCHwKvPqS2IrJY2OZtJ2OemtfeFiz1Cj/ez8bv6NwTk5.Se.YaFwq', FALSE, FALSE, FALSE),
+      ('34567813', 'some', 'Test Headquarter', 'headquarter', 'testheadquarter', '$2b$10$FCHwKvPqS2IrJY2OZtJ2OemtfeFiz1Cj/ez8bv6NwTk5.Se.YaFwq', FALSE, FALSE, FALSE),
+      -- special unit user
+      ('99999999', 'some', 'Special Unit User', 'unit', 'testspecialunit', '$2b$10$FCHwKvPqS2IrJY2OZtJ2OemtfeFiz1Cj/ez8bv6NwTk5.Se.YaFwq', TRUE, FALSE, FALSE);
+    
+    INSERT INTO User_tab (
+        pers_no,
+        rank,
+        name,
+        user_role,
+        username,
+        password,
+        is_special_unit,
+        is_member,
+        is_officer,
+        officer_id
+    )
+    VALUES
+      ('87654321', 'some', 'Jane Smith', 'brigade', 'testbrigade_member', '$2b$10$FCHwKvPqS2IrJY2OZtJ2OemtfeFiz1Cj/ez8bv6NwTk5.Se.YaFwq', FALSE, TRUE, FALSE,2),
+      ('56781234', 'some', 'Alex Johnson', 'division', 'testdivision_member', '$2b$10$FCHwKvPqS2IrJY2OZtJ2OemtfeFiz1Cj/ez8bv6NwTk5.Se.YaFwq', FALSE, TRUE, FALSE,3),
+      ('43218765', 'some', 'Maria Lee', 'corps', 'testcorps_member', '$2b$10$FCHwKvPqS2IrJY2OZtJ2OemtfeFiz1Cj/ez8bv6NwTk5.Se.YaFwq', FALSE, TRUE, FALSE,4),
+      ('34567812', 'some', 'David Brown', 'command', 'testcommand_member', '$2b$10$FCHwKvPqS2IrJY2OZtJ2OemtfeFiz1Cj/ez8bv6NwTk5.Se.YaFwq', FALSE, TRUE, FALSE,5);
+    
+    INSERT INTO User_tab (
+        pers_no,
+        rank,
+        name,
+        user_role,
+        username,
+        password,
+        cw2_type,
+        is_member,
+        is_officer
+    )
+    VALUES
+      ('11111111', 'some', 'CW2 MO User', 'cw2', 'testcw2_mo', '$2b$10$FCHwKvPqS2IrJY2OZtJ2OemtfeFiz1Cj/ez8bv6NwTk5.Se.YaFwq', 'mo', FALSE, FALSE),
+      ('22222222', 'some', 'CW2 OL User', 'cw2', 'testcw2_ol', '$2b$10$FCHwKvPqS2IrJY2OZtJ2OemtfeFiz1Cj/ez8bv6NwTk5.Se.YaFwq', 'ol', FALSE, FALSE),
+      ('33333333', 'some', 'CW2 HR User', 'cw2', 'testcw2_hr', '$2b$10$FCHwKvPqS2IrJY2OZtJ2OemtfeFiz1Cj/ez8bv6NwTk5.Se.YaFwq', 'hr', FALSE, FALSE),
+      ('44444444', 'some', 'CW2 DV User', 'cw2', 'testcw2_dv', '$2b$10$FCHwKvPqS2IrJY2OZtJ2OemtfeFiz1Cj/ez8bv6NwTk5.Se.YaFwq', 'dv', FALSE, FALSE),
+      ('55555555', 'some', 'CW2 MP User', 'cw2', 'testcw2_mp', '$2b$10$FCHwKvPqS2IrJY2OZtJ2OemtfeFiz1Cj/ez8bv6NwTk5.Se.YaFwq', 'mp', FALSE, FALSE);
 
 --------------------------------------------------------------------------------------------Parameter_Master----------------------------------------------------------------------------------------------------------------------
 -- Drop if exists
