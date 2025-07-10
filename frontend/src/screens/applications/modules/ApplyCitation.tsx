@@ -387,10 +387,10 @@ const ApplyCitation = () => {
           dispatch(fetchParameters({
             awardType: "citation",
             search: "",
-            // matrix_unit: profile?.unit?.matrix_unit ?? undefined,
-            // comd: profile?.unit?.comd ?? undefined,
-            matrix_unit: "",
-            comd: "",
+            matrix_unit: profile?.unit?.matrix_unit ?? undefined,
+            comd: profile?.unit?.comd ?? undefined,
+            // matrix_unit: "",
+            // comd: "",
             unit_type: profile?.unit?.unit_type ?? undefined,
             page: 1,
             limit: 1000
