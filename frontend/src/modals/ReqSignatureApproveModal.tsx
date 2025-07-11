@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import Modal from "react-bootstrap/Modal";
-import { SVGICON } from "../constants/iconsList";
 import toast from "react-hot-toast";
+import { SVGICON } from "../constants/iconsList";
 
 interface ReqSignatureApproveModalProps {
   show: boolean;

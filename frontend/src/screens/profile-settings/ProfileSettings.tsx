@@ -2,11 +2,11 @@ import { useEffect, useState, type FormEvent } from "react";
 import { useFormik } from "formik";
 import { unwrapResult } from "@reduxjs/toolkit";
 import toast from "react-hot-toast";
-import type { UpdateUnitProfileRequest } from "../../reduxToolkit/services/auth/authInterface";
 import FormSelect from "../../components/form/FormSelect";
 import Breadcrumb from "../../components/ui/breadcrumb/Breadcrumb";
 import Loader from "../../components/ui/loader/Loader";
 import FormInput from "../../components/form/FormInput";
+import type { UpdateUnitProfileRequest } from "../../reduxToolkit/services/auth/authInterface";
 import {
   unitOptions,
   brigadeOptions,
@@ -323,7 +323,7 @@ const ProfileSettings = () => {
   });
   const isDisabled = !!isMember;
   return (
-    <div className="profile-settings-section" style={{ maxWidth: "80vw" }}>
+    <div className="profile-settings-section">
       <div className="d-flex flex-sm-row flex-column align-items-sm-center justify-content-between mb-4">
         <Breadcrumb title="Profile Settings" />
       </div>

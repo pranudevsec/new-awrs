@@ -2,7 +2,7 @@
   padding: 20px 32px;
   box-shadow: 0 1px 0 rgba(0, 0, 0, 0.02), 0 2px 6px rgba(0, 0, 0, 0.05);
   z-index: 99;
-  background: var(--background);
+  background: #c1121f;
 
   // .nav-icon-btn {
   //   width: 40px;
@@ -128,6 +128,29 @@
           color: var(--gray-500);
         }
       }
+    }
+  }
+}
+
+.top-bar-content {
+  height: 96px;
+
+  h1 {
+    font-size: 23px;
+
+    @media (max-width:480px) {
+      font-size: 18px;
+    }
+  }
+
+  .logo-img {
+    width: 64px;
+    height: 64px;
+    cursor: pointer;
+
+    @media (max-width:480px) {
+      width: 50px;
+      height: 50px;
     }
   }
 }

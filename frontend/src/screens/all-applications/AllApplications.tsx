@@ -1,15 +1,15 @@
 import { useEffect, useState } from "react";
-import { awardTypeOptions } from "../../data/options";
-import { SVGICON } from "../../constants/iconsList";
-import { useAppDispatch, useAppSelector } from "../../reduxToolkit/hooks";
-import { fetchAllApplications } from "../../reduxToolkit/services/application/applicationService";
+import { useNavigate } from "react-router-dom";
+import toast from "react-hot-toast";
 import Breadcrumb from "../../components/ui/breadcrumb/Breadcrumb";
 import FormSelect from "../../components/form/FormSelect";
 import EmptyTable from "../../components/ui/empty-table/EmptyTable";
 import Loader from "../../components/ui/loader/Loader";
 import Pagination from "../../components/ui/pagination/Pagination";
-import { useNavigate } from "react-router-dom";
-import toast from "react-hot-toast";
+import { awardTypeOptions } from "../../data/options";
+import { SVGICON } from "../../constants/iconsList";
+import { useAppDispatch, useAppSelector } from "../../reduxToolkit/hooks";
+import { fetchAllApplications } from "../../reduxToolkit/services/application/applicationService";
 
 const History = () => {
   const dispatch = useAppDispatch();
@@ -146,13 +146,10 @@ const History = () => {
             ) : (
               units.length > 0 &&
               units.map((unit: any, idx) => (
-                <tr
-
-                  style={{ cursor: "pointer" }} key={idx}>
+                <tr style={{ cursor: "pointer" }} key={idx}>
                   <td style={{ width: 150, minWidth: 150, maxWidth: 150 }}>
                     <p className="fw-4">#{unit.id}</p>
                   </td>
-
                   <td style={{ width: 150, minWidth: 150, maxWidth: 150 }}>
                     <p className="fw-4">#{unit.unit_id}</p>
                   </td>

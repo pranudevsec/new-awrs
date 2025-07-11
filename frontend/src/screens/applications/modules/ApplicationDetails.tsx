@@ -3,6 +3,14 @@ import { MdClose } from "react-icons/md";
 import { IoMdCheckmark } from "react-icons/io";
 import { FaCheckCircle } from "react-icons/fa";
 import { SVGICON } from "../../../constants/iconsList";
+import toast from "react-hot-toast";
+import Breadcrumb from "../../../components/ui/breadcrumb/Breadcrumb";
+import Loader from "../../../components/ui/loader/Loader";
+import UnitClarificationModal from "../../../modals/UnitClarificationModal";
+import ReqClarificationModal from "../../../modals/ReqClarificationModal";
+import ReviewCommentModal from "../../../modals/ReviewCommentModal";
+import ViewCreatedClarificationModal from "../../../modals/ViewCreatedClarificationModal";
+import StepProgressBar from "../../../components/ui/stepProgressBar/StepProgressBar";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { useAppDispatch, useAppSelector } from "../../../reduxToolkit/hooks";
 import {
@@ -12,20 +20,12 @@ import {
   updateApplication,
 } from "../../../reduxToolkit/services/application/applicationService";
 import { updateClarification } from "../../../reduxToolkit/services/clarification/clarificationService";
-import Breadcrumb from "../../../components/ui/breadcrumb/Breadcrumb";
-import UnitClarificationModal from "../../../modals/UnitClarificationModal";
-import ReqClarificationModal from "../../../modals/ReqClarificationModal";
-import Loader from "../../../components/ui/loader/Loader";
 import { baseURL } from "../../../reduxToolkit/helper/axios";
 import { useDebounce } from "../../../hooks/useDebounce";
-import ReviewCommentModal from "../../../modals/ReviewCommentModal";
-import ViewCreatedClarificationModal from "../../../modals/ViewCreatedClarificationModal";
-import toast from "react-hot-toast";
-import { updateCitation } from "../../../reduxToolkit/services/citation/citationService";
-import { updateAppreciation } from "../../../reduxToolkit/services/appreciation/appreciationService";
-import StepProgressBar from "../../../components/ui/stepProgressBar/StepProgressBar";
 import { TokenValidation } from "../../../reduxToolkit/services/application/applicationService";
 import { getSignedData } from "../../../reduxToolkit/services/application/applicationService";
+import { updateCitation } from "../../../reduxToolkit/services/citation/citationService";
+import { updateAppreciation } from "../../../reduxToolkit/services/appreciation/appreciationService";
 
 const ApplicationDetails = () => {
   const navigate = useNavigate();
@@ -352,7 +352,7 @@ const ApplicationDetails = () => {
 
     dispatch(addApplicationComment(body))
       .unwrap()
-      .catch(() => {});
+      .catch(() => { });
   };
 
   // Helper function to update priority
@@ -565,7 +565,7 @@ const ApplicationDetails = () => {
               <p className="fw-5 mb-0">
                 {unitDetail?.type
                   ? unitDetail.type.charAt(0).toUpperCase() +
-                    unitDetail.type.slice(1)
+                  unitDetail.type.slice(1)
                   : "--"}
               </p>
             </div>
@@ -754,17 +754,17 @@ const ApplicationDetails = () => {
                               >
                                 {Array.isArray(param?.upload)
                                   ? param.upload.map(
-                                      (filePath: any, idx: any) => (
-                                        <span
-                                          key={idx}
-                                          style={{ display: "block" }}
-                                        >
-                                          {filePath.split("/").pop()}
-                                        </span>
-                                      )
+                                    (filePath: any, idx: any) => (
+                                      <span
+                                        key={idx}
+                                        style={{ display: "block" }}
+                                      >
+                                        {filePath.split("/").pop()}
+                                      </span>
                                     )
+                                  )
                                   : param?.upload
-                                  ? param.upload
+                                    ? param.upload
                                       .toString()
                                       .split(",")
                                       .map((filePath: any, idx: any) => (
@@ -775,7 +775,7 @@ const ApplicationDetails = () => {
                                           {filePath.trim().split("/").pop()}
                                         </span>
                                       ))
-                                  : null}
+                                    : null}
                               </span>
                             </a>
                           ) : (
@@ -810,10 +810,10 @@ const ApplicationDetails = () => {
                             {!isRaisedScreen && (
                               <td style={{ width: 120 }}>
                                 {param?.clarification_id ||
-                                (param?.last_clarification_id &&
-                                  [role, lowerRole].includes(
-                                    param?.last_clarification_handled_by
-                                  )) ? (
+                                  (param?.last_clarification_id &&
+                                    [role, lowerRole].includes(
+                                      param?.last_clarification_handled_by
+                                    )) ? (
                                   <button
                                     className="action-btn bg-transparent d-inline-flex align-items-center justify-content-center"
                                     onClick={() => {
@@ -881,8 +881,8 @@ const ApplicationDetails = () => {
                                 <td style={{ width: 150 }}>
                                   {param?.clarification_details
                                     ?.clarification &&
-                                  param?.clarification_details
-                                    ?.clarification_id ? (
+                                    param?.clarification_details
+                                      ?.clarification_id ? (
                                     param?.clarification_details
                                       ?.clarification_status === "pending" ? (
                                       <div className="d-flex gap-3">
@@ -1085,27 +1085,27 @@ const ApplicationDetails = () => {
                         // If isMember: only member_officer
                         ...(profile?.user?.is_member
                           ? profile.unit.members
-                              .filter((m) => m.member_type === "member_officer")
+                            .filter((m) => m.member_type === "member_officer")
+                            .sort(
+                              (a, b) =>
+                                Number(a.member_order || 0) -
+                                Number(b.member_order || 0)
+                            )
+                          : // Else: presiding officer + member officers
+                          [
+                            ...profile.unit.members.filter(
+                              (m) => m.member_type === "presiding_officer"
+                            ),
+                            ...profile.unit.members
+                              .filter(
+                                (m) => m.member_type === "member_officer"
+                              )
                               .sort(
                                 (a, b) =>
                                   Number(a.member_order || 0) -
                                   Number(b.member_order || 0)
-                              )
-                          : // Else: presiding officer + member officers
-                            [
-                              ...profile.unit.members.filter(
-                                (m) => m.member_type === "presiding_officer"
                               ),
-                              ...profile.unit.members
-                                .filter(
-                                  (m) => m.member_type === "member_officer"
-                                )
-                                .sort(
-                                  (a, b) =>
-                                    Number(a.member_order || 0) -
-                                    Number(b.member_order || 0)
-                                ),
-                            ]),
+                          ]),
                       ].map((member) => {
                         const acceptedMembers =
                           unitDetail?.fds?.accepted_members || [];
@@ -1433,26 +1433,26 @@ const ApplicationDetails = () => {
                       {[
                         ...(profile?.user?.is_member
                           ? profile.unit.members
-                              .filter((m) => m.member_type === "member_officer")
+                            .filter((m) => m.member_type === "member_officer")
+                            .sort(
+                              (a, b) =>
+                                Number(a.member_order || 0) -
+                                Number(b.member_order || 0)
+                            )
+                          : [
+                            ...profile.unit.members.filter(
+                              (m) => m.member_type === "presiding_officer"
+                            ),
+                            ...profile.unit.members
+                              .filter(
+                                (m) => m.member_type === "member_officer"
+                              )
                               .sort(
                                 (a, b) =>
                                   Number(a.member_order || 0) -
                                   Number(b.member_order || 0)
-                              )
-                          : [
-                              ...profile.unit.members.filter(
-                                (m) => m.member_type === "presiding_officer"
                               ),
-                              ...profile.unit.members
-                                .filter(
-                                  (m) => m.member_type === "member_officer"
-                                )
-                                .sort(
-                                  (a, b) =>
-                                    Number(a.member_order || 0) -
-                                    Number(b.member_order || 0)
-                                ),
-                            ]),
+                          ]),
                       ].map((member) => {
                         const acceptedMembers =
                           unitDetail?.fds?.accepted_members || [];

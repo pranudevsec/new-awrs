@@ -63,26 +63,26 @@ const UnitClarificationModal: React.FC<ClarificationModalProps> = ({
       </div>
       <div className="modal-body bg-white rounded-3 pt-0">
         <form onSubmit={handleSubmit}>
-        <div className="mb-4">
-  <FormInput
-    name="reviewer_comment"
-    placeholder="Maximum 200 Words..."
-    type="text"
-    as="textarea"
-    rows={4}
-    value={comment}
-    onChange={(e: any) => {
-      const words = e.target.value.trim().split(/\s+/);
-      if (words.length <= 200) {
-        setComment(e.target.value);
-      } else {
-        // Optionally allow trimming to 200 words:
-        const trimmed = words.slice(0, 200).join(" ");
-        setComment(trimmed);
-      }
-    }}
-  />
-</div>
+          <div className="mb-4">
+            <FormInput
+              name="reviewer_comment"
+              placeholder="Maximum 200 Words..."
+              type="text"
+              as="textarea"
+              rows={4}
+              value={comment}
+              onChange={(e: any) => {
+                const words = e.target.value.trim().split(/\s+/);
+                if (words.length <= 200) {
+                  setComment(e.target.value);
+                } else {
+                  // Optionally allow trimming to 200 words:
+                  const trimmed = words.slice(0, 200).join(" ");
+                  setComment(trimmed);
+                }
+              }}
+            />
+          </div>
 
           <div className="d-flex align-items-center justify-content-end gap-3">
             <button type="submit" className="_btn primary">

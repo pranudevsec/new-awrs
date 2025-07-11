@@ -20,11 +20,11 @@ export const SignUpSchema = Yup.object().shape({
   password: Yup.string()
     .min(4, 'Password must be at least 4 characters')
     .required('Password is required'),
-    confirmPassword: Yup.string()
+  confirmPassword: Yup.string()
     .oneOf([Yup.ref("password")], "Passwords must match")
     .required("Confirm password is required"),
-    captchaToken: Yup.string().required("Captcha is required"),
-  });
+  captchaToken: Yup.string().required("Captcha is required"),
+});
 
 export const ParametersSchema = Yup.object().shape({
   award_type: Yup.string().required('Award type is required'),

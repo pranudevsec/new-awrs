@@ -33,6 +33,6 @@
 
 @media (max-width:575px) {
     .main-layout .scroll-style-110 {
-        @include scrollbar.custom-scrollbar(calc(100% - 74px), 16px 20px);
+        @include scrollbar.custom-scrollbar(calc(100% - 164px), 16px 20px);
     }
 }

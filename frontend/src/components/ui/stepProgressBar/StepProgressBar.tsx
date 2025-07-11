@@ -20,61 +20,61 @@ const StepProgressBar: React.FC<StepProgressBarProps> = ({
   award_type,
   unitDetail,
 }) => {
-    console.log(award_type)
-    const getCurrentStep = () => {
-      if (!unitDetail) return 0;
-    
-      const roleToStepIndex: Record<string, number> = {
-        brigade: 0,
-        division: 1,
-        corps: 2,
-        command: 3,
-      };
-    
-      const lastApprovedRole = unitDetail.last_approved_by_role?.toLowerCase();
-      let step = (roleToStepIndex[lastApprovedRole] ?? -1) + 1;
-    
-      if (unitDetail.is_ol_approved) {
-        step = 7; // ✅ All completed including CW2
-      } else if (unitDetail.is_mo_approved) {
-        step = 5;
-      }
-    
-      return step;
+  console.log(award_type)
+  const getCurrentStep = () => {
+    if (!unitDetail) return 0;
+
+    const roleToStepIndex: Record<string, number> = {
+      brigade: 0,
+      division: 1,
+      corps: 2,
+      command: 3,
     };
-    const getStepDate = (label: string): string | null => {
-      if (!unitDetail) return null;
-    
-      const lowerLabel = label.toLowerCase();
-    
-      if (lowerLabel === "mo" && unitDetail.mo_approved_at) {
-        return format(new Date(unitDetail.mo_approved_at), "dd MMM yyyy");
-      }
-    
-      if (lowerLabel === "ol" && unitDetail.ol_approved_at) {
-        return format(new Date(unitDetail.ol_approved_at), "dd MMM yyyy");
-      }
-    
-      // ✅ Show OL approved date for CW2 when auto-completed
-      if (lowerLabel === "cw2" && unitDetail.is_ol_approved && unitDetail.ol_approved_at) {
-        return format(new Date(unitDetail.ol_approved_at), "dd MMM yyyy");
-      }
-    
-      const applicationPriority = unitDetail?.fds?.applicationPriority;
-      if (!applicationPriority || !Array.isArray(applicationPriority))
-        return null;
-    
-      const found = applicationPriority.find(
-        (p: any) => p.role?.toLowerCase() === lowerLabel
-      );
-    
-      if (found?.priorityAddedAt) {
-        return format(new Date(found.priorityAddedAt), "dd MMM yyyy");
-      }
-    
+
+    const lastApprovedRole = unitDetail.last_approved_by_role?.toLowerCase();
+    let step = (roleToStepIndex[lastApprovedRole] ?? -1) + 1;
+
+    if (unitDetail.is_ol_approved) {
+      step = 7; // ✅ All completed including CW2
+    } else if (unitDetail.is_mo_approved) {
+      step = 5;
+    }
+
+    return step;
+  };
+  const getStepDate = (label: string): string | null => {
+    if (!unitDetail) return null;
+
+    const lowerLabel = label.toLowerCase();
+
+    if (lowerLabel === "mo" && unitDetail.mo_approved_at) {
+      return format(new Date(unitDetail.mo_approved_at), "dd MMM yyyy");
+    }
+
+    if (lowerLabel === "ol" && unitDetail.ol_approved_at) {
+      return format(new Date(unitDetail.ol_approved_at), "dd MMM yyyy");
+    }
+
+    // ✅ Show OL approved date for CW2 when auto-completed
+    if (lowerLabel === "cw2" && unitDetail.is_ol_approved && unitDetail.ol_approved_at) {
+      return format(new Date(unitDetail.ol_approved_at), "dd MMM yyyy");
+    }
+
+    const applicationPriority = unitDetail?.fds?.applicationPriority;
+    if (!applicationPriority || !Array.isArray(applicationPriority))
       return null;
-    };
-    
+
+    const found = applicationPriority.find(
+      (p: any) => p.role?.toLowerCase() === lowerLabel
+    );
+
+    if (found?.priorityAddedAt) {
+      return format(new Date(found.priorityAddedAt), "dd MMM yyyy");
+    }
+
+    return null;
+  };
+
 
   const currentStep = getCurrentStep();
 
@@ -83,13 +83,12 @@ const StepProgressBar: React.FC<StepProgressBarProps> = ({
       {steps.map((step, index) => (
         <div className="step-item position-relative text-center" key={index}>
           <div
-            className={`step-circle d-flex align-items-center justify-content-center fw-6 ${
-              index < currentStep
-                ? "completed"
-                : index === currentStep
+            className={`step-circle d-flex align-items-center justify-content-center fw-6 ${index < currentStep
+              ? "completed"
+              : index === currentStep
                 ? "current"
                 : ""
-            }`}
+              }`}
           >
             {index < currentStep ? "✔" : index + 1}
           </div>

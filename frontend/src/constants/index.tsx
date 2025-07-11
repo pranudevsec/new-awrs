@@ -30,7 +30,7 @@ export const apiEndPoints = {
     clarification: '/api/clarification',
 
     // Dashboard
-    dashboard:'/api/dashboard',
+    dashboard: '/api/dashboard',
     dashboardStats: '/api/dashboard/stats',
     dashboardUnitScores: '/api/dashboard/unit-scores',
 

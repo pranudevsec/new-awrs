@@ -36,7 +36,7 @@ const Clarification = () => {
   }, [searchTerm]);
 
   useEffect(() => {
-    if(profile?.user?.user_role){
+    if (profile?.user?.user_role) {
       if (profile?.user?.user_role?.trim() === "unit") {
         dispatch(getClarifications({ awardType: awardType || "", search: debouncedSearch, page, limit }));
       } else {

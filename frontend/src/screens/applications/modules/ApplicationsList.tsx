@@ -1,15 +1,15 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { awardTypeOptions } from "../../../data/options";
-import { SVGICON } from "../../../constants/iconsList";
-import { useAppDispatch, useAppSelector } from "../../../reduxToolkit/hooks";
-import { fetchApplicationsForHQ, fetchApplicationUnits, fetchSubordinates } from "../../../reduxToolkit/services/application/applicationService";
+import toast from "react-hot-toast";
 import Breadcrumb from "../../../components/ui/breadcrumb/Breadcrumb";
 import FormSelect from "../../../components/form/FormSelect";
 import EmptyTable from "../../../components/ui/empty-table/EmptyTable";
 import Loader from "../../../components/ui/loader/Loader";
 import Pagination from "../../../components/ui/pagination/Pagination";
-import toast from "react-hot-toast";
+import { awardTypeOptions } from "../../../data/options";
+import { SVGICON } from "../../../constants/iconsList";
+import { useAppDispatch, useAppSelector } from "../../../reduxToolkit/hooks";
+import { fetchApplicationsForHQ, fetchApplicationUnits, fetchSubordinates } from "../../../reduxToolkit/services/application/applicationService";
 
 const ApplicationsList = () => {
   const navigate = useNavigate();

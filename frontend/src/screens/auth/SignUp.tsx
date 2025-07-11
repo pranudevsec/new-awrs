@@ -2,13 +2,13 @@ import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom"
 import { useFormik } from "formik";
 import { unwrapResult } from "@reduxjs/toolkit";
+import ReCAPTCHA from "react-google-recaptcha";
+import FormInput from "../../components/form/FormInput";
+import FormSelect from "../../components/form/FormSelect";
 import { roleOptions } from "../../data/options";
 import { SignUpSchema } from "../../validations/validations";
 import { reqToSignUp } from "../../reduxToolkit/services/auth/authService";
 import { useAppDispatch } from "../../reduxToolkit/hooks";
-import FormInput from "../../components/form/FormInput";
-import FormSelect from "../../components/form/FormSelect";
-import ReCAPTCHA from "react-google-recaptcha";
 
 const SignUp = () => {
     const navigate = useNavigate();
@@ -26,14 +26,14 @@ const SignUp = () => {
             user_role: "",
             username: "",
             password: "",
-              confirmPassword: "",
-              captchaToken: "" 
+            confirmPassword: "",
+            captchaToken: ""
         },
         validationSchema: SignUpSchema,
         onSubmit: async (values, { resetForm }) => {
             if (!values.captchaToken) {
                 return; // Captcha not completed
-              }
+            }
             const resultAction = await dispatch(reqToSignUp(values));
             const result = unwrapResult(resultAction);
             if (result.success) {
@@ -42,10 +42,12 @@ const SignUp = () => {
             }
         },
     });
+
     const handleCaptchaChange = (value: string | null) => {
         setCaptchaToken(value);
         formik.setFieldValue("captchaToken", value); // Update Formik
-      };
+    };
+
     return (
         <div className="auth-section">
             <div className="container-fluid">
@@ -65,7 +67,7 @@ const SignUp = () => {
                             <div className="auth-form-area w-100">
                                 <h2 className="font-lexend fw-6">Create an Account</h2>
                                 <form onSubmit={formik.handleSubmit}>
-                                <div className="mb-2">
+                                    <div className="mb-2">
                                         <FormSelect
                                             label="Role"
                                             name="user_role"
@@ -94,7 +96,7 @@ const SignUp = () => {
                                             touched={formik.touched.rank}
                                         />
                                     </div>
-                           
+
                                     <div className="mb-2">
                                         <FormInput
                                             label="Name"
@@ -158,43 +160,42 @@ const SignUp = () => {
                                             <p className="error-text">{formik.errors.password}</p>
                                         )}
                                     </div>
-                                 
+
                                     <div className="mb-4">
-  <label
-    htmlFor="confirmPassword"
-    className="form-label subtitle_3 text_gray_800 mb-1"
-  >
-    Confirm Password
-  </label>
-  <input
-    type="password"
-    className={`form-control ${
-      formik.errors.confirmPassword && formik.touched.confirmPassword
-        ? "invalid"
-        : ""
-    }`}
-    id="confirmPassword"
-    name="confirmPassword"
-    autoComplete="off"
-    placeholder="Re-enter password"
-    value={formik.values.confirmPassword}
-    onChange={formik.handleChange}
-    onBlur={formik.handleBlur}
-  />
-  {formik.errors.confirmPassword && formik.touched.confirmPassword && (
-    <p className="error-text">{formik.errors.confirmPassword}</p>
-  )}
-</div>
-   {/* Captcha */}
-   <div className="mb-4">
-  <ReCAPTCHA
-  sitekey="6LeIxAcTAAAAAJcZVRqyHh71UMIEGNQ_MXjiZKhI"
-  onChange={handleCaptchaChange}
-/>
-  {!captchaToken && formik.submitCount > 0 && (
-    <p className="error-text mt-1">Please verify the captcha</p>
-  )}
-</div>
+                                        <label
+                                            htmlFor="confirmPassword"
+                                            className="form-label subtitle_3 text_gray_800 mb-1"
+                                        >
+                                            Confirm Password
+                                        </label>
+                                        <input
+                                            type="password"
+                                            className={`form-control ${formik.errors.confirmPassword && formik.touched.confirmPassword
+                                                ? "invalid"
+                                                : ""
+                                                }`}
+                                            id="confirmPassword"
+                                            name="confirmPassword"
+                                            autoComplete="off"
+                                            placeholder="Re-enter password"
+                                            value={formik.values.confirmPassword}
+                                            onChange={formik.handleChange}
+                                            onBlur={formik.handleBlur}
+                                        />
+                                        {formik.errors.confirmPassword && formik.touched.confirmPassword && (
+                                            <p className="error-text">{formik.errors.confirmPassword}</p>
+                                        )}
+                                    </div>
+                                    {/* Captcha */}
+                                    <div className="mb-4">
+                                        <ReCAPTCHA
+                                            sitekey="6LeIxAcTAAAAAJcZVRqyHh71UMIEGNQ_MXjiZKhI"
+                                            onChange={handleCaptchaChange}
+                                        />
+                                        {!captchaToken && formik.submitCount > 0 && (
+                                            <p className="error-text mt-1">Please verify the captcha</p>
+                                        )}
+                                    </div>
                                     <button type="submit" className="border-0 w-100 submit-btn" disabled={formik.isSubmitting}>
                                         {formik.isSubmitting ? (
                                             <span>

@@ -72,25 +72,25 @@ const GiveClarificationModal: React.FC<ClarificationModalProps> = ({
         </button>
       </div>
       <div className="modal-body bg-white rounded-3 pt-0">
-      <form onSubmit={handleSubmit}>
-  <div className="mb-4">
-    <label htmlFor="clarification_doc" className="form-label fw-5 mb-2">
-      Please upload a supporting document (Max: 5MB)
-    </label>
-    <input
-      type="file"
-      className="form-control"
-      name="clarification_doc"
-      id="clarification_doc"
-      autoComplete="off"
-      onChange={handleFileChange}
-    />
-  </div>
-  <div className="mb-4">
-    <label htmlFor="clarification" className="form-label fw-5 mb-2">
-      Enter your clarification (max 200 words)
-    </label>
-    <FormInput
+        <form onSubmit={handleSubmit}>
+          <div className="mb-4">
+            <label htmlFor="clarification_doc" className="form-label fw-5 mb-2">
+              Please upload a supporting document (Max: 5MB)
+            </label>
+            <input
+              type="file"
+              className="form-control"
+              name="clarification_doc"
+              id="clarification_doc"
+              autoComplete="off"
+              onChange={handleFileChange}
+            />
+          </div>
+          <div className="mb-4">
+            <label htmlFor="clarification" className="form-label fw-5 mb-2">
+              Enter your clarification (max 200 words)
+            </label>
+            <FormInput
               name="clarification"
               placeholder="Type here...."
               type="text"
@@ -99,13 +99,13 @@ const GiveClarificationModal: React.FC<ClarificationModalProps> = ({
               value={clarification}
               onChange={(e) => setClarification(e.target.value)}
             />
-  </div>
-  <div className="d-flex align-items-center justify-content-end gap-3">
-    <button type="submit" className="_btn primary">
-      Add
-    </button>
-  </div>
-</form>
+          </div>
+          <div className="d-flex align-items-center justify-content-end gap-3">
+            <button type="submit" className="_btn primary">
+              Add
+            </button>
+          </div>
+        </form>
 
       </div>
     </Modal>

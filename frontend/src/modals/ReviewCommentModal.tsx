@@ -23,8 +23,8 @@ const ReviewCommentModal: React.FC<ClarificationModalProps> = ({
   const comments: CommentData[] = Array.isArray(reviewCommentsData)
     ? reviewCommentsData
     : reviewCommentsData
-    ? [reviewCommentsData]
-    : [];
+      ? [reviewCommentsData]
+      : [];
 
   return (
     <Modal
