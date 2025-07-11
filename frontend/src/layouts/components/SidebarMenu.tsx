@@ -8,16 +8,19 @@ const SidebarMenu = () => {
   const userRole = profile?.user?.user_role;
   const isMember = profile?.user?.is_member ?? false;
   const alwaysVisible: string[] = [];
-
+  const cw2_type = profile?.user?.cw2_type?.toLowerCase() ?? "";
   if (
     userRole !== "admin" &&
-    userRole !== "command" &&
     userRole !== "cw2" &&
     userRole !== "headquarter"
   ) {
+    if (userRole !== "command") {
     alwaysVisible.push("Clarification Received", "Home", "Profile Settings");
-
-    if (userRole !== "unit") alwaysVisible.push("Clarification Raised");
+  }
+    // Allow "Clarification Raised" for all except "unit"
+    if (userRole !== "unit") {
+      alwaysVisible.push("Clarification Raised");
+    }
   }
 
   const dashboardItem = sidebarStructure.find(item => item.label === "Dashboard");
@@ -99,12 +102,12 @@ const SidebarMenu = () => {
     filteredStructure.push(allApplicationsItem);
     filteredStructure = filteredStructure.filter(item => item.label !== "Profile Settings");
   }
-//   if (
-//     userRole === "cw2" &&
-//     (cw2_type === "mo" || cw2_type === "ol")
-// ) {
-//     filteredStructure.push(historyItem);
-// }
+  if (
+    userRole === "cw2" &&
+    (cw2_type === "mo" || cw2_type === "ol")
+) {
+    filteredStructure.push(historyItem);
+}
 
   return (
     <aside className="sidebar bg-dark text-white p-3" style={{ width: "300px" }}>

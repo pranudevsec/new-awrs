@@ -48,12 +48,12 @@ const ApplicationDetails = () => {
     for (const param of unitDetail.fds.parameters) {
       if (param.clarification_details) {
         if (param.last_clarification_status !== "clarified") {
-          return false; 
+          return false;
         }
       }
     }
 
-    return true; 
+    return true;
   }
   const isReadyToSubmit = areAllClarificationsResolved(unitDetail);
 
@@ -428,7 +428,7 @@ const ApplicationDetails = () => {
       };
     }
   };
-  
+
   const handleAddsignature = async (member: any, memberdecision: string) => {
     //validation
     const newDecisions: { [memberId: string]: string } = {
@@ -522,7 +522,6 @@ const ApplicationDetails = () => {
   //       const allOthersAccepted = profile?.unit?.members
   //         .filter((m: any) => m.id !== member.id)
   //         .every((m: any) => decisions[m.id] === "accepted");
-
   //       if (allOthersAccepted && memberdecision === "accepted") {
   //         navigate("/applications/list");
   //       }
@@ -1082,99 +1081,106 @@ const ApplicationDetails = () => {
                       </tr>
                     </thead>
                     <tbody>
-  {[
-    // If isMember: only member_officer
-    ...(profile?.user?.is_member
-      ? profile.unit.members
-          .filter((m) => m.member_type === "member_officer")
-          .sort(
-            (a, b) =>
-              Number(a.member_order || 0) - Number(b.member_order || 0)
-          )
-      :
-      // Else: presiding officer + member officers
-      [
-        ...profile.unit.members.filter(
-          (m) => m.member_type === "presiding_officer"
-        ),
-        ...profile.unit.members
-          .filter((m) => m.member_type === "member_officer")
-          .sort(
-            (a, b) =>
-              Number(a.member_order || 0) - Number(b.member_order || 0)
-          ),
-      ]
-    ),
-  ].map((member) => {
-    const acceptedMembers = unitDetail?.fds?.accepted_members || [];
-    const foundMember = acceptedMembers.find(
-      (m: any) => m.member_id === member.id
-    );
-    const isSignatureAdded = foundMember?.is_signature_added === true;
+                      {[
+                        // If isMember: only member_officer
+                        ...(profile?.user?.is_member
+                          ? profile.unit.members
+                              .filter((m) => m.member_type === "member_officer")
+                              .sort(
+                                (a, b) =>
+                                  Number(a.member_order || 0) -
+                                  Number(b.member_order || 0)
+                              )
+                          : // Else: presiding officer + member officers
+                            [
+                              ...profile.unit.members.filter(
+                                (m) => m.member_type === "presiding_officer"
+                              ),
+                              ...profile.unit.members
+                                .filter(
+                                  (m) => m.member_type === "member_officer"
+                                )
+                                .sort(
+                                  (a, b) =>
+                                    Number(a.member_order || 0) -
+                                    Number(b.member_order || 0)
+                                ),
+                            ]),
+                      ].map((member) => {
+                        const acceptedMembers =
+                          unitDetail?.fds?.accepted_members || [];
+                        const foundMember = acceptedMembers.find(
+                          (m: any) => m.member_id === member.id
+                        );
+                        const isSignatureAdded =
+                          foundMember?.is_signature_added === true;
 
-    return (
-      <tr key={member.id}>
-        <td>
-          {member.member_type === "presiding_officer"
-            ? "Presiding Officer"
-            : "Member Officer"}
-        </td>
-        <td>{member.name || "-"}</td>
-        <td>{member.rank || "-"}</td>
-        <td>
-          <div className="d-flex flex-sm-row flex-column gap-sm-3 gap-1 align-items-center">
-            {member.member_type === "presiding_officer" &&
-              !profile?.user?.is_member && 
-              !isSignatureAdded && (
-                <>
-                  {isReadyToSubmit && (
-                    <button
-                      type="button"
-                      className="_btn success w-sm-auto"
-                      onClick={() =>
-                        handleAddsignature(member, "accepted")
-                      }
-                    >
-                      Accept
-                    </button>
-                  )}
-                  <button
-                    type="button"
-                    className="_btn danger w-sm-auto"
-                    onClick={() =>
-                      handleAddsignature(member, "rejected")
-                    }
-                  >
-                    Decline
-                  </button>
-                </>
-              )}
+                        return (
+                          <tr key={member.id}>
+                            <td>
+                              {member.member_type === "presiding_officer"
+                                ? "Presiding Officer"
+                                : "Member Officer"}
+                            </td>
+                            <td>{member.name || "-"}</td>
+                            <td>{member.rank || "-"}</td>
+                            <td>
+                              <div className="d-flex flex-sm-row flex-column gap-sm-3 gap-1 align-items-center">
+                                {member.member_type === "presiding_officer" &&
+                                  !profile?.user?.is_member &&
+                                  !isSignatureAdded && (
+                                    <>
+                                      {isReadyToSubmit && (
+                                        <button
+                                          type="button"
+                                          className="_btn success w-sm-auto"
+                                          onClick={() =>
+                                            handleAddsignature(
+                                              member,
+                                              "accepted"
+                                            )
+                                          }
+                                        >
+                                          Accept
+                                        </button>
+                                      )}
+                                      <button
+                                        type="button"
+                                        className="_btn danger w-sm-auto"
+                                        onClick={() =>
+                                          handleAddsignature(member, "rejected")
+                                        }
+                                      >
+                                        Decline
+                                      </button>
+                                    </>
+                                  )}
 
-            {member.member_type !== "presiding_officer" &&
-              !isSignatureAdded && (
-                <button
-                  type="button"
-                  className="_btn success text-nowrap w-sm-auto"
-                  onClick={() =>
-                    handleAddsignature(member, "accepted")
-                  }
-                >
-                  Add Signature
-                </button>
-              )}
+                                {member.member_type !== "presiding_officer" &&
+                                  !isSignatureAdded && (
+                                    <button
+                                      type="button"
+                                      className="_btn success text-nowrap w-sm-auto"
+                                      onClick={() =>
+                                        handleAddsignature(member, "accepted")
+                                      }
+                                    >
+                                      Add Signature
+                                    </button>
+                                  )}
 
-            {isSignatureAdded && (
-              <span className="text-success fw-semibold text-nowrap d-flex align-items-center gap-1">
-                <FaCheckCircle className="fs-5" /> Signature Added
-              </span>
-            )}
-          </div>
-        </td>
-      </tr>
-    );
-  })}
-</tbody>
-
+                                {isSignatureAdded && (
+                                  <span className="text-success fw-semibold text-nowrap d-flex align-items-center gap-1">
+                                    <FaCheckCircle className="fs-5" /> Signature
+                                    Added
+                                  </span>
+                                )}
+                              </div>
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
                   </table>
                 </div>
               )}
@@ -1257,104 +1263,102 @@ const ApplicationDetails = () => {
             </div>
           </div>
         )}
-         {isHeadquarter && (
-              <div className="mt-4">
-                <h5 className="mb-3">Send for Review</h5>
-                <div className="table-responsive">
-                  <table className="table-style-2 w-100">
-                    <thead>
-                      <tr>
-                        <th style={{ width: 200, minWidth: 200 }}>Category</th>
-                        <th style={{ width: 200, minWidth: 200 }}>Action</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {["HR", "DV", "MP"].map((category) => {
-                        let isAlreadySent: any = false;
-                        console.log(unitDetail);
-                        if (category === "HR") {
-                          isAlreadySent = unitDetail?.is_hr_review;
-                        } else if (category === "DV") {
-                          isAlreadySent = unitDetail?.is_dv_review;
-                        } else if (category === "MP") {
-                          isAlreadySent = unitDetail?.is_mp_review;
-                        }
+        {isHeadquarter && (
+          <div className="mt-4">
+            <h5 className="mb-3">Send for Review</h5>
+            <div className="table-responsive">
+              <table className="table-style-2 w-100">
+                <thead>
+                  <tr>
+                    <th style={{ width: 200, minWidth: 200 }}>Category</th>
+                    <th style={{ width: 200, minWidth: 200 }}>Action</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {["HR", "DV", "MP"].map((category) => {
+                    let isAlreadySent: any = false;
+                    console.log(unitDetail);
+                    if (category === "HR") {
+                      isAlreadySent = unitDetail?.is_hr_review;
+                    } else if (category === "DV") {
+                      isAlreadySent = unitDetail?.is_dv_review;
+                    } else if (category === "MP") {
+                      isAlreadySent = unitDetail?.is_mp_review;
+                    }
 
-                        return (
-                          <tr key={category}>
-                            <td>
-                              <p className="fw-4">{category}</p>
-                            </td>
-                            <td>
-                              {isAlreadySent ? (
-                                <span className="text-danger fw-semibold">
-                                  Already Sent
-                                </span>
-                              ) : (
-                                <button
-                                  type="button"
-                                  className="_btn success"
-                                  onClick={() => {
-                                    const payload: {
-                                      id: number | undefined;
-                                      is_hr_review?: boolean;
-                                      is_dv_review?: boolean;
-                                      is_mp_review?: boolean;
-                                    } = {
-                                      id: unitDetail?.id,
-                                    };
+                    return (
+                      <tr key={category}>
+                        <td>
+                          <p className="fw-4">{category}</p>
+                        </td>
+                        <td>
+                          {isAlreadySent ? (
+                            <span className="text-danger fw-semibold">
+                              Already Sent
+                            </span>
+                          ) : (
+                            <button
+                              type="button"
+                              className="_btn success"
+                              onClick={() => {
+                                const payload: {
+                                  id: number | undefined;
+                                  is_hr_review?: boolean;
+                                  is_dv_review?: boolean;
+                                  is_mp_review?: boolean;
+                                } = {
+                                  id: unitDetail?.id,
+                                };
 
-                                    if (category === "HR") {
-                                      payload.is_hr_review = true;
-                                    } else if (category === "DV") {
-                                      payload.is_dv_review = true;
-                                    } else if (category === "MP") {
-                                      payload.is_mp_review = true;
-                                    }
+                                if (category === "HR") {
+                                  payload.is_hr_review = true;
+                                } else if (category === "DV") {
+                                  payload.is_dv_review = true;
+                                } else if (category === "MP") {
+                                  payload.is_mp_review = true;
+                                }
 
-                                    if (unitDetail?.type === "citation") {
-                                      dispatch(updateCitation(payload)).then(
-                                        () => {
-                                          if (award_type && numericAppId) {
-                                            dispatch(
-                                              fetchApplicationUnitDetail({
-                                                award_type,
-                                                numericAppId,
-                                              })
-                                            );
-                                          }
-                                        }
-                                      );
-                                    } else if (
-                                      unitDetail?.type === "appreciation"
-                                    ) {
+                                if (unitDetail?.type === "citation") {
+                                  dispatch(updateCitation(payload)).then(() => {
+                                    if (award_type && numericAppId) {
                                       dispatch(
-                                        updateAppreciation(payload)
-                                      ).then(() => {
-                                        if (award_type && numericAppId) {
-                                          dispatch(
-                                            fetchApplicationUnitDetail({
-                                              award_type,
-                                              numericAppId,
-                                            })
-                                          );
-                                        }
-                                      });
+                                        fetchApplicationUnitDetail({
+                                          award_type,
+                                          numericAppId,
+                                        })
+                                      );
                                     }
-                                  }}
-                                >
-                                  Send for Review
-                                </button>
-                              )}
-                            </td>
-                          </tr>
-                        );
-                      })}
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-            )}
+                                  });
+                                } else if (
+                                  unitDetail?.type === "appreciation"
+                                ) {
+                                  dispatch(updateAppreciation(payload)).then(
+                                    () => {
+                                      if (award_type && numericAppId) {
+                                        dispatch(
+                                          fetchApplicationUnitDetail({
+                                            award_type,
+                                            numericAppId,
+                                          })
+                                        );
+                                      }
+                                    }
+                                  );
+                                }
+                              }}
+                            >
+                              Send for Review
+                            </button>
+                          )}
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
         {isCW2Role && (
           <div
             style={{
@@ -1427,45 +1431,107 @@ const ApplicationDetails = () => {
                     </thead>
                     <tbody>
                       {[
-                        ...profile.unit.members
-                          .filter((m) => m.member_type === "member_officer")
-                          .sort(
-                            (a, b) =>
-                              Number(a.member_order || 0) -
-                              Number(b.member_order || 0)
-                          ),
-                        ...profile.unit.members.filter(
-                          (m) => m.member_type === "presiding_officer"
-                        ),
-                      ].map((member) => (
-                        <tr key={member.id}>
-                          <td>
-                            {member.member_type === "presiding_officer"
-                              ? "Presiding Officer"
-                              : "Member Officer"}
-                          </td>
-                          <td>{member.name || "-"}</td>
-                          <td>{member.rank || "-"}</td>
-                          <td>
-                            <button
-                              type="button"
-                              className="_btn success"
-                              onClick={() =>
-                                alert(`Signature clicked for ${member.name}`)
-                              }
-                            >
-                              Add Signature
-                            </button>
-                          </td>
-                        </tr>
-                      ))}
+                        ...(profile?.user?.is_member
+                          ? profile.unit.members
+                              .filter((m) => m.member_type === "member_officer")
+                              .sort(
+                                (a, b) =>
+                                  Number(a.member_order || 0) -
+                                  Number(b.member_order || 0)
+                              )
+                          : [
+                              ...profile.unit.members.filter(
+                                (m) => m.member_type === "presiding_officer"
+                              ),
+                              ...profile.unit.members
+                                .filter(
+                                  (m) => m.member_type === "member_officer"
+                                )
+                                .sort(
+                                  (a, b) =>
+                                    Number(a.member_order || 0) -
+                                    Number(b.member_order || 0)
+                                ),
+                            ]),
+                      ].map((member) => {
+                        const acceptedMembers =
+                          unitDetail?.fds?.accepted_members || [];
+                        const foundMember = acceptedMembers.find(
+                          (m: any) => m.member_id === member.id
+                        );
+                        const isSignatureAdded =
+                          foundMember?.is_signature_added === true;
+
+                        return (
+                          <tr key={member.id}>
+                            <td>
+                              {member.member_type === "presiding_officer"
+                                ? "Presiding Officer"
+                                : "Member Officer"}
+                            </td>
+                            <td>{member.name || "-"}</td>
+                            <td>{member.rank || "-"}</td>
+                            <td>
+                              <div className="d-flex flex-sm-row flex-column gap-sm-3 gap-1 align-items-center">
+                                {member.member_type === "presiding_officer" &&
+                                  !profile?.user?.is_member &&
+                                  !isSignatureAdded && (
+                                    <>
+                                      {isReadyToSubmit && (
+                                        <button
+                                          type="button"
+                                          className="_btn success w-sm-auto"
+                                          onClick={() =>
+                                            handleAddsignature(
+                                              member,
+                                              "accepted"
+                                            )
+                                          }
+                                        >
+                                          Accept
+                                        </button>
+                                      )}
+                                      <button
+                                        type="button"
+                                        className="_btn danger w-sm-auto"
+                                        onClick={() =>
+                                          handleAddsignature(member, "rejected")
+                                        }
+                                      >
+                                        Decline
+                                      </button>
+                                    </>
+                                  )}
+
+                                {member.member_type !== "presiding_officer" &&
+                                  !isSignatureAdded && (
+                                    <button
+                                      type="button"
+                                      className="_btn success text-nowrap w-sm-auto"
+                                      onClick={() =>
+                                        handleAddsignature(member, "accepted")
+                                      }
+                                    >
+                                      Add Signature
+                                    </button>
+                                  )}
+
+                                {isSignatureAdded && (
+                                  <span className="text-success fw-semibold text-nowrap d-flex align-items-center gap-1">
+                                    <FaCheckCircle className="fs-5" /> Signature
+                                    Added
+                                  </span>
+                                )}
+                              </div>
+                            </td>
+                          </tr>
+                        );
+                      })}
                     </tbody>
                   </table>
                 </div>
               )}
-   
-
-            {isCW2Role &&
+            {/* {isCW2Role &&
               ((cw2_type === "mo" && !unitDetail?.is_mo_approved) ||
                 (cw2_type === "ol" && !unitDetail?.is_ol_approved)) && (
                 <div className="d-flex flex-sm-row flex-column gap-sm-3 gap-1 justify-content-end mt-2">
@@ -1520,7 +1586,7 @@ const ApplicationDetails = () => {
                     Reject
                   </button>
                 </div>
-              )}
+              )} */}
           </div>
         )}
       </div>

@@ -60,6 +60,7 @@ export interface UpdateApplicationParams {
   is_ol_approved?: boolean;
   withdrawRequested?: boolean;
   withdraw_status?: string;
+  is_mo_ol_member?: boolean;
   member?:any;
   level?:string
 }

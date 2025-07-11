@@ -135,9 +135,9 @@ const History = () => {
               <th style={{ width: 150, minWidth: 150, maxWidth: 150 }}>
                 Approved By Stage
               </th>
-              <th style={{ width: 150, minWidth: 150, maxWidth: 150 }}>
+              {  role!=='cw2' &&  <th style={{ width: 150, minWidth: 150, maxWidth: 150 }}>
                 Action
-              </th>
+              </th>}
             </tr>
           </thead>
 
@@ -222,7 +222,7 @@ const History = () => {
       : "-"}
   </p>
 </td>
-                  <td>
+                 {  role!=='cw2' && <td>
                   {unit?.is_withdraw_requested ? (
   <>
     {unit.withdraw_status === 'approved' && (
@@ -270,7 +270,7 @@ const History = () => {
 </p>
 )}
 
-</td>
+</td>}
 
                 </tr>
               ))
