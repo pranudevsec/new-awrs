@@ -10,22 +10,38 @@ const AuthLayout = ({ children }: { children: React.ReactNode }) => {
     if (!token) return <Navigate to="/authentication/sign-in" />;
 
     return (
-        <main className="d-flex flex-column vh-100">
-            {/* Topbar */}
+        // <main className="d-flex flex-column vh-100">
+        //     {/* Topbar */}
+        //     <Topbar />
+        //     <div className="d-flex flex-grow-1 overflow-hidden">
+        //         {/* Sidebar menu */}
+        //         <SidebarMenu />
+        //         {/* Content area */}
+        //         <div className="d-flex flex-column flex-grow-1">
+        //             {/* Header */}
+        //             <Header />
+        //             <div className="flex-grow-1 overflow-auto">
+        //                 {children}
+        //             </div>
+        //         </div>
+        //     </div>
+        // </main>
+        <>
             <Topbar />
-            <div className="d-flex flex-grow-1 overflow-hidden">
+            <main className='d-flex vh-100'>
                 {/* Sidebar menu */}
                 <SidebarMenu />
-                {/* Content area */}
-                <div className="d-flex flex-column flex-grow-1">
+                {/* Sidebar menu */}
+                <div className='main-layout d-flex flex-column position-relative overflow-hidden'>
                     {/* Header */}
                     <Header />
-                    <div className="flex-grow-1 overflow-auto">
+                    {/* /Header */}
+                    <div className="scroll-style-110 overflow-auto">
                         {children}
                     </div>
                 </div>
-            </div>
-        </main>
+            </main>
+        </>
     );
 }
 

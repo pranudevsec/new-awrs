@@ -24,6 +24,7 @@ const DRAFT_FILE_UPLOAD_KEY = "applyCitationuploadedDocsDraft";
 const groupParametersByCategory = (params: Parameter[]) => {
   return params.reduce((acc: Record<string, Parameter[]>, param) => {
     const category = param.category || "Uncategorized";
+
     if (!acc[category]) acc[category] = [];
     acc[category].push(param);
     return acc;
@@ -48,7 +49,6 @@ const ApplyCitation = () => {
 
   // States
   const [parameters, setParameters] = useState<Parameter[]>([]);
-  console.log(parameters)
   const [counts, setCounts] = useState<Record<number, string>>({});
   const [marks, setMarks] = useState<Record<number, number>>({});
   const [lastDate, setLastDate] = useState("");
@@ -66,6 +66,10 @@ const ApplyCitation = () => {
   const [unitRemarks, setUnitRemarks] = useState(() => {
     return localStorage.getItem("applyCitationUnitRemarks") || "";
   });
+
+  // console.log("groupedParams -> ", groupedParams);
+  // console.log("parameters -> ", parameters);
+
 
   useEffect(() => {
     if (id) {
@@ -290,17 +294,17 @@ const ApplyCitation = () => {
   };
   const handleRemoveUploadedFile = (paramId: number, index: number) => {
     const updatedFiles = { ...uploadedFiles };
-  
+
     if (!updatedFiles[paramId]) return;
-  
+
     // Remove file at index
     updatedFiles[paramId] = updatedFiles[paramId].filter((_, idx) => idx !== index);
-  
+
     // If no files left, remove the paramId key
     if (updatedFiles[paramId].length === 0) {
       delete updatedFiles[paramId];
     }
-  
+
     setUploadedFiles(updatedFiles);
     localStorage.setItem(DRAFT_FILE_UPLOAD_KEY, JSON.stringify(updatedFiles));
     toast.success("File removed");
@@ -405,7 +409,6 @@ const ApplyCitation = () => {
             setCommand(profile?.unit?.comd)
           }
         }
-console.log(paramsRes)
         if (paramsRes.success && paramsRes.data) {
           const revParams = [...paramsRes.data].reverse();
           setParameters(revParams);
@@ -522,9 +525,9 @@ console.log(paramsRes)
 
   // Show loader
   if (loading) return <Loader />
-console.log(groupedParams)
+
   return (
-    <div className="apply-citation-section" style={{ padding: "2rem" }}>
+    <div className="apply-citation-section">
       <div className="d-flex flex-sm-row flex-column align-items-sm-center justify-content-between mb-4">
         <Breadcrumb
           title="Apply For Citation"
@@ -582,57 +585,44 @@ console.log(groupedParams)
           </div>
 
           {profile?.unit?.awards?.length > 0 && (
-  <div className="mt-4">
-    <h5 className="mb-3">Awards</h5>
-    <div className="table-responsive">
-      <table className="table-style-2 w-100">
-        <thead>
-          <tr>
-            <th style={{ width: 150, minWidth: 150, maxWidth: 150 }}>Type</th>
-            <th style={{ width: 200, minWidth: 200, maxWidth: 200 }}>Year</th>
-            <th style={{ width: 300, minWidth: 300, maxWidth: 300 }}>Title</th>
-          </tr>
-        </thead>
-        <tbody>
-        {profile?.unit?.awards?.map((award:any) => (
-            <tr key={award.award_id}>
-    
-              <td style={{ width: 150, minWidth: 150, maxWidth: 150 }}>
-                <p className="fw-4 text-capitalize">{award.award_type}</p>
-              </td>
-              <td style={{ width: 200, minWidth: 200, maxWidth: 200 }}>
-                <p className="fw-4">{award.award_year}</p>
-              </td>
-              <td style={{ width: 300, minWidth: 300, maxWidth: 300 }}>
-                <p className="fw-4">{award.award_title}</p>
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
-  </div>
-)}
+            <div className="mt-4 mb-2">
+              <h5 className="mb-3">Awards</h5>
+              <div className="table-responsive">
+                <table className="table-style-2 w-100">
+                  <thead>
+                    <tr>
+                      <th style={{ width: 150, minWidth: 150, maxWidth: 150 }}>Type</th>
+                      <th style={{ width: 200, minWidth: 200, maxWidth: 200 }}>Year</th>
+                      <th style={{ width: 300, minWidth: 300, maxWidth: 300 }}>Title</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {profile?.unit?.awards?.map((award: any) => (
+                      <tr key={award.award_id}>
 
-          <div
-            style={{
-              position: "sticky",
-              top: 0,
-              backgroundColor: "white",
-              zIndex: 10,
-              paddingBottom: '1rem',
-              whiteSpace: 'nowrap',
-            }}
-          >
+                        <td style={{ width: 150, minWidth: 150, maxWidth: 150 }}>
+                          <p className="fw-4 text-capitalize">{award.award_type}</p>
+                        </td>
+                        <td style={{ width: 200, minWidth: 200, maxWidth: 200 }}>
+                          <p className="fw-4">{award.award_year}</p>
+                        </td>
+                        <td style={{ width: 300, minWidth: 300, maxWidth: 300 }}>
+                          <p className="fw-4">{award.award_title}</p>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
+
+          <div className="position-sticky top-0 bg-white pb-3 mb-3" style={{ zIndex: 10, borderBottom: '1px solid #dee2e6' }}>
             <Tabs
               activeKey={activeTab}
               onSelect={handleTabSelect}
               id="category-tabs"
-              className="mb-3 custom-tabs"
-              style={{
-                display: "inline-flex",
-                gap: "0.5rem",
-              }}
+              className="custom-tabs d-flex gap-2 flex-nowrap overflow-x-auto text-nowrap scrollbar-hidden"
             >
               {Object.keys(groupedParams).map((category) => (
                 <Tab
@@ -669,8 +659,6 @@ console.log(groupedParams)
               ))}
             </Tabs>
           </div>
-
-
 
 
           <div
@@ -776,49 +764,49 @@ console.log(groupedParams)
                             <td style={{ width: 300, minWidth: 300, maxWidth: 300 }}>
                               {param.proof_reqd ? (
                                 <>
-                               {uploadedFiles[param.param_id]?.length > 0 && (
-  <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-    {uploadedFiles[param.param_id].map((fileUrl, idx) => (
-      <div
-        key={idx}
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          gap: '0.5rem',
-          fontSize: 14,
-          wordBreak: 'break-all',
-          background: '#f1f5f9',
-          padding: '4px 8px',
-          borderRadius: 4,
-        }}
-      >
-        <a
-          href={`${baseURL}${fileUrl}`}
-          target="_blank"
-          rel="noopener noreferrer"
-          style={{ flex: 1, color: '#1d4ed8', textDecoration: 'underline' }}
-        >
-          {fileUrl.split("/").pop()}
-        </a>
-        <button
-          type="button"
-          onClick={() => handleRemoveUploadedFile(param.param_id, idx)}
-          style={{
-            background: 'transparent',
-            border: 'none',
-            color: '#dc2626',
-            cursor: 'pointer',
-            fontSize: 16,
-          }}
-          title="Remove file"
-        >
-          🗑️
-        </button>
-      </div>
-    ))}
-  </div>
-)}
+                                  {uploadedFiles[param.param_id]?.length > 0 && (
+                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                                      {uploadedFiles[param.param_id].map((fileUrl, idx) => (
+                                        <div
+                                          key={idx}
+                                          style={{
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            justifyContent: 'space-between',
+                                            gap: '0.5rem',
+                                            fontSize: 14,
+                                            wordBreak: 'break-all',
+                                            background: '#f1f5f9',
+                                            padding: '4px 8px',
+                                            borderRadius: 4,
+                                          }}
+                                        >
+                                          <a
+                                            href={`${baseURL}${fileUrl}`}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            style={{ flex: 1, color: '#1d4ed8', textDecoration: 'underline' }}
+                                          >
+                                            {fileUrl.split("/").pop()}
+                                          </a>
+                                          <button
+                                            type="button"
+                                            onClick={() => handleRemoveUploadedFile(param.param_id, idx)}
+                                            style={{
+                                              background: 'transparent',
+                                              border: 'none',
+                                              color: '#dc2626',
+                                              cursor: 'pointer',
+                                              fontSize: 16,
+                                            }}
+                                            title="Remove file"
+                                          >
+                                            🗑️
+                                          </button>
+                                        </div>
+                                      ))}
+                                    </div>
+                                  )}
                                   <input
                                     type="file"
                                     className="form-control mt-1"

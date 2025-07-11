@@ -1,5 +1,7 @@
 .auth-section {
   background: url("/media/auth/auth-bg2.jpg") center/cover no-repeat;
+  height: 100vh;
+  overflow: auto;
 
   .auth-image-area {
     padding: 30px 30px 0;

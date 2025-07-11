@@ -51,52 +51,52 @@ const ApplicationsList = () => {
     if (!profile?.user?.user_role) return;
 
     const fetchData = async () => {
-  const role = profile.user.user_role;
+      const role = profile.user.user_role;
 
-  // const effectiveAwardType =
-  //   isCW2Role
-  //     ? (cw2_type === "mo" ? "citation" : cw2_type === "ol" ? "appreciation" : '')
-  //     : awardType || '';
+      // const effectiveAwardType =
+      //   isCW2Role
+      //     ? (cw2_type === "mo" ? "citation" : cw2_type === "ol" ? "appreciation" : '')
+      //     : awardType || '';
 
-  const params = {
-    award_type: awardType || '',
-    search: debouncedSearch,
-    page,
-    limit,
-  };
+      const params = {
+        award_type: awardType || '',
+        search: debouncedSearch,
+        page,
+        limit,
+      };
 
-  if (role === 'cw2' || role === 'headquarter') {
-    dispatch(fetchApplicationsForHQ(params));
-  } else if (role !== 'unit') {
-    const updatedParams = {
-      ...params,
-      isGetNotClarifications: true,
-    };
-   
-    try {
-      await  dispatch(fetchSubordinates(updatedParams)).unwrap();
-    } catch (error: any) {    
-      const errorMessage = error?.errors || error?.message || "An error occurred.";
-    
-      if (error?.errors === "Please complete your unit profile before proceeding.") {
-        navigate("/profile-settings");
-        toast.error(errorMessage);
+      if (role === 'cw2' || role === 'headquarter') {
+        dispatch(fetchApplicationsForHQ(params));
+      } else if (role !== 'unit') {
+        const updatedParams = {
+          ...params,
+          isGetNotClarifications: true,
+        };
+
+        try {
+          await dispatch(fetchSubordinates(updatedParams)).unwrap();
+        } catch (error: any) {
+          const errorMessage = error?.errors || error?.message || "An error occurred.";
+
+          if (error?.errors === "Please complete your unit profile before proceeding.") {
+            navigate("/profile-settings");
+            toast.error(errorMessage);
+          } else {
+            toast.error(errorMessage);
+          }
+        }
       } else {
-        toast.error(errorMessage);
+        dispatch(fetchApplicationUnits(params));
       }
-    }
-  } else {
-    dispatch(fetchApplicationUnits(params));
-  }
-};
+    };
 
     fetchData();
   }, [awardType, debouncedSearch, profile, page, limit]);
 
   return (
-    <div className="clarification-section" style={{ padding: "2rem"}}>
+    <div className="clarification-section">
       <div className="d-flex flex-sm-row flex-column align-items-sm-center justify-content-between mb-4">
-      <Breadcrumb
+        <Breadcrumb
           title="Applications"
           paths={[
             { label: "Home", href: "/applications" },
@@ -106,9 +106,9 @@ const ApplicationsList = () => {
       </div>
 
       <div className="filter-wrapper d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
-      <div className="search-wrapper position-relative">
-      <button className="border-0 bg-transparent position-absolute translate-middle-y top-50">
-      {SVGICON.app.search}
+        <div className="search-wrapper position-relative">
+          <button className="border-0 bg-transparent position-absolute translate-middle-y top-50">
+            {SVGICON.app.search}
           </button>
           <input
             type="text"
@@ -118,14 +118,14 @@ const ApplicationsList = () => {
             onChange={(e) => setSearchTerm(e.target.value)}
           />
         </div>
-      
-  <FormSelect
-    name="awardType"
-    options={awardTypeOptions}
-    value={awardType}
-    placeholder="Select Type"
-    onChange={(option: OptionType | null) => setAwardType(option ? option.value : null)}
-  />
+
+        <FormSelect
+          name="awardType"
+          options={awardTypeOptions}
+          value={awardType}
+          placeholder="Select Type"
+          onChange={(option: OptionType | null) => setAwardType(option ? option.value : null)}
+        />
 
       </div>
 

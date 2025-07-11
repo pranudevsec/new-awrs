@@ -4,23 +4,23 @@
   z-index: 99;
   background: var(--background);
 
-  .nav-icon-btn {
-    width: 40px;
-    height: 40px;
-    backdrop-filter: blur(12px);
-    padding: 4px;
-    border-radius: 20px;
-    border: 1px solid var(--gray-200) !important;
-    box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1),
-      0 1px 2px -1px rgba(0, 0, 0, 0.1);
-    color: var(--gray-700);
-    transition: all 0.3s ease;
+  // .nav-icon-btn {
+  //   width: 40px;
+  //   height: 40px;
+  //   backdrop-filter: blur(12px);
+  //   padding: 4px;
+  //   border-radius: 20px;
+  //   border: 1px solid var(--gray-200) !important;
+  //   box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1),
+  //     0 1px 2px -1px rgba(0, 0, 0, 0.1);
+  //   color: var(--gray-700);
+  //   transition: all 0.3s ease;
 
-    &:hover {
-      color: var(--gray-0) !important;
-      background: var(--blue-primary-clr) !important;
-    }
-  }
+  //   &:hover {
+  //     color: var(--gray-0) !important;
+  //     background: var(--blue-primary-clr) !important;
+  //   }
+  // }
 
   .profile-info {
     h6 {
@@ -34,7 +34,7 @@
     }
 
     p {
-      color: var(--gray-600);
+      color: var(--gray-900);
       max-width: 200px;
       overflow: hidden;
       white-space: nowrap;

@@ -28,16 +28,16 @@ const CommandPanel = () => {
   const [limit, setLimit] = useState<number>(10);
   const handleDownload = () => {
     const topN = 5;
-  
+
     const topCandidates = [...scoreboard]
       .sort((a, b) => b.total_marks - a.total_marks)
       .slice(0, topN);
-  
+
     const excelData = topCandidates.map((candidate: any, index) => {
       const parameters = candidate.fds?.parameters || [];
       const graceMarks = candidate.fds?.applicationGraceMarks || [];
       const priorities = candidate.fds?.applicationPriority || [];
-  
+
       const getParamMarks = (paramName: string) => {
         return (
           parameters.find((p: any) =>
@@ -45,22 +45,22 @@ const CommandPanel = () => {
           )?.marks ?? ""
         );
       };
-  
+
       // Roles to extract
       const roles = ["brigade", "division", "corps", "command"];
-  
+
       const graceMarksByRole = roles.reduce((acc: any, role) => {
         acc[`Points by ${capitalize(role)}`] =
           graceMarks.find((g: any) => g.role === role)?.marks ?? "";
         return acc;
       }, {});
-  
+
       const prioritiesByRole = roles.reduce((acc: any, role) => {
         acc[`${capitalize(role)} Priority`] =
           priorities.find((p: any) => p.role === role)?.priority ?? "";
         return acc;
       }, {});
-  
+
       return {
         "S. No.": index + 1,
         "Unit": candidate.unit_name || "",
@@ -81,25 +81,25 @@ const CommandPanel = () => {
         ...prioritiesByRole,
       };
     });
-  
+
     const worksheet = XLSX.utils.json_to_sheet(excelData);
     const workbook = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(workbook, worksheet, "Top Candidates");
-  
+
     const excelBuffer = XLSX.write(workbook, {
       bookType: "xlsx",
       type: "array",
     });
-  
+
     const data = new Blob([excelBuffer], {
       type: "application/octet-stream",
     });
     saveAs(data, `Top_5_Candidates_Scoreboard.xlsx`);
   };
-  
+
   // Capitalize helper
   const capitalize = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
-  
+
   useEffect(() => {
     const handler = setTimeout(() => {
       setDebouncedSearch(searchTerm);
@@ -120,23 +120,23 @@ const CommandPanel = () => {
   }, [awardType, debouncedSearch, page, limit])
 
 
-const handleShortlistToggle = (item: any) => {
-  const updatedPayload = {
-    id: item.id,
-    isShortlisted: !item.isShortlisted,
-  };
+  const handleShortlistToggle = (item: any) => {
+    const updatedPayload = {
+      id: item.id,
+      isShortlisted: !item.isShortlisted,
+    };
 
-  if (item.type === "citation") {
-    dispatch(updateCitation(updatedPayload));
-  } else if (item.type === "appreciation") {
-    dispatch(updateAppreciation(updatedPayload));
-  }
-  fetchScoreboardList();
-};
+    if (item.type === "citation") {
+      dispatch(updateCitation(updatedPayload));
+    } else if (item.type === "appreciation") {
+      dispatch(updateAppreciation(updatedPayload));
+    }
+    fetchScoreboardList();
+  };
 
   return (
     <>
-      <div className="clarification-section" style={{ padding: "2rem"}}>
+      <div className="clarification-section">
         <div className="d-flex flex-sm-row flex-column justify-content-between mb-4">
           <Breadcrumb title="Scoreboard Listing" />
           <div className="d-flex align-items-center justify-content-end gap-3 mt-sm-0 mt-3">
@@ -248,31 +248,31 @@ const handleShortlistToggle = (item: any) => {
                       <p className="fw-4">{item.total_marks || 0}</p>
                     </td>
                     <td style={{ width: 150, minWidth: 150, maxWidth: 150 }}>
-                    <p className="fw-4">
-    {
-      item.fds?.applicationPriority?.find((p:any) => p.role?.toLowerCase() === 'command')?.priority ?? '-'
-    }
-  </p>
+                      <p className="fw-4">
+                        {
+                          item.fds?.applicationPriority?.find((p: any) => p.role?.toLowerCase() === 'command')?.priority ?? '-'
+                        }
+                      </p>
                     </td>
                     <td style={{ width: 200, minWidth: 200, maxWidth: 200 }}>
                       <p className="fw-4">{item.type || "-"}</p>
                     </td>
                     <td onClick={(e) => e.stopPropagation()}>
-  <div className="d-flex align-items-center flex-grow-1 gap-2">
-    <input
-      type="checkbox"
-      id={`switch-${item.id}`}
-      className="custom-switch"
-      hidden
-      checked={item.isshortlisted}
-      onChange={() => handleShortlistToggle(item)}
-    />
-    <label
-      htmlFor={`switch-${item.id}`}
-      className="switch-label"
-    ></label>
-  </div>
-</td>
+                      <div className="d-flex align-items-center flex-grow-1 gap-2">
+                        <input
+                          type="checkbox"
+                          id={`switch-${item.id}`}
+                          className="custom-switch"
+                          hidden
+                          checked={item.isshortlisted}
+                          onChange={() => handleShortlistToggle(item)}
+                        />
+                        <label
+                          htmlFor={`switch-${item.id}`}
+                          className="switch-label"
+                        ></label>
+                      </div>
+                    </td>
                     <td style={{ width: 100, minWidth: 100, maxWidth: 100 }} >
                       <div>
                         <Link

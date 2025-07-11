@@ -3,8 +3,6 @@ import { Navigate } from "react-router-dom";
 
 import Login from "../screens/auth/Login";
 import SignUp from "../screens/auth/SignUp";
-import AllApplications from "../screens/all-applications/AllApplications";
-import Withdraw from "../screens/withdraw/Withdraw";
 
 const Applications = lazy(() => import("../screens/applications/Applications"));
 const AcceptedApplicationsList = lazy(() => import("../screens/applications/modules/AcceptedApplicationsList"));
@@ -39,6 +37,8 @@ const EditParameters = lazy(() => import("../screens/parameters/EditParameters")
 const Dashboard = lazy(() => import("../screens/dashboard/Dashboard"));
 
 const History = lazy(() => import("../screens/history/History"));
+const AllApplications = lazy(() => import("../screens/all-applications/AllApplications"));
+const Withdraw = lazy(() => import("../screens/withdraw/Withdraw"));
 
 interface RouteConfig {
   path: string;

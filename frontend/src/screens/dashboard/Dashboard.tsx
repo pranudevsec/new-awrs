@@ -30,7 +30,7 @@ const Dashboard = () => {
     if (loading) return <Loader />
 
     return (
-        <div className="dashboard-section" style={{ padding: "2rem", maxWidth: "80vw" }}>
+        <div className="dashboard-section" style={{ maxWidth: "80vw" }}>
             <div className="d-flex flex-sm-row flex-column align-items-sm-center justify-content-between mb-4">
                 <Breadcrumb title="Dashboard" />
             </div>

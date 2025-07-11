@@ -52,25 +52,25 @@ const AcceptedApplicationsList = () => {
   };
   useEffect(() => {
     const initialValues: { [key: string]: { [type: string]: string } } = {};
-  
+
     units.forEach((unit) => {
       const found = unit?.fds?.applicationPriority?.find(
         (p: any) => p.role?.toLowerCase() === role
       );
-  
+
       const unitId = String(unit.id);
       const unitType = unit.type;
-  
+
       if (!initialValues[unitId]) {
         initialValues[unitId] = {};
       }
-  
+
       initialValues[unitId][unitType] = found?.priority?.toString() || "";
     });
-  
+
     setPriorityValues(initialValues);
   }, [units, role]);
-  
+
 
   useEffect(() => {
     const handler = setTimeout(() => {
@@ -223,22 +223,22 @@ const AcceptedApplicationsList = () => {
 
   useEffect(() => {
     const initialGraceValues: { [key: string]: { [type: string]: string } } = {};
-  
+
     units.forEach((unit) => {
       const found = unit?.fds?.applicationGraceMarks?.find(
         (g: any) => g.role?.toLowerCase() === role
       );
-  
+
       const unitId = String(unit.id);
       const unitType = unit.type;
-  
+
       if (!initialGraceValues[unitId]) {
         initialGraceValues[unitId] = {};
       }
-  
+
       initialGraceValues[unitId][unitType] = found?.marks?.toString() || "";
     });
-  
+
     setGraceMarksValues(initialGraceValues);
   }, [units, role]);
 
@@ -254,16 +254,16 @@ const AcceptedApplicationsList = () => {
         [unitType]: value,
       },
     }));
-  
+
     if (value === undefined || value === "") return;
-  
+
     const body: any = {
       type: unitType || "citation",
       application_id: unitId,
       applicationGraceMarks: Number(value),
       role,
     };
-  
+
     dispatch(approveMarks(body)).unwrap().then(() => {
       fetchData();
     });
@@ -288,7 +288,7 @@ const AcceptedApplicationsList = () => {
   // };
 
   return (
-    <div className="clarification-section" style={{ padding: "2rem", maxWidth: "80vw" }}>
+    <div className="clarification-section" style={{ maxWidth: "80vw" }}>
       <div className="d-flex flex-sm-row flex-column align-items-sm-center justify-content-between mb-4">
         <Breadcrumb
           title="Accepted Applications"
@@ -526,18 +526,18 @@ const AcceptedApplicationsList = () => {
                     </td>
                   ))}
                   <td style={{ width: 200, minWidth: 200, maxWidth: 200 }}>
-                  <input
-  type="number"
-  className="form-control"
-  placeholder="Enter discretionary points"
-  autoComplete="off"
-  value={
-    (graceMarksValues[String(unit.id)]?.[unit.type]) ?? ""
-  }
-  onChange={(e) =>
-    handleGraceMarksChange(String(unit.id), e.target.value, unit.type)
-  }
-/>
+                    <input
+                      type="number"
+                      className="form-control"
+                      placeholder="Enter discretionary points"
+                      autoComplete="off"
+                      value={
+                        (graceMarksValues[String(unit.id)]?.[unit.type]) ?? ""
+                      }
+                      onChange={(e) =>
+                        handleGraceMarksChange(String(unit.id), e.target.value, unit.type)
+                      }
+                    />
                   </td>
 
                   {role === "headquarter" && (
@@ -570,26 +570,26 @@ const AcceptedApplicationsList = () => {
                     </td>
                   )}
 
-<td style={{ width: 200, minWidth: 200, maxWidth: 200 }}>
-  <input
-    type="text"
-    className="form-control"
-    placeholder="Enter priority"
-    autoComplete="off"
-    value={priorityValues[String(unit.id)]?.[unit.type] ?? ""}
-    onChange={(e) => {
-      const value = e.target.value;
-      setPriorityValues((prev) => ({
-        ...prev,
-        [String(unit.id)]: {
-          ...(prev[String(unit.id)] || {}),
-          [unit.type]: value,
-        },
-      }));
-      handlePriorityChange(unit, value);
-    }}
-  />
-</td>
+                  <td style={{ width: 200, minWidth: 200, maxWidth: 200 }}>
+                    <input
+                      type="text"
+                      className="form-control"
+                      placeholder="Enter priority"
+                      autoComplete="off"
+                      value={priorityValues[String(unit.id)]?.[unit.type] ?? ""}
+                      onChange={(e) => {
+                        const value = e.target.value;
+                        setPriorityValues((prev) => ({
+                          ...prev,
+                          [String(unit.id)]: {
+                            ...(prev[String(unit.id)] || {}),
+                            [unit.type]: value,
+                          },
+                        }));
+                        handlePriorityChange(unit, value);
+                      }}
+                    />
+                  </td>
                   <td style={{ maxWidth: "100%" }}>
                     {unit.status_flag === "approved" || unit.status_flag === "rejected" ? (
                       <div>

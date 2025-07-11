@@ -15,8 +15,8 @@ const SidebarMenu = () => {
     userRole !== "headquarter"
   ) {
     if (userRole !== "command") {
-    alwaysVisible.push("Clarification Received", "Home", "Profile Settings");
-  }
+      alwaysVisible.push("Clarification Received", "Home", "Profile Settings");
+    }
     // Allow "Clarification Raised" for all except "unit"
     if (userRole !== "unit") {
       alwaysVisible.push("Clarification Raised");
@@ -105,12 +105,12 @@ const SidebarMenu = () => {
   if (
     userRole === "cw2" &&
     (cw2_type === "mo" || cw2_type === "ol")
-) {
+  ) {
     filteredStructure.push(historyItem);
-}
+  }
 
   return (
-    <aside className="sidebar bg-dark text-white p-3" style={{ width: "300px" }}>
+    <aside className="sidebar-menu flex-shrink-0 d-xl-block d-none bg-dark text-white p-3">
       <div className="d-flex flex-column justify-content-center align-items-center gap-2 mb-2">
         <h5 className="text-white" >Menu</h5>
         <div className="w-50" style={{ height: "4px", backgroundColor: "#dc3545", borderRadius: "50px" }}></div>

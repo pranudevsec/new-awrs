@@ -55,7 +55,7 @@ const Withdraw = () => {
   }, [awardType, debouncedSearch, profile, page, limit]);
 
   return (
-    <div className="clarification-section" style={{ padding: "2rem" }}>
+    <div className="clarification-section">
       <div className="d-flex flex-sm-row flex-column align-items-sm-center justify-content-between mb-4">
         <Breadcrumb
           title="Withdraw Requests"
@@ -175,66 +175,66 @@ const Withdraw = () => {
                   </td>
 
                   <td>
-  <div className="d-flex flex-sm-row flex-column gap-sm-3 gap-1">
-    {unit?.withdraw_status === 'approved' ? (
-      <span className="badge bg-success text-white text-nowrap">Approved</span>
-    ) : unit?.withdraw_status === 'rejected' ? (
-      <span className="badge bg-danger text-white text-nowrap">Rejected</span>
-    ) : (
-      <>
-        <button
-          type="button"
-          className="_btn success text-nowrap w-sm-auto"
-          onClick={() => {
-            dispatch(
-              updateApplication({
-                id: unit?.id,
-                type: unit?.type,
-                withdraw_status: 'approved',
-              })
-            ).then(() => {
-              const params = {
-                award_type: awardType || "",
-                search: debouncedSearch,
-                page,
-                limit,
-                isGetWithdrawRequests: true,
-              };
-              dispatch(fetchSubordinates(params));
-            });
-          }}
-        >
-          Accept
-        </button>
+                    <div className="d-flex flex-sm-row flex-column gap-sm-3 gap-1">
+                      {unit?.withdraw_status === 'approved' ? (
+                        <span className="badge bg-success text-white text-nowrap">Approved</span>
+                      ) : unit?.withdraw_status === 'rejected' ? (
+                        <span className="badge bg-danger text-white text-nowrap">Rejected</span>
+                      ) : (
+                        <>
+                          <button
+                            type="button"
+                            className="_btn success text-nowrap w-sm-auto"
+                            onClick={() => {
+                              dispatch(
+                                updateApplication({
+                                  id: unit?.id,
+                                  type: unit?.type,
+                                  withdraw_status: 'approved',
+                                })
+                              ).then(() => {
+                                const params = {
+                                  award_type: awardType || "",
+                                  search: debouncedSearch,
+                                  page,
+                                  limit,
+                                  isGetWithdrawRequests: true,
+                                };
+                                dispatch(fetchSubordinates(params));
+                              });
+                            }}
+                          >
+                            Accept
+                          </button>
 
-        <button
-          type="button"
-          className="_btn danger text-nowrap w-sm-auto"
-          onClick={() => {
-            dispatch(
-              updateApplication({
-                id: unit?.id,
-                type: unit?.type,
-                withdraw_status: 'rejected',
-              })
-            ).then(() => {
-              const params = {
-                award_type: awardType || "",
-                search: debouncedSearch,
-                page,
-                limit,
-                isGetWithdrawRequests: true,
-              };
-              dispatch(fetchSubordinates(params));
-            });
-          }}
-        >
-          Reject
-        </button>
-      </>
-    )}
-  </div>
-</td>
+                          <button
+                            type="button"
+                            className="_btn danger text-nowrap w-sm-auto"
+                            onClick={() => {
+                              dispatch(
+                                updateApplication({
+                                  id: unit?.id,
+                                  type: unit?.type,
+                                  withdraw_status: 'rejected',
+                                })
+                              ).then(() => {
+                                const params = {
+                                  award_type: awardType || "",
+                                  search: debouncedSearch,
+                                  page,
+                                  limit,
+                                  isGetWithdrawRequests: true,
+                                };
+                                dispatch(fetchSubordinates(params));
+                              });
+                            }}
+                          >
+                            Reject
+                          </button>
+                        </>
+                      )}
+                    </div>
+                  </td>
 
                 </tr>
               ))

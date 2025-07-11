@@ -35,7 +35,7 @@ const UnitClarificationDetail = () => {
 
   return (
     <>
-      <div className="apply-citation-section" style={{ padding: "2rem"}}>
+      <div className="apply-citation-section">
         <div className="d-flex flex-sm-row flex-column align-items-sm-center justify-content-between mb-4">
           <Breadcrumb
             title={`Application ID: #${unitDetail?.id}`}
@@ -131,24 +131,24 @@ const UnitClarificationDetail = () => {
                           style={{ fontSize: 18 }}
                         >
                           {/* {SVGICON.app.pdf} */}
-                           <span style={{ fontSize: 14, wordBreak: 'break-word' }}>
-                           {Array.isArray(param?.upload)
-  ? param.upload.map((filePath:any, idx:any) => (
-      <span key={idx} style={{ display: "block" }}>
-        {filePath.split("/").pop()}
-      </span>
-    ))
-  : param?.upload
-    ? param.upload
-        .toString()
-        .split(",")
-        .map((filePath:any, idx:any) => (
-          <span key={idx} style={{ display: "block" }}>
-            {filePath.trim().split("/").pop()}
-          </span>
-        ))
-    : null}
-        </span>
+                          <span style={{ fontSize: 14, wordBreak: 'break-word' }}>
+                            {Array.isArray(param?.upload)
+                              ? param.upload.map((filePath: any, idx: any) => (
+                                <span key={idx} style={{ display: "block" }}>
+                                  {filePath.split("/").pop()}
+                                </span>
+                              ))
+                              : param?.upload
+                                ? param.upload
+                                  .toString()
+                                  .split(",")
+                                  .map((filePath: any, idx: any) => (
+                                    <span key={idx} style={{ display: "block" }}>
+                                      {filePath.trim().split("/").pop()}
+                                    </span>
+                                  ))
+                                : null}
+                          </span>
                         </a> : "--"
                       }
                     </td>

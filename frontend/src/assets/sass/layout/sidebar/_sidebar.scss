@@ -3,13 +3,13 @@
 .sidebar-menu {
   position: fixed;
   bottom: 0;
-  top: 0;
+  top: 96px;
   left: 0;
   z-index: 50;
-  width: 290px;
+  width: 300px;
   background-color: var(--background);
   overflow: hidden;
-  border-right: 2px solid var(--gray-100);
+  // border-right: 2px solid var(--gray-100);
 
   .scroll-style-85 {
     @include scrollbar.custom-scrollbar(calc(100% - 117px), 0);

@@ -46,7 +46,7 @@ const Header = () => {
 
     return (
         <>
-            <header className="position-sticky top-0 " style={{ padding: '12px', backgroundColor: '#c1121f', zIndex: 99 }}>
+            <header className="main-header position-sticky top-0 " style={{ padding: '12px', backgroundColor: '#c1121f', zIndex: 99 }}>
                 <div className="d-flex align-items-center justify-content-xl-end justify-content-between gap-4">
                     <button className="d-xl-none d-inline-flex align-items-center justify-content-center bg-transparent border-0"
                         onClick={() => setMobileMenu(true)}>

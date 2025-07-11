@@ -56,7 +56,7 @@ const ParametersList = () => {
 
     return (
         <>
-            <div className="clarification-section" style={{ padding: "2rem"}}>
+            <div className="clarification-section">
                 <div className="d-flex flex-sm-row flex-column justify-content-between mb-4">
                     <Breadcrumb title="Parameters Listing" />
                     <div className="d-flex align-items-center justify-content-end gap-3 mt-sm-0 mt-3">

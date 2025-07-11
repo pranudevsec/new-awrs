@@ -39,7 +39,7 @@ const History = () => {
   useEffect(() => {
     if (!profile?.user?.user_role) return;
 
-    const fetchData = async() => {
+    const fetchData = async () => {
       const params = {
         award_type: awardType || "",
         search: debouncedSearch,
@@ -49,9 +49,9 @@ const History = () => {
 
       try {
         await dispatch(fetchAllApplications(params)).unwrap();
-      } catch (error: any) {      
+      } catch (error: any) {
         const errorMessage = error?.errors || error?.message || "An error occurred.";
-      
+
         if (error?.errors === "Please complete your unit profile before proceeding.") {
           navigate("/profile-settings");
           toast.error(errorMessage);
@@ -59,14 +59,14 @@ const History = () => {
           toast.error(errorMessage);
         }
       }
-      
+
     };
 
     fetchData();
   }, [awardType, debouncedSearch, profile, page, limit]);
 
   return (
-    <div className="clarification-section"  style={{ padding: "2rem"}}>
+    <div className="clarification-section">
       <div className="d-flex flex-sm-row flex-column align-items-sm-center justify-content-between mb-4">
         <Breadcrumb
           title="All Application"
@@ -146,8 +146,8 @@ const History = () => {
             ) : (
               units.length > 0 &&
               units.map((unit: any, idx) => (
-                <tr 
-      
+                <tr
+
                   style={{ cursor: "pointer" }} key={idx}>
                   <td style={{ width: 150, minWidth: 150, maxWidth: 150 }}>
                     <p className="fw-4">#{unit.id}</p>

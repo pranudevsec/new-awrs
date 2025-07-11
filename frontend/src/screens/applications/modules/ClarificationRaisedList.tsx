@@ -40,7 +40,7 @@ const ClarificationRaisedList = () => {
 
   const filteredUnits = useMemo(() => {
     return Array.isArray(units)
-      ? units.filter((unit:any) => unit.clarifications_count > 0)
+      ? units.filter((unit: any) => unit.clarifications_count > 0)
       : [];
   }, [units]);
 
@@ -48,17 +48,17 @@ const ClarificationRaisedList = () => {
   //   return Array.isArray(units)
   //     ? units.filter((unit: any) => {
   //         if (unit.clarifications_count <= 0) return false;
-  
+
   //         const parameters = unit.fds?.parameters || [];
-  
+
   //         return parameters.some((param: any) => {
   //           const hasClarificationIdField =
   //             param.hasOwnProperty("clarification_id") || param.hasOwnProperty("last_clarification_id");
-  
+
   //           const isPendingStatus =
   //             !param.clarification_details?.clarification_status || // if no status field, allow
   //             param.clarification_details?.clarification_status === "pending";
-  
+
   //           return hasClarificationIdField && isPendingStatus;
   //         });
   //       })
@@ -66,7 +66,7 @@ const ClarificationRaisedList = () => {
   // }, [units]);
 
   return (
-    <div className="clarification-section" style={{ padding: "2rem"}}>
+    <div className="clarification-section">
       <div className="d-flex flex-sm-row flex-column align-items-sm-center justify-content-between mb-4">
         <Breadcrumb
           title="Clarification Raised"
@@ -99,7 +99,7 @@ const ClarificationRaisedList = () => {
         />
       </div>
 
-      <div className="table-responsive" style={{ padding: "2rem"}}>
+      <div className="table-responsive">
         <table className="table-style-2 w-100">
           <thead>
             <tr>

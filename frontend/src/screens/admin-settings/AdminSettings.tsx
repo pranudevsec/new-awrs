@@ -66,7 +66,7 @@ const AdminSettings = () => {
   if (firstLoad) return <Loader />;
 
   return (
-    <div className="profile-settings-section" style={{ padding: "2rem"}}>
+    <div className="profile-settings-section">
       <div className="d-flex flex-sm-row flex-column align-items-sm-center justify-content-between mb-4">
         <Breadcrumb title="Admin Settings" />
       </div>

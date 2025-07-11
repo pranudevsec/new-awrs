@@ -121,29 +121,29 @@ const AppreciationReviewPage = () => {
 
     const getParamDisplay = (param: any) => {
         if (param.name != "no") {
-        return {
-            main: param.name,
-            header: param.subcategory || null,
-            subheader: param.subsubcategory || null,
-        };
+            return {
+                main: param.name,
+                header: param.subcategory || null,
+                subheader: param.subsubcategory || null,
+            };
         } else if (param.subsubcategory) {
-        return {
-            main: param.subsubcategory,
-            header: param.subcategory || null,
-            subheader: null,
-        };
+            return {
+                main: param.subsubcategory,
+                header: param.subcategory || null,
+                subheader: null,
+            };
         } else if (param.subcategory) {
-        return {
-            main: param.subcategory,
-            header: null,
-            subheader: null,
-        };
+            return {
+                main: param.subcategory,
+                header: null,
+                subheader: null,
+            };
         } else {
-        return {
-            main: param.category,
-            header: null,
-            subheader: null,
-        };
+            return {
+                main: param.category,
+                header: null,
+                subheader: null,
+            };
         }
     };
 
@@ -185,7 +185,7 @@ const AppreciationReviewPage = () => {
 
 
     // Formik form
-    const formik = useFormik({ 
+    const formik = useFormik({
         enableReinitialize: true,
         initialValues: {
             cyclePeriod: cyclePerios || "",
@@ -200,51 +200,51 @@ const AppreciationReviewPage = () => {
                     return;
                 }
                 const requiredFields = profile?.user?.is_special_unit
-                ? [
-                    { key: "comd", name: "Command" },
-                    { key: "name", name: "Unit Name" },
-                  ]
-                : [
-                    { key: "bde", name: "Brigade" },
-                    { key: "div", name: "Division" },
-                    { key: "corps", name: "Corps" },
-                    { key: "comd", name: "Command" },
-                    { key: "name", name: "Unit Name" },
-                  ];
-              
-              const missingFields = requiredFields.filter(
-                (field) => !profile?.unit?.[field.key]
-              );
-              
-              if (missingFields.length > 0) {
-                const missingNames = missingFields.map((f) => f.name).join(", ");
-                toast.error(`Please fill the following unit fields: ${missingNames}`);
-                navigate("/profile-settings");
-                return;
-              }
-console.log("parameters", parameters);
-const formattedParameters = parameters
-  .map((param: any) => {
-    const display = getParamDisplay(param);
-    const count = Number(counts[param.param_id] ?? 0);
-    const calculatedMarks = marks[param.param_id] ?? 0;
-    const uploadPaths = uploadedFiles[param.param_id] || [];
-    return {
-      id: param.param_id,
-      name: display.main,
-      count,
-      marks: calculatedMarks,
-      upload: uploadPaths,
-    };
-  })
-  .filter((param) => param.count > 0 && param.upload.length > 0 && param.marks > 0);
+                    ? [
+                        { key: "comd", name: "Command" },
+                        { key: "name", name: "Unit Name" },
+                    ]
+                    : [
+                        { key: "bde", name: "Brigade" },
+                        { key: "div", name: "Division" },
+                        { key: "corps", name: "Corps" },
+                        { key: "comd", name: "Command" },
+                        { key: "name", name: "Unit Name" },
+                    ];
+
+                const missingFields = requiredFields.filter(
+                    (field) => !profile?.unit?.[field.key]
+                );
+
+                if (missingFields.length > 0) {
+                    const missingNames = missingFields.map((f) => f.name).join(", ");
+                    toast.error(`Please fill the following unit fields: ${missingNames}`);
+                    navigate("/profile-settings");
+                    return;
+                }
+                console.log("parameters", parameters);
+                const formattedParameters = parameters
+                    .map((param: any) => {
+                        const display = getParamDisplay(param);
+                        const count = Number(counts[param.param_id] ?? 0);
+                        const calculatedMarks = marks[param.param_id] ?? 0;
+                        const uploadPaths = uploadedFiles[param.param_id] || [];
+                        return {
+                            id: param.param_id,
+                            name: display.main,
+                            count,
+                            marks: calculatedMarks,
+                            upload: uploadPaths,
+                        };
+                    })
+                    .filter((param) => param.count > 0 && param.upload.length > 0 && param.marks > 0);
 
                 const payload = {
                     date_init: new Date().toISOString().split("T")[0],
                     appre_fds: {
                         award_type: "appreciation",
                         cycle_period: values.cyclePeriod,
-                        last_date: values.lastDate, 
+                        last_date: values.lastDate,
                         command: values.command,
                         parameters: formattedParameters,
                         unitRemarks: unitRemarks
@@ -348,7 +348,7 @@ const formattedParameters = parameters
     if (loading) return <Loader />
 
     return (
-        <div className="apply-citation-section" style={{ padding: "2rem"}}>
+        <div className="apply-citation-section">
             <div className="d-flex flex-sm-row flex-column align-items-sm-center justify-content-between mb-4">
                 <Breadcrumb
                     title="Appreciation For Review"
@@ -406,37 +406,37 @@ const formattedParameters = parameters
                         </div>
                     </div>
                     {profile?.unit?.awards?.length > 0 && (
-  <div className="mt-4">
-    <h5 className="mb-3">Awards</h5>
-    <div className="table-responsive">
-      <table className="table-style-2 w-100">
-        <thead>
-          <tr>
-            <th style={{ width: 150, minWidth: 150, maxWidth: 150 }}>Type</th>
-            <th style={{ width: 200, minWidth: 200, maxWidth: 200 }}>Year</th>
-            <th style={{ width: 300, minWidth: 300, maxWidth: 300 }}>Title</th>
-          </tr>
-        </thead>
-        <tbody>
-        {profile?.unit?.awards?.map((award:any) => (
-            <tr key={award.award_id}>
-    
-              <td style={{ width: 150, minWidth: 150, maxWidth: 150 }}>
-                <p className="fw-4 text-capitalize">{award.award_type}</p>
-              </td>
-              <td style={{ width: 200, minWidth: 200, maxWidth: 200 }}>
-                <p className="fw-4">{award.award_year}</p>
-              </td>
-              <td style={{ width: 300, minWidth: 300, maxWidth: 300 }}>
-                <p className="fw-4">{award.award_title}</p>
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
-  </div>
-)}
+                        <div className="mt-4 mb-2">
+                            <h5 className="mb-3">Awards</h5>
+                            <div className="table-responsive">
+                                <table className="table-style-2 w-100">
+                                    <thead>
+                                        <tr>
+                                            <th style={{ width: 150, minWidth: 150, maxWidth: 150 }}>Type</th>
+                                            <th style={{ width: 200, minWidth: 200, maxWidth: 200 }}>Year</th>
+                                            <th style={{ width: 300, minWidth: 300, maxWidth: 300 }}>Title</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {profile?.unit?.awards?.map((award: any) => (
+                                            <tr key={award.award_id}>
+
+                                                <td style={{ width: 150, minWidth: 150, maxWidth: 150 }}>
+                                                    <p className="fw-4 text-capitalize">{award.award_type}</p>
+                                                </td>
+                                                <td style={{ width: 200, minWidth: 200, maxWidth: 200 }}>
+                                                    <p className="fw-4">{award.award_year}</p>
+                                                </td>
+                                                <td style={{ width: 300, minWidth: 300, maxWidth: 300 }}>
+                                                    <p className="fw-4">{award.award_title}</p>
+                                                </td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    )}
 
                     <div
                         ref={scrollContainerRef}
@@ -473,90 +473,90 @@ const formattedParameters = parameters
                                     </thead>
                                     <tbody>
                                         {(() => {
-                      let prevHeader: string | null = null;
-                      let prevSubheader: string | null = null;
-                      const rows: any = [];
-                      params.forEach((param: any, idx: number) => {
-                        const display = getParamDisplay(param);
-                        const countValue = counts[param.param_id];
-                        const markValue = marks[param.param_id];
+                                            let prevHeader: string | null = null;
+                                            let prevSubheader: string | null = null;
+                                            const rows: any = [];
+                                            params.forEach((param: any, idx: number) => {
+                                                const display = getParamDisplay(param);
+                                                const countValue = counts[param.param_id];
+                                                const markValue = marks[param.param_id];
 
-                        if (countValue === undefined || countValue === "") return;
+                                                if (countValue === undefined || countValue === "") return;
 
-                        const showHeader = display.header && display.header !== prevHeader;
-                        const showSubheader = display.subheader && display.subheader !== prevSubheader;
+                                                const showHeader = display.header && display.header !== prevHeader;
+                                                const showSubheader = display.subheader && display.subheader !== prevSubheader;
 
-                        if (showHeader) {
-                          rows.push(
-                            <tr key={`header-${display.header}-${idx}`}>
-                              <td colSpan={4} style={{ fontWeight: 600, color: "#555", fontSize: 15, background: "#f5f5f5" }}>
-                                {display.header}
-                              </td>
-                            </tr>
-                          );
-                        }
-                        if (showSubheader) {
-                          rows.push(
-                            <tr key={`subheader-${display.subheader}-${idx}`}>
-                              <td colSpan={4} style={{ color: display.header ? "#1976d2" : "#888", fontSize: 13, background: "#f8fafc" }}>
-                                {display.subheader}
-                              </td>
-                            </tr>
-                          );
-                        }
+                                                if (showHeader) {
+                                                    rows.push(
+                                                        <tr key={`header-${display.header}-${idx}`}>
+                                                            <td colSpan={4} style={{ fontWeight: 600, color: "#555", fontSize: 15, background: "#f5f5f5" }}>
+                                                                {display.header}
+                                                            </td>
+                                                        </tr>
+                                                    );
+                                                }
+                                                if (showSubheader) {
+                                                    rows.push(
+                                                        <tr key={`subheader-${display.subheader}-${idx}`}>
+                                                            <td colSpan={4} style={{ color: display.header ? "#1976d2" : "#888", fontSize: 13, background: "#f8fafc" }}>
+                                                                {display.subheader}
+                                                            </td>
+                                                        </tr>
+                                                    );
+                                                }
 
-                        prevHeader = display.header;
-                        prevSubheader = display.subheader;
+                                                prevHeader = display.header;
+                                                prevSubheader = display.subheader;
 
-                        rows.push(
-                          <tr key={param.param_id}>
-                            <td style={{ width: 300, minWidth: 300, maxWidth: 300 }}>
-                              <p className="fw-5">{display.main}</p>
-                            </td>
-                            <td style={{ width: 200, minWidth: 200, maxWidth: 200 }}>
-                              <p className="fw-5">{countValue !== undefined && countValue !== ""
-                                ? <span>{countValue}</span>
-                                : <span>--</span>}</p>
-                            </td>
-                            <td style={{ width: 200, minWidth: 200, maxWidth: 200 }}>
-                              <span><p className="fw-5">{markValue !== undefined ? markValue : "--"}</p></span>
-                            </td>
-                            <td style={{ width: 200, minWidth: 200, maxWidth: 200 }}>
-                            {param.proof_reqd ? (
-                                                            <>
-                                                                {uploadedFiles[param.param_id]?.length > 0 && (
-                                                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                                                                        {uploadedFiles[param.param_id].map((fileUrl, idx) => (
-                                                                            <a
-                                                                                key={idx}
-                                                                                href={`${baseURL}${fileUrl}`}
-                                                                                target="_blank"
-                                                                                rel="noopener noreferrer"
-                                                                                style={{ fontSize: 14, wordBreak: 'break-all' }}
-                                                                            >
-                                                                                {fileUrl.split("/").pop()}
-                                                                            </a>
-                                                                        ))}
-                                                                    </div>
-                                                                )}
-                                                                <input
-                                                                    type="file"
-                                                                    className="form-control mt-1"
-                                                                    multiple
-                                                                    onChange={(e) => {
-                                                                        handleFileChange(e, param.param_id, param.name);
-                                                                    }}
-                                                                />
-                                                            </>
-                                                        ) : (
-                                                            <span>Not required</span>
-                                                        )}
-                                                    </td>
-                          </tr>
-                        );
-                      });
-                      return rows;
-                    })()}
+                                                rows.push(
+                                                    <tr key={param.param_id}>
+                                                        <td style={{ width: 300, minWidth: 300, maxWidth: 300 }}>
+                                                            <p className="fw-5">{display.main}</p>
+                                                        </td>
+                                                        <td style={{ width: 200, minWidth: 200, maxWidth: 200 }}>
+                                                            <p className="fw-5">{countValue !== undefined && countValue !== ""
+                                                                ? <span>{countValue}</span>
+                                                                : <span>--</span>}</p>
+                                                        </td>
+                                                        <td style={{ width: 200, minWidth: 200, maxWidth: 200 }}>
+                                                            <span><p className="fw-5">{markValue !== undefined ? markValue : "--"}</p></span>
+                                                        </td>
+                                                        <td style={{ width: 200, minWidth: 200, maxWidth: 200 }}>
+                                                            {param.proof_reqd ? (
+                                                                <>
+                                                                    {uploadedFiles[param.param_id]?.length > 0 && (
+                                                                        <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                                                                            {uploadedFiles[param.param_id].map((fileUrl, idx) => (
+                                                                                <a
+                                                                                    key={idx}
+                                                                                    href={`${baseURL}${fileUrl}`}
+                                                                                    target="_blank"
+                                                                                    rel="noopener noreferrer"
+                                                                                    style={{ fontSize: 14, wordBreak: 'break-all' }}
+                                                                                >
+                                                                                    {fileUrl.split("/").pop()}
+                                                                                </a>
+                                                                            ))}
+                                                                        </div>
+                                                                    )}
+                                                                    <input
+                                                                        type="file"
+                                                                        className="form-control mt-1"
+                                                                        multiple
+                                                                        onChange={(e) => {
+                                                                            handleFileChange(e, param.param_id, param.name);
+                                                                        }}
+                                                                    />
+                                                                </>
+                                                            ) : (
+                                                                <span>Not required</span>
+                                                            )}
+                                                        </td>
+                                                    </tr>
+                                                );
+                                            });
+                                            return rows;
+                                        })()}
                                     </tbody>
                                 </table>
                             </div>

@@ -54,25 +54,25 @@ const Login = () => {
         validationSchema: LoginSchema,
         onSubmit: async (values, { resetForm }) => {
             const payload: any = { ...values };
-        
+
             // handle cw2 role
             if (payload.user_role.startsWith("cw2_")) {
                 payload.cw2_type = payload.user_role.split("cw2_")[1];
                 payload.user_role = "cw2";
             }
-        
+
             // handle member roles
             if (payload.user_role.endsWith("_member")) {
                 payload.user_role = payload.user_role.replace("_member", "");
                 payload.is_member = true;
             }
-        
+
             const resultAction = await dispatch(reqToLogin(payload));
             const result = unwrapResult(resultAction);
-        
+
             if (result.success) {
                 resetForm();
-        
+
                 setTimeout(() => {
                     if (payload.user_role === "admin") {
                         navigate("/admin-settings");
@@ -84,7 +84,7 @@ const Login = () => {
                 }, 400);
             }
         }
-        
+
     });
 
     const handleRoleChange = (selectedOption: any) => {

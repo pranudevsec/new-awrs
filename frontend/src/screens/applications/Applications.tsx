@@ -21,7 +21,7 @@ const Applications = () => {
   }, [dispatch]);
 
   return (
-    <div className="application-section" style={{ padding: "2rem"}}>
+    <div className="application-section">
       <div className="d-flex flex-sm-row flex-column align-items-sm-center justify-content-between mb-4">
         <Breadcrumb title="Home" />
       </div>
@@ -67,8 +67,8 @@ const Applications = () => {
                   />
                 </div>
                 <h5 className="fw-6 mt-4">
-  {userRole === "headquarter" ? "Submitted by Commands" : "Applications To Review"}
-</h5>
+                  {userRole === "headquarter" ? "Submitted by Commands" : "Applications To Review"}
+                </h5>
 
               </div>
             </Link>

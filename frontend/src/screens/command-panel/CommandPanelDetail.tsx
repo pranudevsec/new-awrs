@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import {  useParams, useSearchParams } from "react-router-dom";
+import { useParams, useSearchParams } from "react-router-dom";
 import { useAppDispatch, useAppSelector } from "../../reduxToolkit/hooks";
 import { fetchApplicationUnitDetail } from "../../reduxToolkit/services/application/applicationService";
 import Breadcrumb from "../../components/ui/breadcrumb/Breadcrumb";
@@ -78,11 +78,11 @@ const CommandPanelDetail = () => {
     }
   };
 
-   // Show loader
-   if (loading) return <Loader />;
+  // Show loader
+  if (loading) return <Loader />;
   return (
     <>
-      <div className="apply-citation-section" style={{ padding: "2rem"}}>
+      <div className="apply-citation-section">
         <div className="d-flex flex-sm-row flex-column align-items-sm-center justify-content-between mb-4">
           <Breadcrumb
             title={`Application ID: #${unitDetail?.id}`}
@@ -133,7 +133,7 @@ const CommandPanelDetail = () => {
                 <th style={{ width: 100 }}>Count</th>
                 <th style={{ width: 100 }}>Marks</th>
                 <th style={{ width: 200 }}>Document</th>
-          
+
                 {/* {!isUnitRole && (
                   <>
                         <th style={{ width: 200 }}>Approved Marks</th>
@@ -194,22 +194,22 @@ const CommandPanelDetail = () => {
                         {param.upload ? (
                           <a href={param.upload} target="_blank" rel="noopener noreferrer" style={{ fontSize: 18 }}>
                             <span style={{ fontSize: 14, wordBreak: 'break-word' }}>
-                            {Array.isArray(param?.upload)
-  ? param.upload.map((filePath:any, idx:any) => (
-      <span key={idx} style={{ display: "block" }}>
-        {filePath.split("/").pop()}
-      </span>
-    ))
-  : param?.upload
-    ? param.upload
-        .toString()
-        .split(",")
-        .map((filePath:any, idx:any) => (
-          <span key={idx} style={{ display: "block" }}>
-            {filePath.trim().split("/").pop()}
-          </span>
-        ))
-    : null}
+                              {Array.isArray(param?.upload)
+                                ? param.upload.map((filePath: any, idx: any) => (
+                                  <span key={idx} style={{ display: "block" }}>
+                                    {filePath.split("/").pop()}
+                                  </span>
+                                ))
+                                : param?.upload
+                                  ? param.upload
+                                    .toString()
+                                    .split(",")
+                                    .map((filePath: any, idx: any) => (
+                                      <span key={idx} style={{ display: "block" }}>
+                                        {filePath.trim().split("/").pop()}
+                                      </span>
+                                    ))
+                                  : null}
                             </span>
                           </a>
                         ) : (
@@ -254,7 +254,7 @@ const CommandPanelDetail = () => {
                 </div>
               </div>
             </div>
-     
+
           </div>
         )}
 

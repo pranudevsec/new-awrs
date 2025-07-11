@@ -544,7 +544,7 @@ const ApplicationDetails = () => {
 
   return (
     <>
-      <div className="apply-citation-section" style={{ padding: "2rem" }}>
+      <div className="apply-citation-section">
         <div className="d-flex flex-sm-row flex-column align-items-sm-center justify-content-between mb-4">
           <Breadcrumb
             title={`Application ID: #${unitDetail?.id}`}
