@@ -278,7 +278,7 @@ const formattedParameters = parameters
             try {
                 const [configRes, paramsRes] = await Promise.all([
                     dispatch(getConfig()).unwrap(),
-                    dispatch(fetchParameters({ awardType: "appreciation", search: "", limit: 1000 })).unwrap(),
+                    dispatch(fetchParameters({ awardType: "appreciation", search: "", limit: 5000 })).unwrap(),
                 ]);
 
                 if (configRes?.success && configRes.data) {
