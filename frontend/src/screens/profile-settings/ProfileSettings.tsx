@@ -2,6 +2,7 @@ import { useEffect, useState, type FormEvent } from "react";
 import { useFormik } from "formik";
 import { unwrapResult } from "@reduxjs/toolkit";
 import toast from "react-hot-toast";
+import * as Yup from "yup";
 import FormSelect from "../../components/form/FormSelect";
 import Breadcrumb from "../../components/ui/breadcrumb/Breadcrumb";
 import Loader from "../../components/ui/loader/Loader";
@@ -48,6 +49,8 @@ hierarchicalStructure.forEach(([command, corps, division, brigade, unit]) => {
 const ProfileSettings = () => {
   const dispatch = useAppDispatch();
   const { profile } = useAppSelector((state) => state.admin);
+  console.log("profile - > ", profile);
+
   const isMember = profile?.user?.is_member ?? false;
   // States
   const [firstLoad, setFirstLoad] = useState(true);
@@ -308,7 +311,29 @@ const ProfileSettings = () => {
     },
   });
 
-  // const 
+  const memberFormik: any = useFormik({
+    initialValues: {
+      memberUsername: "",
+      memberPassword: ""
+    },
+    enableReinitialize: true,
+    validationSchema: Yup.object({
+      memberUsername: Yup.string()
+        .min(3, "Username must be at least 3 characters")
+        .required("Username is required"),
+      memberPassword: Yup.string()
+        .min(6, "Password must be at least 6 characters")
+        .required("Password is required"),
+    }),
+    onSubmit: async (values: any, { resetForm }) => {
+      const resultAction = await dispatch(reqToUpdateUnitProfile(values));
+      const result = unwrapResult(resultAction);
+      if (result.success) {
+        resetForm();
+        await dispatch(getProfile());
+      }
+    }
+  })
 
   const currentYear = new Date().getFullYear();
   const yearOptions = Array.from(
@@ -664,38 +689,6 @@ const ProfileSettings = () => {
         </div>
       </form>
 
-      {/* Member Register */}
-      <div className="d-flex flex-sm-row flex-column align-items-sm-center justify-content-between mb-4">
-        <Breadcrumb title="Member Register" />
-      </div>
-      <form className="mb-5">
-        <div className="row">
-          <div className="col-sm-6 mb-3">
-            <FormInput
-              label="Username"
-              name="memberUsername"
-              placeholder="Enter Username"
-              value=""
-            />
-          </div>
-          <div className="col-sm-6 mb-3">
-            <FormInput
-              label="Password"
-              name="memberPassword"
-              placeholder="Enter Password"
-              value=""
-            />
-          </div>
-          <div className="col-12 mt-2">
-            <div className="d-flex align-items-center">
-              <button type="submit" className="_btn _btn-lg primary">
-                Register
-              </button>
-            </div>
-          </div>
-        </div>
-      </form>
-
       {!["unit", "headquarter"].includes(role) && (
         <>
           {/* Commander */}
@@ -997,6 +990,51 @@ const ProfileSettings = () => {
             </>
           )}
         </>
+      )}
+
+      {["brigade", "division", "corps", "command"].includes(role) && (
+        !profile?.user?.is_member_added && !profile?.user?.is_member && (
+          <>
+            <div className="d-flex flex-sm-row flex-column align-items-sm-center justify-content-between mb-4">
+              <Breadcrumb title="Staff Register" />
+            </div>
+            <form className="mb-5" onSubmit={memberFormik.handleSubmit}>
+              <div className="row">
+                <div className="col-sm-6 mb-3">
+                  <FormInput
+                    label="Username"
+                    name="memberUsername"
+                    placeholder="Enter Username"
+                    value={memberFormik.values.memberUsername}
+                    onChange={memberFormik.handleChange}
+                    onBlur={memberFormik.handleBlur}
+                    errors={memberFormik.errors.memberUsername}
+                    touched={memberFormik.touched.memberUsername}
+                  />
+                </div>
+                <div className="col-sm-6 mb-3">
+                  <FormInput
+                    label="Password"
+                    name="memberPassword"
+                    placeholder="Enter Password"
+                    value={memberFormik.values.memberPassword}
+                    onChange={memberFormik.handleChange}
+                    onBlur={memberFormik.handleBlur}
+                    errors={memberFormik.errors.memberPassword}
+                    touched={memberFormik.touched.memberPassword}
+                  />
+                </div>
+                <div className="col-12 mt-2">
+                  <div className="d-flex align-items-center">
+                    <button type="submit" className="_btn _btn-lg primary">
+                      Register
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </form>
+          </>
+        )
       )}
     </div>
   );

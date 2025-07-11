@@ -50,7 +50,8 @@ export interface ProfileUser {
   is_special_unit: boolean;
   is_member?: boolean;
   is_officer?: boolean;
-  officer_id?: string | number |  null;
+  officer_id?: string | number | null;
+  is_member_added?: boolean;
 }
 
 export interface ProfileUnit {
@@ -79,18 +80,20 @@ export interface ProfileResponse {
   };
 }
 export interface UpdateUnitProfileRequest {
-  name: string;
-  adm_channel: string | null;
-  tech_channel: string | null;
-  bde: string | null;
-  div: string | null;
-  corps: string | null;
-  comd: string | null;
+  name?: string;
+  adm_channel?: string | null;
+  tech_channel?: string | null;
+  bde?: string | null;
+  div?: string | null;
+  corps?: string | null;
+  comd?: string | null;
   unit_type?: string | null;
   matrix_unit?: string[] | any;
   location?: string | null;
   members?: any;
   awards?: any;
+  memberUsername?: any;
+  memberPassword?: any;
 }
 
 export interface UpdateUnitProfileResponse {
