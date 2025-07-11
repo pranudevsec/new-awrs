@@ -729,10 +729,10 @@ const ApplyCitation = () => {
 
                         rows.push(
                           <tr key={param.param_id}>
-                            <td style={{ width: 250, minWidth: 250, maxWidth: 250 }}>
+                            <td style={{ width: 250, minWidth: 250, maxWidth: 250, verticalAlign: "top" }}>
                               <p className="fw-5 mb-0">{display.main}</p>
                             </td>
-                            <td style={{ width: 300, minWidth: 300, maxWidth: 300 }}>
+                            <td style={{ width: 300, minWidth: 300, maxWidth: 300, verticalAlign: "top" }}>
                               <input
                                 type="text"
                                 className="form-control"
@@ -744,7 +744,7 @@ const ApplyCitation = () => {
                                 pattern="[0-9]*"
                               />
                             </td>
-                            <td style={{ width: 300, minWidth: 300, maxWidth: 300 }}>
+                            <td style={{ width: 300, minWidth: 300, maxWidth: 300, verticalAlign: "top" }}>
                               <div className="input-with-tooltip">
                                 <input
                                   type="number"
@@ -761,7 +761,7 @@ const ApplyCitation = () => {
                                 </div>
                               </div>
                             </td>
-                            <td style={{ width: 300, minWidth: 300, maxWidth: 300 }}>
+                            <td style={{ width: 300, minWidth: 300, maxWidth: 300, verticalAlign: "top" }}>
                               {param.proof_reqd ? (
                                 <>
                                   {uploadedFiles[param.param_id]?.length > 0 && (
@@ -809,7 +809,7 @@ const ApplyCitation = () => {
                                   )}
                                   <input
                                     type="file"
-                                    className="form-control mt-1"
+                                    className="form-control"
                                     placeholder="not more than 5 MB"
                                     multiple
                                     onChange={(e) => {

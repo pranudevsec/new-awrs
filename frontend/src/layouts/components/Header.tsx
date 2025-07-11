@@ -48,13 +48,13 @@ const Header = () => {
         <>
             <header className="main-header position-sticky top-0">
                 <div className="d-flex align-items-center justify-content-xl-end justify-content-between gap-4">
-                    <button className="d-xl-none d-inline-flex align-items-center justify-content-center bg-transparent border-0"
+                    <button className="d-xl-none d-inline-flex align-items-center justify-content-center bg-transparent border-0 text-white"
                         onClick={() => setMobileMenu(true)}>
                         {SVGICON.header.togglemenu}
                     </button>
                     <div className="d-flex align-items-center gap-sm-4 gap-3">
                         <div className="position-relative" ref={notifRef}>
-                            <button className="nav-icon-btn d-inline-flex align-items-center justify-content-center bg-transparent border-0" onClick={() => setNotifOpen((prev) => !prev)}>
+                            <button className="nav-icon-btn d-inline-flex align-items-center justify-content-center bg-transparent border-0 text-white" onClick={() => setNotifOpen((prev) => !prev)}>
                                 {SVGICON.header.notification}
                             </button>
                             <div className={`notification-dropdown-menu ${notifOpen ? "show" : ""}`}>
@@ -196,7 +196,7 @@ const Header = () => {
                                     <h6 className="font-lexend fw-6">{profile?.user?.name || 'User'}</h6>
                                     <p className="fw-4">{profile?.user?.username || ''}</p>
                                 </div>
-                                <div>
+                                <div className="text-white">
                                     {SVGICON.header.downArrow}
                                 </div>
                             </button>
