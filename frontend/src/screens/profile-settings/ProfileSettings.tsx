@@ -290,8 +290,8 @@ const ProfileSettings = () => {
           ? values.matrix_unit.join(",")
           : typeof values.matrix_unit === "string" &&
             values.matrix_unit.length > 0
-          ? values.matrix_unit
-          : "";
+            ? values.matrix_unit
+            : "";
         payload["location"] = values.location;
         payload["awards"] = awards;
 
@@ -307,6 +307,9 @@ const ProfileSettings = () => {
       }
     },
   });
+
+  // const 
+
   const currentYear = new Date().getFullYear();
   const yearOptions = Array.from(
     { length: 50 },
@@ -322,6 +325,7 @@ const ProfileSettings = () => {
 
   // Show loader
   if (firstLoad) return <Loader />;
+
   const buildUnitPayload = (
     members?: UpdateUnitProfileRequest["members"]
   ): UpdateUnitProfileRequest => ({
@@ -340,7 +344,9 @@ const ProfileSettings = () => {
     location: profile?.unit?.location ?? null,
     members,
   });
+
   const isDisabled = !!isMember;
+
   return (
     <div className="profile-settings-section">
       <div className="d-flex flex-sm-row flex-column align-items-sm-center justify-content-between mb-4">
@@ -354,12 +360,12 @@ const ProfileSettings = () => {
             const optionsForField =
               field === "unit"
                 ? {
-                    unit: unitOptions,
-                    brigade: brigadeOptions,
-                    division: divisionOptions,
-                    corps: corpsOptions,
-                    command: commandOptions,
-                  }[profile?.user?.user_role ?? "unit"] || []
+                  unit: unitOptions,
+                  brigade: brigadeOptions,
+                  division: divisionOptions,
+                  corps: corpsOptions,
+                  command: commandOptions,
+                }[profile?.user?.user_role ?? "unit"] || []
                 : optionsMap[field] || [];
 
             const getDynamicLabel = (
@@ -403,11 +409,10 @@ const ProfileSettings = () => {
                     id={field}
                     name={field}
                     type="text"
-                    className={`form-control ${
-                      formik.touched[field] && formik.errors[field]
-                        ? "is-invalid"
-                        : ""
-                    }`}
+                    className={`form-control ${formik.touched[field] && formik.errors[field]
+                      ? "is-invalid"
+                      : ""
+                      }`}
                     value={formik.values[field]}
                     onChange={formik.handleChange}
                     onBlur={formik.handleBlur}
@@ -436,11 +441,11 @@ const ProfileSettings = () => {
                   value={
                     field === "matrix_unit"
                       ? optionsForField.filter((opt: any) =>
-                          formik.values[field]?.includes(opt.value)
-                        )
+                        formik.values[field]?.includes(opt.value)
+                      )
                       : optionsForField.find(
-                          (opt: any) => opt.value === formik.values[field]
-                        ) || null
+                        (opt: any) => opt.value === formik.values[field]
+                      ) || null
                   }
                   onChange={(selectedOption: any) => {
                     const selectedValue =
@@ -656,6 +661,38 @@ const ProfileSettings = () => {
               </div>
             </div>
           )}
+        </div>
+      </form>
+
+      {/* Member Register */}
+      <div className="d-flex flex-sm-row flex-column align-items-sm-center justify-content-between mb-4">
+        <Breadcrumb title="Member Register" />
+      </div>
+      <form className="mb-5">
+        <div className="row">
+          <div className="col-sm-6 mb-3">
+            <FormInput
+              label="Username"
+              name="memberUsername"
+              placeholder="Enter Username"
+              value=""
+            />
+          </div>
+          <div className="col-sm-6 mb-3">
+            <FormInput
+              label="Password"
+              name="memberPassword"
+              placeholder="Enter Password"
+              value=""
+            />
+          </div>
+          <div className="col-12 mt-2">
+            <div className="d-flex align-items-center">
+              <button type="submit" className="_btn _btn-lg primary">
+                Register
+              </button>
+            </div>
+          </div>
         </div>
       </form>
 

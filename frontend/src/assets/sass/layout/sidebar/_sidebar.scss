@@ -12,7 +12,7 @@
   // border-right: 2px solid var(--gray-100);
 
   .scroll-style-85 {
-    @include scrollbar.custom-scrollbar(calc(100% - 117px), 0);
+    @include scrollbar.custom-scrollbar(calc(100% - 32px), 0);
   }
 }
 
