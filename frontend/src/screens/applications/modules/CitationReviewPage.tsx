@@ -47,18 +47,23 @@ const CitationReviewPage = () => {
   const [lastDate, setLastDate] = useState("");
   const [cyclePerios, setCyclePerios] = useState("");
   const [command, setCommand] = useState("");
-  const [uploadedFiles, setUploadedFiles] = useState<Record<number, string[]>>(() => {
-    try {
-      return JSON.parse(localStorage.getItem(DRAFT_FILE_UPLOAD_KEY) || "{}");
-    } catch {
-      return {};
+  const [uploadedFiles, setUploadedFiles] = useState<Record<number, string[]>>(
+    () => {
+      try {
+        return JSON.parse(localStorage.getItem(DRAFT_FILE_UPLOAD_KEY) || "{}");
+      } catch {
+        return {};
+      }
     }
-  });
+  );
   const [unitRemarks, setUnitRemarks] = useState(() => {
     return localStorage.getItem("applyCitationUnitRemarks") || "";
   });
 
-  const filteredParameters = parameters.filter((param: any) => counts[param.param_id] !== undefined && counts[param.param_id] !== "");
+  const filteredParameters = parameters.filter(
+    (param: any) =>
+      counts[param.param_id] !== undefined && counts[param.param_id] !== ""
+  );
   const groupedParams = groupParametersByCategory(filteredParameters);
   useEffect(() => {
     localStorage.setItem("applyCitationUnitRemarks", unitRemarks);
@@ -99,11 +104,15 @@ const CitationReviewPage = () => {
     formData.append(fieldName, file);
 
     try {
-      const response = await Axios.post("/api/applications/upload-doc", formData, {
-        headers: {
-          "Content-Type": "multipart/form-data",
-        },
-      });
+      const response = await Axios.post(
+        "/api/applications/upload-doc",
+        formData,
+        {
+          headers: {
+            "Content-Type": "multipart/form-data",
+          },
+        }
+      );
 
       const uploadedData = response.data;
       if (Array.isArray(uploadedData) && uploadedData.length > 0) {
@@ -167,7 +176,7 @@ const CitationReviewPage = () => {
     if (uploadedUrls.length > 0) {
       const newUploads = {
         ...uploadedFiles,
-        [paramId]: [...(uploadedFiles[paramId] || []), ...uploadedUrls]
+        [paramId]: [...(uploadedFiles[paramId] || []), ...uploadedUrls],
       };
       setUploadedFiles(newUploads);
       localStorage.setItem(DRAFT_FILE_UPLOAD_KEY, JSON.stringify(newUploads));
@@ -187,23 +196,22 @@ const CitationReviewPage = () => {
     },
     onSubmit: async (values) => {
       try {
-
         if (unitRemarks.length > 500) {
           toast.error("Maximum 500 characters allowed in Unit Remarks");
           return;
         }
         const requiredFields = profile?.user?.is_special_unit
           ? [
-            { key: "comd", name: "Command" },
-            { key: "name", name: "Unit Name" },
-          ]
+              { key: "comd", name: "Command" },
+              { key: "name", name: "Unit Name" },
+            ]
           : [
-            { key: "bde", name: "Brigade" },
-            { key: "div", name: "Division" },
-            { key: "corps", name: "Corps" },
-            { key: "comd", name: "Command" },
-            { key: "name", name: "Unit Name" },
-          ];
+              { key: "bde", name: "Brigade" },
+              { key: "div", name: "Division" },
+              { key: "corps", name: "Corps" },
+              { key: "comd", name: "Command" },
+              { key: "name", name: "Unit Name" },
+            ];
 
         const missingFields = requiredFields.filter(
           (field) => !profile?.unit?.[field.key]
@@ -222,17 +230,16 @@ const CitationReviewPage = () => {
             const count = Number(counts[param.param_id] ?? 0);
             const calculatedMarks = marks[param.param_id] ?? 0;
             const uploadPaths = uploadedFiles[param.param_id] || [];
-            // console.log(display.main)
             return {
               id: param.param_id,
               name: display.main,
               count,
               marks: calculatedMarks,
               upload: uploadPaths,
+              negative: param.negative,
             };
           })
           .filter((param) => param.count > 0 || param.marks != 0);
-
 
         const payload = {
           date_init: new Date().toISOString().split("T")[0],
@@ -243,7 +250,7 @@ const CitationReviewPage = () => {
             command: values.command,
             parameters: formattedParameters,
             unitRemarks: unitRemarks,
-            awards: profile?.unit?.awards
+            awards: profile?.unit?.awards,
           },
         };
 
@@ -274,7 +281,9 @@ const CitationReviewPage = () => {
       try {
         const [configRes, paramsRes] = await Promise.all([
           dispatch(getConfig()).unwrap(),
-          dispatch(fetchParameters({ awardType: "citation", search: "", limit: 5000 })).unwrap(),
+          dispatch(
+            fetchParameters({ awardType: "citation", search: "", limit: 5000 })
+          ).unwrap(),
         ]);
 
         if (configRes?.success && configRes.data) {
@@ -282,7 +291,7 @@ const CitationReviewPage = () => {
           const formattedDate = configRes.data.deadline?.split("T")[0] || "";
           setLastDate(formattedDate);
           if (profile) {
-            setCommand(profile?.unit?.comd)
+            setCommand(profile?.unit?.comd);
           }
         }
 
@@ -303,18 +312,39 @@ const CitationReviewPage = () => {
   }, [counts, marks]);
 
   // Total Fields Filled
-  const filledFields = Object.values(counts).filter((value) => value !== "").length;
+  const filledFields = Object.values(counts).filter(
+    (value) => value !== ""
+  ).length;
 
-  // Total Marks
-  const totalMarks = Object.values(marks).reduce((sum, val) => sum + val, 0);
+  let totalMarks = 0;
+  let negativeMarks = 0;
 
-  const negativeMarks = 0;
+  for (const param of parameters) {
+    const paramId: any = param.param_id;
+    const markValue = marks[paramId];
+
+    if (markValue !== undefined) {
+      if (param.negative === true) {
+        negativeMarks += markValue;
+      } else {
+        totalMarks += markValue;
+      }
+    }
+  }
+
+  // Subtract negativeMarks from totalMarks
+  totalMarks = totalMarks - negativeMarks;
+
+  // Ensure totalMarks does not go negative
+  if (totalMarks < 0) {
+    totalMarks = 0;
+  }
 
   // Total Parameters
   const totalParams = parameters.length;
 
   // Show loader
-  if (loading) return <Loader />
+  if (loading) return <Loader />;
 
   return (
     <div className="apply-citation-section">
@@ -324,13 +354,16 @@ const CitationReviewPage = () => {
           paths={[
             { label: "Home", href: "/applications" },
             { label: "Apply For Citation", href: "/applications/citation" },
-            { label: "Citation For Review", href: "/applications/citation-review" },
+            {
+              label: "Citation For Review",
+              href: "/applications/citation-review",
+            },
           ]}
         />
       </div>
-      {Object.keys(groupedParams).length === 0 ?
+      {Object.keys(groupedParams).length === 0 ? (
         <EmptyTable />
-        :
+      ) : (
         <form onSubmit={formik.handleSubmit}>
           <div className="table-filter-area mb-4">
             <div className="row">
@@ -339,7 +372,10 @@ const CitationReviewPage = () => {
                   label="Award Type"
                   name="awardType"
                   options={awardTypeOptions}
-                  value={awardTypeOptions.find((opt) => opt.value === "citation") || null}
+                  value={
+                    awardTypeOptions.find((opt) => opt.value === "citation") ||
+                    null
+                  }
                   placeholder="Select"
                   isDisabled
                 />
@@ -381,22 +417,35 @@ const CitationReviewPage = () => {
                 <table className="table-style-2 w-100">
                   <thead>
                     <tr>
-                      <th style={{ width: 150, minWidth: 150, maxWidth: 150 }}>Type</th>
-                      <th style={{ width: 200, minWidth: 200, maxWidth: 200 }}>Year</th>
-                      <th style={{ width: 300, minWidth: 300, maxWidth: 300 }}>Title</th>
+                      <th style={{ width: 150, minWidth: 150, maxWidth: 150 }}>
+                        Type
+                      </th>
+                      <th style={{ width: 200, minWidth: 200, maxWidth: 200 }}>
+                        Year
+                      </th>
+                      <th style={{ width: 300, minWidth: 300, maxWidth: 300 }}>
+                        Title
+                      </th>
                     </tr>
                   </thead>
                   <tbody>
                     {profile?.unit?.awards?.map((award: any) => (
                       <tr key={award.award_id}>
-
-                        <td style={{ width: 150, minWidth: 150, maxWidth: 150 }}>
-                          <p className="fw-4 text-capitalize">{award.award_type}</p>
+                        <td
+                          style={{ width: 150, minWidth: 150, maxWidth: 150 }}
+                        >
+                          <p className="fw-4 text-capitalize">
+                            {award.award_type}
+                          </p>
                         </td>
-                        <td style={{ width: 200, minWidth: 200, maxWidth: 200 }}>
+                        <td
+                          style={{ width: 200, minWidth: 200, maxWidth: 200 }}
+                        >
                           <p className="fw-4">{award.award_year}</p>
                         </td>
-                        <td style={{ width: 300, minWidth: 300, maxWidth: 300 }}>
+                        <td
+                          style={{ width: 300, minWidth: 300, maxWidth: 300 }}
+                        >
                           <p className="fw-4">{award.award_title}</p>
                         </td>
                       </tr>
@@ -409,10 +458,10 @@ const CitationReviewPage = () => {
           <div
             ref={scrollContainerRef}
             style={{
-              height: '70vh',
-              overflowY: 'auto',
-              scrollbarWidth: 'none',
-              msOverflowStyle: 'none',
+              height: "70vh",
+              overflowY: "auto",
+              scrollbarWidth: "none",
+              msOverflowStyle: "none",
             }}
           >
             {Object.entries(groupedParams).map(([category, params]) => (
@@ -433,10 +482,18 @@ const CitationReviewPage = () => {
                 <table className="table-style-1 w-100">
                   <thead>
                     <tr>
-                      <th style={{ width: 300, minWidth: 300, maxWidth: 300 }}>Parameter</th>
-                      <th style={{ width: 200, minWidth: 200, maxWidth: 200 }}>Count</th>
-                      <th style={{ width: 200, minWidth: 200, maxWidth: 200 }}>Marks</th>
-                      <th style={{ width: 200, minWidth: 200, maxWidth: 200 }}>Upload</th>
+                      <th style={{ width: 300, minWidth: 300, maxWidth: 300 }}>
+                        Parameter
+                      </th>
+                      <th style={{ width: 200, minWidth: 200, maxWidth: 200 }}>
+                        Count
+                      </th>
+                      <th style={{ width: 200, minWidth: 200, maxWidth: 200 }}>
+                        Marks
+                      </th>
+                      <th style={{ width: 200, minWidth: 200, maxWidth: 200 }}>
+                        Upload
+                      </th>
                     </tr>
                   </thead>
                   <tbody>
@@ -449,15 +506,27 @@ const CitationReviewPage = () => {
                         const countValue = counts[param.param_id];
                         const markValue = marks[param.param_id];
 
-                        if (countValue === undefined || countValue === "") return;
+                        if (countValue === undefined || countValue === "")
+                          return;
 
-                        const showHeader = display.header && display.header !== prevHeader;
-                        const showSubheader = display.subheader && display.subheader !== prevSubheader;
+                        const showHeader =
+                          display.header && display.header !== prevHeader;
+                        const showSubheader =
+                          display.subheader &&
+                          display.subheader !== prevSubheader;
 
                         if (showHeader) {
                           rows.push(
                             <tr key={`header-${display.header}-${idx}`}>
-                              <td colSpan={4} style={{ fontWeight: 600, color: "#555", fontSize: 15, background: "#f5f5f5" }}>
+                              <td
+                                colSpan={4}
+                                style={{
+                                  fontWeight: 600,
+                                  color: "#555",
+                                  fontSize: 15,
+                                  background: "#f5f5f5",
+                                }}
+                              >
                                 {display.header}
                               </td>
                             </tr>
@@ -466,7 +535,14 @@ const CitationReviewPage = () => {
                         if (showSubheader) {
                           rows.push(
                             <tr key={`subheader-${display.subheader}-${idx}`}>
-                              <td colSpan={4} style={{ color: display.header ? "#1976d2" : "#888", fontSize: 13, background: "#f8fafc" }}>
+                              <td
+                                colSpan={4}
+                                style={{
+                                  color: display.header ? "#1976d2" : "#888",
+                                  fontSize: 13,
+                                  background: "#f8fafc",
+                                }}
+                              >
                                 {display.subheader}
                               </td>
                             </tr>
@@ -478,33 +554,80 @@ const CitationReviewPage = () => {
 
                         rows.push(
                           <tr key={param.param_id}>
-                            <td style={{ width: 300, minWidth: 300, maxWidth: 300 }}>
+                            <td
+                              style={{
+                                width: 300,
+                                minWidth: 300,
+                                maxWidth: 300,
+                              }}
+                            >
                               <p className="fw-5">{display.main}</p>
                             </td>
-                            <td style={{ width: 200, minWidth: 200, maxWidth: 200 }}>
-                              <p className="fw-5">{countValue !== undefined && countValue !== ""
-                                ? <span>{countValue}</span>
-                                : <span>--</span>}</p>
+                            <td
+                              style={{
+                                width: 200,
+                                minWidth: 200,
+                                maxWidth: 200,
+                              }}
+                            >
+                              <p className="fw-5">
+                                {countValue !== undefined &&
+                                countValue !== "" ? (
+                                  <span>{countValue}</span>
+                                ) : (
+                                  <span>--</span>
+                                )}
+                              </p>
                             </td>
-                            <td style={{ width: 200, minWidth: 200, maxWidth: 200 }}>
-                              <span><p className="fw-5">{markValue !== undefined ? markValue : "--"}</p></span>
+                            <td
+                              style={{
+                                width: 200,
+                                minWidth: 200,
+                                maxWidth: 200,
+                              }}
+                            >
+                              <p className="fw-5">
+                                {markValue !== undefined
+                                  ? param.negative
+                                    ? `-${markValue}`
+                                    : markValue
+                                  : "--"}
+                              </p>
                             </td>
-                            <td style={{ width: 200, minWidth: 200, maxWidth: 200 }}>
+                            <td
+                              style={{
+                                width: 200,
+                                minWidth: 200,
+                                maxWidth: 200,
+                              }}
+                            >
                               {param.proof_reqd ? (
                                 <>
-                                  {uploadedFiles[param.param_id]?.length > 0 && (
-                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                                      {uploadedFiles[param.param_id].map((fileUrl, idx) => (
-                                        <a
-                                          key={idx}
-                                          href={`${baseURL}${fileUrl}`}
-                                          target="_blank"
-                                          rel="noopener noreferrer"
-                                          style={{ fontSize: 14, wordBreak: 'break-all' }}
-                                        >
-                                          {fileUrl.split("/").pop()}
-                                        </a>
-                                      ))}
+                                  {uploadedFiles[param.param_id]?.length >
+                                    0 && (
+                                    <div
+                                      style={{
+                                        display: "flex",
+                                        flexDirection: "column",
+                                        gap: "4px",
+                                      }}
+                                    >
+                                      {uploadedFiles[param.param_id].map(
+                                        (fileUrl, idx) => (
+                                          <a
+                                            key={idx}
+                                            href={`${baseURL}${fileUrl}`}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            style={{
+                                              fontSize: 14,
+                                              wordBreak: "break-all",
+                                            }}
+                                          >
+                                            {fileUrl.split("/").pop()}
+                                          </a>
+                                        )
+                                      )}
                                     </div>
                                   )}
                                   <input
@@ -513,7 +636,11 @@ const CitationReviewPage = () => {
                                     multiple
                                     onChange={(e) => {
                                       const display = getParamDisplay(param);
-                                      handleFileChange(e, param.param_id, display.main);
+                                      handleFileChange(
+                                        e,
+                                        param.param_id,
+                                        display.main
+                                      );
                                     }}
                                   />
                                 </>
@@ -578,7 +705,7 @@ const CitationReviewPage = () => {
             </div>
           </div>
         </form>
-      }
+      )}
     </div>
   );
 };

@@ -54,13 +54,13 @@ export const corpsOptions: OptionType[] = [
 ];
 
 export const commandOptions: OptionType[] = [
-  { value: "NC", label: "Northern Command" },
-  { value: "WC", label: "Western Command" },
-  { value: "CC", label: "Central Command" },
-  { value: "EC", label: "Eastern Command" },
-  { value: "SC", label: "Southern Command" },
-  { value: "SWC", label: "South Western Command" },
-  { value: "TC", label: "Training Command" },
+  { value: "Northern Command", label: "Northern Command" },
+  { value: "Western Command", label: "Western Command" },
+  { value: "Central Command", label: "Central Command" },
+  { value: "Eastern Command", label: "Eastern Command" },
+  { value: "Southern Command", label: "Southern Command" },
+  { value: "South Western Command", label: "South Western Command" },
+  { value: "Training Command", label: "Training Command" },
 ];
 
 export const hierarchicalStructure = [

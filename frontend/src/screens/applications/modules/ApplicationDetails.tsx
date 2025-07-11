@@ -134,53 +134,82 @@ const ApplicationDetails = () => {
 
   const calculateParameterStats = (parameters: any[]) => {
     const totalParams = parameters.length;
-
+  
     const filledParams = parameters.filter(
       (param) => (param.count ?? 0) > 0 || (param.marks ?? 0) > 0
     ).length;
-
+  
     const marks = parameters.reduce((acc, param) => {
       const isRejected =
         param.clarification_details?.clarification_status === "rejected";
-
-      return acc + (isRejected ? 0 : param.marks ?? 0);
+    
+      const isNegative = param.negative === true;
+    
+      if (isRejected || isNegative) return acc;
+    
+      return acc + (param.marks ?? 0);
     }, 0);
-
     const approvedMarks = parameters.reduce((acc, param) => {
       const isRejected =
         param.clarification_details?.clarification_status === "rejected";
-
+  
       return acc + (isRejected ? 0 : Number(param.approved_marks ?? 0));
     }, 0);
-
-    const totalParameterMarks = parameters.reduce((acc, param) => {
+  
+    // Calculate negativeMarks
+    const negativeMarks = parameters.reduce((acc, param) => {
       const isRejected =
         param.clarification_details?.clarification_status === "rejected";
-
+  
       if (isRejected) return acc;
-
+  
       const hasValidApproved =
         param.approved_marks !== undefined &&
         param.approved_marks !== null &&
         param.approved_marks !== "" &&
         !isNaN(Number(param.approved_marks));
-
+  
       const approved = hasValidApproved ? Number(param.approved_marks) : null;
       const original = param.marks ?? 0;
-
+  
+      const valueToCheck = approved !== null ? approved : original;
+  
+      return acc + (param.negative === true ? valueToCheck : 0);
+    }, 0);
+  
+    const totalParameterMarks = parameters.reduce((acc, param) => {
+      const isRejected =
+        param.clarification_details?.clarification_status === "rejected";
+    
+      if (isRejected) return acc;
+    
+      if (param.negative === true) return acc; 
+    
+      const hasValidApproved =
+        param.approved_marks !== undefined &&
+        param.approved_marks !== null &&
+        param.approved_marks !== "" &&
+        !isNaN(Number(param.approved_marks));
+    
+      const approved = hasValidApproved ? Number(param.approved_marks) : null;
+      const original = param.marks ?? 0;
+    
       return acc + (approved !== null ? approved : original);
     }, 0);
-
-    const totalMarks = totalParameterMarks + Number(graceMarks ?? 0);
-
+    
+    let totalMarks = totalParameterMarks + Number(graceMarks ?? 0) - negativeMarks;
+    
+    if (totalMarks < 0) totalMarks = 0;
     return {
       totalParams,
       filledParams,
       marks,
       approvedMarks,
+      negativeMarks,
       totalMarks,
     };
   };
+  
 
   useEffect(() => {
     const parameters = unitDetail?.fds?.parameters || [];
@@ -736,8 +765,10 @@ const ApplicationDetails = () => {
                           <p className="fw-5">{param.count}</p>
                         </td>
                         <td style={{ width: 100 }}>
-                          <p className="fw-5">{param.marks}</p>
-                        </td>
+  <p className="fw-5">
+    {param.negative === true ? `-${param.marks}` : param.marks}
+  </p>
+</td>
                         <td style={{ width: 200 }}>
                           {param.upload ? (
                             <a

@@ -27,7 +27,7 @@ exports.createCitation = async (data, user) => {
     const { award_type, parameters } = citation_fds;
 
     const paramResult = await client.query(
-      `SELECT name, subsubcategory, subcategory, category, per_unit_mark, max_marks
+      `SELECT name, subsubcategory, subcategory, category, per_unit_mark, max_marks,negative
        FROM Parameter_Master
        WHERE award_type = $1`,
       [award_type]
@@ -62,6 +62,7 @@ const updatedParameters = parameters.map((p) => {
     subsubcategory: matchedParam.subsubcategory,
     category: matchedParam.category,
     marks: cappedMarks,
+    negative:  matchedParam.negative,
     info: `1 ${matchedParam.name} = ${matchedParam.per_unit_mark} marks (Max ${matchedParam.max_marks} marks)`,
   };
 });

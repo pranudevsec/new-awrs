@@ -24,3 +24,4 @@ token_storage
 *.sln
 *.sw?
 uploads
+.env
