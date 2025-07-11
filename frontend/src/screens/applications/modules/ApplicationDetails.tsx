@@ -1103,116 +1103,97 @@ const ApplicationDetails = () => {
                     Submit Signatures:
                   </label>
                   <table className="table-style-1 w-100">
-                    <thead className="table-light">
-                      <tr>
-                        <th style={{ width: "25%" }}>Member</th>
-                        <th style={{ width: "25%" }}>Name</th>
-                        <th style={{ width: "25%" }}>Rank</th>
-                        <th style={{ width: "25%" }}>Signature</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {[
-                        // If isMember: only member_officer
-                        ...(profile?.user?.is_member
-                          ? profile.unit.members
-                            .filter((m) => m.member_type === "member_officer")
-                            .sort(
-                              (a, b) =>
-                                Number(a.member_order || 0) -
-                                Number(b.member_order || 0)
-                            )
-                          : // Else: presiding officer + member officers
-                          [
-                            ...profile.unit.members.filter(
-                              (m) => m.member_type === "presiding_officer"
-                            ),
-                            ...profile.unit.members
-                              .filter(
-                                (m) => m.member_type === "member_officer"
-                              )
-                              .sort(
-                                (a, b) =>
-                                  Number(a.member_order || 0) -
-                                  Number(b.member_order || 0)
-                              ),
-                          ]),
-                      ].map((member) => {
-                        const acceptedMembers =
-                          unitDetail?.fds?.accepted_members || [];
-                        const foundMember = acceptedMembers.find(
-                          (m: any) => m.member_id === member.id
-                        );
-                        const isSignatureAdded =
-                          foundMember?.is_signature_added === true;
+  <thead className="table-light">
+    <tr>
+      <th style={{ width: "25%" }}>Member</th>
+      <th style={{ width: "25%" }}>Name</th>
+      <th style={{ width: "25%" }}>Rank</th>
+      <th style={{ width: "25%" }}>Signature</th>
+    </tr>
+  </thead>
+  <tbody>
+    {[
+      // Always show all presiding officers first
+      ...profile.unit.members.filter(
+        (m) => m.member_type === "presiding_officer"
+      ),
+      // Then show member officers, sorted by member_order
+      ...profile.unit.members
+        .filter((m) => m.member_type === "member_officer")
+        .sort(
+          (a, b) =>
+            Number(a.member_order || 0) - Number(b.member_order || 0)
+        ),
+    ].map((member) => {
+      const acceptedMembers = unitDetail?.fds?.accepted_members || [];
+      const foundMember = acceptedMembers.find(
+        (m:any) => m.member_id === member.id
+      );
+      const isSignatureAdded = foundMember?.is_signature_added === true;
 
-                        return (
-                          <tr key={member.id}>
-                            <td>
-                              {member.member_type === "presiding_officer"
-                                ? "Presiding Officer"
-                                : "Member Officer"}
-                            </td>
-                            <td>{member.name || "-"}</td>
-                            <td>{member.rank || "-"}</td>
-                            <td>
-                              <div className="d-flex flex-sm-row flex-column gap-sm-3 gap-1 align-items-center">
-                                {member.member_type === "presiding_officer" &&
-                                  !profile?.user?.is_member &&
-                                  !isSignatureAdded && (
-                                    <>
-                                      {isReadyToSubmit && (
-                                        <button
-                                          type="button"
-                                          className="_btn success w-sm-auto"
-                                          onClick={() =>
-                                            handleAddsignature(
-                                              member,
-                                              "accepted"
-                                            )
-                                          }
-                                        >
-                                          Accept
-                                        </button>
-                                      )}
-                                      <button
-                                        type="button"
-                                        className="_btn danger w-sm-auto"
-                                        onClick={() =>
-                                          handleAddsignature(member, "rejected")
-                                        }
-                                      >
-                                        Decline
-                                      </button>
-                                    </>
-                                  )}
+      return (
+        <tr key={member.id}>
+          <td>
+            {member.member_type === "presiding_officer"
+              ? "Presiding Officer"
+              : "Member Officer"}
+          </td>
+          <td>{member.name || "-"}</td>
+          <td>{member.rank || "-"}</td>
+          <td>
+            <div className="d-flex flex-sm-row flex-column gap-sm-3 gap-1 align-items-center">
+              {member.member_type === "presiding_officer" &&
+                !isSignatureAdded && (
+                  <>
+                    {isReadyToSubmit && (
+                      <button
+                        type="button"
+                        className="_btn success w-sm-auto"
+                        onClick={() =>
+                          handleAddsignature(member, "accepted")
+                        }
+                      >
+                        Accept
+                      </button>
+                    )}
+                    <button
+                      type="button"
+                      className="_btn danger w-sm-auto"
+                      onClick={() =>
+                        handleAddsignature(member, "rejected")
+                      }
+                    >
+                      Decline
+                    </button>
+                  </>
+                )}
 
-                                {member.member_type !== "presiding_officer" &&
-                                  !isSignatureAdded && (
-                                    <button
-                                      type="button"
-                                      className="_btn success text-nowrap w-sm-auto"
-                                      onClick={() =>
-                                        handleAddsignature(member, "accepted")
-                                      }
-                                    >
-                                      Add Signature
-                                    </button>
-                                  )}
+              {member.member_type !== "presiding_officer" &&
+                !isSignatureAdded && (
+                  <button
+                    type="button"
+                    className="_btn success text-nowrap w-sm-auto"
+                    onClick={() =>
+                      handleAddsignature(member, "accepted")
+                    }
+                  >
+                    Add Signature
+                  </button>
+                )}
 
-                                {isSignatureAdded && (
-                                  <span className="text-success fw-semibold text-nowrap d-flex align-items-center gap-1">
-                                    <FaCheckCircle className="fs-5" /> Signature
-                                    Added
-                                  </span>
-                                )}
-                              </div>
-                            </td>
-                          </tr>
-                        );
-                      })}
-                    </tbody>
-                  </table>
+              {isSignatureAdded && (
+                <span className="text-success fw-semibold text-nowrap d-flex align-items-center gap-1">
+                  <FaCheckCircle className="fs-5" /> Signature Added
+                </span>
+              )}
+            </div>
+          </td>
+        </tr>
+      );
+    })}
+  </tbody>
+</table>
+
                 </div>
               )}
             <div className="d-flex flex-sm-row flex-column gap-sm-3 gap-1 justify-content-end">
@@ -1462,29 +1443,16 @@ const ApplicationDetails = () => {
                     </thead>
                     <tbody>
                       {[
-                        ...(profile?.user?.is_member
-                          ? profile.unit.members
-                            .filter((m) => m.member_type === "member_officer")
-                            .sort(
-                              (a, b) =>
-                                Number(a.member_order || 0) -
-                                Number(b.member_order || 0)
-                            )
-                          : [
-                            ...profile.unit.members.filter(
-                              (m) => m.member_type === "presiding_officer"
-                            ),
-                            ...profile.unit.members
-                              .filter(
-                                (m) => m.member_type === "member_officer"
-                              )
-                              .sort(
-                                (a, b) =>
-                                  Number(a.member_order || 0) -
-                                  Number(b.member_order || 0)
-                              ),
-                          ]),
-                      ].map((member) => {
+  ...profile.unit.members.filter(
+    (m) => m.member_type === "presiding_officer"
+  ),
+  ...profile.unit.members
+    .filter((m) => m.member_type === "member_officer")
+    .sort(
+      (a, b) =>
+        Number(a.member_order || 0) - Number(b.member_order || 0)
+    )
+].map((member) => {
                         const acceptedMembers =
                           unitDetail?.fds?.accepted_members || [];
                         const foundMember = acceptedMembers.find(

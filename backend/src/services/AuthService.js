@@ -115,6 +115,7 @@ exports.getProfile = async ({ user_id }) => {
         u.unit_id, u.is_special_unit,
         u.is_officer,
         u.is_member,
+        u.is_member_added, 
         u.officer_id                 -- added
       FROM User_tab u
       WHERE u.user_id = $1
@@ -192,6 +193,7 @@ exports.getProfile = async ({ user_id }) => {
         is_special_unit: user.is_special_unit,
         is_officer: user.is_officer,
         is_member: user.is_member,
+        is_member_added: user.is_member_added,
       },
       unit: unitData,
     });

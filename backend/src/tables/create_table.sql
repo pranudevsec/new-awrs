@@ -16,7 +16,8 @@ CREATE TABLE User_tab (
         is_member BOOLEAN DEFAULT FALSE, 
         officer_id INTEGER,
         is_officer BOOLEAN DEFAULT FALSE, 
-    
+        is_member_added BOOLEAN DEFAULT FALSE, 
+
         is_active BOOLEAN DEFAULT TRUE,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -42,28 +43,29 @@ FOR EACH ROW
 EXECUTE FUNCTION update_user_tab_timestamp();
 
  -- Insert a sample user
-    INSERT INTO User_tab (
-        pers_no,
-        rank,
-        name,
-        user_role,
-        username,
-        password,
-        is_special_unit,
-        is_member,
-        is_officer
-    )
-    VALUES
-      ('12345678', 'some', 'John Doe', 'unit', 'testuser1', '$2b$10$FCHwKvPqS2IrJY2OZtJ2OemtfeFiz1Cj/ez8bv6NwTk5.Se.YaFwq', FALSE, FALSE, FALSE),
-      ('87654321', 'some', 'Jane Smith', 'brigade', 'testbrigade', '$2b$10$FCHwKvPqS2IrJY2OZtJ2OemtfeFiz1Cj/ez8bv6NwTk5.Se.YaFwq', FALSE, FALSE, TRUE),
-      ('56781234', 'some', 'Alex Johnson', 'division', 'testdivision', '$2b$10$FCHwKvPqS2IrJY2OZtJ2OemtfeFiz1Cj/ez8bv6NwTk5.Se.YaFwq', FALSE, FALSE, TRUE),
-      ('43218765', 'some', 'Maria Lee', 'corps', 'testcorps', '$2b$10$FCHwKvPqS2IrJY2OZtJ2OemtfeFiz1Cj/ez8bv6NwTk5.Se.YaFwq', FALSE, FALSE, TRUE),
-      ('34567812', 'some', 'David Brown', 'command', 'testcommand', '$2b$10$FCHwKvPqS2IrJY2OZtJ2OemtfeFiz1Cj/ez8bv6NwTk5.Se.YaFwq', FALSE, FALSE, TRUE),
-      ('34567812', 'some', 'Test Admin', 'admin', 'admin', '$2b$10$FCHwKvPqS2IrJY2OZtJ2OemtfeFiz1Cj/ez8bv6NwTk5.Se.YaFwq', FALSE, FALSE, FALSE),
-      ('34567813', 'some', 'Test Headquarter', 'headquarter', 'testheadquarter', '$2b$10$FCHwKvPqS2IrJY2OZtJ2OemtfeFiz1Cj/ez8bv6NwTk5.Se.YaFwq', FALSE, FALSE, FALSE),
-      -- special unit user
-      ('99999999', 'some', 'Special Unit User', 'unit', 'testspecialunit', '$2b$10$FCHwKvPqS2IrJY2OZtJ2OemtfeFiz1Cj/ez8bv6NwTk5.Se.YaFwq', TRUE, FALSE, FALSE);
-    
+ INSERT INTO User_tab (
+    pers_no,
+    rank,
+    name,
+    user_role,
+    username,
+    password,
+    is_special_unit,
+    is_member,
+    is_officer,
+    is_member_added
+)
+VALUES
+  ('12345678', 'some', 'John Doe', 'unit', 'testuser1', '$2b$10$FCHwKvPqS2IrJY2OZtJ2OemtfeFiz1Cj/ez8bv6NwTk5.Se.YaFwq', FALSE, FALSE, FALSE, FALSE),
+  ('87654321', 'some', 'Jane Smith', 'brigade', 'testbrigade', '$2b$10$FCHwKvPqS2IrJY2OZtJ2OemtfeFiz1Cj/ez8bv6NwTk5.Se.YaFwq', FALSE, FALSE, TRUE, TRUE),
+  ('56781234', 'some', 'Alex Johnson', 'division', 'testdivision', '$2b$10$FCHwKvPqS2IrJY2OZtJ2OemtfeFiz1Cj/ez8bv6NwTk5.Se.YaFwq', FALSE, FALSE, TRUE, TRUE),
+  ('43218765', 'some', 'Maria Lee', 'corps', 'testcorps', '$2b$10$FCHwKvPqS2IrJY2OZtJ2OemtfeFiz1Cj/ez8bv6NwTk5.Se.YaFwq', FALSE, FALSE, TRUE, TRUE),
+  ('34567812', 'some', 'David Brown', 'command', 'testcommand', '$2b$10$FCHwKvPqS2IrJY2OZtJ2OemtfeFiz1Cj/ez8bv6NwTk5.Se.YaFwq', FALSE, FALSE, TRUE, TRUE),
+  ('34567812', 'some', 'Test Admin', 'admin', 'admin', '$2b$10$FCHwKvPqS2IrJY2OZtJ2OemtfeFiz1Cj/ez8bv6NwTk5.Se.YaFwq', FALSE, FALSE, FALSE, FALSE),
+  ('34567813', 'some', 'Test Headquarter', 'headquarter', 'testheadquarter', '$2b$10$FCHwKvPqS2IrJY2OZtJ2OemtfeFiz1Cj/ez8bv6NwTk5.Se.YaFwq', FALSE, FALSE, FALSE, FALSE),
+  -- special unit user
+  ('99999999', 'some', 'Special Unit User', 'unit', 'testspecialunit', '$2b$10$FCHwKvPqS2IrJY2OZtJ2OemtfeFiz1Cj/ez8bv6NwTk5.Se.YaFwq', TRUE, FALSE, FALSE, FALSE);
+
     INSERT INTO User_tab (
         pers_no,
         rank,

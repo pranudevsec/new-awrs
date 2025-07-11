@@ -1,6 +1,7 @@
 const dbService = require("../utils/postgres/dbService");
 const ResponseHelper = require("../utils/responseHelper");
 const { randomUUID } = require('crypto');
+const bcrypt = require("bcryptjs");
 
 exports.createUnit = async (data) => {
   const client = await dbService.getClient();
@@ -82,11 +83,57 @@ exports.deleteUnit = async (id) => {
   }
 };
 
-exports.createOrUpdateUnitForUser = async (userId, data) => {
+exports.createOrUpdateUnitForUser = async (userId, data,user) => {
   const client = await dbService.getClient();
 
   try {
     await client.query('BEGIN');
+    const { memberUsername, memberPassword } = data;
+    if (memberUsername && memberPassword) {
+        // Check if username already exists
+        const existingUserRes = await client.query(
+            'SELECT user_id FROM User_tab WHERE username = $1',
+            [memberUsername]
+        );
+        if (existingUserRes.rows.length > 0) {
+            throw new Error("Username already exists");
+        }
+
+        // Hash the password securely
+        const hashedPassword = await bcrypt.hash(memberPassword, 10);
+
+        // Insert the new user
+        const insertUserRes = await client.query(
+            `INSERT INTO User_tab (
+                pers_no, rank, name, user_role,
+                username, password, officer_id, is_member
+            )
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+            RETURNING user_id`,
+            [
+                user.pers_no,
+                user.rank,
+                user.name,
+                user.user_role,
+                memberUsername,
+                hashedPassword,
+                user.user_id,
+                true
+            ]
+        );
+
+        const newUserId = insertUserRes.rows[0].user_id;
+
+        // Update the current user to mark is_member_added = true
+        await client.query(
+            `UPDATE User_tab SET is_member_added = true WHERE user_id = $1`,
+            [user.user_id]
+        );
+
+        await client.query('COMMIT');
+
+        return ResponseHelper.success(200, "Member user created successfully", { newUserId });
+    }
 
     const userRes = await client.query(
       'SELECT unit_id FROM User_tab WHERE user_id = $1',

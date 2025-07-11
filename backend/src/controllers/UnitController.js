@@ -61,7 +61,7 @@ exports.createOrUpdateUnit = async (req, res) => {
   try {
     const userId = req.user.user_id;
     const data = req.body;
-    const result = await UnitService.createOrUpdateUnitForUser(userId, data);
+    const result = await UnitService.createOrUpdateUnitForUser(userId, data,req.user);
 
     res.status(result.statusCode || StatusCodes.OK).send(result);
   } catch (error) {
