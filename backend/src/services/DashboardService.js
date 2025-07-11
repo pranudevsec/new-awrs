@@ -190,10 +190,18 @@ exports.getHomeCounts = async (user) => {
       if (user_role !== "unit") {
         query.isGetNotClarifications = true;
       }
-
-      const applicationsResult =
-        await ApplicationService.getApplicationsOfSubordinates(user, query);
-      const applicationsToReview = applicationsResult?.meta?.totalItems || 0;
+      let applicationsResult;
+      let applicationsToReview = 0;
+      
+      if (user?.user_role === "cw2") {
+        // If role is 'cw2', use getAllApplicationsForHQ
+        applicationsResult = await ApplicationService.getAllApplicationsForHQ(user, query);
+      } else {
+        // Otherwise, use getApplicationsOfSubordinates
+        applicationsResult = await ApplicationService.getApplicationsOfSubordinates(user, query);
+      }
+      
+      applicationsToReview = applicationsResult?.meta?.totalItems || 0;
 
       const clarificationsIRaised = Array.isArray(applicationsResult?.data)
         ? applicationsResult.data.filter((app) => app.clarifications_count > 0)
