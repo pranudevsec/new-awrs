@@ -23,6 +23,7 @@ import {
   getProfile,
   reqToUpdateUnitProfile,
 } from "../../reduxToolkit/services/auth/authService";
+import { rank } from "../../data/options";
 
 type UserRole = "unit" | "brigade" | "division" | "corps" | "command" | string;
 
@@ -822,14 +823,15 @@ const ProfileSettings = () => {
                     />
                   </div>
                   <div className="col-sm-6 mb-3">
-                    <FormInput
+                    <FormSelect
                       label="Rank"
                       name="rank"
-                      placeholder="Enter Rank"
-                      value={presidingOfficer.rank}
-                      onChange={(e) =>
-                        handlePresidingChange("rank", e.target.value)
+                      options={rank}
+                      value={rank.find((opt: any) => opt.value === presidingOfficer.rank) || null}
+                      onChange={(selected: any) =>
+                        handlePresidingChange("rank", selected?.value || "")
                       }
+                      placeholder="Select Rank"
                     />
                   </div>
                   <div className="col-sm-6 mb-3">
@@ -927,14 +929,15 @@ const ProfileSettings = () => {
                         />
                       </div>
                       <div className="col-sm-6 mb-3">
-                        <FormInput
+                        <FormSelect
                           label="Rank"
                           name={`rank-${index}`}
-                          placeholder="Enter Rank"
-                          value={officer.rank}
-                          onChange={(e) =>
-                            handleChange(index, "rank", e.target.value)
+                          options={rank}
+                          value={rank.find((opt: any) => opt.value === officer.rank) || null}
+                          onChange={(selected: any) =>
+                            handleChange(index, "rank", selected?.value || "")
                           }
+                          placeholder="Select Rank"
                         />
                       </div>
                       <div className="col-sm-6 mb-3">

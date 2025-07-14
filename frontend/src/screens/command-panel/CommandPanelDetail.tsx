@@ -68,26 +68,30 @@ const CommandPanelDetail = () => {
     if (param.name != "no") {
       return {
         main: param.name,
-        header: param.subcategory || null,
-        subheader: param.subsubcategory || null,
+        header: param.category || null,
+        subheader: param.subcategory || null,
+        subsubheader: param.subsubcategory || null,
       };
     } else if (param.subsubcategory) {
       return {
         main: param.subsubcategory,
-        header: param.subcategory || null,
-        subheader: null,
+        header: param.category || null,
+        subheader: param.subcategory || null,
+        subsubheader: null,
       };
     } else if (param.subcategory) {
       return {
         main: param.subcategory,
-        header: null,
+        header: param.category || null,
         subheader: null,
+        subsubheader: null,
       };
     } else {
       return {
         main: param.category,
         header: null,
         subheader: null,
+        subsubheader: null,
       };
     }
   };
@@ -162,6 +166,7 @@ const CommandPanelDetail = () => {
               {(() => {
                 let prevHeader: string | null = null;
                 let prevSubheader: string | null = null;
+                let prevSubsubheader: string | null = null;
                 const rows: any[] = [];
 
                 unitDetail?.fds?.parameters?.forEach((param: any, index: number) => {
@@ -169,6 +174,7 @@ const CommandPanelDetail = () => {
 
                   const showHeader = display.header && display.header !== prevHeader;
                   const showSubheader = display.subheader && display.subheader !== prevSubheader;
+                  const showSubsubheader = display.subsubheader && display.subsubheader !== prevSubsubheader;
 
                   if (showHeader) {
                     rows.push(
@@ -190,8 +196,19 @@ const CommandPanelDetail = () => {
                     );
                   }
 
+                  if (showSubsubheader) {
+                    rows.push(
+                      <tr key={`subsubheader-${display.subsubheader}-${index}`}>
+                        <td colSpan={4} style={{ color: "#666", fontSize: 12, background: "#fafbfc", fontStyle: "italic" }}>
+                          {display.subsubheader}
+                        </td>
+                      </tr>
+                    );
+                  }
+
                   prevHeader = display.header;
                   prevSubheader = display.subheader;
+                  prevSubsubheader = display.subsubheader;
 
                   rows.push(
                     <tr key={index}>

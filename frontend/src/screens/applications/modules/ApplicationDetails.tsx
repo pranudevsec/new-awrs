@@ -437,26 +437,30 @@ const ApplicationDetails = () => {
     if (param.name != "no") {
       return {
         main: param.name,
-        header: param.subcategory || null,
-        subheader: param.subsubcategory || null,
+        header: param.category || null,
+        subheader: param.subcategory || null,
+        subsubheader: param.subsubcategory || null,
       };
     } else if (param.subsubcategory) {
       return {
         main: param.subsubcategory,
-        header: param.subcategory || null,
-        subheader: null,
+        header: param.category || null,
+        subheader: param.subcategory || null,
+        subsubheader: null,
       };
     } else if (param.subcategory) {
       return {
         main: param.subcategory,
-        header: null,
+        header: param.category || null,
         subheader: null,
+        subsubheader: null,
       };
     } else {
       return {
         main: param.category,
         header: null,
         subheader: null,
+        subsubheader: null,
       };
     }
   };
@@ -468,16 +472,19 @@ const ApplicationDetails = () => {
       [member.id]: memberdecision,
     };
     setDecisions(newDecisions);
-  
-    const result = await dispatch(TokenValidation({ inputPersID: member.ic_number }));
 
-
+    const result = await dispatch(
+      TokenValidation({ inputPersID: member.ic_number })
+    );
+    const decision = decisions[member.id];
+    console.log(decision);
     if (TokenValidation.fulfilled.match(result)) {
       const isValid = result.payload.vaildId;
       if (!isValid) {
         // toast.error("Token is not valid");
         return;
       }
+      //sign
 
       const SignPayload = {
         data: {
@@ -703,6 +710,7 @@ const ApplicationDetails = () => {
               {(() => {
                 let prevHeader: string | null = null;
                 let prevSubheader: string | null = null;
+                let prevSubsubheader: string | null = null;
                 const rows: any[] = [];
 
                 unitDetail?.fds?.parameters?.forEach(
@@ -713,6 +721,8 @@ const ApplicationDetails = () => {
                       display.header && display.header !== prevHeader;
                     const showSubheader =
                       display.subheader && display.subheader !== prevSubheader;
+                    const showSubsubheader =
+                      display.subsubheader && display.subsubheader !== prevSubsubheader;
 
                     if (showHeader) {
                       rows.push(
@@ -749,8 +759,27 @@ const ApplicationDetails = () => {
                       );
                     }
 
+                    if (showSubsubheader) {
+                      rows.push(
+                        <tr key={`subsubheader-${display.subsubheader}-${index}`}>
+                          <td
+                            colSpan={6}
+                            style={{
+                              color: "#666",
+                              fontSize: 12,
+                              background: "#fafbfc",
+                              fontStyle: "italic",
+                            }}
+                          >
+                            {display.subsubheader}
+                          </td>
+                        </tr>
+                      );
+                    }
+
                     prevHeader = display.header;
                     prevSubheader = display.subheader;
+                    prevSubsubheader = display.subsubheader;
 
                     rows.push(
                       <tr key={index}>

@@ -1,3 +1,5 @@
+import { Label } from "recharts";
+
 export const awardTypeOptions: OptionType[] = [
   { value: "citation", label: "Citation" },
   { value: "appreciation", label: "Appreciation" },
@@ -35,12 +37,42 @@ export const divisonOptions: OptionType[] = [
 
 export const divisionOptions: OptionType[] = [
   { value: "n/a", label: "N/A" },
-  { value: "mydiv", label: "My Division" },
   { value: "divison1", label: "Divison 1" },
   { value: "divison2", label: "Divison 2" },
   { value: "divison3", label: "Divison 3" },
   { value: "divison4", label: "Divison 4" },
   { value: "divison5", label: "Divison 5" },
+  { value: "divison1", label: "Divison 6" },
+  { value: "divison2", label: "Divison 7" },
+  { value: "divison3", label: "Divison 8" },
+  { value: "divison4", label: "Divison 9" },
+  { value: "divison5", label: "Divison 10" },
+  { value: "divison1", label: "Divison 11" },
+  { value: "divison2", label: "Divison 12" },
+  { value: "divison4", label: "Divison 14" },
+  { value: "divison5", label: "Divison 15" },
+  { value: "divison1", label: "Divison 16" },
+  { value: "divison2", label: "Divison 17" },
+  { value: "divison3", label: "Divison 18" },
+  { value: "divison4", label: "Divison 19" },
+  { value: "divison5", label: "Divison 20" },
+  { value: "divison1", label: "Divison 21" },
+  { value: "divison2", label: "Divison 22" },
+  { value: "divison3", label: "Divison 23" },
+  { value: "divison4", label: "Divison 24" },
+  { value: "divison5", label: "Divison 25" },
+  { value: "divison1", label: "Divison 26" },
+  { value: "divison2", label: "Divison 27" },
+  { value: "divison3", label: "Divison 28" },
+  { value: "divison4", label: "Divison 31" },
+  { value: "divison5", label: "Divison 36" },
+  { value: "divison1", label: "Divison 40" },
+  { value: "divison2", label: "Divison 41" },
+  { value: "divison3", label: "Divison 42" },
+  { value: "divison4", label: "Divison 56" },
+  { value: "divison5", label: "Divison 59" },
+  { value: "divison1", label: "Divison 71" },
+  { value: "divison2", label: "Divison 72" },
 ];
 
 export const corpsOptions: OptionType[] = [
@@ -50,7 +82,15 @@ export const corpsOptions: OptionType[] = [
   { value: "corps2", label: "Corps 2" },
   { value: "corps3", label: "Corps 3" },
   { value: "corps4", label: "Corps 4" },
-  { value: "corps5", label: "Corps 5" },
+  { value: "corps1", label: "Corps 9" },
+  { value: "corps2", label: "Corps 10" },
+  { value: "corps3", label: "Corps 11" },
+  { value: "corps5", label: "Corps 14" },
+  { value: "corps1", label: "Corps 15" },
+  { value: "corps2", label: "Corps 16" },
+  { value: "corps4", label: "Corps 17" },
+  { value: "corps3", label: "Corps 33" },
+  { value: "corps4", label: "Corps 21" },
 ];
 
 export const commandOptions: OptionType[] = [
@@ -303,3 +343,14 @@ export const matrixUnitOptions = [
   { label: "IS", value: "IS" },
   { label: "NM", value: "NM" },
 ];
+
+export const rank = [
+  { label: "Lt Gen", value: "Lt Gen" },
+  { label: "Maj Gen", value: "Maj Gen" },
+  { label: "Brig", value: "Brig" },
+  { label: "Col", value: "Col" },
+  { label: "Lt Col", value: "Lt Col" },
+  { label: "Maj", value: "Maj" },
+  { label: "Capt", value: "Capt" },
+  { label: "Lt", value: "Lt" },
+]

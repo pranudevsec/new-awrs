@@ -56,15 +56,15 @@ EXECUTE FUNCTION update_user_tab_timestamp();
     is_member_added
 )
 VALUES
-  ('12345678', 'some', 'John Doe', 'unit', 'testuser1', '$2b$10$FCHwKvPqS2IrJY2OZtJ2OemtfeFiz1Cj/ez8bv6NwTk5.Se.YaFwq', FALSE, FALSE, FALSE, FALSE),
-  ('87654321', 'some', 'Jane Smith', 'brigade', 'testbrigade', '$2b$10$FCHwKvPqS2IrJY2OZtJ2OemtfeFiz1Cj/ez8bv6NwTk5.Se.YaFwq', FALSE, FALSE, TRUE, TRUE),
-  ('56781234', 'some', 'Alex Johnson', 'division', 'testdivision', '$2b$10$FCHwKvPqS2IrJY2OZtJ2OemtfeFiz1Cj/ez8bv6NwTk5.Se.YaFwq', FALSE, FALSE, TRUE, TRUE),
-  ('43218765', 'some', 'Maria Lee', 'corps', 'testcorps', '$2b$10$FCHwKvPqS2IrJY2OZtJ2OemtfeFiz1Cj/ez8bv6NwTk5.Se.YaFwq', FALSE, FALSE, TRUE, TRUE),
-  ('34567812', 'some', 'David Brown', 'command', 'testcommand', '$2b$10$FCHwKvPqS2IrJY2OZtJ2OemtfeFiz1Cj/ez8bv6NwTk5.Se.YaFwq', FALSE, FALSE, TRUE, TRUE),
-  ('34567812', 'some', 'Test Admin', 'admin', 'admin', '$2b$10$FCHwKvPqS2IrJY2OZtJ2OemtfeFiz1Cj/ez8bv6NwTk5.Se.YaFwq', FALSE, FALSE, FALSE, FALSE),
-  ('34567813', 'some', 'Test Headquarter', 'headquarter', 'testheadquarter', '$2b$10$FCHwKvPqS2IrJY2OZtJ2OemtfeFiz1Cj/ez8bv6NwTk5.Se.YaFwq', FALSE, FALSE, FALSE, FALSE),
+  ('12345678', 'some', 'CO', 'unit', 'testuser1', '$2b$10$FCHwKvPqS2IrJY2OZtJ2OemtfeFiz1Cj/ez8bv6NwTk5.Se.YaFwq', FALSE, FALSE, FALSE, FALSE),
+  ('87654321', 'some', 'CDR', 'brigade', 'testbrigade', '$2b$10$FCHwKvPqS2IrJY2OZtJ2OemtfeFiz1Cj/ez8bv6NwTk5.Se.YaFwq', FALSE, FALSE, TRUE, TRUE),
+  ('56781234', 'some', 'DIV GOC', 'division', 'testdivision', '$2b$10$FCHwKvPqS2IrJY2OZtJ2OemtfeFiz1Cj/ez8bv6NwTk5.Se.YaFwq', FALSE, FALSE, TRUE, TRUE),
+  ('43218765', 'some', 'CORPS CDR', 'corps', 'testcorps', '$2b$10$FCHwKvPqS2IrJY2OZtJ2OemtfeFiz1Cj/ez8bv6NwTk5.Se.YaFwq', FALSE, FALSE, TRUE, TRUE),
+  ('34567812', 'some', 'GOC-in-C', 'command', 'testcommand', '$2b$10$FCHwKvPqS2IrJY2OZtJ2OemtfeFiz1Cj/ez8bv6NwTk5.Se.YaFwq', FALSE, FALSE, TRUE, TRUE),
+  ('34567812', 'some', 'Admin', 'admin', 'admin', '$2b$10$FCHwKvPqS2IrJY2OZtJ2OemtfeFiz1Cj/ez8bv6NwTk5.Se.YaFwq', FALSE, FALSE, FALSE, FALSE),
+  ('34567813', 'some', 'Headquarter', 'headquarter', 'testheadquarter', '$2b$10$FCHwKvPqS2IrJY2OZtJ2OemtfeFiz1Cj/ez8bv6NwTk5.Se.YaFwq', FALSE, FALSE, FALSE, FALSE),
   -- special unit user
-  ('99999999', 'some', 'Special Unit User', 'unit', 'testspecialunit', '$2b$10$FCHwKvPqS2IrJY2OZtJ2OemtfeFiz1Cj/ez8bv6NwTk5.Se.YaFwq', TRUE, FALSE, FALSE, FALSE);
+  ('99999999', 'some', 'Spl Unit CO', 'unit', 'testspecialunit', '$2b$10$FCHwKvPqS2IrJY2OZtJ2OemtfeFiz1Cj/ez8bv6NwTk5.Se.YaFwq', TRUE, FALSE, FALSE, FALSE);
 
     INSERT INTO User_tab (
         pers_no,
@@ -79,11 +79,11 @@ VALUES
         officer_id
     )
     VALUES
-      ('87654321', 'some', 'Jane Smith', 'brigade', 'testbrigade_member', '$2b$10$FCHwKvPqS2IrJY2OZtJ2OemtfeFiz1Cj/ez8bv6NwTk5.Se.YaFwq', FALSE, TRUE, FALSE,2),
-      ('56781234', 'some', 'Alex Johnson', 'division', 'testdivision_member', '$2b$10$FCHwKvPqS2IrJY2OZtJ2OemtfeFiz1Cj/ez8bv6NwTk5.Se.YaFwq', FALSE, TRUE, FALSE,3),
-      ('43218765', 'some', 'Maria Lee', 'corps', 'testcorps_member', '$2b$10$FCHwKvPqS2IrJY2OZtJ2OemtfeFiz1Cj/ez8bv6NwTk5.Se.YaFwq', FALSE, TRUE, FALSE,4),
-      ('34567812', 'some', 'David Brown', 'command', 'testcommand_member', '$2b$10$FCHwKvPqS2IrJY2OZtJ2OemtfeFiz1Cj/ez8bv6NwTk5.Se.YaFwq', FALSE, TRUE, FALSE,5);
-    
+      ('87654321', 'some', 'DY CDR', 'brigade', 'testbrigade_member', '$2b$10$FCHwKvPqS2IrJY2OZtJ2OemtfeFiz1Cj/ez8bv6NwTk5.Se.YaFwq', FALSE, TRUE, FALSE,2),
+      ('56781234', 'some', 'DY GOC', 'division', 'testdivision_member', '$2b$10$FCHwKvPqS2IrJY2OZtJ2OemtfeFiz1Cj/ez8bv6NwTk5.Se.YaFwq', FALSE, TRUE, FALSE,3),
+      ('43218765', 'some', 'COS', 'corps', 'testcorps_member', '$2b$10$FCHwKvPqS2IrJY2OZtJ2OemtfeFiz1Cj/ez8bv6NwTk5.Se.YaFwq', FALSE, TRUE, FALSE,4),
+      ('34567812', 'some', 'COS', 'command', 'testcommand_member', '$2b$10$FCHwKvPqS2IrJY2OZtJ2OemtfeFiz1Cj/ez8bv6NwTk5.Se.YaFwq', FALSE, TRUE, FALSE,5);
+      
     INSERT INTO User_tab (
         pers_no,
         rank,

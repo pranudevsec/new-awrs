@@ -15,7 +15,7 @@ const initializeVectorStore = async () => {
       host: 'localhost',
       port: 5432,
       user: 'postgres',
-      password: process.env.DB_PASSWORD || 'nakul',
+      password: process.env.DB_PASSWORD || '123',
       database: 'newcitation',
     },
     tableName: 'documents',

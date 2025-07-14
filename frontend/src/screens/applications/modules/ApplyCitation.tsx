@@ -750,13 +750,7 @@ const ApplyCitation = () => {
                                   type="number"
                                   className="form-control"
                                   placeholder="Marks"
-                                  value={
-                                    param.negative
-                                      ? marks[param.param_id] === 0 || marks[param.param_id] === undefined
-                                        ? 0
-                                        : -Math.abs(marks[param.param_id])
-                                      : marks[param.param_id] ?? 0
-                                  }
+                                  value={Number(marks[param.param_id] ?? 0).toFixed(2) }
                                   readOnly
                                 />
                                 <div className="tooltip-icon">
@@ -767,7 +761,6 @@ const ApplyCitation = () => {
                                 </div>
                               </div>
                             </td>
-
                             <td style={{ width: 300, minWidth: 300, maxWidth: 300, verticalAlign: "top" }}>
                               {param.proof_reqd ? (
                                 <>
