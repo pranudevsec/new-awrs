@@ -283,6 +283,17 @@ CREATE TABLE signature_logs (
     created_at TIMESTAMP default current_timestamp
 );
 
+CREATE EXTENSION IF NOT EXISTS vector;
+DROP TABLE IF EXISTS documents;
+
+CREATE TABLE documents (
+  id SERIAL PRIMARY KEY,
+  embedding vector(768),
+  text TEXT,
+  metadata JSONB
+);
+
+
 --------------------------------------------------------------------------------------------Insert Data----------------------------------------------------------------------------------------------------------------------
 
 -- Insert dummy parameters

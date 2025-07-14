@@ -2,6 +2,7 @@ import { NavLink } from "react-router-dom";
 import { sidebarStructure } from "./structure";
 import { useAppSelector } from "../../reduxToolkit/hooks";
 import { SVGICON } from "../../constants/iconsList";
+import { Chatbot } from "../../screens/Chatbot/Chatbot";
 
 const SidebarMenu = () => {
   const profile = useAppSelector((state) => state.admin.profile);
@@ -111,27 +112,30 @@ const SidebarMenu = () => {
 
   return (
     <aside className="sidebar-menu flex-shrink-0 d-xl-block d-none bg-dark text-white p-3">
-      <div className="d-flex flex-column justify-content-center align-items-center gap-2 mb-2">
-        <h5 className="text-white" >Menu</h5>
-        <div className="w-50" style={{ height: "4px", backgroundColor: "#dc3545", borderRadius: "50px" }}></div>
-      </div>
-      <div className="scroll-style-85">
-        <div className="sidebar-wrapper mt-3 pb-3">
-          {filteredStructure.map((item, index) => (
-            <NavLink
-              to={item.to}
-              className="nav-items d-flex align-items-center fw-5 position-relative text-white py-2"
-              key={index}
-            >
-              <div className="d-flex align-items-center text-truncate">
-                <span className="nav-icon me-2 d-inline-flex align-items-center justify-content-center">
-                  {item.icon}
-                </span>
-                <span className="text-truncate">{item.label}</span>
-              </div>
-            </NavLink>
-          ))}
+      <div className="d-flex flex-column justify-content-inbetween align-items-center">
+        <div className="d-flex flex-column justify-content-center align-items-center gap-2 mb-2">
+          <h5 className="text-white" >Menu</h5>
+          <div className="w-50" style={{ height: "4px", backgroundColor: "#dc3545", borderRadius: "50px" }}></div>
         </div>
+        <div className="scroll-style-85">
+          <div className="sidebar-wrapper mt-3 pb-3">
+            {filteredStructure.map((item, index) => (
+              <NavLink
+                to={item.to}
+                className="nav-items d-flex align-items-center fw-5 position-relative text-white py-2"
+                key={index}
+              >
+                <div className="d-flex align-items-center text-truncate">
+                  <span className="nav-icon me-2 d-inline-flex align-items-center justify-content-center">
+                    {item.icon}
+                  </span>
+                  <span className="text-truncate">{item.label}</span>
+                </div>
+              </NavLink>
+            ))}
+          </div>
+        </div>
+        <Chatbot/>
       </div>
     </aside>
   );

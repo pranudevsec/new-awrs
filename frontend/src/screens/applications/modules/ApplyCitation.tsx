@@ -397,7 +397,7 @@ const ApplyCitation = () => {
             // comd: "",
             unit_type: profile?.unit?.unit_type ?? undefined,
             page: 1,
-            limit: 1000
+            limit: 5000
           })).unwrap(),
         ]);
 

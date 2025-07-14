@@ -2,6 +2,7 @@ import { Route, Routes } from "react-router";
 import { publicRoutes, authProtectedRoutes } from "./routing";
 import AuthLayout from "./layouts/AuthLayout";
 import PublicLayout from "./layouts/PublicLayout";
+import { UploadDocs } from "./screens/Chatbot/UploadDocs";
 
 const App = () => {
   return (
@@ -20,6 +21,7 @@ const App = () => {
           key={idx}
         />
       ))}
+      <Route path="/upload-docs" element={<UploadDocs />} />
     </Routes>
   );
 };
