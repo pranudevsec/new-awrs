@@ -1,6 +1,7 @@
 import { createSlice, type PayloadAction } from "@reduxjs/toolkit";
 import {
-  fetchApplicationHistory,fetchAllApplications,
+  fetchApplicationHistory,
+  fetchAllApplications,
   fetchApplicationsForHQ,
   fetchApplicationUnitDetail,
   fetchApplicationUnits,
@@ -139,8 +140,7 @@ const applicationSlice = createSlice({
       (state, action: PayloadAction<any>) => {
         state.loading = false;
         state.success = false;
-        state.error =
-          action.payload || "Failed to fetch HQ applications";
+        state.error = action.payload || "Failed to fetch HQ applications";
       }
     );
 
@@ -163,11 +163,9 @@ const applicationSlice = createSlice({
       (state, action: PayloadAction<any>) => {
         state.loading = false;
         state.success = false;
-        state.error =
-          action.payload || "Failed to fetch application history";
+        state.error = action.payload || "Failed to fetch application history";
       }
-    )
-
+    );
 
     builder.addCase(fetchAllApplications.pending, (state) => {
       state.loading = true;
@@ -188,11 +186,9 @@ const applicationSlice = createSlice({
       (state, action: PayloadAction<any>) => {
         state.loading = false;
         state.success = false;
-        state.error =
-          action.payload || "Failed to fetch application history";
+        state.error = action.payload || "Failed to fetch application history";
       }
-    )
-
+    );
   },
 });
 

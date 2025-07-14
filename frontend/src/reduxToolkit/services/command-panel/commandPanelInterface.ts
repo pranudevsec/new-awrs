@@ -18,7 +18,7 @@ export interface Fds {
   award_type: string;
   parameters: Parameter[];
   cycle_period: string;
-  applicationPriority:any;
+  applicationPriority: any;
 }
 
 export interface Application {

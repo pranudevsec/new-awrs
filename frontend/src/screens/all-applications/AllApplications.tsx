@@ -94,11 +94,9 @@ const History = () => {
           <FormSelect
             name="awardType"
             options={awardTypeOptions}
-            value={awardType}
+            value={awardTypeOptions.find((opt) => opt.value === awardType) || null}
             placeholder="Select Type"
-            onChange={(option: OptionType | null) =>
-              setAwardType(option ? option.value : null)
-            }
+            onChange={(option) => setAwardType(option?.value || null)}
           />
         </div>
       </div>
@@ -146,7 +144,7 @@ const History = () => {
             ) : (
               units.length > 0 &&
               units.map((unit: any, idx) => (
-                <tr style={{ cursor: "pointer" }} key={idx}>
+                <tr className="cursor-auto" key={idx}>
                   <td style={{ width: 150, minWidth: 150, maxWidth: 150 }}>
                     <p className="fw-4">#{unit.id}</p>
                   </td>

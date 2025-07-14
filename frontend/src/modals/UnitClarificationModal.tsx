@@ -36,7 +36,7 @@ const UnitClarificationModal: React.FC<ClarificationModalProps> = ({
       type,
       application_id,
       parameter_name,
-  parameter_id,
+      parameter_id,
       reviewer_comment: comment,
     };
 

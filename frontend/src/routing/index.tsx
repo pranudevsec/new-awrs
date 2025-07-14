@@ -7,6 +7,7 @@ import SignUp from "../screens/auth/SignUp";
 const Applications = lazy(() => import("../screens/applications/Applications"));
 const AcceptedApplicationsList = lazy(() => import("../screens/applications/modules/AcceptedApplicationsList"));
 const ApplyCitation = lazy(() => import("../screens/applications/modules/ApplyCitation"));
+const SubmittedFormDetail = lazy(() => import("../screens/applications/modules/SubmittedFormDetail"));
 const CitationReviewPage = lazy(() => import("../screens/applications/modules/CitationReviewPage"));
 const ApplyAppreciation = lazy(() => import("../screens/applications/modules/ApplyAppreciation"));
 const AppreciationReviewPage = lazy(() => import("../screens/applications/modules/AppreciationReviewPage"));
@@ -63,6 +64,8 @@ export const authProtectedRoutes: RouteConfig[] = [
   { path: "/applications/list", element: <ApplicationsList /> },
   { path: "/application/accepted", element: <AcceptedApplicationsList /> },
   { path: "/submitted-forms/list", element: <ApplicationsList /> },
+  { path: "/submitted-forms/list/:application_id", element: <SubmittedFormDetail /> },
+
   { path: "/applications/list/:application_id", element: <ApplicationDetails /> },
   { path: "/applications/clarification/list", element: <ClarificationList /> },
   { path: "/applications/clarification/list/:id", element: <ClarificationDetails /> },

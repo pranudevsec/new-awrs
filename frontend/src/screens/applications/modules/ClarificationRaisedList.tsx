@@ -93,9 +93,9 @@ const ClarificationRaisedList = () => {
         <FormSelect
           name="awardType"
           options={awardTypeOptions}
-          value={awardType}
+          value={awardTypeOptions.find((opt) => opt.value === awardType) || null}
           placeholder="Select Type"
-          onChange={(option: OptionType | null) => setAwardType(option ? option.value : null)}
+          onChange={(option) => setAwardType(option?.value || null)}
         />
       </div>
 

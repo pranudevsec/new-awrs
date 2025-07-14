@@ -47,7 +47,6 @@ const History = () => {
         limit,
       };
 
-
       try {
         dispatch(fetchApplicationHistory(params)).unwrap();
       } catch (error: any) {
@@ -95,7 +94,7 @@ const History = () => {
           <FormSelect
             name="awardType"
             options={awardTypeOptions}
-            value={awardType}
+            value={awardTypeOptions.find((opt) => opt.value === awardType) || null}
             placeholder="Select Type"
             onChange={(option: OptionType | null) =>
               setAwardType(option ? option.value : null)
@@ -141,7 +140,7 @@ const History = () => {
           <tbody>
             {loading ? (
               <tr>
-                <td colSpan={6}>
+                <td colSpan={8}>
                   <div className="d-flex justify-content-center py-5">
                     <Loader inline size={40} />
                   </div>
@@ -150,11 +149,10 @@ const History = () => {
             ) : (
               units.length > 0 &&
               units.map((unit: any, idx) => (
-                <tr key={idx}>
+                <tr key={idx} style={{ height: 75 }} className="cursor-auto">
                   <td style={{ width: 150, minWidth: 150, maxWidth: 150 }}>
                     <p className="fw-4">#{unit.id}</p>
                   </td>
-
                   <td style={{ width: 150, minWidth: 150, maxWidth: 150 }}>
                     <p className="fw-4">#{unit.unit_id}</p>
                   </td>
@@ -182,7 +180,6 @@ const History = () => {
                         : "-"}
                     </p>
                   </td>
-
                   <td style={{ width: 150, minWidth: 150, maxWidth: 150 }}>
                     <p
                       className="fw-4"
@@ -201,7 +198,6 @@ const History = () => {
                         : "-"}
                     </p>
                   </td>
-
                   {/* <td style={{ width: 200, minWidth: 200, maxWidth: 200 }}>
                     <div className="status-content approved pending d-flex align-items-center gap-3">
                       <span></span>
@@ -229,7 +225,7 @@ const History = () => {
                           <span className="badge bg-danger text-nowrap">Withdraw Rejected</span>
                         )}
                         {['pending', 'in_review', 'shortlisted_approved'].includes(unit.withdraw_status) && (
-                          <span className="badge bg-warning text-dark text-nowrap">Withdraw Pending</span>
+                          <span className="badge bg-warning text-white text-nowrap">Withdraw Pending</span>
                         )}
                       </>
                     ) : (
@@ -268,7 +264,6 @@ const History = () => {
                     )}
 
                   </td>}
-
                 </tr>
               ))
             )}

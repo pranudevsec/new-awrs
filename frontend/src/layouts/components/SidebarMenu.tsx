@@ -92,10 +92,10 @@ const SidebarMenu = () => {
     userRole === "corps" ||
     userRole === "command"
   ) {
-   
+
     filteredStructure.push(allApplicationsItem);
     if (userRole !== "brigade") { filteredStructure.push(withdrawItem); }
-    if (!isMember) { filteredStructure.push(historyItem);  filteredStructure.push(acceptedApplicationItem);}
+    if (!isMember) { filteredStructure.push(historyItem); filteredStructure.push(acceptedApplicationItem); }
   }
 
   if (userRole === "headquarter") {

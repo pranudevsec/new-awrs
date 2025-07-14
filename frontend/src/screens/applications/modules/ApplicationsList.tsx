@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
 import Breadcrumb from "../../../components/ui/breadcrumb/Breadcrumb";
 import FormSelect from "../../../components/form/FormSelect";
@@ -13,6 +13,7 @@ import { fetchApplicationsForHQ, fetchApplicationUnits, fetchSubordinates } from
 
 const ApplicationsList = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const dispatch = useAppDispatch();
 
   const profile = useAppSelector((state) => state.admin.profile);
@@ -25,6 +26,10 @@ const ApplicationsList = () => {
   const [page, setPage] = useState<number>(1);
   const [limit, setLimit] = useState<number>(10);
   const role = profile?.user?.user_role?.toLowerCase() ?? "";
+
+  console.log("awardType -> ", awardType);
+
+
   // const isCW2Role = profile?.user?.user_role === "cw2";
   // const cw2_type = profile?.user?.cw2_type?.toLowerCase() ?? "";
   // useEffect(() => {
@@ -122,9 +127,9 @@ const ApplicationsList = () => {
         <FormSelect
           name="awardType"
           options={awardTypeOptions}
-          value={awardType}
+          value={awardTypeOptions.find((opt) => opt.value === awardType) || null}
+          onChange={(option) => setAwardType(option?.value || null)}
           placeholder="Select Type"
-          onChange={(option: OptionType | null) => setAwardType(option ? option.value : null)}
         />
 
       </div>
@@ -163,7 +168,9 @@ const ApplicationsList = () => {
                 <tr
                   key={idx}
                   onClick={() => {
-                    if (unit.status_flag === "draft") {
+                    if (location.pathname === "/submitted-forms/list") {
+                      navigate(`/submitted-forms/list/${unit.id}?award_type=${unit.type}`);
+                    } else if (unit.status_flag === "draft") {
                       navigate(`/applications/${unit.type}?id=${unit.id}`);
                     } else {
                       navigate(`/applications/list/${unit.id}?award_type=${unit.type}`);

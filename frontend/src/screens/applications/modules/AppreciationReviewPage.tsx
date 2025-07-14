@@ -311,28 +311,28 @@ const AppreciationReviewPage = () => {
 
     let totalMarks = 0;
     let negativeMarks = 0;
-    
+
     for (const param of parameters) {
-      const paramId: any = param.param_id;
-      const markValue = marks[paramId];
-    
-      if (markValue !== undefined) {
-        if (param.negative === true) {
-          negativeMarks += markValue;
-        } else {
-          totalMarks += markValue;
+        const paramId: any = param.param_id;
+        const markValue = marks[paramId];
+
+        if (markValue !== undefined) {
+            if (param.negative === true) {
+                negativeMarks += markValue;
+            } else {
+                totalMarks += markValue;
+            }
         }
-      }
     }
-    
+
     // Subtract negativeMarks from totalMarks
     totalMarks = totalMarks - negativeMarks;
-    
+
     // Ensure totalMarks does not go negative
     if (totalMarks < 0) {
-      totalMarks = 0;
-    }  
-  
+        totalMarks = 0;
+    }
+
     // Total Parameters
     const totalParams = parameters.length;
     // const getParamDisplay = (param: any) => {
@@ -537,14 +537,14 @@ const AppreciationReviewPage = () => {
                                                                 : <span>--</span>}</p>
                                                         </td>
                                                         <td style={{ width: 200, minWidth: 200, maxWidth: 200 }}>
-  <p className="fw-5">
-    {markValue !== undefined
-      ? param.negative
-        ? `-${markValue}`
-        : markValue
-      : "--"}
-  </p>
-</td>
+                                                            <p className="fw-5">
+                                                                {markValue !== undefined
+                                                                    ? param.negative
+                                                                        ? `-${markValue}`
+                                                                        : markValue
+                                                                    : "--"}
+                                                            </p>
+                                                        </td>
                                                         <td style={{ width: 200, minWidth: 200, maxWidth: 200 }}>
                                                             {param.proof_reqd ? (
                                                                 <>

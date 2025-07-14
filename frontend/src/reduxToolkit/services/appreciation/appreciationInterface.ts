@@ -16,7 +16,7 @@ export interface AppreciationFormData {
 export interface CreateAppreciationPayload {
   date_init: string;
   appre_fds: AppreciationFormData;
-  isDraft?:boolean;
+  isDraft?: boolean;
 }
 
 export interface CreateAppreciationResponse {
@@ -31,7 +31,6 @@ export interface UpdateAppreciationRequest {
   appre_fds?: AppreciationFormData; // Make this optional
   date_init?: string;
   isDraft?: boolean;
-  
 }
 export interface UpdateAppreciationResponse {
   success: boolean;

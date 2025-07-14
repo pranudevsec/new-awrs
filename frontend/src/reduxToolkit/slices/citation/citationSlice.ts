@@ -1,6 +1,9 @@
 import { createSlice, type PayloadAction } from "@reduxjs/toolkit";
 import type { CreateCitationResponse } from "../../services/citation/citationInterface";
-import { createCitation, fetchCitationById } from "../../services/citation/citationService";
+import {
+  createCitation,
+  fetchCitationById,
+} from "../../services/citation/citationService";
 
 interface CitationState {
   loading: boolean;

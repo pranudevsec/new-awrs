@@ -16,7 +16,7 @@ export const createCitation = createAsyncThunk<
   try {
     const response = await Axios.post(apiEndPoints.citation, payload);
     if (response.data.success) {
-      if(!payload?.isDraft )toast.success("Citation created successfully!");
+      if (!payload?.isDraft) toast.success("Citation created successfully!");
       return response.data;
     } else {
       toast.error("Failed to create citation");
@@ -75,21 +75,18 @@ export const deleteCitation = createAsyncThunk<
   UpdateCitationResponse,
   number,
   { rejectValue: string }
->(
-  "citations/delete",
-  async (id, { rejectWithValue }) => {
-    try {
-      const response = await Axios.delete(`${apiEndPoints.citation}/${id}`);
-      if (response.data.success) {
-        toast.success("Citation deleted successfully!");
-        return response.data;
-      } else {
-        toast.error("Failed to delete citation");
-        return rejectWithValue(response.data.message);
-      }
-    } catch (error: any) {
-      toast.error(error.response?.data?.message || "Error deleting citation");
-      return rejectWithValue("Failed to delete citation");
+>("citations/delete", async (id, { rejectWithValue }) => {
+  try {
+    const response = await Axios.delete(`${apiEndPoints.citation}/${id}`);
+    if (response.data.success) {
+      toast.success("Citation deleted successfully!");
+      return response.data;
+    } else {
+      toast.error("Failed to delete citation");
+      return rejectWithValue(response.data.message);
     }
+  } catch (error: any) {
+    toast.error(error.response?.data?.message || "Error deleting citation");
+    return rejectWithValue("Failed to delete citation");
   }
-);
+});
