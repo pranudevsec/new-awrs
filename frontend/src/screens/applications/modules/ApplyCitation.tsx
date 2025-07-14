@@ -745,22 +745,29 @@ const ApplyCitation = () => {
                               />
                             </td>
                             <td style={{ width: 300, minWidth: 300, maxWidth: 300, verticalAlign: "top" }}>
-                              <div className="input-with-tooltip">
-                                <input
-                                  type="number"
-                                  className="form-control"
-                                  placeholder="Marks"
-                                  value={marks[param.param_id] ?? 0}
-                                  readOnly
-                                />
-                                <div className="tooltip-icon">
-                                  <i className="info-circle">i</i>
-                                  <span className="tooltip-text">
-                                    {`1 unit = ${param.per_unit_mark} marks, max ${param.max_marks} marks`}
-                                  </span>
-                                </div>
-                              </div>
-                            </td>
+  <div className="input-with-tooltip">
+    <input
+      type="number"
+      className="form-control"
+      placeholder="Marks"
+      value={
+        param.negative
+          ? marks[param.param_id] === 0 || marks[param.param_id] === undefined
+            ? 0
+            : -Math.abs(marks[param.param_id])
+          : marks[param.param_id] ?? 0
+      }
+      readOnly
+    />
+    <div className="tooltip-icon">
+      <i className="info-circle">i</i>
+      <span className="tooltip-text">
+        {`1 unit = ${param.per_unit_mark} marks, max ${param.max_marks} marks`}
+      </span>
+    </div>
+  </div>
+</td>
+
                             <td style={{ width: 300, minWidth: 300, maxWidth: 300, verticalAlign: "top" }}>
                               {param.proof_reqd ? (
                                 <>

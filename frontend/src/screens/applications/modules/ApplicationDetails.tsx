@@ -70,6 +70,8 @@ const ApplicationDetails = () => {
     useState<number>(0);
   const [clarificationParameterName, setClarificationParameterName] =
     useState<string>("");
+  const [clarificationParameterId, setClarificationParameterId] =
+    useState<string>("");
   const [clarificationDocForView, setClarificationDocForView] = useState<
     string | null
   >(null);
@@ -101,7 +103,7 @@ const ApplicationDetails = () => {
   const [decisions, setDecisions] = useState<{ [memberId: string]: string }>(
     {}
   );
-
+console.log(clarificationParameterId)
   let userPriority = "";
 
   if (role === "cw2" && Array.isArray(unitDetail?.fds?.applicationPriority)) {
@@ -130,6 +132,7 @@ const ApplicationDetails = () => {
     marks: 0,
     approvedMarks: 0,
     totalMarks: 0,
+    negativeMarks: 0,
   });
 
   const calculateParameterStats = (parameters: any[]) => {
@@ -458,115 +461,115 @@ const ApplicationDetails = () => {
     }
   };
 
-  const handleAddsignature = async (member: any, memberdecision: string) => {
-    //validation
-    const newDecisions: { [memberId: string]: string } = {
-      ...decisions,
-      [member.id]: memberdecision,
-    };
-    setDecisions(newDecisions);
+  // const handleAddsignature = async (member: any, memberdecision: string) => {
+  //   //validation
+  //   const newDecisions: { [memberId: string]: string } = {
+  //     ...decisions,
+  //     [member.id]: memberdecision,
+  //   };
+  //   setDecisions(newDecisions);
 
-    const result = await dispatch(
-      TokenValidation({ inputPersID: member.ic_number })
-    );
-    const decision = decisions[member.id];
-    console.log(decision);
-    if (TokenValidation.fulfilled.match(result)) {
-      const isValid = result.payload.vaildId;
-      if (!isValid) {
-        // toast.error("Token is not valid");
-        return;
-      }
-      //sign
+  //   const result = await dispatch(
+  //     TokenValidation({ inputPersID: member.ic_number })
+  //   );
+  //   const decision = decisions[member.id];
+  //   console.log(decision);
+  //   if (TokenValidation.fulfilled.match(result)) {
+  //     const isValid = result.payload.vaildId;
+  //     if (!isValid) {
+  //       // toast.error("Token is not valid");
+  //       return;
+  //     }
+  //     //sign
 
-      const SignPayload = {
-        data: {
-          application_id,
-          member,
-          type: unitDetail?.type,
-        },
-      };
-      const response = await dispatch(getSignedData(SignPayload));
+  //     const SignPayload = {
+  //       data: {
+  //         application_id,
+  //         member,
+  //         type: unitDetail?.type,
+  //       },
+  //     };
+  //     const response = await dispatch(getSignedData(SignPayload));
 
-      const updatePayload = {
-        id: unitDetail?.id,
-        type: unitDetail?.type,
-        member: {
-          name: member.name,
-          ic_number: member.ic_number,
-          member_type: member.member_type,
-          member_id: member.id,
-          is_signature_added: true,
-          sign_digest: response.payload,
-        },
-        level: profile?.user?.user_role,
-      };
-      if (memberdecision === "accepted") {
-        dispatch(updateApplication(updatePayload)).then(() => {
-          dispatch(fetchApplicationUnitDetail({ award_type, numericAppId }));
-          const allOthersAccepted = profile?.unit?.members
-            .filter((m: any) => m.id !== member.id)
-            .every((m: any) => decisions[m.id] === "accepted");
+  //     const updatePayload = {
+  //       id: unitDetail?.id,
+  //       type: unitDetail?.type,
+  //       member: {
+  //         name: member.name,
+  //         ic_number: member.ic_number,
+  //         member_type: member.member_type,
+  //         member_id: member.id,
+  //         is_signature_added: true,
+  //         sign_digest: response.payload,
+  //       },
+  //       level: profile?.user?.user_role,
+  //     };
+  //     if (memberdecision === "accepted") {
+  //       dispatch(updateApplication(updatePayload)).then(() => {
+  //         dispatch(fetchApplicationUnitDetail({ award_type, numericAppId }));
+  //         const allOthersAccepted = profile?.unit?.members
+  //           .filter((m: any) => m.id !== member.id)
+  //           .every((m: any) => decisions[m.id] === "accepted");
 
-          if (allOthersAccepted && memberdecision === "accepted") {
-            navigate("/applications/list");
-          }
-        });
-      } else if (memberdecision === "rejected") {
-        console.log(memberdecision);
-        dispatch(
-          updateApplication({
-            ...updatePayload,
-            status: "rejected",
-          })
-        ).then(() => {
-          navigate("/applications/list");
-        });
-      }
-    }
-    // } else {
-    //   toast.error(result.payload as string || "Token validation failed");
-    //   return;
-    // }
-  };
+  //         if (allOthersAccepted && memberdecision === "accepted") {
+  //           navigate("/applications/list");
+  //         }
+  //       });
+  //     } else if (memberdecision === "rejected") {
+  //       console.log(memberdecision);
+  //       dispatch(
+  //         updateApplication({
+  //           ...updatePayload,
+  //           status: "rejected",
+  //         })
+  //       ).then(() => {
+  //         navigate("/applications/list");
+  //       });
+  //     }
+  //   }
+  //   // } else {
+  //   //   toast.error(result.payload as string || "Token validation failed");
+  //   //   return;
+  //   // }
+  // };
 
   // Development handleAddsignature
-  // const handleAddsignature = async (member: any, memberdecision: string) => {
-  //   const updatePayload = {
-  //     id: unitDetail?.id,
-  //     type: unitDetail?.type,
-  //     member: {
-  //       name: member.name,
-  //       ic_number: member.ic_number,
-  //       member_type: member.member_type,
-  //       member_id: member.id,
-  //       is_signature_added: true,
-  //       sign_digest: "something while developing",
-  //     },
-  //     level: profile?.user?.user_role,
-  //   };
-  //   if (memberdecision === "accepted") {
-  //     dispatch(updateApplication(updatePayload)).then(() => {
-  //       dispatch(fetchApplicationUnitDetail({ award_type, numericAppId }));
-  //       const allOthersAccepted = profile?.unit?.members
-  //         .filter((m: any) => m.id !== member.id)
-  //         .every((m: any) => decisions[m.id] === "accepted");
-  //       if (allOthersAccepted && memberdecision === "accepted") {
-  //         navigate("/applications/list");
-  //       }
-  //     });
-  //   } else if (memberdecision === "rejected") {
-  //     console.log(memberdecision);
-  //     dispatch(
-  //       updateApplication({
-  //         ...updatePayload,
-  //         status: "rejected",
-  //       })
-  //     ).then(() => {
-  //       navigate("/applications/list");
-  //     });
-  //   }
-  // };
+  const handleAddsignature = async (member: any, memberdecision: string) => {
+    const updatePayload = {
+      id: unitDetail?.id,
+      type: unitDetail?.type,
+      member: {
+        name: member.name,
+        ic_number: member.ic_number,
+        member_type: member.member_type,
+        member_id: member.id,
+        is_signature_added: true,
+        sign_digest: "something while developing",
+      },
+      level: profile?.user?.user_role,
+    };
+    if (memberdecision === "accepted") {
+      dispatch(updateApplication(updatePayload)).then(() => {
+        dispatch(fetchApplicationUnitDetail({ award_type, numericAppId }));
+        const allOthersAccepted = profile?.unit?.members
+          .filter((m: any) => m.id !== member.id)
+          .every((m: any) => decisions[m.id] === "accepted");
+        if (allOthersAccepted && memberdecision === "accepted") {
+          navigate("/applications/list");
+        }
+      });
+    } else if (memberdecision === "rejected") {
+      console.log(memberdecision);
+      dispatch(
+        updateApplication({
+          ...updatePayload,
+          status: "rejected",
+        })
+      ).then(() => {
+        navigate("/applications/list");
+      });
+    }
+  };
 
   // Show loader
   if (loading) return <Loader />;
@@ -865,6 +868,7 @@ const ApplicationDetails = () => {
                                         unitDetail?.id
                                       );
                                       setClarificationParameterName(param.name);
+                                      setClarificationParameterId(param.id);
                                       setClarificationDocForView(
                                         param?.clarification_details
                                           ?.clarification_doc
@@ -1044,21 +1048,25 @@ const ApplicationDetails = () => {
             }}
           >
             <div className="row text-center text-sm-start mb-3">
-              <div className="col-6 col-sm-3">
+              <div className="col-6 col-sm-2">
                 <span className="fw-medium text-muted">Filled Params:</span>
                 <div className="fw-bold">{paramStats.filledParams}</div>
               </div>
-              <div className="col-6 col-sm-3">
+              <div className="col-6 col-sm-2">
                 <span className="fw-medium text-muted">Marks:</span>
                 <div className="fw-bold">{paramStats.marks}</div>
               </div>
-              <div className="col-6 col-sm-3">
+              <div className="col-6 col-sm-2">
+                <span className="fw-medium text-muted">Nagative Marks:</span>
+                <div className="fw-bold text-danger">-{paramStats.negativeMarks}</div>
+              </div>
+              <div className="col-6 col-sm-2">
                 <span className="fw-medium text-muted">Approved Marks:</span>
                 <div className="fw-bold text-primary">
                   {paramStats.approvedMarks}
                 </div>
               </div>
-              <div className="col-6 col-sm-3">
+              <div className="col-6 col-sm-2">
                 <span className="fw-medium text-muted">Total Marks:</span>
                 <div className="fw-bold text-success">
                   {paramStats.totalMarks}
@@ -1595,6 +1603,7 @@ const ApplicationDetails = () => {
         type={clarificationType}
         application_id={clarificationApplicationId}
         parameter_name={clarificationParameterName}
+        parameter_id={clarificationParameterId}
         setIsRefreshData={setIsRefreshData}
         isRefreshData={isRefreshData}
       />

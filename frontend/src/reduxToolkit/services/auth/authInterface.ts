@@ -51,6 +51,7 @@ export interface ProfileUser {
   is_member?: boolean;
   is_officer?: boolean;
   officer_id?: string | number | null;
+  member_username?: string;
   is_member_added?: boolean;
 }
 

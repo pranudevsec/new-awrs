@@ -9,6 +9,7 @@ exports.addClarification = async (user, data) => {
         type, // 'citation' or 'appreciation'
         application_id,
         parameter_name,
+        parameter_id,
         clarification,
         clarification_doc,
         reviewer_comment, // new field added
@@ -17,24 +18,34 @@ exports.addClarification = async (user, data) => {
       await client.query('BEGIN');
   
       const insertQuery = `
-        INSERT INTO Clarification_tab (
-          application_type, application_id, parameter_name,
-          clarification_by_id, clarification_by_role,
-          clarification_status, clarification, clarification_doc, reviewer_comment, clarification_sent_at
-        ) VALUES ($1, $2, $3, $4, $5, 'pending', $6, $7, $8, NOW())
-        RETURNING clarification_id;
-      `;
-  
-      const values = [
-        type,
+      INSERT INTO Clarification_tab (
+        application_type,
         application_id,
+        parameter_id,             
         parameter_name,
-        user.user_id,
-        user.user_role,
+        clarification_by_id,
+        clarification_by_role,
+        clarification_status,
         clarification,
         clarification_doc,
-        reviewer_comment,  // included in insert values
-      ];
+        reviewer_comment,
+        clarification_sent_at
+      )
+      VALUES ($1, $2, $3, $4, $5, $6, 'pending', $7, $8, $9, NOW())
+      RETURNING clarification_id;
+    `;
+
+    const values = [
+      type,
+      application_id,
+      parameter_id,              
+      parameter_name,
+      user.user_id,
+      user.user_role,
+      clarification,
+      clarification_doc,
+      reviewer_comment,
+    ];
   
       const result = await client.query(insertQuery, values);
       const clarificationId = result.rows[0].clarification_id;
@@ -57,7 +68,7 @@ exports.addClarification = async (user, data) => {
       const updatedFds = {
         ...fds,
         parameters: fds.parameters.map(param => {
-          if (param.name === parameter_name) {
+          if (param.id === parameter_id) {
             return {
               ...param,
               clarification_id: clarificationId,

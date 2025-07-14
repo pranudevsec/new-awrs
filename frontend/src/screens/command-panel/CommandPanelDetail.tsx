@@ -20,6 +20,7 @@ const CommandPanelDetail = () => {
   const [clarificationType, _] = useState<string>("appreciation");
   const [clarificationApplicationId, _1] = useState<number>(0);
   const [clarificationParameterName, _2] = useState<string>("");
+  const [clarificationParameterId, _5] = useState<string>("");
   const [clarificationDocForView, _3] = useState<string | null>(null);
   const [clarificationClarificationForView, _4] = useState<string | null>(null);
   const [reqClarificationShow, setReqClarificationShow] = useState(false);
@@ -278,6 +279,7 @@ const CommandPanelDetail = () => {
         type={clarificationType}
         application_id={clarificationApplicationId}
         parameter_name={clarificationParameterName}
+        parameter_id={clarificationParameterId}
         setIsRefreshData={setIsRefreshData}
         isRefreshData={isRefreshData}
       />

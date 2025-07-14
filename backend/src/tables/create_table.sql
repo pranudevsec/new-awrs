@@ -252,6 +252,7 @@ CREATE TABLE Clarification_tab (
     clarification_id SERIAL PRIMARY KEY,
     application_type VARCHAR(20) NOT NULL CHECK (application_type IN ('citation', 'appreciation')),
     application_id INTEGER NOT NULL,
+    parameter_id INTEGER NOT NULL,
     parameter_name TEXT NOT NULL,
 
     clarification_by_id INTEGER NOT NULL,

@@ -11,6 +11,7 @@ interface ClarificationModalProps {
   type: string;
   application_id: number;
   parameter_name: string;
+  parameter_id: string;
   isRefreshData: boolean;
   setIsRefreshData: React.Dispatch<React.SetStateAction<boolean>>;
 }
@@ -21,6 +22,7 @@ const UnitClarificationModal: React.FC<ClarificationModalProps> = ({
   type,
   application_id,
   parameter_name,
+  parameter_id,
   setIsRefreshData,
   isRefreshData
 }) => {
@@ -34,6 +36,7 @@ const UnitClarificationModal: React.FC<ClarificationModalProps> = ({
       type,
       application_id,
       parameter_name,
+  parameter_id,
       reviewer_comment: comment,
     };
 

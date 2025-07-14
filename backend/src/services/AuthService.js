@@ -116,7 +116,7 @@ exports.getProfile = async ({ user_id }) => {
         u.is_officer,
         u.is_member,
         u.is_member_added, 
-        u.officer_id                 -- added
+        u.officer_id
       FROM User_tab u
       WHERE u.user_id = $1
       `,
@@ -135,12 +135,10 @@ exports.getProfile = async ({ user_id }) => {
     let effectiveUnitId = user.unit_id;
 
     if (!effectiveUnitId && user.is_member && user.officer_id) {
-      // If user is a member and has an officer_id, fetch officer's unit_id
       const officerResult = await db.query(
         `SELECT unit_id FROM User_tab WHERE user_id = $1`,
         [user.officer_id]
       );
-
       if (officerResult.rows.length > 0) {
         effectiveUnitId = officerResult.rows[0].unit_id;
       }
@@ -180,7 +178,19 @@ exports.getProfile = async ({ user_id }) => {
       }
     }
 
-    // Step 4: Return structured response
+    // Step 4: Fetch registered member's username if is_member_added is true
+    let memberUsername = null;
+    if (user.is_member_added) {
+      const memberResult = await db.query(
+        `SELECT username FROM User_tab WHERE officer_id = $1 LIMIT 1`,
+        [user.user_id]
+      );
+      if (memberResult.rows.length > 0) {
+        memberUsername = memberResult.rows[0].username;
+      }
+    }
+
+    // Step 5: Return structured response
     return ResponseHelper.success(200, MSG.FOUND_SUCCESS, {
       user: {
         user_id: user.user_id,
@@ -194,6 +204,7 @@ exports.getProfile = async ({ user_id }) => {
         is_officer: user.is_officer,
         is_member: user.is_member,
         is_member_added: user.is_member_added,
+        member_username: memberUsername,
       },
       unit: unitData,
     });
