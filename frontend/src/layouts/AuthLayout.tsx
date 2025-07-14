@@ -3,6 +3,7 @@ import { useAppSelector } from '../reduxToolkit/hooks';
 import SidebarMenu from './components/SidebarMenu';
 import Header from './components/Header';
 import Topbar from './components/Topbar';
+import Footer from './components/Footer';
 
 const AuthLayout = ({ children }: { children: React.ReactNode }) => {
     const token = !!useAppSelector((state) => state.admin).admin?.token;
@@ -41,6 +42,7 @@ const AuthLayout = ({ children }: { children: React.ReactNode }) => {
                     </div>
                 </div>
             </main>
+            <Footer/>
         </>
     );
 }

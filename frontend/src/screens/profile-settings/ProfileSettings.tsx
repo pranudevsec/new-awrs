@@ -83,7 +83,7 @@ const ProfileSettings = () => {
     if (profile?.unit?.awards && Array.isArray(profile.unit.awards)) {
       const processedAwards = profile.unit.awards.map((award) => ({
         award_id: award.award_id ?? undefined,
-        award_type: award.award_type ?? "goc",
+        award_type: award.award_type ?? "GOC-in-C",
         award_title: award.award_title ?? "",
         award_year: award.award_year ?? "",
       }));
@@ -529,15 +529,15 @@ const ProfileSettings = () => {
                             onChange={(e) => {
                               const updated = [...awards];
                               updated[idx].award_type = e.target.value as
-                                | "goc"
-                                | "coas"
-                                | "cds";
+                                | "GOC-in-C"
+                                | "COAS"
+                                | "CDS";
                               setAwards(updated);
                             }}
                           >
-                            <option value="goc">GOC-in-C</option>
-                            <option value="coas">COAS</option>
-                            <option value="cds">CDS</option>
+                            <option value="GOC-in-C">GOC-in-C</option>
+                            <option value="COAS">COAS</option>
+                            <option value="CDS">CDS</option>
                           </select>
                         </td>
                         <td>
@@ -601,7 +601,7 @@ const ProfileSettings = () => {
                   onClick={() => {
                     setAwards((prev) => [
                       ...prev,
-                      { award_type: "goc", award_title: "", award_year: "" },
+                      { award_type: "GOC-in-C", award_title: "", award_year: "" },
                     ]);
                   }}
                 >
@@ -997,23 +997,25 @@ const ProfileSettings = () => {
 
       {["brigade", "division", "corps", "command"].includes(role) && (
         <>
-          <div className="d-flex flex-sm-row flex-column align-items-sm-center justify-content-between mb-4">
-            <Breadcrumb title="Staff Register" />
-          </div>
 
           {profile?.user?.is_member_added ? (
-            <div className="mb-5">
-              <div className="row">
-                <div className="col-sm-6 mb-3">
-                  <FormInput
-                    label="Registered Member Username"
-                    name="memberUsername"
-                    value={profile.user.member_username || ""}
-                    disabled
-                  />
+            <>
+            <div className="d-flex flex-sm-row flex-column align-items-sm-center justify-content-between mb-4">
+              <Breadcrumb title="Staff Officer Register" />
+            </div>
+              <div className="mb-5">
+                <div className="row">
+                  <div className="col-sm-6 mb-3">
+                    <FormInput
+                      label="Registered Member Username"
+                      name="memberUsername"
+                      value={profile.user.member_username || ""}
+                      disabled
+                    />
+                  </div>
                 </div>
               </div>
-            </div>
+            </>
           ) : (
             !profile?.user?.is_member && (
               <form className="mb-5" onSubmit={memberFormik.handleSubmit}>
