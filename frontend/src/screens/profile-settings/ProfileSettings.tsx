@@ -992,67 +992,67 @@ const ProfileSettings = () => {
         </>
       )}
 
-{["brigade", "division", "corps", "command"].includes(role) && (
-  <>
-    <div className="d-flex flex-sm-row flex-column align-items-sm-center justify-content-between mb-4">
-      <Breadcrumb title="Staff Register" />
-    </div>
-
-    {profile?.user?.is_member_added ? (
-      <div className="mb-5">
-        <div className="row">
-          <div className="col-sm-6 mb-3">
-            <FormInput
-              label="Registered Member Username"
-              name="memberUsername"
-              value={profile.user.member_username || ""}
-              disabled
-            />
+      {["brigade", "division", "corps", "command"].includes(role) && (
+        <>
+          <div className="d-flex flex-sm-row flex-column align-items-sm-center justify-content-between mb-4">
+            <Breadcrumb title="Staff Register" />
           </div>
-        </div>
-      </div>
-    ) : (
-      !profile?.user?.is_member && (
-        <form className="mb-5" onSubmit={memberFormik.handleSubmit}>
-          <div className="row">
-            <div className="col-sm-6 mb-3">
-              <FormInput
-                label="Username"
-                name="memberUsername"
-                placeholder="Enter Username"
-                value={memberFormik.values.memberUsername}
-                onChange={memberFormik.handleChange}
-                onBlur={memberFormik.handleBlur}
-                errors={memberFormik.errors.memberUsername}
-                touched={memberFormik.touched.memberUsername}
-              />
-            </div>
-            <div className="col-sm-6 mb-3">
-              <FormInput
-                label="Password"
-                name="memberPassword"
-                placeholder="Enter Password"
-                type="password"
-                value={memberFormik.values.memberPassword}
-                onChange={memberFormik.handleChange}
-                onBlur={memberFormik.handleBlur}
-                errors={memberFormik.errors.memberPassword}
-                touched={memberFormik.touched.memberPassword}
-              />
-            </div>
-            <div className="col-12 mt-2">
-              <div className="d-flex align-items-center">
-                <button type="submit" className="_btn _btn-lg primary">
-                  Register
-                </button>
+
+          {profile?.user?.is_member_added ? (
+            <div className="mb-5">
+              <div className="row">
+                <div className="col-sm-6 mb-3">
+                  <FormInput
+                    label="Registered Member Username"
+                    name="memberUsername"
+                    value={profile.user.member_username || ""}
+                    disabled
+                  />
+                </div>
               </div>
             </div>
-          </div>
-        </form>
-      )
-    )}
-  </>
-)}
+          ) : (
+            !profile?.user?.is_member && (
+              <form className="mb-5" onSubmit={memberFormik.handleSubmit}>
+                <div className="row">
+                  <div className="col-sm-6 mb-3">
+                    <FormInput
+                      label="Username"
+                      name="memberUsername"
+                      placeholder="Enter Username"
+                      value={memberFormik.values.memberUsername}
+                      onChange={memberFormik.handleChange}
+                      onBlur={memberFormik.handleBlur}
+                      errors={memberFormik.errors.memberUsername}
+                      touched={memberFormik.touched.memberUsername}
+                    />
+                  </div>
+                  <div className="col-sm-6 mb-3">
+                    <FormInput
+                      label="Password"
+                      name="memberPassword"
+                      placeholder="Enter Password"
+                      type="password"
+                      value={memberFormik.values.memberPassword}
+                      onChange={memberFormik.handleChange}
+                      onBlur={memberFormik.handleBlur}
+                      errors={memberFormik.errors.memberPassword}
+                      touched={memberFormik.touched.memberPassword}
+                    />
+                  </div>
+                  <div className="col-12 mt-2">
+                    <div className="d-flex align-items-center">
+                      <button type="submit" className="_btn _btn-lg primary">
+                        Register
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </form>
+            )
+          )}
+        </>
+      )}
 
     </div>
   );

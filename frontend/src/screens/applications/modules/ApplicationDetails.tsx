@@ -103,7 +103,7 @@ const ApplicationDetails = () => {
   const [decisions, setDecisions] = useState<{ [memberId: string]: string }>(
     {}
   );
-console.log(clarificationParameterId)
+  console.log(clarificationParameterId)
   let userPriority = "";
 
   if (role === "cw2" && Array.isArray(unitDetail?.fds?.applicationPriority)) {
@@ -137,71 +137,71 @@ console.log(clarificationParameterId)
 
   const calculateParameterStats = (parameters: any[]) => {
     const totalParams = parameters.length;
-  
+
     const filledParams = parameters.filter(
       (param) => (param.count ?? 0) > 0 || (param.marks ?? 0) > 0
     ).length;
-  
+
     const marks = parameters.reduce((acc, param) => {
       const isRejected =
         param.clarification_details?.clarification_status === "rejected";
-    
+
       const isNegative = param.negative === true;
-    
+
       if (isRejected || isNegative) return acc;
-    
+
       return acc + (param.marks ?? 0);
     }, 0);
     const approvedMarks = parameters.reduce((acc, param) => {
       const isRejected =
         param.clarification_details?.clarification_status === "rejected";
-  
+
       return acc + (isRejected ? 0 : Number(param.approved_marks ?? 0));
     }, 0);
-  
+
     // Calculate negativeMarks
     const negativeMarks = parameters.reduce((acc, param) => {
       const isRejected =
         param.clarification_details?.clarification_status === "rejected";
-  
+
       if (isRejected) return acc;
-  
+
       const hasValidApproved =
         param.approved_marks !== undefined &&
         param.approved_marks !== null &&
         param.approved_marks !== "" &&
         !isNaN(Number(param.approved_marks));
-  
+
       const approved = hasValidApproved ? Number(param.approved_marks) : null;
       const original = param.marks ?? 0;
-  
+
       const valueToCheck = approved !== null ? approved : original;
-  
+
       return acc + (param.negative === true ? valueToCheck : 0);
     }, 0);
-  
+
     const totalParameterMarks = parameters.reduce((acc, param) => {
       const isRejected =
         param.clarification_details?.clarification_status === "rejected";
-    
+
       if (isRejected) return acc;
-    
-      if (param.negative === true) return acc; 
-    
+
+      if (param.negative === true) return acc;
+
       const hasValidApproved =
         param.approved_marks !== undefined &&
         param.approved_marks !== null &&
         param.approved_marks !== "" &&
         !isNaN(Number(param.approved_marks));
-    
+
       const approved = hasValidApproved ? Number(param.approved_marks) : null;
       const original = param.marks ?? 0;
-    
+
       return acc + (approved !== null ? approved : original);
     }, 0);
-    
+
     let totalMarks = totalParameterMarks + Number(graceMarks ?? 0) - negativeMarks;
-    
+
     if (totalMarks < 0) totalMarks = 0;
     return {
       totalParams,
@@ -212,7 +212,7 @@ console.log(clarificationParameterId)
       totalMarks,
     };
   };
-  
+
 
   useEffect(() => {
     const parameters = unitDetail?.fds?.parameters || [];
@@ -524,10 +524,6 @@ console.log(clarificationParameterId)
         });
       }
     }
-    // } else {
-    //   toast.error(result.payload as string || "Token validation failed");
-    //   return;
-    // }
   };
 
   // Development handleAddsignature
@@ -654,7 +650,7 @@ console.log(clarificationParameterId)
                 </thead>
                 <tbody>
                   {unitDetail?.fds?.awards?.map((award: any) => (
-                    <tr key={award.award_id}>
+                    <tr key={award.award_id} className="cursor-auto">
                       <td style={{ width: 150, minWidth: 150, maxWidth: 150 }}>
                         <p className="fw-4 text-capitalize">
                           {award.award_type}
@@ -765,10 +761,10 @@ console.log(clarificationParameterId)
                           <p className="fw-5">{param.count}</p>
                         </td>
                         <td style={{ width: 100 }}>
-  <p className="fw-5">
-    {param.negative === true ? `-${param.marks}` : param.marks}
-  </p>
-</td>
+                          <p className="fw-5">
+                            {param.negative === true ? `-${param.marks}` : param.marks}
+                          </p>
+                        </td>
                         <td style={{ width: 200 }}>
                           {param.upload ? (
                             <a
@@ -1108,96 +1104,96 @@ console.log(clarificationParameterId)
                     Submit Signatures:
                   </label>
                   <table className="table-style-1 w-100">
-  <thead className="table-light">
-    <tr>
-      <th style={{ width: "25%" }}>Member</th>
-      <th style={{ width: "25%" }}>Name</th>
-      <th style={{ width: "25%" }}>Rank</th>
-      <th style={{ width: "25%" }}>Signature</th>
-    </tr>
-  </thead>
-  <tbody>
-    {[
-      // Always show all presiding officers first
-      ...profile.unit.members.filter(
-        (m) => m.member_type === "presiding_officer"
-      ),
-      // Then show member officers, sorted by member_order
-      ...profile.unit.members
-        .filter((m) => m.member_type === "member_officer")
-        .sort(
-          (a, b) =>
-            Number(a.member_order || 0) - Number(b.member_order || 0)
-        ),
-    ].map((member) => {
-      const acceptedMembers = unitDetail?.fds?.accepted_members || [];
-      const foundMember = acceptedMembers.find(
-        (m:any) => m.member_id === member.id
-      );
-      const isSignatureAdded = foundMember?.is_signature_added === true;
+                    <thead className="table-light">
+                      <tr>
+                        <th style={{ width: "25%" }}>Member</th>
+                        <th style={{ width: "25%" }}>Name</th>
+                        <th style={{ width: "25%" }}>Rank</th>
+                        <th style={{ width: "25%" }}>Signature</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {[
+                        // Always show all presiding officers first
+                        ...profile.unit.members.filter(
+                          (m) => m.member_type === "presiding_officer"
+                        ),
+                        // Then show member officers, sorted by member_order
+                        ...profile.unit.members
+                          .filter((m) => m.member_type === "member_officer")
+                          .sort(
+                            (a, b) =>
+                              Number(a.member_order || 0) - Number(b.member_order || 0)
+                          ),
+                      ].map((member) => {
+                        const acceptedMembers = unitDetail?.fds?.accepted_members || [];
+                        const foundMember = acceptedMembers.find(
+                          (m: any) => m.member_id === member.id
+                        );
+                        const isSignatureAdded = foundMember?.is_signature_added === true;
 
-      return (
-        <tr key={member.id}>
-          <td>
-            {member.member_type === "presiding_officer"
-              ? "Presiding Officer"
-              : "Member Officer"}
-          </td>
-          <td>{member.name || "-"}</td>
-          <td>{member.rank || "-"}</td>
-          <td>
-            <div className="d-flex flex-sm-row flex-column gap-sm-3 gap-1 align-items-center">
-              {member.member_type === "presiding_officer" &&
-                !isSignatureAdded && (
-                  <>
-                    {isReadyToSubmit && (
-                      <button
-                        type="button"
-                        className="_btn success w-sm-auto"
-                        onClick={() =>
-                          handleAddsignature(member, "accepted")
-                        }
-                      >
-                        Accept
-                      </button>
-                    )}
-                    <button
-                      type="button"
-                      className="_btn danger w-sm-auto"
-                      onClick={() =>
-                        handleAddsignature(member, "rejected")
-                      }
-                    >
-                      Decline
-                    </button>
-                  </>
-                )}
+                        return (
+                          <tr key={member.id}>
+                            <td>
+                              {member.member_type === "presiding_officer"
+                                ? "Presiding Officer"
+                                : "Member Officer"}
+                            </td>
+                            <td>{member.name || "-"}</td>
+                            <td>{member.rank || "-"}</td>
+                            <td>
+                              <div className="d-flex flex-sm-row flex-column gap-sm-3 gap-1 align-items-center">
+                                {member.member_type === "presiding_officer" &&
+                                  !isSignatureAdded && (
+                                    <>
+                                      {isReadyToSubmit && (
+                                        <button
+                                          type="button"
+                                          className="_btn success w-sm-auto"
+                                          onClick={() =>
+                                            handleAddsignature(member, "accepted")
+                                          }
+                                        >
+                                          Accept
+                                        </button>
+                                      )}
+                                      <button
+                                        type="button"
+                                        className="_btn danger w-sm-auto"
+                                        onClick={() =>
+                                          handleAddsignature(member, "rejected")
+                                        }
+                                      >
+                                        Decline
+                                      </button>
+                                    </>
+                                  )}
 
-              {member.member_type !== "presiding_officer" &&
-                !isSignatureAdded && (
-                  <button
-                    type="button"
-                    className="_btn success text-nowrap w-sm-auto"
-                    onClick={() =>
-                      handleAddsignature(member, "accepted")
-                    }
-                  >
-                    Add Signature
-                  </button>
-                )}
+                                {member.member_type !== "presiding_officer" &&
+                                  !isSignatureAdded && (
+                                    <button
+                                      type="button"
+                                      className="_btn success text-nowrap w-sm-auto"
+                                      onClick={() =>
+                                        handleAddsignature(member, "accepted")
+                                      }
+                                    >
+                                      Add Signature
+                                    </button>
+                                  )}
 
-              {isSignatureAdded && (
-                <span className="text-success fw-semibold text-nowrap d-flex align-items-center gap-1">
-                  <FaCheckCircle className="fs-5" /> Signature Added
-                </span>
-              )}
-            </div>
-          </td>
-        </tr>
-      );
-    })}
-  </tbody>
-</table>
+                                {isSignatureAdded && (
+                                  <span className="text-success fw-semibold text-nowrap d-flex align-items-center gap-1">
+                                    <FaCheckCircle className="fs-5" /> Signature Added
+                                  </span>
+                                )}
+                              </div>
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
 
                 </div>
               )}
@@ -1448,16 +1444,16 @@ console.log(clarificationParameterId)
                     </thead>
                     <tbody>
                       {[
-  ...profile.unit.members.filter(
-    (m) => m.member_type === "presiding_officer"
-  ),
-  ...profile.unit.members
-    .filter((m) => m.member_type === "member_officer")
-    .sort(
-      (a, b) =>
-        Number(a.member_order || 0) - Number(b.member_order || 0)
-    )
-].map((member) => {
+                        ...profile.unit.members.filter(
+                          (m) => m.member_type === "presiding_officer"
+                        ),
+                        ...profile.unit.members
+                          .filter((m) => m.member_type === "member_officer")
+                          .sort(
+                            (a, b) =>
+                              Number(a.member_order || 0) - Number(b.member_order || 0)
+                          )
+                      ].map((member) => {
                         const acceptedMembers =
                           unitDetail?.fds?.accepted_members || [];
                         const foundMember = acceptedMembers.find(

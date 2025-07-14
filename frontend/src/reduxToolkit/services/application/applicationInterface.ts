@@ -19,12 +19,12 @@ export interface ApplicationDetail {
   unit_id: number;
   date_init: string;
   fds: any;
-  remarks:any;
+  remarks: any;
   clarifications_count: number;
   total_pending_clarifications: number;
   unit_name: string;
   is_mo_approved: boolean;
-  mo_approved_at: string | null; 
+  mo_approved_at: string | null;
 
   is_ol_approved: boolean;
   ol_approved_at: string | null;
@@ -61,8 +61,8 @@ export interface UpdateApplicationParams {
   withdrawRequested?: boolean;
   withdraw_status?: string;
   is_mo_ol_member?: boolean;
-  member?:any;
-  level?:string
+  member?: any;
+  level?: string;
 }
 export interface UpdateApplicationResponse {
   success: boolean;

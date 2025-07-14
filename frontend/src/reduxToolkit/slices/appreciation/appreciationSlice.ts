@@ -1,5 +1,9 @@
 import { createSlice, type PayloadAction } from "@reduxjs/toolkit";
-import { createAppreciation, fetchAppreciationById, updateAppreciation } from "../../services/appreciation/appreciationService";
+import {
+  createAppreciation,
+  fetchAppreciationById,
+  updateAppreciation,
+} from "../../services/appreciation/appreciationService";
 import type { CreateAppreciationResponse } from "../../services/appreciation/appreciationInterface";
 
 interface AppreciationState {
@@ -38,7 +42,10 @@ const appreciationSlice = createSlice({
       })
       .addCase(
         createAppreciation.fulfilled,
-        (state: AppreciationState, action: PayloadAction<CreateAppreciationResponse>) => {
+        (
+          state: AppreciationState,
+          action: PayloadAction<CreateAppreciationResponse>
+        ) => {
           state.loading = false;
           state.success = action.payload.success;
           state.data = action.payload.data || null;
@@ -56,29 +63,47 @@ const appreciationSlice = createSlice({
         state.loading = true;
         state.error = null;
       })
-      .addCase(fetchAppreciationById.fulfilled, (state: AppreciationState, action: PayloadAction<CreateAppreciationResponse>) => {
-        state.loading = false;
-        state.success = action.payload.success;
-        state.draftData = action.payload.data || null;
-      })
-      .addCase(fetchAppreciationById.rejected, (state: AppreciationState, action: PayloadAction<any>) => {
-        state.loading = false;
-        state.error = action.payload || "Failed to fetch appreciation";
-      })
+      .addCase(
+        fetchAppreciationById.fulfilled,
+        (
+          state: AppreciationState,
+          action: PayloadAction<CreateAppreciationResponse>
+        ) => {
+          state.loading = false;
+          state.success = action.payload.success;
+          state.draftData = action.payload.data || null;
+        }
+      )
+      .addCase(
+        fetchAppreciationById.rejected,
+        (state: AppreciationState, action: PayloadAction<any>) => {
+          state.loading = false;
+          state.error = action.payload || "Failed to fetch appreciation";
+        }
+      )
       .addCase(updateAppreciation.pending, (state: AppreciationState) => {
         state.loading = true;
         state.error = null;
       })
-      .addCase(updateAppreciation.fulfilled, (state: AppreciationState, action: PayloadAction<CreateAppreciationResponse>) => {
-        state.loading = false;
-        state.success = action.payload.success;
-        state.data = action.payload.data || null;
-      })
-      .addCase(updateAppreciation.rejected, (state: AppreciationState, action: PayloadAction<any>) => {
-        state.loading = false;
-        state.error = action.payload || "Failed to update appreciation";
-      });
-  }
+      .addCase(
+        updateAppreciation.fulfilled,
+        (
+          state: AppreciationState,
+          action: PayloadAction<CreateAppreciationResponse>
+        ) => {
+          state.loading = false;
+          state.success = action.payload.success;
+          state.data = action.payload.data || null;
+        }
+      )
+      .addCase(
+        updateAppreciation.rejected,
+        (state: AppreciationState, action: PayloadAction<any>) => {
+          state.loading = false;
+          state.error = action.payload || "Failed to update appreciation";
+        }
+      );
+  },
 });
 
 export const { resetAppreciationState } = appreciationSlice.actions;

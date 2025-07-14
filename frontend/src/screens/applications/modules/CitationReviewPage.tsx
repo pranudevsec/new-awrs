@@ -202,16 +202,16 @@ const CitationReviewPage = () => {
         }
         const requiredFields = profile?.user?.is_special_unit
           ? [
-              { key: "comd", name: "Command" },
-              { key: "name", name: "Unit Name" },
-            ]
+            { key: "comd", name: "Command" },
+            { key: "name", name: "Unit Name" },
+          ]
           : [
-              { key: "bde", name: "Brigade" },
-              { key: "div", name: "Division" },
-              { key: "corps", name: "Corps" },
-              { key: "comd", name: "Command" },
-              { key: "name", name: "Unit Name" },
-            ];
+            { key: "bde", name: "Brigade" },
+            { key: "div", name: "Division" },
+            { key: "corps", name: "Corps" },
+            { key: "comd", name: "Command" },
+            { key: "name", name: "Unit Name" },
+          ];
 
         const missingFields = requiredFields.filter(
           (field) => !profile?.unit?.[field.key]
@@ -573,7 +573,7 @@ const CitationReviewPage = () => {
                             >
                               <p className="fw-5">
                                 {countValue !== undefined &&
-                                countValue !== "" ? (
+                                  countValue !== "" ? (
                                   <span>{countValue}</span>
                                 ) : (
                                   <span>--</span>
@@ -606,31 +606,31 @@ const CitationReviewPage = () => {
                                 <>
                                   {uploadedFiles[param.param_id]?.length >
                                     0 && (
-                                    <div
-                                      style={{
-                                        display: "flex",
-                                        flexDirection: "column",
-                                        gap: "4px",
-                                      }}
-                                    >
-                                      {uploadedFiles[param.param_id].map(
-                                        (fileUrl, idx) => (
-                                          <a
-                                            key={idx}
-                                            href={`${baseURL}${fileUrl}`}
-                                            target="_blank"
-                                            rel="noopener noreferrer"
-                                            style={{
-                                              fontSize: 14,
-                                              wordBreak: "break-all",
-                                            }}
-                                          >
-                                            {fileUrl.split("/").pop()}
-                                          </a>
-                                        )
-                                      )}
-                                    </div>
-                                  )}
+                                      <div
+                                        style={{
+                                          display: "flex",
+                                          flexDirection: "column",
+                                          gap: "4px",
+                                        }}
+                                      >
+                                        {uploadedFiles[param.param_id].map(
+                                          (fileUrl, idx) => (
+                                            <a
+                                              key={idx}
+                                              href={`${baseURL}${fileUrl}`}
+                                              target="_blank"
+                                              rel="noopener noreferrer"
+                                              style={{
+                                                fontSize: 14,
+                                                wordBreak: "break-all",
+                                              }}
+                                            >
+                                              {fileUrl.split("/").pop()}
+                                            </a>
+                                          )
+                                        )}
+                                      </div>
+                                    )}
                                   <input
                                     type="file"
                                     className="form-control mt-1"

@@ -6,16 +6,29 @@ import type { ParameterRequest, ParameterResponse } from "./parameterInterface";
 
 export const fetchParameters = createAsyncThunk<
   ParameterResponse,
-  { awardType: string; search: string; matrix_unit?:string; comd?:string; unit_type?:string; page?: number; limit?: number }
+  {
+    awardType: string;
+    search: string;
+    matrix_unit?: string;
+    comd?: string;
+    unit_type?: string;
+    page?: number;
+    limit?: number;
+  }
 >(
   "parameters/fetch",
-  async ({ awardType, search,matrix_unit,comd,unit_type, page, limit }, { rejectWithValue }) => {
-  // async ({ awardType, search, page, limit }, { rejectWithValue }) => {
+  async (
+    { awardType, search, matrix_unit, comd, unit_type, page, limit },
+    { rejectWithValue }
+  ) => {
+    // async ({ awardType, search, page, limit }, { rejectWithValue }) => {
     try {
       const response = await Axios.get(
         `${apiEndPoints.parameter}?awardType=${
           awardType || ""
-        }&search=${search}&matrix_unit=${matrix_unit || ""}&comd=${comd|| ""}&unit_type=${unit_type || ""}&page=${page || 1}&limit=${limit || 10}`
+        }&search=${search}&matrix_unit=${matrix_unit || ""}&comd=${
+          comd || ""
+        }&unit_type=${unit_type || ""}&page=${page || 1}&limit=${limit || 10}`
       );
       // const response = await Axios.get(
       //   `${apiEndPoints.parameter}?awardType=${

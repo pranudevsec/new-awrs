@@ -83,7 +83,7 @@ const Withdraw = () => {
         <FormSelect
           name="awardType"
           options={awardTypeOptions}
-          value={awardType}
+          value={awardTypeOptions.find((opt) => opt.value === awardType) || null}
           placeholder="Select Type"
           onChange={(option: OptionType | null) =>
             setAwardType(option ? option.value : null)
@@ -133,6 +133,7 @@ const Withdraw = () => {
               units.map((unit: any, idx) => (
                 <tr
                   key={idx}
+                  className="cursor-auto"
                 //   onClick={() => {
                 //     if (unit.status_flag === "draft") {
                 //       navigate(`/applications/${unit.type}?id=${unit.id}`);

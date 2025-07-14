@@ -11,10 +11,10 @@ import App from './App.tsx';
 createRoot(document.getElementById('root')!).render(
   <Provider store={store}>
     <PersistGate loading={null} persistor={persistor}>
-        <BrowserRouter>
-          <App />
-          <Toaster position="top-center" />
-        </BrowserRouter>
+      <BrowserRouter>
+        <App />
+        <Toaster position="top-center" />
+      </BrowserRouter>
     </PersistGate>
   </Provider>
 )

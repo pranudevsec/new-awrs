@@ -39,21 +39,21 @@ const CommandPanelDetail = () => {
   const filledParams = parameters.filter((param: any) =>
     (param.count ?? 0) > 0 || (param.marks ?? 0) > 0
   ).length;
-  
+
   const negativeMarks = parameters.reduce((acc: any, param: any) => {
     if (param.negative === true) {
       return acc + (param.marks ?? 0);
     }
     return acc;
   }, 0);
-  
+
   const totalMarks = parameters.reduce((acc: any, param: any) => {
     if (param.negative === true) {
-      return acc; 
+      return acc;
     }
     return acc + (param.marks ?? 0);
   }, 0);
-  
+
   useEffect(() => {
     console.log(unitDetail?.fds?.parameters)
     if (unitDetail?.fds?.parameters) {

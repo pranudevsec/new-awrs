@@ -24,7 +24,7 @@ const TopWinnersList = () => {
                         </tr>
                     </thead>
                     <tbody>
-                        <tr>
+                        <tr className="cursor-auto">
                             <td style={{ width: 200, minWidth: 200, maxWidth: 200 }}>
                                 <p className="fw-4">#123456</p>
                             </td>
@@ -41,7 +41,7 @@ const TopWinnersList = () => {
                                 <p className="fw-4">Citation</p>
                             </td>
                         </tr>
-                        <tr>
+                        <tr className="cursor-auto">
                             <td style={{ width: 200, minWidth: 200, maxWidth: 200 }}>
                                 <p className="fw-4">#123456</p>
                             </td>
@@ -58,7 +58,7 @@ const TopWinnersList = () => {
                                 <p className="fw-4">Citation</p>
                             </td>
                         </tr>
-                        <tr>
+                        <tr className="cursor-auto">
                             <td style={{ width: 200, minWidth: 200, maxWidth: 200 }}>
                                 <p className="fw-4">#123456</p>
                             </td>
@@ -75,7 +75,7 @@ const TopWinnersList = () => {
                                 <p className="fw-4">Citation</p>
                             </td>
                         </tr>
-                        <tr>
+                        <tr className="cursor-auto">
                             <td style={{ width: 200, minWidth: 200, maxWidth: 200 }}>
                                 <p className="fw-4">#123456</p>
                             </td>
@@ -92,7 +92,7 @@ const TopWinnersList = () => {
                                 <p className="fw-4">Citation</p>
                             </td>
                         </tr>
-                        <tr>
+                        <tr className="cursor-auto">
                             <td style={{ width: 200, minWidth: 200, maxWidth: 200 }}>
                                 <p className="fw-4">#123456</p>
                             </td>
@@ -109,7 +109,7 @@ const TopWinnersList = () => {
                                 <p className="fw-4">Citation</p>
                             </td>
                         </tr>
-                        <tr>
+                        <tr className="cursor-auto">
                             <td style={{ width: 200, minWidth: 200, maxWidth: 200 }}>
                                 <p className="fw-4">#123456</p>
                             </td>

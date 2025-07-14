@@ -14,10 +14,10 @@ import type {
   UpdateApplicationParams,
   UpdateApplicationResponse,
   TokenValidationParam,
-  TokenValidationResponse
+  TokenValidationResponse,
 } from "./applicationInterface";
 import { apiEndPoints } from "../../../constants";
-import { create } from 'xmlbuilder2';
+import { create } from "xmlbuilder2";
 
 const URL = import.meta.env.VITE_VALIDATE_TOKEN_URL;
 
@@ -109,9 +109,10 @@ export const fetchApplicationHistory = createAsyncThunk<
         errors: response.data.errors,
       });
     }
-  }  catch (error: any) {
+  } catch (error: any) {
     return rejectWithValue({
-      message: error.response?.data?.message || "Failed to fetch all applications",
+      message:
+        error.response?.data?.message || "Failed to fetch all applications",
       errors: error.response?.data?.errors,
     });
   }
@@ -120,8 +121,53 @@ export const fetchApplicationHistory = createAsyncThunk<
 export const fetchAllApplications = createAsyncThunk<
   FetchApplicationUnitsResponse,
   FetchUnitsParams | undefined
+>("applications/fetchAllApplications", async (params, { rejectWithValue }) => {
+  try {
+    const queryParams = new URLSearchParams();
+
+    if (params?.award_type) {
+      queryParams.append("award_type", params.award_type);
+    }
+    if (params?.search) {
+      queryParams.append("search", params.search);
+    }
+    if (params?.page) {
+      queryParams.append("page", String(params.page));
+    }
+    if (params?.limit) {
+      queryParams.append("limit", String(params.limit));
+    }
+
+    const response = await Axios.get(
+      `${apiEndPoints.applicationAll}?${queryParams.toString()}`
+    );
+
+    if (response.data.success) {
+      return response.data;
+    } else {
+      // toast.error(response.data.message || "Failed to fetch all applications");
+      return rejectWithValue({
+        message: response.data.message || "Failed to fetch all applications",
+        errors: response.data.errors,
+      });
+    }
+  } catch (error: any) {
+    // toast.error(
+    //   error.response?.data?.message || "Error fetching all applications"
+    // );
+    return rejectWithValue({
+      message:
+        error.response?.data?.message || "Failed to fetch all applications",
+      errors: error.response?.data?.errors,
+    });
+  }
+});
+
+export const fetchApplicationsForHQ = createAsyncThunk<
+  FetchApplicationUnitsResponse,
+  FetchHQApplicationsParams | undefined
 >(
-  "applications/fetchAllApplications",
+  "applications/fetchApplicationsForHQ",
   async (params, { rejectWithValue }) => {
     try {
       const queryParams = new URLSearchParams();
@@ -140,70 +186,25 @@ export const fetchAllApplications = createAsyncThunk<
       }
 
       const response = await Axios.get(
-        `${apiEndPoints.applicationAll}?${queryParams.toString()}`
+        `${apiEndPoints.application}/headquarter?${queryParams.toString()}`
       );
 
       if (response.data.success) {
         return response.data;
       } else {
-        // toast.error(response.data.message || "Failed to fetch all applications");
-        return rejectWithValue({
-          message: response.data.message || "Failed to fetch all applications",
-          errors: response.data.errors,
-        });
+        toast.error(response.data.message || "Failed to fetch HQ applications");
+        return rejectWithValue(response.data.message);
       }
     } catch (error: any) {
-      // toast.error(
-      //   error.response?.data?.message || "Error fetching all applications"
-      // );
-      return rejectWithValue({
-        message: error.response?.data?.message || "Failed to fetch all applications",
-        errors: error.response?.data?.errors,
-      });
+      toast.error(
+        error.response?.data?.message || "Error fetching HQ applications"
+      );
+      return rejectWithValue(
+        error.response?.data?.message || "Failed to fetch HQ applications"
+      );
     }
   }
 );
-
-
-export const fetchApplicationsForHQ = createAsyncThunk<
-  FetchApplicationUnitsResponse, 
-  FetchHQApplicationsParams | undefined
->("applications/fetchApplicationsForHQ", async (params, { rejectWithValue }) => {
-  try {
-    const queryParams = new URLSearchParams();
-
-    if (params?.award_type) {
-      queryParams.append("award_type", params.award_type);
-    }
-    if (params?.search) {
-      queryParams.append("search", params.search);
-    }
-    if (params?.page) {
-      queryParams.append("page", String(params.page));
-    }
-    if (params?.limit) {
-      queryParams.append("limit", String(params.limit));
-    }
-
-    const response = await Axios.get(
-      `${apiEndPoints.application}/headquarter?${queryParams.toString()}`
-    );
-
-    if (response.data.success) {
-      return response.data;
-    } else {
-      toast.error(response.data.message || "Failed to fetch HQ applications");
-      return rejectWithValue(response.data.message);
-    }
-  } catch (error: any) {
-    toast.error(
-      error.response?.data?.message || "Error fetching HQ applications"
-    );
-    return rejectWithValue(
-      error.response?.data?.message || "Failed to fetch HQ applications"
-    );
-  }
-});
 
 interface FetchUnitDetailParams {
   award_type: string;
@@ -253,10 +254,16 @@ export const fetchSubordinates = createAsyncThunk<
       queryParams.append("isShortlisted", String(params.isShortlisted));
     }
     if (params?.isGetNotClarifications !== undefined) {
-      queryParams.append("isGetNotClarifications", String(params.isGetNotClarifications));
+      queryParams.append(
+        "isGetNotClarifications",
+        String(params.isGetNotClarifications)
+      );
     }
     if (params?.isGetWithdrawRequests !== undefined) {
-      queryParams.append("isGetWithdrawRequests", String(params.isGetWithdrawRequests));
+      queryParams.append(
+        "isGetWithdrawRequests",
+        String(params.isGetWithdrawRequests)
+      );
     }
     const response = await Axios.get(
       `${apiEndPoints.applicationSubordinates}?${queryParams.toString()}`
@@ -270,9 +277,10 @@ export const fetchSubordinates = createAsyncThunk<
         errors: response.data.errors,
       });
     }
-  }  catch (error: any) {
+  } catch (error: any) {
     return rejectWithValue({
-      message: error.response?.data?.message || "Failed to fetch all applications",
+      message:
+        error.response?.data?.message || "Failed to fetch all applications",
       errors: error.response?.data?.errors,
     });
   }
@@ -289,9 +297,9 @@ export const updateApplication = createAsyncThunk<
         type: params.type,
         status: params.status,
         member: params.member,
-        level:params.level,
-        withdrawRequested:params.withdrawRequested,
-        withdraw_status:params.withdraw_status
+        level: params.level,
+        withdrawRequested: params.withdrawRequested,
+        withdraw_status: params.withdraw_status,
       }
     );
 
@@ -301,11 +309,19 @@ export const updateApplication = createAsyncThunk<
       );
       return response.data;
     } else {
-      toast.error(response.data.errors||response.data.message || "Failed to update application");
+      toast.error(
+        response.data.errors ||
+          response.data.message ||
+          "Failed to update application"
+      );
       return rejectWithValue(response.data.message);
     }
   } catch (error: any) {
-    toast.error( error.response?.data?.errors|| error.response?.data?.message || "Error updating application");
+    toast.error(
+      error.response?.data?.errors ||
+        error.response?.data?.message ||
+        "Error updating application"
+    );
     return rejectWithValue(
       error.response?.data?.message || "Failed to update application"
     );
@@ -315,48 +331,44 @@ export const updateApplication = createAsyncThunk<
 export const approveApplications = createAsyncThunk<
   ApproveApplicationsResponse,
   ApproveApplicationsParams
->(
-  "applications/approveApplications",
-  async (params, { rejectWithValue }) => {
-    try {
-      const payload: any = {
-        type: params.type,
-        status: params.status || "approved",
-      };
+>("applications/approveApplications", async (params, { rejectWithValue }) => {
+  try {
+    const payload: any = {
+      type: params.type,
+      status: params.status || "approved",
+    };
 
-      if (params.id) {
-        payload.id = params.id; 
-      }
-
-      if (params.ids) {
-        payload.ids = params.ids;
-      }
-
-      const response = await Axios.put(
-        `${apiEndPoints.application}/approve/applications`,
-        payload
-      );
-
-      if (response.data.success) {
-        toast.success(
-          response.data.message || "Applications approved successfully"
-        );
-        return response.data;
-      } else {
-        toast.error(response.data.message || "Failed to approve applications");
-        return rejectWithValue(response.data.message);
-      }
-    } catch (error: any) {
-      toast.error(
-        error.response?.data?.message || "Error approving applications"
-      );
-      return rejectWithValue(
-        error.response?.data?.message || "Failed to approve applications"
-      );
+    if (params.id) {
+      payload.id = params.id;
     }
-  }
-);
 
+    if (params.ids) {
+      payload.ids = params.ids;
+    }
+
+    const response = await Axios.put(
+      `${apiEndPoints.application}/approve/applications`,
+      payload
+    );
+
+    if (response.data.success) {
+      toast.success(
+        response.data.message || "Applications approved successfully"
+      );
+      return response.data;
+    } else {
+      toast.error(response.data.message || "Failed to approve applications");
+      return rejectWithValue(response.data.message);
+    }
+  } catch (error: any) {
+    toast.error(
+      error.response?.data?.message || "Error approving applications"
+    );
+    return rejectWithValue(
+      error.response?.data?.message || "Failed to approve applications"
+    );
+  }
+});
 
 export const approveMarks = createAsyncThunk<
   ApproveMarksResponse,
@@ -375,9 +387,7 @@ export const approveMarks = createAsyncThunk<
       return rejectWithValue(response.data.message);
     }
   } catch (error: any) {
-    toast.error(
-      error.response?.data?.message || "Error approving marks"
-    );
+    toast.error(error.response?.data?.message || "Error approving marks");
     return rejectWithValue(
       error.response?.data?.message || "Failed to approve marks"
     );
@@ -387,37 +397,32 @@ export const approveMarks = createAsyncThunk<
 export const addApplicationComment = createAsyncThunk<
   AddCommentResponse,
   AddCommentParam
->(
-  "applications/addApplicationComment",
-  async (body, { rejectWithValue }) => {
-    try {
-      const response = await Axios.post(
-        `${apiEndPoints.application}/add-comment`,
-        body
-      );
+>("applications/addApplicationComment", async (body, { rejectWithValue }) => {
+  try {
+    const response = await Axios.post(
+      `${apiEndPoints.application}/add-comment`,
+      body
+    );
 
-      if (response.data.success) {
-        toast.success(response.data.message || "Comment(s) added successfully");
-        return response.data;
-      } else {
-        toast.error(response.data.message || "Failed to add comment(s)");
-        return rejectWithValue(response.data.message);
-      }
-    } catch (error: any) {
-      toast.error(
-        error.response?.data?.message || "Error adding comment(s)"
-      );
-      return rejectWithValue(
-        error.response?.data?.message || "Failed to add comment(s)"
-      );
+    if (response.data.success) {
+      toast.success(response.data.message || "Comment(s) added successfully");
+      return response.data;
+    } else {
+      toast.error(response.data.message || "Failed to add comment(s)");
+      return rejectWithValue(response.data.message);
     }
+  } catch (error: any) {
+    toast.error(error.response?.data?.message || "Error adding comment(s)");
+    return rejectWithValue(
+      error.response?.data?.message || "Failed to add comment(s)"
+    );
   }
-);
+});
 export const TokenValidation = createAsyncThunk<
-  TokenValidationResponse,       // Return type
-  TokenValidationParam,          // Argument type
+  TokenValidationResponse, // Return type
+  TokenValidationParam, // Argument type
   {
-    rejectValue: string;         // Rejection type
+    rejectValue: string; // Rejection type
   }
 >(
   "applications/validateToken",
@@ -454,23 +459,20 @@ export const TokenValidation = createAsyncThunk<
   }
 );
 
-export const getSignedData = createAsyncThunk<
-  any,
-  any 
->(
+export const getSignedData = createAsyncThunk<any, any>(
   "applications/getSignedData",
   async (body, { rejectWithValue }) => {
     try {
-      const xml = create({ version: '1.0' })
+      const xml = create({ version: "1.0" })
         .ele(body)
         .end({ prettyPrint: true });
 
       const config = {
-        method: 'post' as const,
+        method: "post" as const,
         maxBodyLength: Infinity,
         url: `${URL}/SignXml`,
         headers: {
-          'Content-Type': 'application/xml',
+          "Content-Type": "application/xml",
         },
         data: xml,
       };
@@ -486,8 +488,7 @@ export const getSignedData = createAsyncThunk<
       }
     } catch (error: any) {
       console.error("Data signing error:", error);
-      const message =
-        error?.response?.data?.message || "Error signing data";
+      const message = error?.response?.data?.message || "Error signing data";
       toast.error(message);
       return rejectWithValue(message);
     }

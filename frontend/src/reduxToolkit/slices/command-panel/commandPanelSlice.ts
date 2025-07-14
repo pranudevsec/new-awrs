@@ -20,7 +20,7 @@ interface CommandPanelState {
   success: boolean;
   error: string | null;
   dashboardStats: DashboardStats | null;
-  homeCounts: HomeCountData | null; 
+  homeCounts: HomeCountData | null;
   unitScores: {
     name: string;
     score: number;
