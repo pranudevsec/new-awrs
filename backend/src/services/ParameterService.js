@@ -75,6 +75,7 @@ exports.getAllParameters = async (query) => {
     if (unit_type) {
       values.push(unit_type);
       orConditions.push(`arms_service = $${values.length}`);
+      orConditions.push(`arms_service = 'ALL'`); 
     }
     if (matrix_unit) {
     const matrixUnits = matrix_unit.split(',').map(u => u.trim()).filter(Boolean);

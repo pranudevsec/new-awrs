@@ -296,7 +296,8 @@ const CitationReviewPage = () => {
         }
 
         if (paramsRes.success && paramsRes.data) {
-          setParameters(paramsRes.data);
+          const revParams = [...paramsRes.data].reverse();
+          setParameters(revParams);
         }
       } catch (err) {
         console.error("Failed to fetch data", err);
