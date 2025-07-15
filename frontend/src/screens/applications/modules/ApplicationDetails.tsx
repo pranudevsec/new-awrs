@@ -202,7 +202,6 @@ const ApplicationDetails = () => {
 
     let totalMarks = totalParameterMarks + Number(graceMarks ?? 0) - negativeMarks;
 
-    if (totalMarks < 0) totalMarks = 0;
     return {
       totalParams,
       filledParams,
@@ -466,6 +465,11 @@ const ApplicationDetails = () => {
   };
 
   const handleAddsignature = async (member: any, memberdecision: string) => {
+      if(!priority && (cw2_type === "mo" || cw2_type === "ol")) {
+        toast.error(`Please enter priority`);
+       return;
+  }
+
     //validation
     const newDecisions: { [memberId: string]: string } = {
       ...decisions,
@@ -520,7 +524,6 @@ const ApplicationDetails = () => {
           }
         });
       } else if (memberdecision === "rejected") {
-        console.log(memberdecision);
         dispatch(
           updateApplication({
             ...updatePayload,
@@ -1079,7 +1082,7 @@ const ApplicationDetails = () => {
                 <div className="fw-bold">{paramStats.marks}</div>
               </div>
               <div className="col-6 col-sm-2">
-                <span className="fw-medium text-muted">Nagative Marks:</span>
+                <span className="fw-medium text-muted">Negative Marks:</span>
                 <div className="fw-bold text-danger">-{paramStats.negativeMarks}</div>
               </div>
               <div className="col-6 col-sm-2">

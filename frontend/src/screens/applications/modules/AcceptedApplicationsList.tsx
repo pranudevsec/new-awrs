@@ -112,7 +112,7 @@ const AcceptedApplicationsList = () => {
         (acc: number, item: any) => acc + (item?.marks ?? 0),
         0
       ) ?? 0;
-
+    let totalNegativeMarks= 0;
     const totalParameterMarks = parameters.reduce((acc: number, param: any) => {
       const isRejected =
         param?.clarification_details?.clarification_status === "rejected";
@@ -124,14 +124,16 @@ const AcceptedApplicationsList = () => {
         param?.approved_marks !== null &&
         param?.approved_marks !== "" &&
         !isNaN(Number(param?.approved_marks));
-
       const approved = hasValidApproved ? Number(param.approved_marks) : null;
-      const original = Number(param?.marks ?? 0);
-
+      let original = 0;
+        if(param?.negative){
+        totalNegativeMarks += Number(param?.marks ?? 0);
+        } else {
+        original= Number(param?.marks ?? 0);
+        }
       return acc + (approved !== null ? approved : original);
     }, 0);
-
-    return totalParameterMarks + graceMarks;
+    return totalParameterMarks + graceMarks - totalNegativeMarks;
   };
   const getDiscretionaryMarksByRole = (unit: any, role: string): number => {
     const graceEntry = unit?.fds?.applicationGraceMarks?.find(

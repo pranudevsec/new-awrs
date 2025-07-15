@@ -328,11 +328,6 @@ const AppreciationReviewPage = () => {
     // Subtract negativeMarks from totalMarks
     totalMarks = totalMarks - negativeMarks;
 
-    // Ensure totalMarks does not go negative
-    if (totalMarks < 0) {
-        totalMarks = 0;
-    }
-
     // Total Parameters
     const totalParams = parameters.length;
     // const getParamDisplay = (param: any) => {
