@@ -1174,7 +1174,7 @@ exports.getApplicationsScoreboard = async (user, query) => {
       if (isCommand) {
         return `${alias}.unit_id = ANY($1) AND ${alias}.status_flag = 'approved' AND ${alias}.last_approved_by_role = 'command'`;
       } else {
-        return `${alias}.status_flag = 'approved' AND ${alias}.last_approved_by_role = 'command'`;
+        return `${alias}.status_flag = 'approved' AND ${alias}.last_approved_by_role = 'cw2'`;
       }
     }
 
@@ -1240,18 +1240,18 @@ exports.getApplicationsScoreboard = async (user, query) => {
       new Set(
         allApps.flatMap(
           (app) =>
-            app.fds?.parameters?.map((p) => p.name?.trim().toLowerCase()) || []
+            app.fds?.parameters?.map((p) => p.param_id) || []
         )
       )
     );
 
     const parameterMasterRes = await client.query(
-      `SELECT name, negative FROM Parameter_Master WHERE LOWER(TRIM(name)) = ANY($1)`,
+      `SELECT param_id, name, negative FROM Parameter_Master WHERE param_id = ANY($1)`,
       [allParameterNames]
     );
 
     const negativeParamMap = parameterMasterRes.rows.reduce((acc, row) => {
-      acc[row.name.trim().toLowerCase()] = row.negative;
+      acc[row.param_id] = row.negative;
       return acc;
     }, {});
 
