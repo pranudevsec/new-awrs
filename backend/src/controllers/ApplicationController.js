@@ -60,8 +60,9 @@ exports.getApplicationsScoreboard = async (req, res) => {
   
   exports.updateApplicationStatus = async (req, res) => {
     try {
-      const { type, status,member ,withdrawRequested,withdraw_status,level} = req.body;
+      const { type, status,member,iscdr ,withdrawRequested,withdraw_status,level} = req.body;
       const id=req.params.id;
+
 
       if (status) {
         if (!['approved', 'rejected', "shortlisted_approved"].includes(status)) {
@@ -70,7 +71,9 @@ exports.getApplicationsScoreboard = async (req, res) => {
           );
         }
       }
-      const result = await ApplicationService.updateApplicationStatus(id, type, status, req.user,member,withdrawRequested,withdraw_status);
+
+      const result = await ApplicationService.updateApplicationStatus(id, type,status, req.user,member,withdrawRequested,withdraw_status);
+
       if(member){
         await SignatureLogService.addSignatureLogs(id,status,member,level);
       }

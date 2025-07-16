@@ -306,21 +306,22 @@ const AcceptedApplicationsList = () => {
           name: profile?.user?.name,
           ic_number: profile?.user?.pers_no,
           member_type: profile?.user?.user_role,
+          iscdr:true,
           member_id: profile?.user?.user_id,
           is_signature_added: true,
           sign_digest: response.payload,
         },  
         level: profile?.user?.user_role,
       };
-      if (decision === "accepted") {
+      if (decision === "approved") {
         await dispatch(
           updateApplication({
             ...updatePayload,
             status: "approved",
           })
-        ).unwrap();
-        // If all checks pass, navigate
-        navigate("/applications/list");
+        ).then(() => {
+          navigate("/applications/list");
+        });
       } else if (decision === "rejected") {
         dispatch(
           updateApplication({
@@ -694,15 +695,7 @@ const AcceptedApplicationsList = () => {
                                 );
                                 return;
                               }
-                              await dispatch(
-                                updateApplication({
-                                  id: unit?.id,
-                                  type: unit?.type,
-                                  status: "approved",
-                                })
-                              ).unwrap();
-                              // If all checks pass, navigate
-                              navigate("/applications/list");
+                             await handleAddsignature("approved",unit);
                             } catch (error) {
                               toast.error("Error while approving the application.");
                             }
@@ -713,16 +706,8 @@ const AcceptedApplicationsList = () => {
 
                         <button
                           className="_btn danger"
-                          onClick={() => {
-                            dispatch(
-                              updateApplication({
-                                id: unit?.id,
-                                type: unit?.type,
-                                status: "rejected",
-                              })
-                            ).then(() => {
-                              navigate("/applications/list");
-                            });
+                          onClick={async () => {
+                            await handleAddsignature("rejected",unit);
                           }}
                         >
                           Reject

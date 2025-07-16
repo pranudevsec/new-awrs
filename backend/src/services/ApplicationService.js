@@ -1483,6 +1483,9 @@ exports.updateApplicationStatus = async (
   const client = await dbService.getClient();
 
   try {
+    const iscdr = member?.iscdr ?? false;
+
+
     const validTypes = {
       citation: {
         table: "Citation_tab",
@@ -1600,6 +1603,7 @@ exports.updateApplicationStatus = async (
       "shortlisted_approved",
     ];
     let statusLower = status ? status.toLowerCase() : null;
+
     const isStatusValid = statusLower && allowedStatuses.includes(statusLower);
     let isMemberStatusUpdate = false;
     let updatedFds = null;
@@ -1636,7 +1640,8 @@ exports.updateApplicationStatus = async (
       const profile = await AuthService.getProfile(user);
       const unit = profile?.data?.unit;
 
-      if (member) {
+      if (member && !iscdr) {
+
         if (!fds.accepted_members || !Array.isArray(fds.accepted_members)) {
           fds.accepted_members = [];
         }

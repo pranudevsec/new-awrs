@@ -303,6 +303,7 @@ export const updateApplication = createAsyncThunk<
         status: params.status,
         member: params.member,
         level: params.level,
+        iscdr:params.iscdr,
         withdrawRequested: params.withdrawRequested,
         withdraw_status: params.withdraw_status,
       }
