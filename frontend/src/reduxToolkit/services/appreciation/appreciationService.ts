@@ -64,7 +64,6 @@ export const updateAppreciation = createAsyncThunk<
     );
 
     if (response.data.success) {
-      // toast.success("Appreciation updated successfully!");
       return response.data;
     } else {
       toast.error("Failed to update appreciation");

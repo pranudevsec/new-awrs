@@ -125,6 +125,7 @@ const SignUp = () => {
                                         <label
                                             htmlFor="password"
                                             className="form-label subtitle_3 text_gray_800 mb-1"
+                                            aria-hidden="true"
                                         >
                                             Password
                                         </label>
@@ -165,6 +166,7 @@ const SignUp = () => {
                                         <label
                                             htmlFor="confirmPassword"
                                             className="form-label subtitle_3 text_gray_800 mb-1"
+                                            aria-hidden="true"
                                         >
                                             Confirm Password
                                         </label>
@@ -198,10 +200,10 @@ const SignUp = () => {
                                     </div>
                                     <button type="submit" className="border-0 w-100 submit-btn" disabled={formik.isSubmitting}>
                                         {formik.isSubmitting ? (
-                                            <span>
-                                                <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
-                                                Signing up...
-                                            </span>
+                                            <>
+                                                <span className="spinner-border spinner-border-sm me-2" aria-hidden="true"></span>
+                                                {' '}Signing up...
+                                            </>
                                         ) : (
                                             "Sign Up"
                                         )}

@@ -14,6 +14,32 @@ import { updateCitation } from "../../reduxToolkit/services/citation/citationSer
 import { updateAppreciation } from "../../reduxToolkit/services/appreciation/appreciationService";
 import { getScoreBoards } from "../../reduxToolkit/services/command-panel/commandPanelService";
 
+const capitalize = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
+
+const getParamMarks = (parameters: any[], paramName: string): any => {
+  return (
+    parameters.find((p: any) =>
+      p.name.toLowerCase().includes(paramName.toLowerCase())
+    )?.marks ?? ""
+  );
+};
+
+const getMarksByRole = (roles: string[], graceMarks: any[]) => {
+  return roles.reduce((acc: any, role) => {
+    acc[`Points by ${capitalize(role)}`] =
+      graceMarks.find((g: any) => g.role === role)?.marks ?? "";
+    return acc;
+  }, {});
+};
+
+const getPrioritiesByRole = (roles: string[], priorities: any[]) => {
+  return roles.reduce((acc: any, role) => {
+    acc[`${capitalize(role)} Priority`] =
+      priorities.find((p: any) => p.role === role)?.priority ?? "";
+    return acc;
+  }, {});
+};
+
 const CommandPanel = () => {
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
@@ -26,79 +52,6 @@ const CommandPanel = () => {
   const [debouncedSearch, setDebouncedSearch] = useState<string>("");
   const [page, setPage] = useState<number>(1);
   const [limit, setLimit] = useState<number>(10);
-  const handleDownload = () => {
-    const topN = 5;
-
-    const topCandidates = [...scoreboard]
-      .sort((a, b) => b.total_marks - a.total_marks)
-      .slice(0, topN);
-
-    const excelData = topCandidates.map((candidate: any, index) => {
-      const parameters = candidate.fds?.parameters || [];
-      const graceMarks = candidate.fds?.applicationGraceMarks || [];
-      const priorities = candidate.fds?.applicationPriority || [];
-
-      const getParamMarks = (paramName: string) => {
-        return (
-          parameters.find((p: any) =>
-            p.name.toLowerCase().includes(paramName.toLowerCase())
-          )?.marks ?? ""
-        );
-      };
-
-      // Roles to extract
-      const roles = ["brigade", "division", "corps", "command"];
-
-      const graceMarksByRole = roles.reduce((acc: any, role) => {
-        acc[`Points by ${capitalize(role)}`] =
-          graceMarks.find((g: any) => g.role === role)?.marks ?? "";
-        return acc;
-      }, {});
-
-      const prioritiesByRole = roles.reduce((acc: any, role) => {
-        acc[`${capitalize(role)} Priority`] =
-          priorities.find((p: any) => p.role === role)?.priority ?? "";
-        return acc;
-      }, {});
-
-      return {
-        "S. No.": index + 1,
-        "Unit": candidate.unit_name || "",
-        "Location": candidate.location || "",
-        "Brigade": candidate.bde || "",
-        "Division": candidate.div || "",
-        "Corps": candidate.corps || "",
-        "Command": candidate.comd || "",
-        "Unit Type": candidate.unit_type || "",
-        "Tenure": getParamMarks("tenure"),
-        "Kills": getParamMarks("kills"),
-        "Surrendered": getParamMarks("surrendered"),
-        "Radioset Recovery": getParamMarks("radioset"),
-        "Pistol Recovery": getParamMarks("pistol"),
-        "(-ve Marks)": candidate.totalNegativeMarks ?? 0,
-        ...graceMarksByRole,
-        "Total Marks": candidate.total_marks ?? 0,
-        ...prioritiesByRole,
-      };
-    });
-
-    const worksheet = XLSX.utils.json_to_sheet(excelData);
-    const workbook = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(workbook, worksheet, "Top Candidates");
-
-    const excelBuffer = XLSX.write(workbook, {
-      bookType: "xlsx",
-      type: "array",
-    });
-
-    const data = new Blob([excelBuffer], {
-      type: "application/octet-stream",
-    });
-    saveAs(data, `Top_5_Candidates_Scoreboard.xlsx`);
-  };
-
-  // Capitalize helper
-  const capitalize = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
 
   useEffect(() => {
     const handler = setTimeout(() => {
@@ -119,7 +72,6 @@ const CommandPanel = () => {
     fetchScoreboardList();
   }, [awardType, debouncedSearch, page, limit])
 
-
   const handleShortlistToggle = (item: any) => {
     const updatedPayload = {
       id: item.id,
@@ -132,6 +84,59 @@ const CommandPanel = () => {
       dispatch(updateAppreciation(updatedPayload));
     }
     fetchScoreboardList();
+  };
+
+  const handleDownload = () => {
+    const topN = 5;
+
+    const topCandidates = [...scoreboard]
+      .sort((a, b) => b.total_marks - a.total_marks)
+      .slice(0, topN);
+
+    const excelData = topCandidates.map((candidate: any, index: number) => {
+      const parameters = candidate.fds?.parameters || [];
+      const graceMarks = candidate.fds?.applicationGraceMarks || [];
+      const priorities = candidate.fds?.applicationPriority || [];
+
+      const roles = ["brigade", "division", "corps", "command"];
+      const graceMarksByRole = getMarksByRole(roles, graceMarks);
+      const prioritiesByRole = getPrioritiesByRole(roles, priorities);
+
+      return {
+        "S. No.": index + 1,
+        "Unit": candidate.unit_name || "",
+        "Location": candidate.location || "",
+        "Brigade": candidate.bde || "",
+        "Division": candidate.div || "",
+        "Corps": candidate.corps || "",
+        "Command": candidate.comd || "",
+        "Unit Type": candidate.unit_type || "",
+        "Tenure": getParamMarks(parameters, "tenure"),
+        "Kills": getParamMarks(parameters, "kills"),
+        "Surrendered": getParamMarks(parameters, "surrendered"),
+        "Radioset Recovery": getParamMarks(parameters, "radioset"),
+        "Pistol Recovery": getParamMarks(parameters, "pistol"),
+        "(-ve Marks)": candidate.totalNegativeMarks ?? 0,
+        ...graceMarksByRole,
+        "Total Marks": candidate.total_marks ?? 0,
+        ...prioritiesByRole,
+      };
+    });
+
+    const worksheet = XLSX.utils.json_to_sheet(excelData);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Top Candidates");
+
+    const excelBuffer = XLSX.write(workbook, {
+      bookType: "xlsx",
+      type: "array",
+    });
+
+    const data = new Blob([excelBuffer], {
+      type: "application/octet-stream",
+    });
+
+    saveAs(data, `Top_5_Candidates_Scoreboard.xlsx`);
   };
 
   return (

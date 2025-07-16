@@ -219,7 +219,7 @@ const Login = () => {
                                         )}
                                     </div>
                                     <div className="mb-4 d-flex flex-wrap align-items-center justify-content-between gap-2">
-                                        <label className="ios-checkbox text-nowrap">
+                                        <label className="ios-checkbox text-nowrap" aria-hidden="true">
                                             <input type="checkbox" hidden defaultChecked />
                                             <div className="checkbox-wrapper">
                                                 <div className="checkbox-bg" />
@@ -233,10 +233,10 @@ const Login = () => {
                                     </div>
                                     <button type="submit" className="border-0 w-100 submit-btn" disabled={formik.isSubmitting}>
                                         {formik.isSubmitting ? (
-                                            <span>
-                                                <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
-                                                Signing in...
-                                            </span>
+                                            <>
+                                                <span className="spinner-border spinner-border-sm me-2" aria-hidden="true"></span>
+                                                {' '}Signing in...
+                                            </>
                                         ) : (
                                             "Sign in"
                                         )}

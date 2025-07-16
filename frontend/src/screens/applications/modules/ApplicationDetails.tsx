@@ -1,8 +1,7 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useState, type JSX } from "react";
 import { MdClose } from "react-icons/md";
 import { IoMdCheckmark } from "react-icons/io";
 import { FaCheckCircle } from "react-icons/fa";
-import { SVGICON } from "../../../constants/iconsList";
 import toast from "react-hot-toast";
 import Breadcrumb from "../../../components/ui/breadcrumb/Breadcrumb";
 import Loader from "../../../components/ui/loader/Loader";
@@ -11,6 +10,7 @@ import ReqClarificationModal from "../../../modals/ReqClarificationModal";
 import ReviewCommentModal from "../../../modals/ReviewCommentModal";
 import ViewCreatedClarificationModal from "../../../modals/ViewCreatedClarificationModal";
 import StepProgressBar from "../../../components/ui/stepProgressBar/StepProgressBar";
+import { SVGICON } from "../../../constants/iconsList";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { useAppDispatch, useAppSelector } from "../../../reduxToolkit/hooks";
 import {
@@ -27,6 +27,25 @@ import { getSignedData } from "../../../reduxToolkit/services/application/applic
 import { updateCitation } from "../../../reduxToolkit/services/citation/citationService";
 import { updateAppreciation } from "../../../reduxToolkit/services/appreciation/appreciationService";
 
+function areAllClarificationsResolved(unitDetail: any): boolean {
+  const parameters = unitDetail?.fds?.parameters;
+
+  if (!Array.isArray(parameters)) {
+    return true;
+  }
+
+  for (const param of parameters) {
+    if (param.clarification_details && param.last_clarification_status !== "clarified") {
+      return false;
+    }
+  }
+
+  return true;
+}
+
+
+const hierarchy = ["brigade", "division", "corps", "command", "headquarter"];
+
 const ApplicationDetails = () => {
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
@@ -34,62 +53,45 @@ const ApplicationDetails = () => {
   const { application_id } = useParams();
 
   const profile = useAppSelector((state) => state.admin.profile);
-
   const { loading, unitDetail } = useAppSelector((state) => state.application);
-  function areAllClarificationsResolved(unitDetail: any): boolean {
-    if (
-      !unitDetail ||
-      !unitDetail.fds ||
-      !Array.isArray(unitDetail.fds.parameters)
-    ) {
-      return true;
-    }
 
-    for (const param of unitDetail.fds.parameters) {
-      if (param.clarification_details) {
-        if (param.last_clarification_status !== "clarified") {
-          return false;
-        }
-      }
-    }
-
-    return true;
-  }
   const isReadyToSubmit = areAllClarificationsResolved(unitDetail);
 
-  const [remarksError, setRemarksError] = useState<string | null>(null);
-
   const raisedParam = searchParams.get("raised_clarifications");
-
   const isRaisedScreen = raisedParam === "true";
+  let userPriority = "";
+
   // States
-  const [clarificationShow, setClarificationShow] = useState(false);
-  const [clarificationType, setClarificationType] =
-    useState<string>("appreciation");
-  const [clarificationApplicationId, setClarificationApplicationId] =
-    useState<number>(0);
-  const [clarificationParameterName, setClarificationParameterName] =
-    useState<string>("");
-  const [clarificationParameterId, setClarificationParameterId] =
-    useState<string>("");
-  const [clarificationDocForView, setClarificationDocForView] = useState<
-    string | null
-  >(null);
-  const [reviewCommentsData, setReviewCommentsData] = useState<any>(null);
-  const [
-    clarificationClarificationForView,
-    setClarificationClarificationForView,
-  ] = useState<string | null>(null);
-  const [reviewerClarificationForView, setReviewerClarificationForView] =
-    useState<string | null>(null);
-  const [reqClarificationShow, setReqClarificationShow] = useState(false);
-  const [reqViewCreatedClarificationShow, setReqViewCreatedClarificationShow] =
-    useState(false);
-  const [reviewCommentsShow, setReviewCommentsShow] = useState(false);
   const [isRefreshData, setIsRefreshData] = useState(false);
-  const [approvedMarksState, setApprovedMarksState] = useState<
-    Record<string, string>
-  >({});
+  const [clarificationShow, setClarificationShow] = useState(false);
+  const [reviewCommentsShow, setReviewCommentsShow] = useState(false);
+  const [reqClarificationShow, setReqClarificationShow] = useState(false);
+  const [reqViewCreatedClarificationShow, setReqViewCreatedClarificationShow] = useState(false);
+  const [clarificationApplicationId, setClarificationApplicationId] = useState<number>(0);
+  const [clarificationType, setClarificationType] = useState<string>("appreciation");
+  const [clarificationParameterName, setClarificationParameterName] = useState<string>("");
+  const [clarificationParameterId, setClarificationParameterId] = useState<string>("");
+  const [clarificationDocForView, setClarificationDocForView] = useState<string | null>(null);
+  const [reviewCommentsData, setReviewCommentsData] = useState<any>(null);
+  const [clarificationClarificationForView, setClarificationClarificationForView] = useState<string | null>(null);
+  const [reviewerClarificationForView, setReviewerClarificationForView] = useState<string | null>(null);
+  const [approvedMarksState, setApprovedMarksState] = useState<Record<string, string>>({});
+  const [remarksError, setRemarksError] = useState<string | null>(null);
+  const [graceMarks, setGraceMarks] = useState("");
+  const [decisions, setDecisions] = useState<{ [memberId: string]: string }>({});
+  const [priority, setPriority] = useState(userPriority);
+  const [commentsState, setCommentsState] = useState<Record<string, string>>({});
+  const [localComment, setLocalComment] = useState(commentsState?.__application__ || "");
+  const [unitRemarks, setUnitRemarks] = useState("");
+  const [paramStats, setParamStats] = useState({
+    totalParams: 0,
+    filledParams: 0,
+    marks: 0,
+    approvedMarks: 0,
+    totalMarks: 0,
+    negativeMarks: 0,
+  });
+
   const isUnitRole = ["unit", "cw2"].includes(profile?.user?.user_role || "");
   const isCW2Role = profile?.user?.user_role === "cw2";
   const isHeadquarter = profile?.user?.user_role === "headquarter";
@@ -99,12 +101,6 @@ const ApplicationDetails = () => {
   const lowerRole = roleHierarchy[roleHierarchy.indexOf(role) - 1] ?? null;
   const award_type = searchParams.get("award_type") || "";
   const numericAppId = Number(application_id);
-  const [graceMarks, setGraceMarks] = useState("");
-  const [decisions, setDecisions] = useState<{ [memberId: string]: string }>(
-    {}
-  );
-  console.log(clarificationParameterId)
-  let userPriority = "";
 
   if (role === "cw2" && Array.isArray(unitDetail?.fds?.applicationPriority)) {
     const foundPriority = unitDetail.fds.applicationPriority.find(
@@ -116,24 +112,14 @@ const ApplicationDetails = () => {
       userPriority = foundPriority.priority ?? "";
     }
   }
-  const [priority, setPriority] = useState(userPriority);
 
   useEffect(() => {
     setPriority(userPriority);
   }, [userPriority]);
-  useEffect(() => {
-    if (award_type && numericAppId)
-      dispatch(fetchApplicationUnitDetail({ award_type, numericAppId }));
-  }, [award_type, numericAppId, isRefreshData]);
 
-  const [paramStats, setParamStats] = useState({
-    totalParams: 0,
-    filledParams: 0,
-    marks: 0,
-    approvedMarks: 0,
-    totalMarks: 0,
-    negativeMarks: 0,
-  });
+  useEffect(() => {
+    if (award_type && numericAppId) dispatch(fetchApplicationUnitDetail({ award_type, numericAppId }));
+  }, [award_type, numericAppId, isRefreshData]);
 
   const calculateParameterStats = (parameters: any[]) => {
     const totalParams = parameters.length;
@@ -143,26 +129,20 @@ const ApplicationDetails = () => {
     ).length;
 
     const marks = parameters.reduce((acc, param) => {
-      const isRejected =
-        param.clarification_details?.clarification_status === "rejected";
-
+      const isRejected = param.clarification_details?.clarification_status === "rejected";
       const isNegative = param.negative === true;
-
       if (isRejected || isNegative) return acc;
-
       return acc + (param.marks ?? 0);
     }, 0);
-    const approvedMarks = parameters.reduce((acc, param) => {
-      const isRejected =
-        param.clarification_details?.clarification_status === "rejected";
 
+    const approvedMarks = parameters.reduce((acc, param) => {
+      const isRejected = param.clarification_details?.clarification_status === "rejected";
       return acc + (isRejected ? 0 : Number(param.approved_marks ?? 0));
     }, 0);
 
     // Calculate negativeMarks
     const negativeMarks = parameters.reduce((acc, param) => {
-      const isRejected =
-        param.clarification_details?.clarification_status === "rejected";
+      const isRejected = param.clarification_details?.clarification_status === "rejected";
 
       if (isRejected) return acc;
 
@@ -174,18 +154,14 @@ const ApplicationDetails = () => {
 
       const approved = hasValidApproved ? Number(param.approved_marks) : null;
       const original = param.marks ?? 0;
-
       const valueToCheck = approved !== null ? approved : original;
-
       return acc + (param.negative === true ? valueToCheck : 0);
     }, 0);
 
     const totalParameterMarks = parameters.reduce((acc, param) => {
-      const isRejected =
-        param.clarification_details?.clarification_status === "rejected";
+      const isRejected = param.clarification_details?.clarification_status === "rejected";
 
       if (isRejected) return acc;
-
       if (param.negative === true) return acc;
 
       const hasValidApproved =
@@ -201,7 +177,6 @@ const ApplicationDetails = () => {
     }, 0);
 
     let totalMarks = totalParameterMarks + Number(graceMarks ?? 0) - negativeMarks;
-
     if (totalMarks < 0) totalMarks = 0;
     return {
       totalParams,
@@ -213,20 +188,11 @@ const ApplicationDetails = () => {
     };
   };
 
-
   useEffect(() => {
     const parameters = unitDetail?.fds?.parameters || [];
-
     const stats = calculateParameterStats(parameters);
     setParamStats(stats);
   }, [unitDetail, graceMarks]);
-
-  const [commentsState, setCommentsState] = React.useState<
-    Record<string, string>
-  >({});
-  const [localComment, setLocalComment] = useState(
-    commentsState?.__application__ || ""
-  );
 
   useEffect(() => {
     if (unitDetail?.fds?.parameters && profile) {
@@ -276,12 +242,10 @@ const ApplicationDetails = () => {
     }
   };
 
-  // Create debounced version of handleSave
   const debouncedHandleSave = useDebounce(handleSave, 600);
-
   const handleInputChange = (paramName: string, value: string) => {
     setApprovedMarksState((prev) => ({ ...prev, [paramName]: value }));
-    debouncedHandleSave(paramName, value); // this uses the updated handleSave
+    debouncedHandleSave(paramName, value);
   };
 
   useEffect(() => {
@@ -305,7 +269,6 @@ const ApplicationDetails = () => {
 
   //   dispatch(approveMarks(body)).unwrap();
   // };
-  const [unitRemarks, setUnitRemarks] = useState("");
 
   // Set remark value when application is loaded or profile changes
   useEffect(() => {
@@ -321,7 +284,6 @@ const ApplicationDetails = () => {
 
   const handleRemarksChange = async (e: any) => {
     const value = e.target.value;
-
     setUnitRemarks(value);
 
     if (value.length > 200) {
@@ -330,6 +292,7 @@ const ApplicationDetails = () => {
     } else {
       setRemarksError(null);
     }
+
     const body = {
       type: unitDetail?.type || "citation",
       application_id: unitDetail?.id || 0,
@@ -339,7 +302,6 @@ const ApplicationDetails = () => {
 
     try {
       await dispatch(approveMarks(body)).unwrap();
-      // Optional: Add a toast or success indicator here
     } catch (err) {
       console.error("Failed to update remarks", err);
     }
@@ -352,10 +314,8 @@ const ApplicationDetails = () => {
   //   debouncedGraceMarksSave(value);
   // };
 
-  const hierarchy = ["brigade", "division", "corps", "command", "headquarter"];
   const currentRoleIndex = hierarchy.indexOf(role?.toLowerCase());
-
-  const lowerRoles = hierarchy.slice(0, currentRoleIndex); // roles below current role
+  const lowerRoles = hierarchy.slice(0, currentRoleIndex)
   const roleMarksMap = unitDetail?.fds?.applicationGraceMarks || [];
 
   const displayedMarks = lowerRoles
@@ -571,6 +531,170 @@ const ApplicationDetails = () => {
   //   }
   // };
 
+  const renderHeaderRow = (header: string, index: number) => (
+    <tr key={`header-${header}-${index}`}>
+      <td colSpan={6} style={{ fontWeight: 600, color: "#555", fontSize: 15, background: "#f5f5f5" }}>
+        {header}
+      </td>
+    </tr>
+  );
+
+  const renderSubHeaderRow = (subheader: string, header: string, index: number) => (
+    <tr key={`subheader-${subheader}-${index}`}>
+      <td colSpan={6} style={{ color: header ? "#1976d2" : "#888", fontSize: 13, background: "#f8fafc" }}>
+        {subheader}
+      </td>
+    </tr>
+  );
+
+  const renderUploads = (upload: any) => {
+    const uploads = Array.isArray(upload)
+      ? upload
+      : typeof upload === "string"
+        ? upload.split(",")
+        : [];
+    return uploads.map((filePath: string, idx: number) => (
+      <span key={idx} style={{ display: "block" }}>
+        {filePath.trim().split("/").pop()}
+      </span>
+    ));
+  };
+
+  const handleClarify = (id: number) => {
+    dispatch(updateClarification({ id, clarification_status: "clarified" }))
+      .then(() => setIsRefreshData(prev => !prev));
+  };
+
+  const handleReject = (id: number) => {
+    dispatch(updateClarification({ id, clarification_status: "rejected" }))
+      .then(() => setIsRefreshData(prev => !prev));
+  };
+
+  const renderClarificationActions = (param: any) => {
+    const clarificationId = param?.clarification_details?.clarification_id;
+
+    return (
+      <div className="d-flex gap-3">
+        <button
+          className="action-btn bg-transparent d-flex align-items-center justify-content-center"
+          style={{ color: "var(--green-default)" }}
+          onClick={() => handleClarify(clarificationId)}
+        >
+          <IoMdCheckmark />
+        </button>
+        <button
+          className="action-btn bg-transparent d-flex align-items-center justify-content-center"
+          style={{ color: "var(--red-default)" }}
+          onClick={() => handleReject(clarificationId)}
+        >
+          <MdClose />
+        </button>
+      </div>
+    );
+  };
+
+  const renderParameterRow = (param: any, index: number, display: any) => {
+    const rows: JSX.Element[] = [];
+
+    rows.push(
+      <tr key={index}>
+        <td style={{ width: 150 }}><p className="fw-5 mb-0">{display.main}</p></td>
+        <td style={{ width: 100 }}><p className="fw-5">{param.count}</p></td>
+        <td style={{ width: 100 }}><p className="fw-5">{param.negative ? `-${param.marks}` : param.marks}</p></td>
+        <td style={{ width: 200 }}>
+          {param.upload && (
+            <a href={`${baseURL}${param.upload}`} target="_blank" rel="noopener noreferrer" style={{ fontSize: 18 }}>
+              <span style={{ fontSize: 14, wordBreak: "break-word" }}>
+                {renderUploads(param.upload)}
+              </span>
+            </a>
+          )}
+        </td>
+
+        {!isUnitRole && !isHeadquarter && (
+          <>
+            <td style={{ width: 200 }}>
+              <input
+                type="text"
+                className="form-control"
+                placeholder="Enter approved marks"
+                autoComplete="off"
+                value={param?.clarification_details?.clarification_status === "rejected" ? "0" : approvedMarksState[param.name] ?? ""}
+                disabled={param?.clarification_details?.clarification_status === "rejected"}
+                onChange={(e) => handleInputChange(param.name, e.target.value)}
+              />
+            </td>
+
+            {!isRaisedScreen && (
+              <td style={{ width: 120 }}>
+                {param?.clarification_id || (param?.last_clarification_id &&
+                  [role, lowerRole].includes(param?.last_clarification_handled_by)) ? (
+                  <button
+                    className="action-btn bg-transparent d-inline-flex align-items-center justify-content-center"
+                    onClick={() => {
+                      setReqViewCreatedClarificationShow(true);
+                      setReviewerClarificationForView(param?.clarification_details?.reviewer_comment);
+                    }}
+                  >
+                    {SVGICON.app.eye}
+                  </button>
+                ) : (
+                  <button
+                    onClick={() => {
+                      setClarificationType(unitDetail?.type || "");
+                      setClarificationApplicationId(unitDetail?.id || 0);
+                      setClarificationParameterName(param.name);
+                      setClarificationParameterId(param.id);
+                      setClarificationDocForView(param?.clarification_details?.clarification_doc);
+                      setClarificationClarificationForView(param?.clarification_details?.clarification);
+                      setClarificationShow(true);
+                    }}
+                    className="fw-5 text-decoration-underline bg-transparent border-0"
+                    style={{ fontSize: 14, color: "#0d6efd" }}
+                  >
+                    Ask Clarification
+                  </button>
+                )}
+              </td>
+            )}
+
+            {isRaisedScreen && (
+              <>
+                <td style={{ width: 200 }}>
+                  {param?.clarification_details?.clarification && (
+                    <button
+                      className="action-btn bg-transparent d-inline-flex align-items-center justify-content-center"
+                      onClick={() => {
+                        setReqClarificationShow(true);
+                        setClarificationDocForView(param?.clarification_details?.clarification_doc);
+                        setClarificationClarificationForView(param?.clarification_details?.clarification);
+                      }}
+                    >
+                      {SVGICON.app.eye}
+                    </button>
+                  )}
+                </td>
+                <td style={{ width: 150 }}>
+                  {param?.clarification_details?.clarification &&
+                    param?.clarification_details?.clarification_id ? (
+                    param?.clarification_details?.clarification_status === "pending" ?
+                      renderClarificationActions(param) :
+                      <p className="fw-5 text-capitalize">
+                        {param?.clarification_details?.clarification_status}
+                      </p>
+                  ) : null}
+                </td>
+              </>
+            )}
+          </>
+        )}
+      </tr>
+    );
+
+    return rows;
+  };
+
+
   // Show loader
   if (loading) return <Loader />;
 
@@ -593,7 +717,7 @@ const ApplicationDetails = () => {
               className="text-center flex-grow-1 flex-sm-grow-0 flex-basis-100 flex-sm-basis-auto"
               style={{ minWidth: "150px" }}
             >
-              <label className="form-label fw-semibold">Award Type</label>
+              <div className="form-label fw-semibold">Award Type</div>
               <p className="fw-5 mb-0">
                 {unitDetail?.type
                   ? unitDetail.type.charAt(0).toUpperCase() +
@@ -606,7 +730,7 @@ const ApplicationDetails = () => {
               className="text-center flex-grow-1 flex-sm-grow-0 flex-basis-100 flex-sm-basis-auto"
               style={{ minWidth: "150px" }}
             >
-              <label className="form-label fw-semibold">Cycle Period</label>
+              <div className="form-label fw-semibold">Cycle Period</div>
               <p className="fw-5 mb-0">
                 {unitDetail?.fds?.cycle_period || "--"}
               </p>
@@ -616,7 +740,7 @@ const ApplicationDetails = () => {
               className="text-center flex-grow-1 flex-sm-grow-0 flex-basis-100 flex-sm-basis-auto"
               style={{ minWidth: "150px" }}
             >
-              <label className="form-label fw-semibold">Last Date</label>
+              <div className="form-label fw-semibold">Last Date</div>
               <p className="fw-5 mb-0">{unitDetail?.fds?.last_date || "--"}</p>
             </div>
 
@@ -624,7 +748,7 @@ const ApplicationDetails = () => {
               className="text-center flex-grow-1 flex-sm-grow-0 flex-basis-100 flex-sm-basis-auto"
               style={{ minWidth: "150px" }}
             >
-              <label className="form-label fw-semibold">Command</label>
+              <div className="form-label fw-semibold">Command</div>
               <p className="fw-5 mb-0">{unitDetail?.fds?.command || "--"}</p>
             </div>
 
@@ -632,7 +756,7 @@ const ApplicationDetails = () => {
               className="text-center flex-grow-1 flex-sm-grow-0 flex-basis-100 flex-sm-basis-auto"
               style={{ minWidth: "150px" }}
             >
-              <label className="form-label fw-semibold">Unit Name</label>
+              <div className="form-label fw-semibold">Unit Name</div>
               <p className="fw-5 mb-0">{unitDetail?.unit_name || "--"}</p>
             </div>
           </div>
@@ -700,292 +824,39 @@ const ApplicationDetails = () => {
                     )}
                   </>
                 )}
-
-                {/* {isHeadquarter && (
-                  <th style={{ width: 150 }}>Review comments</th>
-                )} */}
               </tr>
             </thead>
             <tbody>
               {(() => {
                 let prevHeader: string | null = null;
                 let prevSubheader: string | null = null;
-                const rows: any[] = [];
+                const rows: JSX.Element[] = [];
 
-                unitDetail?.fds?.parameters?.forEach(
-                  (param: any, index: number) => {
-                    const display = getParamDisplay(param);
+                unitDetail?.fds?.parameters?.forEach((param: any, index: number) => {
+                  const display = getParamDisplay(param);
 
-                    const showHeader =
-                      display.header && display.header !== prevHeader;
-                    const showSubheader =
-                      display.subheader && display.subheader !== prevSubheader;
+                  const showHeader = display.header && display.header !== prevHeader;
+                  const showSubheader = display.subheader && display.subheader !== prevSubheader;
 
-                    if (showHeader) {
-                      rows.push(
-                        <tr key={`header-${display.header}-${index}`}>
-                          <td
-                            colSpan={6}
-                            style={{
-                              fontWeight: 600,
-                              color: "#555",
-                              fontSize: 15,
-                              background: "#f5f5f5",
-                            }}
-                          >
-                            {display.header}
-                          </td>
-                        </tr>
-                      );
-                    }
-
-                    if (showSubheader) {
-                      rows.push(
-                        <tr key={`subheader-${display.subheader}-${index}`}>
-                          <td
-                            colSpan={6}
-                            style={{
-                              color: display.header ? "#1976d2" : "#888",
-                              fontSize: 13,
-                              background: "#f8fafc",
-                            }}
-                          >
-                            {display.subheader}
-                          </td>
-                        </tr>
-                      );
-                    }
-
-                    prevHeader = display.header;
-                    prevSubheader = display.subheader;
-
-                    rows.push(
-                      <tr key={index}>
-                        <td style={{ width: 150 }}>
-                          <p className="fw-5 mb-0">{display.main}</p>
-                        </td>
-                        <td style={{ width: 100 }}>
-                          <p className="fw-5">{param.count}</p>
-                        </td>
-                        <td style={{ width: 100 }}>
-                          <p className="fw-5">
-                            {param.negative === true ? `-${param.marks}` : param.marks}
-                          </p>
-                        </td>
-                        <td style={{ width: 200 }}>
-                          {param.upload ? (
-                            <a
-                              href={`${baseURL}${param.upload}`}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              style={{ fontSize: 18 }}
-                            >
-                              <span
-                                style={{
-                                  fontSize: 14,
-                                  wordBreak: "break-word",
-                                }}
-                              >
-                                {Array.isArray(param?.upload)
-                                  ? param.upload.map(
-                                    (filePath: any, idx: any) => (
-                                      <span
-                                        key={idx}
-                                        style={{ display: "block" }}
-                                      >
-                                        {filePath.split("/").pop()}
-                                      </span>
-                                    )
-                                  )
-                                  : param?.upload
-                                    ? param.upload
-                                      .toString()
-                                      .split(",")
-                                      .map((filePath: any, idx: any) => (
-                                        <span
-                                          key={idx}
-                                          style={{ display: "block" }}
-                                        >
-                                          {filePath.trim().split("/").pop()}
-                                        </span>
-                                      ))
-                                    : null}
-                              </span>
-                            </a>
-                          ) : (
-                            ""
-                          )}
-                        </td>
-
-                        {/* Your logic for conditional clarification/approval UI below */}
-                        {!isUnitRole && !isHeadquarter && (
-                          <>
-                            <td style={{ width: 200 }}>
-                              <input
-                                type="text"
-                                className="form-control"
-                                placeholder="Enter approved marks"
-                                autoComplete="off"
-                                value={
-                                  param?.clarification_details
-                                    ?.clarification_status === "rejected"
-                                    ? "0"
-                                    : approvedMarksState[param.name] ?? ""
-                                }
-                                disabled={
-                                  param?.clarification_details
-                                    ?.clarification_status === "rejected"
-                                }
-                                onChange={(e) =>
-                                  handleInputChange(param.name, e.target.value)
-                                }
-                              />
-                            </td>
-                            {!isRaisedScreen && (
-                              <td style={{ width: 120 }}>
-                                {param?.clarification_id ||
-                                  (param?.last_clarification_id &&
-                                    [role, lowerRole].includes(
-                                      param?.last_clarification_handled_by
-                                    )) ? (
-                                  <button
-                                    className="action-btn bg-transparent d-inline-flex align-items-center justify-content-center"
-                                    onClick={() => {
-                                      setReqViewCreatedClarificationShow(true);
-                                      setReviewerClarificationForView(
-                                        param?.clarification_details
-                                          ?.reviewer_comment
-                                      );
-                                    }}
-                                  >
-                                    {SVGICON.app.eye}
-                                  </button>
-                                ) : (
-                                  <button
-                                    onClick={() => {
-                                      setClarificationType(unitDetail?.type);
-                                      setClarificationApplicationId(
-                                        unitDetail?.id
-                                      );
-                                      setClarificationParameterName(param.name);
-                                      setClarificationParameterId(param.id);
-                                      setClarificationDocForView(
-                                        param?.clarification_details
-                                          ?.clarification_doc
-                                      );
-                                      setClarificationClarificationForView(
-                                        param?.clarification_details
-                                          ?.clarification
-                                      );
-                                      setClarificationShow(true);
-                                    }}
-                                    className="fw-5 text-decoration-underline bg-transparent border-0"
-                                    style={{ fontSize: 14, color: "#0d6efd" }}
-                                  >
-                                    Ask Clarification
-                                  </button>
-                                )}
-                              </td>
-                            )}
-
-                            {isRaisedScreen && (
-                              <>
-                                <td style={{ width: 200 }}>
-                                  {param?.clarification_details
-                                    ?.clarification ? (
-                                    <button
-                                      className="action-btn bg-transparent d-inline-flex align-items-center justify-content-center"
-                                      onClick={() => {
-                                        setReqClarificationShow(true);
-                                        setClarificationDocForView(
-                                          param?.clarification_details
-                                            ?.clarification_doc
-                                        );
-                                        setClarificationClarificationForView(
-                                          param?.clarification_details
-                                            ?.clarification
-                                        );
-                                      }}
-                                    >
-                                      {SVGICON.app.eye}
-                                    </button>
-                                  ) : (
-                                    ""
-                                  )}
-                                </td>
-                                <td style={{ width: 150 }}>
-                                  {param?.clarification_details
-                                    ?.clarification &&
-                                    param?.clarification_details
-                                      ?.clarification_id ? (
-                                    param?.clarification_details
-                                      ?.clarification_status === "pending" ? (
-                                      <div className="d-flex gap-3">
-                                        <button
-                                          className="action-btn bg-transparent d-flex align-items-center justify-content-center"
-                                          style={{
-                                            color: "var(--green-default)",
-                                          }}
-                                          onClick={() => {
-                                            dispatch(
-                                              updateClarification({
-                                                id: param?.clarification_details
-                                                  ?.clarification_id,
-                                                clarification_status:
-                                                  "clarified",
-                                              })
-                                            ).then(() => {
-                                              setIsRefreshData((prev) => !prev);
-                                            });
-                                          }}
-                                        >
-                                          <IoMdCheckmark />
-                                        </button>
-                                        <button
-                                          className="action-btn bg-transparent d-flex align-items-center justify-content-center"
-                                          style={{
-                                            color: "var(--red-default)",
-                                          }}
-                                          onClick={() => {
-                                            dispatch(
-                                              updateClarification({
-                                                id: param?.clarification_details
-                                                  ?.clarification_id,
-                                                clarification_status:
-                                                  "rejected",
-                                              })
-                                            ).then(() => {
-                                              setIsRefreshData((prev) => !prev);
-                                            });
-                                          }}
-                                        >
-                                          <MdClose />
-                                        </button>
-                                      </div>
-                                    ) : (
-                                      <p className="fw-5 text-capitalize">
-                                        {
-                                          param?.clarification_details
-                                            ?.clarification_status
-                                        }
-                                      </p>
-                                    )
-                                  ) : (
-                                    ""
-                                  )}
-                                </td>
-                              </>
-                            )}
-                          </>
-                        )}
-                      </tr>
-                    );
+                  if (showHeader) {
+                    rows.push(renderHeaderRow(display.header, index));
                   }
-                );
+
+                  if (showSubheader) {
+                    rows.push(renderSubHeaderRow(display.subheader, display.header, index));
+                  }
+
+                  prevHeader = display.header;
+                  prevSubheader = display.subheader;
+
+                  rows.push(...renderParameterRow(param, index, display));
+                });
 
                 return rows;
               })()}
             </tbody>
+
+
           </table>
         </div>
         {!isUnitRole && (
@@ -1019,9 +890,9 @@ const ApplicationDetails = () => {
 
               {/* Other Remarks */}
               {Array.isArray(unitDetail?.remarks) &&
-                unitDetail.remarks.map((item: any, idx: number) => (
+                unitDetail.remarks.map((item: any) => (
                   <li
-                    key={idx}
+                    key={item?.remarks}
                     style={{
                       padding: "8px 12px",
                       backgroundColor: "#f9f9f9",
@@ -1077,12 +948,12 @@ const ApplicationDetails = () => {
             {/* Grace Marks Field */}
             {!isHeadquarter && (
               <div className="w-100 mb-4">
-                <label
+                <div
                   className="fw-medium text-muted mb-2"
                   style={{ whiteSpace: "nowrap" }}
                 >
                   Enter Your Remarks:
-                </label>
+                </div>
                 <textarea
                   className="form-control"
                   placeholder="Enter remarks (max 200 characters)"
@@ -1104,12 +975,12 @@ const ApplicationDetails = () => {
               Array.isArray(profile.unit.members) &&
               profile.unit.members.length > 0 && (
                 <div className="table-responsive mb-3">
-                  <label
+                  <div
                     className="fw-medium text-muted mb-2"
                     style={{ whiteSpace: "nowrap" }}
                   >
                     Submit Signatures:
-                  </label>
+                  </div>
                   <table className="table-style-1 w-100">
                     <thead className="table-light">
                       <tr>
@@ -1297,7 +1168,6 @@ const ApplicationDetails = () => {
                 <tbody>
                   {["HR", "DV", "MP"].map((category) => {
                     let isAlreadySent: any = false;
-                    console.log(unitDetail);
                     if (category === "HR") {
                       isAlreadySent = unitDetail?.is_hr_review;
                     } else if (category === "DV") {
@@ -1391,11 +1261,12 @@ const ApplicationDetails = () => {
               <>
                 {(cw2_type === "mo" || cw2_type === "ol") && (
                   <div className="mb-2">
-                    <label className="form-label mb-1">Priority:</label>
+                    <label htmlFor="priority" className="form-label mb-1" aria-hidden="true">Priority:</label>
                     <input
                       type="text"
                       className="form-control"
                       name="priority"
+                      id="priority"
                       value={priority}
                       onChange={(e) => {
                         const value = e.target.value;
@@ -1412,7 +1283,7 @@ const ApplicationDetails = () => {
                     handleCommentChange("__application__", localComment);
                   }}
                 >
-                  <label className="form-label mb-1">Drop Comment:</label>
+                  <label className="form-label mb-1" aria-hidden="true">Drop Comment:</label>
                   <textarea
                     className="form-control"
                     placeholder="Enter comment"
@@ -1434,12 +1305,12 @@ const ApplicationDetails = () => {
               Array.isArray(profile.unit.members) &&
               profile.unit.members.length > 0 && (
                 <div className="table-responsive mb-3">
-                  <label
+                  <div
                     className="fw-medium text-muted mb-2"
                     style={{ whiteSpace: "nowrap" }}
                   >
                     Submit Signatures:
-                  </label>
+                  </div>
                   <table className="table-style-1 w-100">
                     <thead className="table-light">
                       <tr>

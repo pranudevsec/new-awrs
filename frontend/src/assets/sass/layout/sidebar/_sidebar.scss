@@ -9,7 +9,6 @@
   width: 300px;
   background-color: var(--background);
   overflow: hidden;
-  // border-right: 2px solid var(--gray-100);
 
   .scroll-style-85 {
     @include scrollbar.custom-scrollbar(calc(100% - 32px), 0);
@@ -29,11 +28,6 @@
   &:hover:not(.active) {
     background-color: var(--blue-primary-clr);
     color: var(--gray-0);
-
-    // background-color: #00CFFF;
-    // color: white;
-
-    // background-color: #B3ECFF;
   }
 
   &.active {

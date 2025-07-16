@@ -79,7 +79,6 @@ const UnitClarificationModal: React.FC<ClarificationModalProps> = ({
                 if (words.length <= 200) {
                   setComment(e.target.value);
                 } else {
-                  // Optionally allow trimming to 200 words:
                   const trimmed = words.slice(0, 200).join(" ");
                   setComment(trimmed);
                 }

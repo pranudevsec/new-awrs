@@ -130,9 +130,9 @@ const Withdraw = () => {
               </tr>
             ) : (
               units.length > 0 &&
-              units.map((unit: any, idx) => (
+              units.map((unit: any) => (
                 <tr
-                  key={idx}
+                  key={unit.id}
                   className="cursor-auto"
                 //   onClick={() => {
                 //     if (unit.status_flag === "draft") {

@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "private": true,
   "scripts": {
+    "sonar": "sonar-scanner",
     "dev": "concurrently \"npm run dev --prefix backend\" \"npm run dev --prefix frontend\"",
     "dev:backend": "npm run dev --prefix backend",
     "start:backend": "npm run start --prefix backend",
@@ -18,6 +19,7 @@
     "build": "concurrently \"npm run build --prefix backend\" \"npm run build --prefix frontend\""
   },
   "devDependencies": {
+    "@sonar/scan": "^4.3.0",
     "concurrently": "^8.2.2"
   },
   "dependencies": {

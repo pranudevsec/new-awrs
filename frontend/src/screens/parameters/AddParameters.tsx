@@ -173,7 +173,7 @@ const AddParameters = () => {
                         />
                     </div>
                     <div className="col-sm-6 mb-3">
-                        <label className="form-label mb-1">
+                        <label className="form-label mb-1" aria-hidden="true">
                             Negative
                         </label>
                         <div className="d-flex align-items-center gap-xxl-4 gap-2 flex-grow-1">
@@ -199,7 +199,7 @@ const AddParameters = () => {
                         )}
                     </div>
                     <div className="col-sm-6 mb-3">
-                        <label className="form-label mb-1">
+                        <label className="form-label mb-1" aria-hidden="true">
                             Proof required
                         </label>
                         <div className="d-flex align-items-center gap-xxl-4 gap-2 flex-grow-1">
@@ -241,10 +241,10 @@ const AddParameters = () => {
                         <div className="d-flex align-items-center">
                             <button type="submit" className="_btn _btn-lg primary" disabled={formik.isSubmitting}>
                                 {formik.isSubmitting ? (
-                                    <span>
-                                        <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
-                                        Adding...
-                                    </span>
+                                    <>
+                                        <span className="spinner-border spinner-border-sm me-2" aria-hidden="true"></span>
+                                        {' '}Adding...
+                                    </>
                                 ) : (
                                     "Add"
                                 )}

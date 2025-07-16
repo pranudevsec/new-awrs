@@ -21,7 +21,6 @@ export const fetchParameters = createAsyncThunk<
     { awardType, search, matrix_unit, comd, unit_type, page, limit },
     { rejectWithValue }
   ) => {
-    // async ({ awardType, search, page, limit }, { rejectWithValue }) => {
     try {
       const response = await Axios.get(
         `${apiEndPoints.parameter}?awardType=${
@@ -30,11 +29,6 @@ export const fetchParameters = createAsyncThunk<
           comd || ""
         }&unit_type=${unit_type || ""}&page=${page || 1}&limit=${limit || 10}`
       );
-      // const response = await Axios.get(
-      //   `${apiEndPoints.parameter}?awardType=${
-      //     awardType || ""
-      //   }&search=${search}&page=${page || 1}&limit=${limit || 10}`
-      // );
       if (response.data.success) {
         return response.data;
       } else {

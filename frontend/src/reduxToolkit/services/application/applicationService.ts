@@ -1,7 +1,8 @@
 import { createAsyncThunk } from "@reduxjs/toolkit";
+import { create } from "xmlbuilder2";
 import toast from "react-hot-toast";
-import Axios from "../../helper/axios";
 import axios from "axios";
+import Axios from "../../helper/axios";
 import type {
   AddCommentParam,
   AddCommentResponse,
@@ -17,7 +18,6 @@ import type {
   TokenValidationResponse,
 } from "./applicationInterface";
 import { apiEndPoints } from "../../../constants";
-import { create } from "xmlbuilder2";
 
 const URL = import.meta.env.VITE_VALIDATE_TOKEN_URL;
 
@@ -145,16 +145,12 @@ export const fetchAllApplications = createAsyncThunk<
     if (response.data.success) {
       return response.data;
     } else {
-      // toast.error(response.data.message || "Failed to fetch all applications");
       return rejectWithValue({
         message: response.data.message || "Failed to fetch all applications",
         errors: response.data.errors,
       });
     }
   } catch (error: any) {
-    // toast.error(
-    //   error.response?.data?.message || "Error fetching all applications"
-    // );
     return rejectWithValue({
       message:
         error.response?.data?.message || "Failed to fetch all applications",
@@ -419,10 +415,10 @@ export const addApplicationComment = createAsyncThunk<
   }
 });
 export const TokenValidation = createAsyncThunk<
-  TokenValidationResponse, // Return type
-  TokenValidationParam, // Argument type
+  TokenValidationResponse,
+  TokenValidationParam,
   {
-    rejectValue: string; // Rejection type
+    rejectValue: string;
   }
 >(
   "applications/validateToken",

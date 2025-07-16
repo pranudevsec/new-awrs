@@ -11,6 +11,17 @@ import { SVGICON } from "../../constants/iconsList";
 import { useAppDispatch, useAppSelector } from "../../reduxToolkit/hooks";
 import { fetchApplicationHistory, updateApplication, } from "../../reduxToolkit/services/application/applicationService";
 
+const getStatusColor = (status: string) => {
+  if (["pending", "in_review", "shortlisted_approved"].includes(status)) return "orange";
+  if (status === "approved") return "green";
+  return "red";
+};
+
+const getStatusLabel = (status: string) => {
+  if (["pending", "in_review", "shortlisted_approved"].includes(status)) return "Pending";
+  return status.charAt(0).toUpperCase() + status.slice(1);
+};
+
 const History = () => {
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
@@ -181,7 +192,7 @@ const History = () => {
                     </p>
                   </td>
                   <td style={{ width: 150, minWidth: 150, maxWidth: 150 }}>
-                    <p
+                    {/* <p
                       className="fw-4"
                       style={{
                         color: ['pending', 'in_review', 'shortlisted_approved'].includes(unit?.status_flag)
@@ -196,6 +207,9 @@ const History = () => {
                           ? 'Pending'
                           : unit.status_flag.charAt(0).toUpperCase() + unit.status_flag.slice(1)
                         : "-"}
+                    </p> */}
+                    <p className="fw-4" style={{ color: getStatusColor(unit?.status_flag) }}>
+                      {unit?.status_flag ? getStatusLabel(unit.status_flag) : "-"}
                     </p>
                   </td>
                   {/* <td style={{ width: 200, minWidth: 200, maxWidth: 200 }}>

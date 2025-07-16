@@ -153,6 +153,12 @@ const CitationReviewPage = () => {
       };
     }
   };
+
+  const handleFileInputChange = (e: React.ChangeEvent<HTMLInputElement>, param: any) => {
+    const display = getParamDisplay(param);
+    handleFileChange(e, param.param_id, display.main);
+  };
+
   const handleFileChange = async (
     e: React.ChangeEvent<HTMLInputElement>,
     paramId: number,
@@ -343,6 +349,104 @@ const CitationReviewPage = () => {
   // Total Parameters
   const totalParams = parameters.length;
 
+  const renderParamRows = ({
+    params,
+    counts,
+    marks,
+    uploadedFiles,
+    handleFileInputChange,
+    getParamDisplay,
+  }: any) => {
+    let prevHeader: string | null = null;
+    let prevSubheader: string | null = null;
+
+    return params.reduce((rows: any[], param: any, idx: number) => {
+      const display = getParamDisplay(param);
+      const countValue = counts[param.param_id];
+      const markValue = marks[param.param_id];
+
+      if (countValue === undefined || countValue === "") return rows;
+
+      const showHeader = display.header && display.header !== prevHeader;
+      const showSubheader =
+        display.subheader && display.subheader !== prevSubheader;
+
+      if (showHeader) {
+        rows.push(
+          <tr key={`header-${display.header}-${idx}`}>
+            <td colSpan={4} style={{ fontWeight: 600, color: "#555", background: "#f5f5f5" }}>
+              {display.header}
+            </td>
+          </tr>
+        );
+      }
+
+      if (showSubheader) {
+        rows.push(
+          <tr key={`subheader-${display.subheader}-${idx}`}>
+            <td colSpan={4} style={{ color: "#1976d2", background: "#f8fafc", fontSize: 13 }}>
+              {display.subheader}
+            </td>
+          </tr>
+        );
+      }
+
+      prevHeader = display.header;
+      prevSubheader = display.subheader;
+
+      rows.push(
+        <tr key={param.param_id}>
+          <td style={{ width: 300 }}>
+            <p className="fw-5">{display.main}</p>
+          </td>
+          <td style={{ width: 200 }}>
+            <p className="fw-5">{countValue ?? "--"}</p>
+          </td>
+          <td style={{ width: 200 }}>
+            <p className="fw-5">
+              {markValue !== undefined
+                ? param.negative
+                  ? `-${markValue}`
+                  : markValue
+                : "--"}
+            </p>
+          </td>
+          <td style={{ width: 200 }}>
+            {param.proof_reqd ? (
+              <>
+                {uploadedFiles[param.param_id]?.length > 0 && (
+                  <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
+                    {uploadedFiles[param.param_id].map((fileUrl: string) => (
+                      <a
+                        key={fileUrl}
+                        href={`${baseURL}${fileUrl}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        style={{ fontSize: 14, wordBreak: "break-all" }}
+                      >
+                        {fileUrl.split("/").pop()}
+                      </a>
+                    ))}
+                  </div>
+                )}
+                <input
+                  type="file"
+                  className="form-control mt-1"
+                  multiple
+                  onChange={(e) => handleFileInputChange(e, param)}
+                />
+              </>
+            ) : (
+              <span>Not required</span>
+            )}
+          </td>
+        </tr>
+      );
+
+      return rows;
+    }, []);
+  };
+
   // Show loader
   if (loading) return <Loader />;
 
@@ -497,162 +601,14 @@ const CitationReviewPage = () => {
                     </tr>
                   </thead>
                   <tbody>
-                    {(() => {
-                      let prevHeader: string | null = null;
-                      let prevSubheader: string | null = null;
-                      const rows: any = [];
-                      params.forEach((param: any, idx: number) => {
-                        const display = getParamDisplay(param);
-                        const countValue = counts[param.param_id];
-                        const markValue = marks[param.param_id];
-
-                        if (countValue === undefined || countValue === "")
-                          return;
-
-                        const showHeader =
-                          display.header && display.header !== prevHeader;
-                        const showSubheader =
-                          display.subheader &&
-                          display.subheader !== prevSubheader;
-
-                        if (showHeader) {
-                          rows.push(
-                            <tr key={`header-${display.header}-${idx}`}>
-                              <td
-                                colSpan={4}
-                                style={{
-                                  fontWeight: 600,
-                                  color: "#555",
-                                  fontSize: 15,
-                                  background: "#f5f5f5",
-                                }}
-                              >
-                                {display.header}
-                              </td>
-                            </tr>
-                          );
-                        }
-                        if (showSubheader) {
-                          rows.push(
-                            <tr key={`subheader-${display.subheader}-${idx}`}>
-                              <td
-                                colSpan={4}
-                                style={{
-                                  color: display.header ? "#1976d2" : "#888",
-                                  fontSize: 13,
-                                  background: "#f8fafc",
-                                }}
-                              >
-                                {display.subheader}
-                              </td>
-                            </tr>
-                          );
-                        }
-
-                        prevHeader = display.header;
-                        prevSubheader = display.subheader;
-
-                        rows.push(
-                          <tr key={param.param_id}>
-                            <td
-                              style={{
-                                width: 300,
-                                minWidth: 300,
-                                maxWidth: 300,
-                              }}
-                            >
-                              <p className="fw-5">{display.main}</p>
-                            </td>
-                            <td
-                              style={{
-                                width: 200,
-                                minWidth: 200,
-                                maxWidth: 200,
-                              }}
-                            >
-                              <p className="fw-5">
-                                {countValue !== undefined &&
-                                  countValue !== "" ? (
-                                  <span>{countValue}</span>
-                                ) : (
-                                  <span>--</span>
-                                )}
-                              </p>
-                            </td>
-                            <td
-                              style={{
-                                width: 200,
-                                minWidth: 200,
-                                maxWidth: 200,
-                              }}
-                            >
-                              <p className="fw-5">
-                                {markValue !== undefined
-                                  ? param.negative
-                                    ? `-${markValue}`
-                                    : markValue
-                                  : "--"}
-                              </p>
-                            </td>
-                            <td
-                              style={{
-                                width: 200,
-                                minWidth: 200,
-                                maxWidth: 200,
-                              }}
-                            >
-                              {param.proof_reqd ? (
-                                <>
-                                  {uploadedFiles[param.param_id]?.length >
-                                    0 && (
-                                      <div
-                                        style={{
-                                          display: "flex",
-                                          flexDirection: "column",
-                                          gap: "4px",
-                                        }}
-                                      >
-                                        {uploadedFiles[param.param_id].map(
-                                          (fileUrl, idx) => (
-                                            <a
-                                              key={idx}
-                                              href={`${baseURL}${fileUrl}`}
-                                              target="_blank"
-                                              rel="noopener noreferrer"
-                                              style={{
-                                                fontSize: 14,
-                                                wordBreak: "break-all",
-                                              }}
-                                            >
-                                              {fileUrl.split("/").pop()}
-                                            </a>
-                                          )
-                                        )}
-                                      </div>
-                                    )}
-                                  <input
-                                    type="file"
-                                    className="form-control mt-1"
-                                    multiple
-                                    onChange={(e) => {
-                                      const display = getParamDisplay(param);
-                                      handleFileChange(
-                                        e,
-                                        param.param_id,
-                                        display.main
-                                      );
-                                    }}
-                                  />
-                                </>
-                              ) : (
-                                <span>Not required</span>
-                              )}
-                            </td>
-                          </tr>
-                        );
-                      });
-                      return rows;
-                    })()}
+                    {renderParamRows({
+                      params,
+                      counts,
+                      marks,
+                      uploadedFiles,
+                      handleFileInputChange,
+                      getParamDisplay,
+                    })}
                   </tbody>
                 </table>
               </div>

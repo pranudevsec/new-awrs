@@ -23,6 +23,8 @@ const GiveClarificationModal: React.FC<ClarificationModalProps> = ({
   isRefreshData
 }) => {
   const dispatch = useDispatch<AppDispatch>();
+
+  // States
   const [clarification, setClarification] = useState("");
   const [file, setFile] = useState<File | null>(null);
 

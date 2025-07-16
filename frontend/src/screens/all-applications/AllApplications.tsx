@@ -17,6 +17,7 @@ const History = () => {
 
   const profile = useAppSelector((state) => state.admin.profile);
   const { units, loading, meta } = useAppSelector((state) => state.application);
+  const role = profile?.user?.user_role?.toLowerCase() ?? "";
 
   // States
   const [awardType, setAwardType] = useState<string | null>(null);
@@ -24,16 +25,13 @@ const History = () => {
   const [debouncedSearch, setDebouncedSearch] = useState<string>("");
   const [page, setPage] = useState<number>(1);
   const [limit, setLimit] = useState<number>(10);
-  const role = profile?.user?.user_role?.toLowerCase() ?? "";
 
   useEffect(() => {
     const handler = setTimeout(() => {
       setDebouncedSearch(searchTerm);
     }, 500);
 
-    return () => {
-      clearTimeout(handler);
-    };
+    return () => { clearTimeout(handler) };
   }, [searchTerm]);
 
   useEffect(() => {
@@ -131,7 +129,6 @@ const History = () => {
               </th>
             </tr>
           </thead>
-
           <tbody>
             {loading ? (
               <tr>
@@ -143,78 +140,81 @@ const History = () => {
               </tr>
             ) : (
               units.length > 0 &&
-              units.map((unit: any, idx) => (
-                <tr className="cursor-auto" key={idx}>
-                  <td style={{ width: 150, minWidth: 150, maxWidth: 150 }}>
-                    <p className="fw-4">#{unit.id}</p>
-                  </td>
-                  <td style={{ width: 150, minWidth: 150, maxWidth: 150 }}>
-                    <p className="fw-4">#{unit.unit_id}</p>
-                  </td>
-                  {role === "headquarter" && (
+              units.map((unit: any) => {
+
+                const approverRole =
+                  unit?.status_flag === "rejected"
+                    ? "N/A"
+                    : unit?.last_approved_by_role
+                      ? unit.last_approved_by_role.charAt(0).toUpperCase() + unit.last_approved_by_role.slice(1)
+                      : "Unit";
+
+                return (
+                  <tr className="cursor-auto" key={unit.id}>
                     <td style={{ width: 150, minWidth: 150, maxWidth: 150 }}>
-                      <p className="fw-4">{unit?.fds?.command}</p>
+                      <p className="fw-4">#{unit.id}</p>
                     </td>
-                  )}
-                  <td style={{ width: 200, minWidth: 200, maxWidth: 200 }}>
-                    <p className="fw-4">
-                      {new Date(unit.date_init).toLocaleDateString()}
-                    </p>
-                  </td>
-                  <td style={{ width: 200, minWidth: 200, maxWidth: 200 }}>
-                    <p className="fw-4">
-                      {unit.fds?.last_date
-                        ? new Date(unit.fds.last_date).toLocaleDateString()
-                        : "-"}
-                    </p>
-                  </td>
-                  <td style={{ width: 150, minWidth: 150, maxWidth: 150 }}>
-                    <p className="fw-4">
-                      {unit.type.charAt(0).toUpperCase() + unit.type.slice(1)}
-                    </p>
-                  </td>
+                    <td style={{ width: 150, minWidth: 150, maxWidth: 150 }}>
+                      <p className="fw-4">#{unit.unit_id}</p>
+                    </td>
+                    {role === "headquarter" && (
+                      <td style={{ width: 150, minWidth: 150, maxWidth: 150 }}>
+                        <p className="fw-4">{unit?.fds?.command}</p>
+                      </td>
+                    )}
+                    <td style={{ width: 200, minWidth: 200, maxWidth: 200 }}>
+                      <p className="fw-4">
+                        {new Date(unit.date_init).toLocaleDateString()}
+                      </p>
+                    </td>
+                    <td style={{ width: 200, minWidth: 200, maxWidth: 200 }}>
+                      <p className="fw-4">
+                        {unit.fds?.last_date
+                          ? new Date(unit.fds.last_date).toLocaleDateString()
+                          : "-"}
+                      </p>
+                    </td>
+                    <td style={{ width: 150, minWidth: 150, maxWidth: 150 }}>
+                      <p className="fw-4">
+                        {unit.type.charAt(0).toUpperCase() + unit.type.slice(1)}
+                      </p>
+                    </td>
 
-                  <td style={{ width: 150, minWidth: 150, maxWidth: 150 }}>
-                    <p
-                      className="fw-4"
-                      style={{
-                        color:
-                          unit?.status_flag === "approved" || unit?.status_flag === "shortlisted_approved" || unit?.status_flag === "in_review"
-                            ? "green"
-                            : "red",
-                      }}
-                    >
-                      {unit.status_flag === "shortlisted_approved" || unit?.status_flag === "in_review"
-                        ? "Approved"
-                        : unit.status_flag.charAt(0).toUpperCase() + unit.status_flag.slice(1)
-                      }
-                    </p>
-                  </td>
+                    <td style={{ width: 150, minWidth: 150, maxWidth: 150 }}>
+                      <p
+                        className="fw-4"
+                        style={{
+                          color:
+                            unit?.status_flag === "approved" || unit?.status_flag === "shortlisted_approved" || unit?.status_flag === "in_review"
+                              ? "green"
+                              : "red",
+                        }}
+                      >
+                        {unit.status_flag === "shortlisted_approved" || unit?.status_flag === "in_review"
+                          ? "Approved"
+                          : unit.status_flag.charAt(0).toUpperCase() + unit.status_flag.slice(1)
+                        }
+                      </p>
+                    </td>
 
-                  {/* <td style={{ width: 200, minWidth: 200, maxWidth: 200 }}>
+                    {/* <td style={{ width: 200, minWidth: 200, maxWidth: 200 }}>
                     <div className="status-content approved pending d-flex align-items-center gap-3">
                       <span></span>
                       <p className="text-capitalize fw-5">Accepted</p>
                     </div>
                   </td> */}
-                  <td style={{ width: 150, minWidth: 150, maxWidth: 150 }}>
-                    <p className="fw-4">
-                      {unit?.status_flag === "rejected"
-                        ? "N/A"
-                        : unit?.last_approved_by_role
-                          ? unit.last_approved_by_role.charAt(0).toUpperCase() + unit.last_approved_by_role.slice(1)
-                          : "Unit"
-                      }
-                    </p>
-                  </td>
 
-
-                </tr>
-              ))
+                    <td style={{ width: 150, minWidth: 150, maxWidth: 150 }}>
+                      <p className="fw-4">{approverRole}</p>
+                    </td>
+                  </tr>
+                )
+              })
             )}
           </tbody>
         </table>
       </div>
+
       {/* Empty Data */}
       {!loading && units.length === 0 && <EmptyTable />}
 

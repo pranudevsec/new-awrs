@@ -20,11 +20,13 @@ const ReviewCommentModal: React.FC<ClarificationModalProps> = ({
   handleClose,
   reviewCommentsData,
 }) => {
-  const comments: CommentData[] = Array.isArray(reviewCommentsData)
-    ? reviewCommentsData
-    : reviewCommentsData
-      ? [reviewCommentsData]
-      : [];
+  let comments: CommentData[] = [];
+
+  if (Array.isArray(reviewCommentsData)) {
+    comments = reviewCommentsData;
+  } else if (reviewCommentsData) {
+    comments = [reviewCommentsData];
+  }
 
   return (
     <Modal
@@ -45,8 +47,8 @@ const ReviewCommentModal: React.FC<ClarificationModalProps> = ({
 
       <div className="modal-body bg-white rounded-3 pt-0">
         {comments.length > 0 ? (
-          comments.map((item, idx) => (
-            <div key={idx} className="mb-3 border-bottom pb-2">
+          comments.map((item) => (
+            <div key={item.commented_at} className="mb-3 border-bottom pb-2">
               <p className="fw-semibold mb-1 text-uppercase">
                 {item.commented_by_role_type}:
               </p>

@@ -41,6 +41,7 @@ interface Award {
   award_title: string;
   award_year: string;
 }
+
 const hierarchyMap: Record<string, string[]> = {};
 hierarchicalStructure.forEach(([command, corps, division, brigade, unit]) => {
   hierarchyMap[command] = [corps, division, brigade, unit];
@@ -49,11 +50,16 @@ hierarchicalStructure.forEach(([command, corps, division, brigade, unit]) => {
 const ProfileSettings = () => {
   const dispatch = useAppDispatch();
   const { profile } = useAppSelector((state) => state.admin);
-  console.log("profile - > ", profile);
 
   const isMember = profile?.user?.is_member ?? false;
+  const role = profile?.user?.user_role?.toLowerCase() ?? "";
+
+  const currentYear = new Date().getFullYear();
+  const yearOptions = Array.from({ length: 50 }, (_, i) => `${currentYear - i}`);
+
   // States
   const [firstLoad, setFirstLoad] = useState(true);
+  const [awards, setAwards] = useState<Award[]>(profile?.unit?.awards ?? []);
   const [presidingOfficer, setPresidingOfficer] = useState<Officer>({
     id: undefined,
     serialNumber: "",
@@ -63,21 +69,16 @@ const ProfileSettings = () => {
     appointment: "",
     // digitalSign: "",
   });
+  const [officers, setOfficers] = useState<Officer[]>([{
+    id: undefined,
+    serialNumber: "",
+    icNumber: "",
+    rank: "",
+    name: "",
+    appointment: "",
+    // digitalSign: "",
+  }]);
 
-  const [officers, setOfficers] = useState<Officer[]>([
-    {
-      id: undefined,
-      serialNumber: "",
-      icNumber: "",
-      rank: "",
-      name: "",
-      appointment: "",
-      // digitalSign: "",
-    },
-  ]);
-  const [awards, setAwards] = useState<Award[]>(profile?.unit?.awards ?? []);
-
-  const role = profile?.user?.user_role?.toLowerCase() ?? "";
   useEffect(() => {
     if (profile?.unit?.awards && Array.isArray(profile.unit.awards)) {
       const processedAwards = profile.unit.awards.map((award) => ({
@@ -91,9 +92,9 @@ const ProfileSettings = () => {
       setAwards([]);
     }
   }, [profile?.unit?.awards]);
+
   useEffect(() => {
     if (profile?.unit?.members && Array.isArray(profile.unit.members)) {
-      // Extract presiding officer
       const presiding = profile.unit.members.find(
         (member) => member.member_type === "presiding_officer"
       );
@@ -126,17 +127,15 @@ const ProfileSettings = () => {
       if (otherOfficers.length > 0) {
         setOfficers(otherOfficers);
       } else {
-        setOfficers([
-          {
-            id: undefined,
-            serialNumber: "",
-            icNumber: "",
-            rank: "",
-            name: "",
-            appointment: "",
-            // digitalSign: "",
-          },
-        ]);
+        setOfficers([{
+          id: undefined,
+          serialNumber: "",
+          icNumber: "",
+          rank: "",
+          name: "",
+          appointment: "",
+          // digitalSign: "",
+        }]);
       }
     }
   }, [profile?.unit?.members]);
@@ -144,6 +143,10 @@ const ProfileSettings = () => {
   useEffect(() => {
     if (profile) setFirstLoad(false);
   }, [profile]);
+
+  const handleRemoveAward = (idx: number) => {
+    setAwards((prev) => prev.filter((_, i) => i !== idx));
+  };
 
   const getVisibleFields = (
     role: UserRole,
@@ -244,7 +247,6 @@ const ProfileSettings = () => {
     ]);
   };
 
-  // Formik form
   const formik: any = useFormik({
     initialValues: {
       unit: profile?.unit?.name || "",
@@ -335,21 +337,12 @@ const ProfileSettings = () => {
     }
   })
 
-  const currentYear = new Date().getFullYear();
-  const yearOptions = Array.from(
-    { length: 50 },
-    (_, i) => `${currentYear - i}`
-  );
-
   const handlePresidingChange = (field: keyof Officer, value: string) => {
     setPresidingOfficer((prev) => ({
       ...prev,
       [field]: value,
     }));
   };
-
-  // Show loader
-  if (firstLoad) return <Loader />;
 
   const buildUnitPayload = (
     members?: UpdateUnitProfileRequest["members"]
@@ -371,6 +364,9 @@ const ProfileSettings = () => {
   });
 
   const isDisabled = !!isMember;
+
+  // Show loader
+  if (firstLoad) return <Loader />;
 
   return (
     <div className="profile-settings-section">
@@ -506,7 +502,7 @@ const ProfileSettings = () => {
           {role === "unit" && (
             <>
               <div className="col-12 mb-3">
-                <label className="form-label fw-6">Awards Received</label>
+                <label className="form-label fw-6" aria-hidden="true">Awards Received</label>
                 <table className="table table-bordered">
                   <thead>
                     {awards.length !== 0 && (
@@ -574,11 +570,7 @@ const ProfileSettings = () => {
                           <button
                             type="button"
                             className="_btn danger btn-sm"
-                            onClick={() => {
-                              setAwards((prev) =>
-                                prev.filter((_, i) => i !== idx)
-                              );
-                            }}
+                            onClick={() => handleRemoveAward(idx)}
                           >
                             Remove
                           </button>
@@ -671,14 +663,10 @@ const ProfileSettings = () => {
                   disabled={formik.isSubmitting}
                 >
                   {formik.isSubmitting ? (
-                    <span>
-                      <span
-                        className="spinner-border spinner-border-sm me-2"
-                        role="status"
-                        aria-hidden="true"
-                      ></span>
-                      Submitting...
-                    </span>
+                    <>
+                      <span className="spinner-border spinner-border-sm me-2" aria-hidden="true"></span>
+                      {' '}Submitting...
+                    </>
                   ) : (
                     "Submit"
                   )}
@@ -910,7 +898,7 @@ const ProfileSettings = () => {
                 }}
               >
                 {officers.map((officer, index) => (
-                  <div key={index} className="mb-4">
+                  <div key={officer.name} className="mb-4">
                     <div className="d-flex flex-sm-row flex-column align-items-sm-center justify-content-between mb-3">
                       <Breadcrumb title={`Member Officer ${index + 1}`} />
                     </div>

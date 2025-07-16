@@ -62,15 +62,12 @@ export const CreateCitationSchema = Yup.object().shape({
   date_init: Yup.string()
     .required('Initial date is required')
     .matches(/^\d{4}-\d{2}-\d{2}$/, 'Date must be in YYYY-MM-DD format'),
-
   citation_fds: Yup.object().shape({
     award_type: Yup.string()
       .required('Award type is required')
       .oneOf(['citation'], 'Only "citation" is allowed'),
-
     cycle_period: Yup.string()
       .required('Cycle period is required'),
-
     last_date: Yup.string()
       .required('Last date is required')
       .matches(/^\d{4}-\d{2}-\d{2}$/, 'Date must be in YYYY-MM-DD format'),

@@ -59,7 +59,6 @@ export const updateCitation = createAsyncThunk<
     );
 
     if (response.data.success) {
-      // toast.success("Citation updated successfully!");
       return response.data;
     } else {
       toast.error("Failed to update citation");

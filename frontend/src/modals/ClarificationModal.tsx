@@ -12,6 +12,7 @@ const ClarificationModal: React.FC<ClarificationModalProps> = ({
   show,
   handleClose,
 }) => {
+  // States
   const [clarification, setSlarification] = useState("")
 
   return (

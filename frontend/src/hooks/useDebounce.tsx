@@ -10,7 +10,6 @@ export function useDebounce(callback: (...args: any[]) => void, delay: number) {
     }, delay);
   }, [callback, delay]);
 
-  // Cleanup on unmount
   useEffect(() => {
     return () => {
       if (timer.current) clearTimeout(timer.current);

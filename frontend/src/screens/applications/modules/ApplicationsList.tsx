@@ -27,21 +27,6 @@ const ApplicationsList = () => {
   const [limit, setLimit] = useState<number>(10);
   const role = profile?.user?.user_role?.toLowerCase() ?? "";
 
-  console.log("awardType -> ", awardType);
-
-
-  // const isCW2Role = profile?.user?.user_role === "cw2";
-  // const cw2_type = profile?.user?.cw2_type?.toLowerCase() ?? "";
-  // useEffect(() => {
-  //   if (isCW2Role) {
-  //     if (cw2_type === "mo") {
-  //       setAwardType("citations");
-  //     } else if (cw2_type === "ol") {
-  //       setAwardType("appreciations");
-  //     }
-  //   }
-  // }, [isCW2Role, cw2_type]);
-
   useEffect(() => {
     const handler = setTimeout(() => {
       setDebouncedSearch(searchTerm);
@@ -57,12 +42,6 @@ const ApplicationsList = () => {
 
     const fetchData = async () => {
       const role = profile.user.user_role;
-
-      // const effectiveAwardType =
-      //   isCW2Role
-      //     ? (cw2_type === "mo" ? "citation" : cw2_type === "ol" ? "appreciation" : '')
-      //     : awardType || '';
-
       const params = {
         award_type: awardType || '',
         search: debouncedSearch,
@@ -164,9 +143,9 @@ const ApplicationsList = () => {
                   </div>
                 </td>
               </tr>
-              : units.length > 0 && units.map((unit: any, idx) => (
+              : units.length > 0 && units.map((unit: any) => (
                 <tr
-                  key={idx}
+                  key={unit.id}
                   onClick={() => {
                     if (location.pathname === "/submitted-forms/list") {
                       navigate(`/submitted-forms/list/${unit.id}?award_type=${unit.type}`);

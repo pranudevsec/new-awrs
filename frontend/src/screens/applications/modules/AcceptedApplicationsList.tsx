@@ -18,12 +18,16 @@ import {
   updateApplication,
 } from "../../../reduxToolkit/services/application/applicationService";
 
+const hierarchy = ["unit", "brigade", "division", "corps", "command"];
+const allRoles = ["brigade", "division", "corps", "command"];
+
 const AcceptedApplicationsList = () => {
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
 
   const profile = useAppSelector((state) => state.admin.profile);
   const { units, loading, meta } = useAppSelector((state) => state.application);
+  const role = profile?.user?.user_role?.toLowerCase() ?? "";
 
   // States
   const [showSignatureModal, setShowSignatureModal] = useState(false);
@@ -32,17 +36,13 @@ const AcceptedApplicationsList = () => {
   const [debouncedSearch, setDebouncedSearch] = useState<string>("");
   const [page, setPage] = useState<number>(1);
   const [limit, setLimit] = useState<number>(10);
-  const role = profile?.user?.user_role?.toLowerCase() ?? "";
-  const [priorityValues, setPriorityValues] = useState<{
-    [key: string]: {
-      [type: string]: string;
-    };
-  }>({});
-  const hierarchy = ["unit", "brigade", "division", "corps", "command"];
-  const allRoles = ["brigade", "division", "corps", "command"];
+  const [priorityValues, setPriorityValues] = useState<{ [key: string]: { [type: string]: string } }>({});
+  const [graceMarksValues, setGraceMarksValues] = useState<{ [key: string]: { [type: string]: string } }>({});
+
   const lowerRole = hierarchy[hierarchy.indexOf(role) - 1] || null;
   const currentRole = profile?.user?.user_role?.toLowerCase() ?? "";
   const allowedRoles = allRoles.slice(0, allRoles.indexOf(currentRole));
+
   const getLowerRolePriority = (unit: any) => {
     if (!lowerRole || !unit?.fds?.applicationPriority) return "-";
     const priorityEntry = unit?.fds.applicationPriority.find(
@@ -50,6 +50,7 @@ const AcceptedApplicationsList = () => {
     );
     return priorityEntry?.priority ?? "-";
   };
+
   useEffect(() => {
     const initialValues: { [key: string]: { [type: string]: string } } = {};
 
@@ -71,15 +72,12 @@ const AcceptedApplicationsList = () => {
     setPriorityValues(initialValues);
   }, [units, role]);
 
-
   useEffect(() => {
     const handler = setTimeout(() => {
       setDebouncedSearch(searchTerm);
     }, 500);
 
-    return () => {
-      clearTimeout(handler);
-    };
+    return () => { clearTimeout(handler) };
   }, [searchTerm]);
 
   const fetchData = () => {
@@ -101,6 +99,7 @@ const AcceptedApplicationsList = () => {
       dispatch(fetchApplicationUnits(params));
     }
   };
+
   useEffect(() => {
     fetchData();
   }, [awardType, debouncedSearch, profile, page, limit]);
@@ -133,6 +132,7 @@ const AcceptedApplicationsList = () => {
 
     return totalParameterMarks + graceMarks;
   };
+
   const getDiscretionaryMarksByRole = (unit: any, role: string): number => {
     const graceEntry = unit?.fds?.applicationGraceMarks?.find(
       (item: any) => item?.role?.toLowerCase() === role.toLowerCase()
@@ -140,7 +140,6 @@ const AcceptedApplicationsList = () => {
     return graceEntry?.marks ?? 0;
   };
 
-  // Helper function to update priority
   const handlePriorityChange = async (unitDetail: any, value: string) => {
     const priorityPoints = parseInt(value);
 
@@ -178,7 +177,6 @@ const AcceptedApplicationsList = () => {
       return;
     }
 
-    // Group by type
     const groupedByType = units.reduce(
       (acc: Record<string, number[]>, unit) => {
         if (!acc[unit?.type]) {
@@ -214,12 +212,6 @@ const AcceptedApplicationsList = () => {
       toast.error("One or more approvals failed");
     }
   };
-
-  const [graceMarksValues, setGraceMarksValues] = useState<{
-    [key: string]: {
-      [type: string]: string;
-    };
-  }>({});
 
   useEffect(() => {
     const initialGraceValues: { [key: string]: { [type: string]: string } } = {};
@@ -264,28 +256,8 @@ const AcceptedApplicationsList = () => {
       role,
     };
 
-    dispatch(approveMarks(body)).unwrap().then(() => {
-      fetchData();
-    });
+    dispatch(approveMarks(body)).unwrap().then(() => { fetchData() });
   };
-
-  // const handleGraceMarksSave = (
-  //   unitId: string,
-  //   unitType: string,
-  //   value: string
-  // ) => {
-  //   if (value === undefined || value === "") return;
-
-  //   const body: any = {
-  //     type: unitType || "citation",
-  //     application_id: unitId,
-  //     applicationGraceMarks: Number(value),
-  //     role, // pass current role if your backend uses it
-  //   };
-
-  //   dispatch(approveMarks(body)).unwrap();
-  //   fetchData();
-  // };
 
   return (
     <div className="clarification-section" style={{ maxWidth: "80vw" }}>
@@ -411,22 +383,20 @@ const AcceptedApplicationsList = () => {
           </thead>
 
           <tbody>
-            {
-              units.length > 0 &&
-              units.map((unit: any, idx) => (
+            {units.length > 0 &&
+              units.map((unit: any) => (
                 <tr
-                  key={idx}
+                  key={unit.id}
                   className="cursor-auto"
-                  onClick={() => {
-                    // if (unit.status_flag === "draft") {
-                    //   navigate(`/applications/${unit.type}?id=${unit.id}`);
-                    // } else {
-                    //   navigate(
-                    //     `/applications/list/${unit.id}?award_type=${unit.type}`
-                    //   );
-                    // }
-                  }}
-                //   style={{ cursor: "pointer" }}
+                // onClick={() => {
+                //   if (unit.status_flag === "draft") {
+                //     navigate(`/applications/${unit.type}?id=${unit.id}`);
+                //   } else {
+                //     navigate(
+                //       `/applications/list/${unit.id}?award_type=${unit.type}`
+                //     );
+                //   }
+                // }}
                 >
                   <td style={{ width: 150, minWidth: 150, maxWidth: 150 }}>
                     <p className="fw-4">#{unit.id}</p>
@@ -636,7 +606,6 @@ const AcceptedApplicationsList = () => {
                                   status: "approved",
                                 })
                               ).unwrap();
-                              // If all checks pass, navigate
                               navigate("/applications/list");
                             } catch (error) {
                               toast.error("Error while approving the application.");
@@ -666,7 +635,6 @@ const AcceptedApplicationsList = () => {
                     )}
                   </td>
 
-
                 </tr>
               ))
             }
@@ -675,32 +643,6 @@ const AcceptedApplicationsList = () => {
       </div>
       {/* Empty Data */}
       {!loading && units.length === 0 && <EmptyTable />}
-      {units && units.length > 0 && (
-        <div className="button-groups d-flex flex-wrap gap-2 align-items-center justify-content-end mt-4">
-          {/* <button className="_btn outline">Upload signature</button>
-          <button className="_btn outline">Upload signature</button> */}
-          {/* <button
-            className="_btn success"
-            onClick={() => {
-              const incompleteUnits = units.filter((unit) => {
-                const value = priorityValues[unit.id];
-                return !value || isNaN(Number(value));
-              });
-
-              if (incompleteUnits.length > 0) {
-                toast.error(
-                  "Please enter priority for all applications before approving."
-                );
-                return;
-              }
-
-              setShowSignatureModal(true);
-            }}
-          >
-            Approve
-          </button> */}
-        </div>
-      )}
 
       {/* Pagination */}
       {units.length > 0 && (
@@ -712,6 +654,7 @@ const AcceptedApplicationsList = () => {
           setLimit={setLimit}
         />
       )}
+
       <ReqSignatureApproveModal
         show={showSignatureModal}
         handleClose={() => setShowSignatureModal(false)}

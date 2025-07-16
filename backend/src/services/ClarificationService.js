@@ -543,7 +543,6 @@ exports.addClarification = async (user, data) => {
         currentPage: pageInt,
         itemsPerPage: limitInt,
       };
-      console.log(pagination)
   
       return ResponseHelper.success(200, 'Fetched pending clarifications', paginatedData, pagination);
     } catch (err) {

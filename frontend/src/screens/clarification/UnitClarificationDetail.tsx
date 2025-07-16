@@ -48,7 +48,7 @@ const UnitClarificationDetail = () => {
         <div className="table-filter-area mb-4">
           <div className="d-flex flex-wrap justify-content-between align-items-center gap-3">
             <div className="text-center flex-grow-1 flex-sm-grow-0 flex-basis-100 flex-sm-basis-auto" style={{ minWidth: '150px' }}>
-              <label className="form-label fw-semibold">Award Type</label>
+              <label className="form-label fw-semibold" aria-hidden="true">Award Type</label>
               <p className="fw-5 mb-0">
                 {unitDetail?.type
                   ? unitDetail.type.charAt(0).toUpperCase() + unitDetail.type.slice(1)
@@ -57,22 +57,22 @@ const UnitClarificationDetail = () => {
             </div>
 
             <div className="text-center flex-grow-1 flex-sm-grow-0 flex-basis-100 flex-sm-basis-auto" style={{ minWidth: '150px' }}>
-              <label className="form-label fw-semibold">Cycle Period</label>
+              <label className="form-label fw-semibold" aria-hidden="true">Cycle Period</label>
               <p className="fw-5 mb-0">{unitDetail?.fds?.cycle_period || "--"}</p>
             </div>
 
             <div className="text-center flex-grow-1 flex-sm-grow-0 flex-basis-100 flex-sm-basis-auto" style={{ minWidth: '150px' }}>
-              <label className="form-label fw-semibold">Last Date</label>
+              <label className="form-label fw-semibold" aria-hidden="true">Last Date</label>
               <p className="fw-5 mb-0">{unitDetail?.fds?.last_date || "--"}</p>
             </div>
 
             <div className="text-center flex-grow-1 flex-sm-grow-0 flex-basis-100 flex-sm-basis-auto" style={{ minWidth: '150px' }}>
-              <label className="form-label fw-semibold">Command</label>
+              <label className="form-label fw-semibold" aria-hidden="true">Command</label>
               <p className="fw-5 mb-0">{unitDetail?.fds?.command || "--"}</p>
             </div>
 
             <div className="text-center flex-grow-1 flex-sm-grow-0 flex-basis-100 flex-sm-basis-auto" style={{ minWidth: '150px' }}>
-              <label className="form-label fw-semibold">Unit Name</label>
+              <label className="form-label fw-semibold" aria-hidden="true">Unit Name</label>
               <p className="fw-5 mb-0">{unitDetail?.unit_name || "--"}</p>
             </div>
           </div>
@@ -108,8 +108,8 @@ const UnitClarificationDetail = () => {
             </thead>
             <tbody>
               {unitDetail?.fds?.parameters
-                ?.filter((param: any) => param.clarification_id).map((param: any, index: any) => (
-                  <tr key={index}>
+                ?.filter((param: any) => param.clarification_id).map((param: any) => (
+                  <tr key={param.name}>
                     <td style={{ width: 150 }}>
                       <p className="fw-5">{param.name}</p>
                     </td>

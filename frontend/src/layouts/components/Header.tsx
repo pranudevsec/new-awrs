@@ -60,7 +60,7 @@ const Header = () => {
                             <div className={`notification-dropdown-menu ${notifOpen ? "show" : ""}`}>
                                 <div className="top-header mb-3 d-flex align-items-center justify-content-between gap-2">
                                     <h5 className="fw-6">Notifications</h5>
-                                    <label className="ios-checkbox text-nowrap">
+                                    <label className="ios-checkbox text-nowrap" aria-hidden="true">
                                         <input type="checkbox" hidden />
                                         <div className="checkbox-wrapper">
                                             <div className="checkbox-bg" />
