@@ -112,6 +112,26 @@ export const hierarchicalStructure = [
   ["eastern", "corps3", "divison3", "brigade3", "unit3"],
   ["southern", "corps4", "divison4", "brigade4", "unit4"],
   ["training", "corps5", "divison5", "brigade5", "unit5"],
+  ["southwestern", "corps6", "divison6", "brigade6", "unit6"],
+  ["northern", "corps7", "divison7", "brigade7", "unit7"],
+  ["western", "corps8", "divison8", "brigade8", "unit8"], 
+  ["central", "corps9", "divison9", "brigade9", "unit9"],
+  ["eastern", "corps10", "divison10", "brigade10", "unit10"],
+  ["southern", "corps11", "divison11", "brigade11", "unit11"],
+  ["southwestern", "corps12", "divison12", "brigade12", "unit12"],
+  ["training", "corps13", "divison13", "brigade13", "unit13"],
+  ["northern", "corps14", "divison14", "brigade14", "unit14"],
+  ["western", "corps15", "divison15", "brigade15", "unit15"],
+  ["central", "corps16", "divison16", "brigade16", "unit16"],
+  ["eastern", "corps17", "divison17", "brigade17", "unit17"],
+  ["southern", "corps18", "divison18", "brigade18", "unit18"],
+  ["southwestern", "corps19", "divison19", "brigade19", "unit19"],
+  ["training", "corps20", "divison20", "brigade20", "unit20"],
+  ["northern", "corps21", "divison21", "brigade21", "unit21"],
+  ["western", "corps22", "divison22", "brigade22", "unit22"],
+  ["central", "corps23", "divison23", "brigade23", "unit23"],
+  ["eastern", "corps24", "divison24", "brigade24", "unit24"],
+  
 ];
 
 export const hierarchicalStructure2 = {

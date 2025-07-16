@@ -173,7 +173,8 @@ exports.getAllApplicationsForUnit = async (user, query) => {
 exports.getAllApplicationsForHQ = async (user, query) => {
   const client = await dbService.getClient();
   try {
-    const { award_type, search, page = 1, limit = 10 } = query;
+    const { award_type, search, command_type, page = 1, limit = 10 } = query;
+    console.log(command_type);
 
     const citations = await client.query(`
       SELECT 
@@ -218,6 +219,14 @@ exports.getAllApplicationsForHQ = async (user, query) => {
       allApps = allApps.filter(
         (app) => app.type?.toLowerCase() === award_type.toLowerCase()
       );
+      console.log("Filtering by award_type:", award_type);
+    }
+
+    if (command_type) {
+      allApps = allApps.filter(
+        (app) => app.fds?.command?.toLowerCase() === command_type.toLowerCase()
+      );
+      console.log("Filtering by command_type:", command_type);
     }
 
     // Normalize and filter by search if provided

@@ -16,14 +16,19 @@ import {
   fetchApplicationUnits,
   fetchSubordinates,
   updateApplication,
+  TokenValidation,
+  getSignedData,
 } from "../../../reduxToolkit/services/application/applicationService";
+
 
 const AcceptedApplicationsList = () => {
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
 
   const profile = useAppSelector((state) => state.admin.profile);
+  console.log("Profile:", profile);
   const { units, loading, meta } = useAppSelector((state) => state.application);
+  console.log(units)
 
   // States
   const [showSignatureModal, setShowSignatureModal] = useState(false);
@@ -269,6 +274,64 @@ const AcceptedApplicationsList = () => {
     dispatch(approveMarks(body)).unwrap().then(() => {
       fetchData();
     });
+  };
+
+  const handleAddsignature = async (decision:string,unit:any) => {
+    //validation
+    const result = await dispatch(
+      TokenValidation({ inputPersID: profile?.user?.pers_no ?? "" })
+    );
+
+    if (TokenValidation.fulfilled.match(result)) {
+      const isValid = result.payload.vaildId;
+      if (!isValid) {
+        // toast.error("Token is not valid");
+        return;
+      }
+      //sign
+
+      const SignPayload = {
+        data: {
+          id: unit?.id,
+          user: profile?.user,
+          type: profile?.user?.user_role,
+        },
+      };
+      const response = await dispatch(getSignedData(SignPayload));
+
+      const updatePayload = {
+        id: unit?.id,
+        type: unit?.type,
+        member: {
+          name: profile?.user?.name,
+          ic_number: profile?.user?.pers_no,
+          member_type: profile?.user?.user_role,
+          member_id: profile?.user?.user_id,
+          is_signature_added: true,
+          sign_digest: response.payload,
+        },  
+        level: profile?.user?.user_role,
+      };
+      if (decision === "accepted") {
+        await dispatch(
+          updateApplication({
+            ...updatePayload,
+            status: "approved",
+          })
+        ).unwrap();
+        // If all checks pass, navigate
+        navigate("/applications/list");
+      } else if (decision === "rejected") {
+        dispatch(
+          updateApplication({
+            ...updatePayload,
+            status: "rejected",
+          })
+        ).then(() => {
+          navigate("/applications/list");
+        });
+      }
+    }
   };
 
   // const handleGraceMarksSave = (
