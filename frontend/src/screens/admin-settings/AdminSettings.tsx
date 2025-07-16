@@ -53,13 +53,15 @@ const AdminSettings = () => {
     value: item,
   }));
 
-  const cyclePeriodError =
-    formik.touched.cycle_period && formik.errors.cycle_period
-      ? typeof formik.errors.cycle_period === "string"
-        ? formik.errors.cycle_period
-        : formik.errors.cycle_period.join(", ")
-      : "";
+  let cyclePeriodError = "";
 
+  if (formik.touched.cycle_period && formik.errors.cycle_period) {
+    if (typeof formik.errors.cycle_period === "string") {
+      cyclePeriodError = formik.errors.cycle_period;
+    } else {
+      cyclePeriodError = formik.errors.cycle_period.join(", ");
+    }
+  }
 
   // Show loader
   if (firstLoad) return <Loader />;

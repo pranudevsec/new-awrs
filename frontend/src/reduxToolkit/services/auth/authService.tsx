@@ -4,7 +4,6 @@ import Axios from '../../helper/axios';
 import { apiEndPoints } from '../../../constants';
 import type { LoginRequest, LoginResponse, ProfileResponse, SignUpRequest, SignUpResponse, UpdateUnitProfileRequest, UpdateUnitProfileResponse } from './authInterface';
 
-// reqToLogin
 export const reqToLogin = createAsyncThunk<LoginResponse, LoginRequest>(
   'auth/login',
   async (data: LoginRequest, { rejectWithValue }) => {
@@ -24,7 +23,6 @@ export const reqToLogin = createAsyncThunk<LoginResponse, LoginRequest>(
   }
 );
 
-// reqToSignUp
 export const reqToSignUp = createAsyncThunk<SignUpResponse, SignUpRequest>(
   'auth/signUp',
   async (data: SignUpRequest, { rejectWithValue }) => {
@@ -44,7 +42,6 @@ export const reqToSignUp = createAsyncThunk<SignUpResponse, SignUpRequest>(
   }
 );
 
-// getProfile
 export const getProfile = createAsyncThunk<ProfileResponse>(
   'auth/getProfile',
   async (_, { rejectWithValue }) => {
@@ -63,7 +60,6 @@ export const getProfile = createAsyncThunk<ProfileResponse>(
   }
 );
 
-// reqToUpdateUnitProfile
 export const reqToUpdateUnitProfile = createAsyncThunk<
   UpdateUnitProfileResponse,
   UpdateUnitProfileRequest

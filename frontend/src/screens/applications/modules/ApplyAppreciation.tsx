@@ -123,7 +123,6 @@ const ApplyAppreciation = () => {
     return localStorage.getItem("applyAppreciationUnitRemarks") || "";
   });
 
-  // Load from API or localStorage
   useEffect(() => {
     const loadDraftData = () => {
       loadDraftCountsAndMarks();
@@ -170,7 +169,6 @@ const ApplyAppreciation = () => {
     localStorage.setItem("applyAppreciationUnitRemarks", unitRemarks);
   }, [unitRemarks]);
 
-  // Populate from API data
   useEffect(() => {
     if (draftData?.appre_fds?.parameters && parameters?.length > 0) {
       const newCounts: Record<string, string> = {};
@@ -355,11 +353,8 @@ const ApplyAppreciation = () => {
     const updatedFiles = { ...uploadedFiles };
 
     if (!updatedFiles[paramId]) return;
-
-    // Remove file at index
     updatedFiles[paramId] = updatedFiles[paramId].filter((_, idx) => idx !== index);
 
-    // If no files left, remove the paramId key
     if (updatedFiles[paramId].length === 0) {
       delete updatedFiles[paramId];
     }
@@ -539,7 +534,6 @@ const ApplyAppreciation = () => {
       return;
     }
 
-    // If all good, navigate
     navigate('/applications/appreciation-review');
   };
 
@@ -604,6 +598,19 @@ const ApplyAppreciation = () => {
       prevHeader = display.header;
       prevSubheader = display.subheader;
 
+      const rawMarkValue = marks[param.param_id];
+      let markInputValue: number;
+
+      if (param.negative) {
+        if (rawMarkValue === 0 || rawMarkValue === undefined) {
+          markInputValue = 0;
+        } else {
+          markInputValue = -Math.abs(rawMarkValue);
+        }
+      } else {
+        markInputValue = rawMarkValue ?? 0;
+      }
+
       rows.push(
         <tr key={param.param_id}>
           <td style={{ width: 250, minWidth: 250, maxWidth: 250, verticalAlign: "top" }}>
@@ -627,13 +634,7 @@ const ApplyAppreciation = () => {
                 type="number"
                 className="form-control"
                 placeholder="Marks"
-                value={
-                  param.negative
-                    ? marks[param.param_id] === 0 || marks[param.param_id] === undefined
-                      ? 0
-                      : -Math.abs(marks[param.param_id])
-                    : marks[param.param_id] ?? 0
-                }
+                value={markInputValue}
                 readOnly
               />
               <div className="tooltip-icon">
@@ -663,7 +664,8 @@ const ApplyAppreciation = () => {
                     const display = getParamDisplay(param);
                     handleFileChange(e, param.param_id, display.main);
                   }}
-                /><span style={{ fontSize: 12, color: 'red' }}>*not more than 5 MB</span>
+                />
+                <span style={{ fontSize: 12, color: 'red' }}>*not more than 5 MB</span>
               </>
             ) : (
               <span>Not required</span>

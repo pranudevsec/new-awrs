@@ -10,22 +10,6 @@ const AuthLayout = ({ children }: { children: React.ReactNode }) => {
     if (!token) return <Navigate to="/authentication/sign-in" />;
 
     return (
-        // <main className="d-flex flex-column vh-100">
-        //     {/* Topbar */}
-        //     <Topbar />
-        //     <div className="d-flex flex-grow-1 overflow-hidden">
-        //         {/* Sidebar menu */}
-        //         <SidebarMenu />
-        //         {/* Content area */}
-        //         <div className="d-flex flex-column flex-grow-1">
-        //             {/* Header */}
-        //             <Header />
-        //             <div className="flex-grow-1 overflow-auto">
-        //                 {children}
-        //             </div>
-        //         </div>
-        //     </div>
-        // </main>
         <>
             <Topbar />
             <main className='d-flex vh-100'>

@@ -388,15 +388,6 @@ const AcceptedApplicationsList = () => {
                 <tr
                   key={unit.id}
                   className="cursor-auto"
-                // onClick={() => {
-                //   if (unit.status_flag === "draft") {
-                //     navigate(`/applications/${unit.type}?id=${unit.id}`);
-                //   } else {
-                //     navigate(
-                //       `/applications/list/${unit.id}?award_type=${unit.type}`
-                //     );
-                //   }
-                // }}
                 >
                   <td style={{ width: 150, minWidth: 150, maxWidth: 150 }}>
                     <p className="fw-4">#{unit.id}</p>
@@ -641,6 +632,7 @@ const AcceptedApplicationsList = () => {
           </tbody>
         </table>
       </div>
+      
       {/* Empty Data */}
       {!loading && units.length === 0 && <EmptyTable />}
 

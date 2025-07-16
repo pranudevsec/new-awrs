@@ -8,13 +8,6 @@ import {
 } from 'recharts';
 import type { DashboardStats } from '../../../reduxToolkit/services/command-panel/commandPanelInterface';
 
-// const cyclePeriodOptions: OptionType[] = [
-//     { value: "Jan - Jun 2024", label: "Jan - Jun 2024" },
-//     { value: "July - Dec 2024", label: "July - Dec 2024" },
-//     { value: "Jan - Jun 2025", label: "Jan - Jun 2025" },
-//     { value: "July - Dec 2025", label: "July - Dec 2025" },
-// ];
-
 const COLORS = ['#FFE089', '#1A7262', '#7AD9D2', '#21438D'];
 
 const CustomTooltip = ({ active, payload }: any) => {
@@ -44,6 +37,15 @@ interface ProductDetailProps {
     dashboardStats: DashboardStats | null;
 }
 
+interface LegendFormatterProps {
+    value: string;
+}
+const LegendFormatter: React.FC<LegendFormatterProps> = ({ value }) => (
+    <span className="legend-text" style={{ fontSize: 14, fontWeight: 600 }}>
+        {value}
+    </span>
+);
+
 const ApplicationStatus: React.FC<ProductDetailProps> = ({ dashboardStats }) => {
     const data = [
         { name: 'Pending', value: dashboardStats?.totalPendingApplications || 0 },
@@ -51,20 +53,14 @@ const ApplicationStatus: React.FC<ProductDetailProps> = ({ dashboardStats }) => 
         { name: 'Rejected', value: dashboardStats?.rejected || 0 },
     ];
 
-    // States
-    // const [applicationDate, setApplicationDate] = useState("Jan - Jun 2025")
+    const renderLegendLabel = (value: string) => {
+        return <LegendFormatter value={value} />;
+    };
 
     return (
         <div className="application-status-chart h-100">
             <div className="d-flex flex-wrap gap-2 justify-content-between mb-3">
                 <h2 className="fw-6">Top Units by Total Score</h2>
-                {/* <FormSelect
-                    name="cyclePeriod"
-                    options={cyclePeriodOptions}
-                    value={cyclePeriodOptions.find((opt) => opt.value === applicationDate) || null}
-                    onChange={(e: any) => setApplicationDate(e?.value)}
-                    placeholder="Select"
-                /> */}
             </div>
             <div style={{ height: 250, overflowX: "auto" }}>
                 <ResponsiveContainer width="100%" height="100%" minWidth={400}>
@@ -79,8 +75,8 @@ const ApplicationStatus: React.FC<ProductDetailProps> = ({ dashboardStats }) => 
                             cornerRadius={10}
                             dataKey="value"
                         >
-                            {data.map((_, index) => (
-                                <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                            {data.map((val, index) => (
+                                <Cell key={`cell-${val}`} fill={COLORS[index % COLORS.length]} />
                             ))}
                         </Pie>
                         <Tooltip content={<CustomTooltip />} />
@@ -89,9 +85,7 @@ const ApplicationStatus: React.FC<ProductDetailProps> = ({ dashboardStats }) => 
                             align="right"
                             layout="vertical"
                             iconType="circle"
-                            formatter={(value) => (
-                                <span className="legend-text" style={{ fontSize: 14, fontWeight: 600, }}>{value}</span>
-                            )}
+                            formatter={renderLegendLabel}
                         />
                     </PieChart>
                 </ResponsiveContainer>

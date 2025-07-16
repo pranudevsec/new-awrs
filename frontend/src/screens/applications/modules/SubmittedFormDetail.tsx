@@ -121,7 +121,6 @@ const SubmittedFormDetail = () => {
             return acc + (isRejected ? 0 : Number(param.approved_marks ?? 0));
         }, 0);
 
-        // Calculate negativeMarks
         const negativeMarks = parameters.reduce((acc, param) => {
             const isRejected = param.clarification_details?.clarification_status === "rejected";
 
@@ -275,7 +274,7 @@ const SubmittedFormDetail = () => {
     const hierarchy = ["brigade", "division", "corps", "command", "headquarter"];
     const currentRoleIndex = hierarchy.indexOf(role?.toLowerCase());
 
-    const lowerRoles = hierarchy.slice(0, currentRoleIndex); // roles below current role
+    const lowerRoles = hierarchy.slice(0, currentRoleIndex);
     const roleMarksMap = unitDetail?.fds?.applicationGraceMarks || [];
 
     const displayedMarks = lowerRoles
@@ -380,7 +379,6 @@ const SubmittedFormDetail = () => {
     };
 
     const handleAddsignature = async (member: any, memberdecision: string) => {
-        //validation
         const newDecisions: { [memberId: string]: string } = {
             ...decisions,
             [member.id]: memberdecision,
@@ -395,11 +393,8 @@ const SubmittedFormDetail = () => {
         if (TokenValidation.fulfilled.match(result)) {
             const isValid = result.payload.vaildId;
             if (!isValid) {
-                // toast.error("Token is not valid");
                 return;
             }
-            //sign
-
             const SignPayload = {
                 data: {
                     application_id,
@@ -511,17 +506,52 @@ const SubmittedFormDetail = () => {
         );
     };
 
-    const renderParameterRow = (param: any, index: number, display: any) => {
+
+    const renderParameterRow = (param: any, display: any) => {
         const rows: JSX.Element[] = [];
 
+        const isRejected = param?.clarification_details?.clarification_status === "rejected";
+        const approvedMarksValue = isRejected ? "0" : approvedMarksState[param.name] ?? "";
+        const clarificationDetails = param?.clarification_details;
+        const hasClarification = clarificationDetails?.clarification && clarificationDetails?.clarification_id;
+        const clarificationStatus = clarificationDetails?.clarification_status;
+        const canViewClarification =
+            param?.clarification_id ||
+            (param?.last_clarification_id &&
+                [role, lowerRole].includes(param?.last_clarification_handled_by));
+
+        let clarificationActionContent = null;
+        if (hasClarification) {
+            clarificationActionContent =
+                clarificationStatus === "pending" ? (
+                    renderClarificationActions(param)
+                ) : (
+                    <p className="fw-5 text-capitalize">{clarificationStatus}</p>
+                );
+        }
+
         rows.push(
-            <tr key={index}>
-                <td style={{ width: 150 }}><p className="fw-5 mb-0">{display.main}</p></td>
-                <td style={{ width: 100 }}><p className="fw-5">{param.count}</p></td>
-                <td style={{ width: 100 }}><p className="fw-5">{param.negative ? `-${param.marks}` : param.marks}</p></td>
+            <tr key={display.main}>
+                <td style={{ width: 150 }}>
+                    <p className="fw-5 mb-0">{display.main}</p>
+                </td>
+
+                <td style={{ width: 100 }}>
+                    <p className="fw-5">{param.count}</p>
+                </td>
+
+                <td style={{ width: 100 }}>
+                    <p className="fw-5">{param.negative ? `-${param.marks}` : param.marks}</p>
+                </td>
+
                 <td style={{ width: 200 }}>
                     {param.upload && (
-                        <a href={`${baseURL}${param.upload}`} target="_blank" rel="noopener noreferrer" style={{ fontSize: 18 }}>
+                        <a
+                            href={`${baseURL}${param.upload}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            style={{ fontSize: 18 }}
+                        >
                             <span style={{ fontSize: 14, wordBreak: "break-word" }}>
                                 {renderUploads(param.upload)}
                             </span>
@@ -537,16 +567,15 @@ const SubmittedFormDetail = () => {
                                 className="form-control"
                                 placeholder="Enter approved marks"
                                 autoComplete="off"
-                                value={param?.clarification_details?.clarification_status === "rejected" ? "0" : approvedMarksState[param.name] ?? ""}
-                                disabled={param?.clarification_details?.clarification_status === "rejected"}
+                                value={approvedMarksValue}
+                                disabled={isRejected}
                                 onChange={(e) => handleInputChange(param.name, e.target.value)}
                             />
                         </td>
 
                         {!isRaisedScreen && (
                             <td style={{ width: 120 }}>
-                                {param?.clarification_id || (param?.last_clarification_id &&
-                                    [role, lowerRole].includes(param?.last_clarification_handled_by)) ? (
+                                {canViewClarification ? (
                                     <button
                                         className="action-btn bg-transparent d-inline-flex align-items-center justify-content-center"
                                     >
@@ -566,7 +595,7 @@ const SubmittedFormDetail = () => {
                         {isRaisedScreen && (
                             <>
                                 <td style={{ width: 200 }}>
-                                    {param?.clarification_details?.clarification && (
+                                    {clarificationDetails?.clarification && (
                                         <button
                                             className="action-btn bg-transparent d-inline-flex align-items-center justify-content-center"
                                         >
@@ -574,16 +603,7 @@ const SubmittedFormDetail = () => {
                                         </button>
                                     )}
                                 </td>
-                                <td style={{ width: 150 }}>
-                                    {param?.clarification_details?.clarification &&
-                                        param?.clarification_details?.clarification_id ? (
-                                        param?.clarification_details?.clarification_status === "pending" ?
-                                            renderClarificationActions(param) :
-                                            <p className="fw-5 text-capitalize">
-                                                {param?.clarification_details?.clarification_status}
-                                            </p>
-                                    ) : null}
-                                </td>
+                                <td style={{ width: 150 }}>{clarificationActionContent}</td>
                             </>
                         )}
                     </>
@@ -748,7 +768,7 @@ const SubmittedFormDetail = () => {
                                     prevHeader = display.header;
                                     prevSubheader = display.subheader;
 
-                                    rows.push(...renderParameterRow(param, index, display));
+                                    rows.push(...renderParameterRow(param, display));
                                 });
 
                                 return rows;
@@ -1098,7 +1118,7 @@ const SubmittedFormDetail = () => {
                             <>
                                 {(cw2_type === "mo" || cw2_type === "ol") && (
                                     <div className="mb-2">
-                                        <label htmlFor="priority" className="form-label mb-1" aria-hidden="true">Priority:</label>
+                                        <label htmlFor="priority" className="form-label mb-1">Priority:</label>
                                         <input
                                             type="text"
                                             className="form-control"
@@ -1120,7 +1140,7 @@ const SubmittedFormDetail = () => {
                                         handleCommentChange("__application__", localComment);
                                     }}
                                 >
-                                    <label className="form-label mb-1" aria-hidden="true">Drop Comment:</label>
+                                    <div className="form-label mb-1">Drop Comment:</div>
                                     <textarea
                                         className="form-control"
                                         placeholder="Enter comment"

@@ -90,7 +90,6 @@ export const updateParameter = createAsyncThunk<
   }
 });
 
-// deleteParameter
 export const deleteParameter = createAsyncThunk<
   ParameterResponse,
   { id: string }

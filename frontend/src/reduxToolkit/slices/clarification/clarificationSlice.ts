@@ -68,7 +68,6 @@ const clarificationSlice = createSlice({
       }
     );
 
-    // ✅ Get Clarifications for Units
     builder.addCase(getClarifications.pending, (state) => {
       state.loading = true;
     });
@@ -88,7 +87,6 @@ const clarificationSlice = createSlice({
       }
     );
 
-    // ✅ Get Clarifications for Subordinates
     builder.addCase(getSubordinateClarifications.pending, (state) => {
       state.loading = true;
     });

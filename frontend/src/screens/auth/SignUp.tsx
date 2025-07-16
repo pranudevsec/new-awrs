@@ -32,7 +32,7 @@ const SignUp = () => {
         validationSchema: SignUpSchema,
         onSubmit: async (values, { resetForm }) => {
             if (!values.captchaToken) {
-                return; // Captcha not completed
+                return;
             }
             const resultAction = await dispatch(reqToSignUp(values));
             const result = unwrapResult(resultAction);
@@ -45,7 +45,7 @@ const SignUp = () => {
 
     const handleCaptchaChange = (value: string | null) => {
         setCaptchaToken(value);
-        formik.setFieldValue("captchaToken", value); // Update Formik
+        formik.setFieldValue("captchaToken", value);
     };
 
     return (
@@ -125,7 +125,6 @@ const SignUp = () => {
                                         <label
                                             htmlFor="password"
                                             className="form-label subtitle_3 text_gray_800 mb-1"
-                                            aria-hidden="true"
                                         >
                                             Password
                                         </label>
@@ -166,7 +165,6 @@ const SignUp = () => {
                                         <label
                                             htmlFor="confirmPassword"
                                             className="form-label subtitle_3 text_gray_800 mb-1"
-                                            aria-hidden="true"
                                         >
                                             Confirm Password
                                         </label>

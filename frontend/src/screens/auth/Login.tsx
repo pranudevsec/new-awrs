@@ -30,7 +30,6 @@ const roleCredentials: Record<string, { username: string; password: string }> = 
     command_member: { username: "testcommand_member", password: "12345678" },
     admin: { username: "admin", password: "12345678" },
     headquarter: { username: "testheadquarter", password: "12345678" },
-    // cw2_type with username or same password
     cw2_mo: { username: "testcw2_mo", password: "12345678" },
     cw2_ol: { username: "testcw2_ol", password: "12345678" },
     cw2_hr: { username: "testcw2_hr", password: "12345678" },
@@ -47,7 +46,7 @@ const Login = () => {
     const formik = useFormik({
         initialValues: {
             user_role: "unit",
-            cw2_type: "", // new field for cw2 subtype
+            cw2_type: "",
             username: "testuser1",
             password: "12345678",
         },
@@ -95,10 +94,7 @@ const Login = () => {
             formik.setFieldValue("cw2_type", "");
         }
 
-        if (role === "cw2") {
-            formik.setFieldValue("username", "");
-            formik.setFieldValue("password", "");
-        } else if (role in roleCredentials) {
+        if (role in roleCredentials && role !== "cw2") {
             formik.setFieldValue("username", roleCredentials[role].username);
             formik.setFieldValue("password", roleCredentials[role].password);
         } else {

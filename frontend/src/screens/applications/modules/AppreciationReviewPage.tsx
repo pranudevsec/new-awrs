@@ -184,7 +184,6 @@ const AppreciationReviewPage = () => {
             localStorage.setItem(DRAFT_FILE_UPLOAD_KEY, JSON.stringify(newUploads));
             toast.success(`Uploaded ${uploadedUrls.length} file(s)`);
         } else {
-            // toast.error("No files uploaded");
             input.value = "";
         }
     };
@@ -329,43 +328,10 @@ const AppreciationReviewPage = () => {
         }
     }
 
-    // Subtract negativeMarks from totalMarks
     totalMarks = totalMarks - negativeMarks;
 
-    // Ensure totalMarks does not go negative
-    if (totalMarks < 0) {
-        totalMarks = 0;
-    }
-
-    // Total Parameters
+    if (totalMarks < 0) totalMarks = 0;
     const totalParams = parameters.length;
-    // const getParamDisplay = (param: any) => {
-    //     if (param.name != "no") {
-    //         return {
-    //             main: param.name,
-    //             header: param.subcategory || null,
-    //             subheader: param.subsubcategory || null,
-    //         };
-    //     } else if (param.subsubcategory) {
-    //         return {
-    //             main: param.subsubcategory,
-    //             header: param.subcategory || null,
-    //             subheader: null,
-    //         };
-    //     } else if (param.subcategory) {
-    //         return {
-    //             main: param.subcategory,
-    //             header: null,
-    //             subheader: null,
-    //         };
-    //     } else {
-    //         return {
-    //             main: param.category,
-    //             header: null,
-    //             subheader: null,
-    //         };
-    //     }
-    // };
 
     const renderParamRows = (params: any[]) => {
         let prevHeader: string | null = null;
@@ -405,6 +371,12 @@ const AppreciationReviewPage = () => {
             prevHeader = display.header;
             prevSubheader = display.subheader;
 
+            let displayMark: string | number = "--";
+
+            if (markValue !== undefined) {
+                displayMark = param.negative ? `-${markValue}` : markValue;
+            }
+
             rows.push(
                 <tr key={param.param_id}>
                     <td style={{ width: 300, minWidth: 300, maxWidth: 300 }}>
@@ -417,11 +389,7 @@ const AppreciationReviewPage = () => {
                     </td>
                     <td style={{ width: 200, minWidth: 200, maxWidth: 200 }}>
                         <p className="fw-5">
-                            {markValue !== undefined
-                                ? param.negative
-                                    ? `-${markValue}`
-                                    : markValue
-                                : "--"}
+                            {displayMark}
                         </p>
                     </td>
                     <td style={{ width: 200, minWidth: 200, maxWidth: 200 }}>
@@ -459,7 +427,6 @@ const AppreciationReviewPage = () => {
 
         return rows;
     };
-
 
     // Show loader
     if (loading) return <Loader />

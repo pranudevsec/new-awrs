@@ -19,7 +19,6 @@ const configSlice = createSlice({
   initialState,
   reducers: {},
   extraReducers: (builder) => {
-    // Get Config
     builder.addCase(getConfig.pending, (state) => {
       state.loader = true;
     });
@@ -33,7 +32,6 @@ const configSlice = createSlice({
       state.error = action.payload || 'Failed to load config';
     });
 
-    // Update Config
     builder.addCase(updateConfig.pending, (state) => {
       state.loader = true;
     });

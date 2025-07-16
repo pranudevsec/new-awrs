@@ -76,15 +76,6 @@ const ClarificationDetail = () => {
                 placeholder="Select"
               />
             </div>
-            {/* <div className="col-lg-3 col-sm-4">
-              <FormInput
-                label="Unit"
-                name="lastDate"
-                placeholder="Search by unit"
-                value=""
-                readOnly={true}
-              />
-            </div> */}
           </div>
         </div>
         <div className="table-responsive">
@@ -386,10 +377,6 @@ const ClarificationDetail = () => {
           </div>
         </div>
       </div>
-      {/* <UnitClarificationModal
-        show={clarificationShow}
-        handleClose={() => setClarificationShow(false)}
-      /> */}
     </>
   );
 };

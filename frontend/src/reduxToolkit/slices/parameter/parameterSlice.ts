@@ -38,7 +38,6 @@ const parameterSlice = createSlice({
     },
   },
   extraReducers: (builder) => {
-    // fetchParameters
     builder.addCase(fetchParameters.pending, (state) => {
       state.loading = true;
       state.error = null;
@@ -60,7 +59,6 @@ const parameterSlice = createSlice({
       }
     );
 
-    // deleteParameter
     builder.addCase(deleteParameter.pending, (state) => {
       state.loading = true;
       state.error = null;

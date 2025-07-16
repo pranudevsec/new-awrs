@@ -44,27 +44,6 @@ const ClarificationRaisedList = () => {
       : [];
   }, [units]);
 
-  // const filteredUnits = useMemo(() => {
-  //   return Array.isArray(units)
-  //     ? units.filter((unit: any) => {
-  //         if (unit.clarifications_count <= 0) return false;
-
-  //         const parameters = unit.fds?.parameters || [];
-
-  //         return parameters.some((param: any) => {
-  //           const hasClarificationIdField =
-  //             param.hasOwnProperty("clarification_id") || param.hasOwnProperty("last_clarification_id");
-
-  //           const isPendingStatus =
-  //             !param.clarification_details?.clarification_status || // if no status field, allow
-  //             param.clarification_details?.clarification_status === "pending";
-
-  //           return hasClarificationIdField && isPendingStatus;
-  //         });
-  //       })
-  //     : [];
-  // }, [units]);
-
   return (
     <div className="clarification-section">
       <div className="d-flex flex-sm-row flex-column align-items-sm-center justify-content-between mb-4">
@@ -112,7 +91,6 @@ const ClarificationRaisedList = () => {
               </th>
               <th style={{ width: 200, minWidth: 200, maxWidth: 200 }}>Dead Line</th>
               <th style={{ width: 150, minWidth: 150, maxWidth: 150 }}>Type</th>
-              {/* <th style={{ width: 200, minWidth: 200, maxWidth: 200 }}>Status</th> */}
               <th style={{ width: 100, minWidth: 100, maxWidth: 100 }}></th>
             </tr>
           </thead>
@@ -154,17 +132,11 @@ const ClarificationRaisedList = () => {
                     <td style={{ width: 150, minWidth: 150, maxWidth: 150 }}>
                       <p className="fw-4">  {unit.type.charAt(0).toUpperCase() + unit.type.slice(1)}</p>
                     </td>
-                    {/* <td style={{ width: 200, minWidth: 200, maxWidth: 200 }}>
-                    <div className="status-content approved pending d-flex align-items-center gap-3">
-                      <span></span>
-                      <p className="text-capitalize fw-5">Accepted</p>
-                    </div>
-                  </td> */}
                     <td style={{ width: 100, minWidth: 100, maxWidth: 100 }}>
                       <Link
                         to={`/applications/list/${unit.id}?award_type=${unit.type}&raised_clarifications=true`}
                         className="action-btn bg-transparent d-inline-flex align-items-center justify-content-center"
-                        onClick={(e) => e.stopPropagation()} // prevent triggering row click navigation
+                        onClick={(e) => e.stopPropagation()}
                       >
                         {SVGICON.app.eye}
                       </Link>
@@ -175,6 +147,7 @@ const ClarificationRaisedList = () => {
           </tbody>
         </table>
       </div>
+      
       {/* Empty Data */}
       {!loading && filteredUnits.length === 0 && <EmptyTable />}
 

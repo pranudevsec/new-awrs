@@ -37,12 +37,10 @@ const ParametersList = () => {
         };
     }, [searchTerm]);
 
-    // Get parametes function
     const fetchParametersList = async () => {
         await dispatch(fetchParameters({ awardType: awardType || "", search: debouncedSearch, page, limit }));
     };
 
-    // Delete paramete function
     const handleDelete = async () => {
         const resultAction = await dispatch(deleteParameter({ id }));
         setDeleteShow(false);
@@ -121,8 +119,8 @@ const ParametersList = () => {
                                     </td>
                                 </tr>
                             ) : parameters.length > 0 && (
-                                parameters.map((item, idx) => (
-                                    <tr key={idx}>
+                                parameters.map((item) => (
+                                    <tr key={item.param_id}>
                                         <td style={{ width: 150, minWidth: 150, maxWidth: 150 }}>
                                             <p className="fw-4">{item.name}</p>
                                         </td>

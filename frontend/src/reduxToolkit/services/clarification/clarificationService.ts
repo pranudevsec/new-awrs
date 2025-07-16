@@ -31,7 +31,6 @@ export const createClarification = createAsyncThunk<
   }
 });
 
-// ✅ Get Clarification for Units
 export const getClarifications = createAsyncThunk<
   GetClarificationListResponse,
   { awardType: string; search: string; page?: number; limit?: number }
@@ -54,7 +53,6 @@ export const getClarifications = createAsyncThunk<
   }
 );
 
-// ✅ Get Clarification for Subordinates
 export const getSubordinateClarifications = createAsyncThunk<
   GetClarificationListResponse,
   { awardType: string; search: string; page?: number; limit?: number }
@@ -78,7 +76,6 @@ export const getSubordinateClarifications = createAsyncThunk<
   }
 );
 
-// ✅ Update Clarification
 export const updateClarification = createAsyncThunk<
   UpdateClarificationResponse,
   UpdateClarificationPayload

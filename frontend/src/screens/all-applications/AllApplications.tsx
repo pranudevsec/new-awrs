@@ -142,12 +142,15 @@ const History = () => {
               units.length > 0 &&
               units.map((unit: any) => {
 
-                const approverRole =
-                  unit?.status_flag === "rejected"
-                    ? "N/A"
-                    : unit?.last_approved_by_role
-                      ? unit.last_approved_by_role.charAt(0).toUpperCase() + unit.last_approved_by_role.slice(1)
-                      : "Unit";
+                let approverRole = "Unit";
+
+                if (unit?.status_flag === "rejected") {
+                  approverRole = "N/A";
+                } else if (unit?.last_approved_by_role) {
+                  approverRole =
+                    unit.last_approved_by_role.charAt(0).toUpperCase() +
+                    unit.last_approved_by_role.slice(1);
+                }
 
                 return (
                   <tr className="cursor-auto" key={unit.id}>
@@ -196,14 +199,6 @@ const History = () => {
                         }
                       </p>
                     </td>
-
-                    {/* <td style={{ width: 200, minWidth: 200, maxWidth: 200 }}>
-                    <div className="status-content approved pending d-flex align-items-center gap-3">
-                      <span></span>
-                      <p className="text-capitalize fw-5">Accepted</p>
-                    </div>
-                  </td> */}
-
                     <td style={{ width: 150, minWidth: 150, maxWidth: 150 }}>
                       <p className="fw-4">{approverRole}</p>
                     </td>

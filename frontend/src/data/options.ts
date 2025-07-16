@@ -230,17 +230,6 @@ export const hierarchicalStructure2 = {
   },
 };
 
-// export const roleOptions: OptionType[] = [
-//   { value: "unit", label: "Unit" },
-//   { value: "brigade", label: "Brigade" },
-//   { value: "division", label: "Division" },
-//   { value: "corps", label: "Corps" },
-//   { value: "command", label: "Command" },
-//   { value: "headquarter", label: "Headquarter" },
-//   { value: "cw2", label: "CW2" },
-//   { value: "admin", label: "Admin" },
-
-// ];
 export const roleOptions = [
   { label: "Unit", value: "unit" },
   { label: "Special Unit", value: "special_unit" },

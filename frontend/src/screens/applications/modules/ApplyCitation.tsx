@@ -348,7 +348,6 @@ const ApplyCitation = () => {
       localStorage.setItem(DRAFT_FILE_UPLOAD_KEY, JSON.stringify(newUploads));
       toast.success(`Uploaded ${uploadedUrls.length} file(s)`);
     } else {
-      // toast.error("No files uploaded");
       input.value = "";
     }
   };
@@ -358,10 +357,8 @@ const ApplyCitation = () => {
 
     if (!updatedFiles[paramId]) return;
 
-    // Remove file at index
     updatedFiles[paramId] = updatedFiles[paramId].filter((_, idx) => idx !== index);
 
-    // If no files left, remove the paramId key
     if (updatedFiles[paramId].length === 0) {
       delete updatedFiles[paramId];
     }
@@ -414,10 +411,8 @@ const ApplyCitation = () => {
 
         let resultAction;
         if (id) {
-          // Update if `id` exists
           resultAction = await dispatch(updateCitation({ id: Number(id), ...payload }));
         } else {
-          // Otherwise, create new
           resultAction = await dispatch(createCitation(payload));
         }
 
@@ -529,7 +524,6 @@ const ApplyCitation = () => {
       return;
     }
 
-    // If all good, navigate
     navigate('/applications/citation-review');
   };
 
@@ -597,7 +591,15 @@ const ApplyCitation = () => {
       if (showHeader) {
         rows.push(
           <tr key={`header-${display.header}-${idx}`}>
-            <td colSpan={4} style={{ fontWeight: 500, fontSize: 15, backgroundColor: "#ebeae8", lineHeight: "1" }}>
+            <td
+              colSpan={4}
+              style={{
+                fontWeight: 500,
+                fontSize: 15,
+                backgroundColor: "#ebeae8",
+                lineHeight: "1",
+              }}
+            >
               {display.header}
             </td>
           </tr>
@@ -607,7 +609,14 @@ const ApplyCitation = () => {
       if (showSubheader) {
         rows.push(
           <tr key={`subheader-${display.subheader}-${idx}`}>
-            <td colSpan={4} style={{ color: display.header ? "black" : "#888", fontSize: 15, fontWeight: 700 }}>
+            <td
+              colSpan={4}
+              style={{
+                color: display.header ? "black" : "#888",
+                fontSize: 15,
+                fontWeight: 700,
+              }}
+            >
               {display.subheader}
             </td>
           </tr>
@@ -617,12 +626,36 @@ const ApplyCitation = () => {
       prevHeader = display.header;
       prevSubheader = display.subheader;
 
+      const markRawValue = marks[param.param_id];
+      let displayMarkValue = 0;
+
+      if (param.negative) {
+        displayMarkValue =
+          markRawValue === 0 || markRawValue === undefined ? 0 : -Math.abs(markRawValue);
+      } else {
+        displayMarkValue = markRawValue ?? 0;
+      }
+
       rows.push(
         <tr key={param.param_id}>
-          <td style={{ width: 250, minWidth: 250, maxWidth: 250, verticalAlign: "top" }}>
+          <td
+            style={{
+              width: 250,
+              minWidth: 250,
+              maxWidth: 250,
+              verticalAlign: "top",
+            }}
+          >
             <p className="fw-5 mb-0">{display.main}</p>
           </td>
-          <td style={{ width: 300, minWidth: 300, maxWidth: 300, verticalAlign: "top" }}>
+          <td
+            style={{
+              width: 300,
+              minWidth: 300,
+              maxWidth: 300,
+              verticalAlign: "top",
+            }}
+          >
             <input
               type="text"
               className="form-control"
@@ -634,19 +667,20 @@ const ApplyCitation = () => {
               pattern="[0-9]*"
             />
           </td>
-          <td style={{ width: 300, minWidth: 300, maxWidth: 300, verticalAlign: "top" }}>
+          <td
+            style={{
+              width: 300,
+              minWidth: 300,
+              maxWidth: 300,
+              verticalAlign: "top",
+            }}
+          >
             <div className="input-with-tooltip">
               <input
                 type="number"
                 className="form-control"
                 placeholder="Marks"
-                value={
-                  param.negative
-                    ? marks[param.param_id] === 0 || marks[param.param_id] === undefined
-                      ? 0
-                      : -Math.abs(marks[param.param_id])
-                    : marks[param.param_id] ?? 0
-                }
+                value={displayMarkValue}
                 readOnly
               />
               <div className="tooltip-icon">
@@ -657,7 +691,14 @@ const ApplyCitation = () => {
               </div>
             </div>
           </td>
-          <td style={{ width: 300, minWidth: 300, maxWidth: 300, verticalAlign: "top" }}>
+          <td
+            style={{
+              width: 300,
+              minWidth: 300,
+              maxWidth: 300,
+              verticalAlign: "top",
+            }}
+          >
             {param.proof_reqd ? (
               <>
                 {uploadedFiles[param.param_id]?.length > 0 && (
@@ -676,7 +717,10 @@ const ApplyCitation = () => {
                     const display = getParamDisplay(param);
                     handleFileChange(e, param.param_id, display.main);
                   }}
-                /><span style={{ fontSize: 12, color: 'red' }}>*not more than 5 MB</span>
+                />
+                <span style={{ fontSize: 12, color: "red" }}>
+                  *not more than 5 MB
+                </span>
               </>
             ) : (
               <span>Not required</span>
@@ -688,6 +732,7 @@ const ApplyCitation = () => {
       return rows;
     });
   };
+
 
   // Show loader
   if (loading) return <Loader />
@@ -796,26 +841,6 @@ const ApplyCitation = () => {
                   title={
                     <span
                       className="form-label mb-1"
-                      style={{
-                        // color: activeTab === category ? "#fff" : "#2563eb",
-                        // background: activeTab === category ? "linear-gradient(90deg, #3b82f6 60%, #2563eb 100%)" : "#e0e7ff",
-                        // borderRadius: 20,
-                        // padding: "0.5rem 1.8rem",
-                        // fontWeight: 600,
-                        // fontSize: 16,
-                        // boxShadow: activeTab === category ? "0 2px 8px rgba(59,130,246,0.15)" : "none",
-                        // border: activeTab === category ? "2px solid #2563eb" : "2px solid transparent",
-                        // letterSpacing: 1,
-                        // cursor: "pointer",
-                        // transition: "all 0.2s",
-                        // outline: activeTab === category ? "2px solid #93c5fd" : "none",
-                        // filter: activeTab === category ? "brightness(1.05)" : "none",
-                        // textDecoration: "none",
-                        // display: "inline-block",
-                        // marginRight: "0.5rem",
-                        // minWidth: 120,
-                        // textAlign: "center",
-                      }}
                     >
                       {category.toUpperCase()}
                     </span>

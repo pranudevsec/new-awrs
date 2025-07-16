@@ -9,7 +9,6 @@ import type {
   HomeCountResponse,
 } from "./commandPanelInterface";
 
-// ✅ Get ScoreBoards
 export const getScoreBoards = createAsyncThunk<
   CommandPanelResponse,
   {
@@ -43,7 +42,6 @@ export const getScoreBoards = createAsyncThunk<
   }
 );
 
-// ✅ Get getDashboardStats
 export const getDashboardStats = createAsyncThunk<DashboardResponse>(
   "commandDashboard/getStats",
   async (_, { rejectWithValue }) => {
@@ -66,7 +64,6 @@ export const getDashboardStats = createAsyncThunk<DashboardResponse>(
   }
 );
 
-// ✅ Get getDashboardUnitScores
 export const getDashboardUnitScores =
   createAsyncThunk<DashboardUnitScoreResponse>(
     "commandDashboard/getUnitScoresChart",
@@ -89,7 +86,6 @@ export const getDashboardUnitScores =
     }
   );
 
-// ✅ Get Home Count Stats
 export const getHomeCountStats = createAsyncThunk<HomeCountResponse>(
   "commandPanel/getHomeCounts",
   async (_, { rejectWithValue }) => {

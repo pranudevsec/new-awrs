@@ -32,7 +32,6 @@ export const createAppreciation = createAsyncThunk<
   }
 });
 
-// Fetch appreciation by ID
 export const fetchAppreciationById = createAsyncThunk<
   CreateAppreciationResponse,
   number
@@ -51,7 +50,6 @@ export const fetchAppreciationById = createAsyncThunk<
   }
 });
 
-// Update appreciation by ID
 export const updateAppreciation = createAsyncThunk<
   UpdateAppreciationResponse,
   UpdateAppreciationRequest
@@ -75,7 +73,6 @@ export const updateAppreciation = createAsyncThunk<
   }
 });
 
-// Delete appreciation by ID
 export const deleteAppreciation = createAsyncThunk<
   UpdateAppreciationResponse,
   number,

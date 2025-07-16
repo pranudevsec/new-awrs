@@ -134,7 +134,6 @@ const Winners = () => {
             </tbody>
           </table>
         </div>
-        {/* <Pagination /> */}
       </div>
     </>
   );

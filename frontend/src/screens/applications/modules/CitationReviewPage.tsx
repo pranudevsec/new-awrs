@@ -338,13 +338,9 @@ const CitationReviewPage = () => {
     }
   }
 
-  // Subtract negativeMarks from totalMarks
   totalMarks = totalMarks - negativeMarks;
 
-  // Ensure totalMarks does not go negative
-  if (totalMarks < 0) {
-    totalMarks = 0;
-  }
+  if (totalMarks < 0) totalMarks = 0;
 
   // Total Parameters
   const totalParams = parameters.length;
@@ -368,8 +364,7 @@ const CitationReviewPage = () => {
       if (countValue === undefined || countValue === "") return rows;
 
       const showHeader = display.header && display.header !== prevHeader;
-      const showSubheader =
-        display.subheader && display.subheader !== prevSubheader;
+      const showSubheader = display.subheader && display.subheader !== prevSubheader;
 
       if (showHeader) {
         rows.push(
@@ -394,6 +389,12 @@ const CitationReviewPage = () => {
       prevHeader = display.header;
       prevSubheader = display.subheader;
 
+      let displayMark: string | number = "--";
+
+      if (markValue !== undefined) {
+        displayMark = param.negative ? `-${markValue}` : markValue;
+      }
+
       rows.push(
         <tr key={param.param_id}>
           <td style={{ width: 300 }}>
@@ -403,13 +404,7 @@ const CitationReviewPage = () => {
             <p className="fw-5">{countValue ?? "--"}</p>
           </td>
           <td style={{ width: 200 }}>
-            <p className="fw-5">
-              {markValue !== undefined
-                ? param.negative
-                  ? `-${markValue}`
-                  : markValue
-                : "--"}
-            </p>
+            <p className="fw-5">{displayMark}</p>
           </td>
           <td style={{ width: 200 }}>
             {param.proof_reqd ? (
@@ -446,6 +441,7 @@ const CitationReviewPage = () => {
       return rows;
     }, []);
   };
+
 
   // Show loader
   if (loading) return <Loader />;

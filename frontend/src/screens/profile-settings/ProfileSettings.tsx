@@ -111,7 +111,6 @@ const ProfileSettings = () => {
         });
       }
 
-      // Extract other officers
       const otherOfficers = profile.unit.members
         .filter((member) => member.member_type !== "presiding_officer")
         .map((member) => ({
@@ -153,7 +152,6 @@ const ProfileSettings = () => {
     isSpecialUnit?: boolean
   ): string[] => {
     if (isSpecialUnit) {
-      // If it's a special unit, exclude brigade, division, corps
       switch (role) {
         case "unit":
           return [
@@ -266,7 +264,6 @@ const ProfileSettings = () => {
         const role = profile?.user?.user_role ?? "";
         const visibleFields = getVisibleFields(role);
 
-        // Map to backend field names
         const fieldMap: Record<string, string> = {
           unit: "name",
           brigade: "bde",
@@ -275,10 +272,8 @@ const ProfileSettings = () => {
           command: "comd",
         };
 
-        // Prepare payload with visible fields only; others as null
         const payload: any = {};
-
-        // Include all relevant fields
+        let matrixUnit = "";
         Object.entries(fieldMap).forEach(([formField, backendField]) => {
           if (visibleFields.includes(formField)) {
             payload[backendField] = values[formField];
@@ -287,16 +282,16 @@ const ProfileSettings = () => {
           }
         });
 
-        // Add other values
+        if (Array.isArray(values.matrix_unit)) {
+          matrixUnit = values.matrix_unit.join(",");
+        } else if (typeof values.matrix_unit === "string" && values.matrix_unit.length > 0) {
+          matrixUnit = values.matrix_unit;
+        }
+
         payload["adm_channel"] = values.adm_channel;
         payload["tech_channel"] = values.tech_channel;
         payload["unit_type"] = values.unit_type;
-        payload["matrix_unit"] = Array.isArray(values.matrix_unit)
-          ? values.matrix_unit.join(",")
-          : typeof values.matrix_unit === "string" &&
-            values.matrix_unit.length > 0
-            ? values.matrix_unit
-            : "";
+        payload["matrix_unit"] = matrixUnit;
         payload["location"] = values.location;
         payload["awards"] = awards;
 
@@ -502,16 +497,11 @@ const ProfileSettings = () => {
           {role === "unit" && (
             <>
               <div className="col-12 mb-3">
-                <label className="form-label fw-6" aria-hidden="true">Awards Received</label>
+                <div className="form-label fw-6">Awards Received</div>
                 <table className="table table-bordered">
                   <thead>
                     {awards.length !== 0 && (
-                      <tr>
-                        {/* <th>Type</th>
-                      <th>Brigade</th>
-                      <th>Year</th>
-                      <th>Action</th> */}
-                      </tr>
+                      <tr>                      </tr>
                     )}
                   </thead>
                   <tbody>
@@ -601,59 +591,6 @@ const ProfileSettings = () => {
               </div>
             </>
           )}
-
-          {/* {role !== "unit" && (
-            <>
-              {" "}
-              <div className="col-sm-6 mb-3">
-                <label htmlFor="adm_channel" className="form-label mb-1">
-                  Adm Channel
-                </label>
-                <input
-                  id="adm_channel"
-                  name="adm_channel"
-                  type="text"
-                  className={`form-control ${formik.touched.adm_channel && formik.errors.adm_channel
-                    ? "is-invalid"
-                    : ""
-                    }`}
-                  value={formik.values.adm_channel}
-                  onChange={formik.handleChange}
-                  onBlur={formik.handleBlur}
-                  placeholder="Enter Adm Channel"
-                />
-                {formik.touched.adm_channel && formik.errors.adm_channel && (
-                  <div className="invalid-feedback">
-                    {formik.errors.adm_channel}
-                  </div>
-                )}
-              </div>
-              <div className="col-sm-6 mb-3">
-                <label htmlFor="tech_channel" className="form-label mb-1">
-                  Tech Channel
-                </label>
-                <input
-                  id="tech_channel"
-                  name="tech_channel"
-                  type="text"
-                  className={`form-control ${formik.touched.tech_channel && formik.errors.tech_channel
-                    ? "is-invalid"
-                    : ""
-                    }`}
-                  value={formik.values.tech_channel}
-                  onChange={formik.handleChange}
-                  onBlur={formik.handleBlur}
-                  placeholder="Enter Tech Channel"
-                />
-                {formik.touched.tech_channel && formik.errors.tech_channel && (
-                  <div className="invalid-feedback">
-                    {formik.errors.tech_channel}
-                  </div>
-                )}
-              </div>
-            </>
-          )} */}
-
           {!isDisabled && role !== "cw2" && (
             <div className="col-12 mt-2">
               <div className="d-flex align-items-center">
@@ -679,73 +616,8 @@ const ProfileSettings = () => {
 
       {!["unit", "headquarter"].includes(role) && (
         <>
-          {/* Commander */}
-          {/* <div className="d-flex flex-sm-row flex-column align-items-sm-center justify-content-between mb-4">
-        <Breadcrumb title="Commander" />
-      </div>
-      <form className="mb-5">
-        <div className="row">
-          <div className="col-sm-6 mb-3">
-            <FormInput
-              label="Serial Number"
-              name="serialNumber"
-              placeholder="Enter Serial Number"
-              value=""
-            />
-          </div>
-          <div className="col-sm-6 mb-3">
-            <FormInput
-              label="IC Number"
-              name="icNumber"
-              placeholder="Enter IC Number"
-              value=""
-            />
-          </div>
-          <div className="col-sm-6 mb-3">
-            <FormInput
-              label="Rank"
-              name="rank"
-              placeholder="Enter Rank"
-              value=""
-            />
-          </div>
-          <div className="col-sm-6 mb-3">
-            <FormInput
-              label="Name"
-              name="name"
-              placeholder="Enter Name"
-              value=""
-            />
-          </div>
-          <div className="col-sm-6 mb-3">
-            <FormInput
-              label="Appointment"
-              name="appointment"
-              placeholder="Enter Appointment"
-              value=""
-            />
-          </div>
-          <div className="col-sm-6 mb-3">
-            <FormInput
-              label="Digital Sign"
-              name="digitalSign"
-              placeholder="Enter Digital Sign"
-              value=""
-            />
-          </div>
-          <div className="col-12 mt-2">
-            <div className="d-flex align-items-center">
-              <button type="submit" className="_btn _btn-lg primary">
-                Add  Commander
-              </button>
-            </div>
-          </div>
-        </div>
-      </form> */}
-
           {!isMember && (
             <>
-              {" "}
               {/* Presiding Officer */}
               <div className="d-flex flex-sm-row flex-column align-items-sm-center justify-content-between mb-4">
                 <Breadcrumb title="Presiding Officer" />

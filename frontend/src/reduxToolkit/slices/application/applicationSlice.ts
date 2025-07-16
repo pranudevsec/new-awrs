@@ -76,7 +76,6 @@ const applicationSlice = createSlice({
       }
     );
 
-    // 👇 Unit detail cases
     builder.addCase(fetchApplicationUnitDetail.pending, (state) => {
       state.loading = true;
       state.unitDetail = null;

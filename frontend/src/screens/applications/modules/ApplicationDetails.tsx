@@ -258,19 +258,7 @@ const ApplicationDetails = () => {
     }
   }, [unitDetail, role]);
 
-  // const handleGraceMarksSave = (value: string) => {
-  //   if (value === undefined) return;
 
-  //   const body: any = {
-  //     type: unitDetail?.type || "citation",
-  //     application_id: unitDetail?.id || 0,
-  //     applicationGraceMarks: Number(value),
-  //   };
-
-  //   dispatch(approveMarks(body)).unwrap();
-  // };
-
-  // Set remark value when application is loaded or profile changes
   useEffect(() => {
     if (unitDetail?.remarks && Array.isArray(unitDetail?.remarks)) {
       const existing = unitDetail?.remarks.find(
@@ -306,13 +294,6 @@ const ApplicationDetails = () => {
       console.error("Failed to update remarks", err);
     }
   };
-  // const debouncedGraceMarksSave = useDebounce(handleGraceMarksSave, 600);
-
-  // const handleGraceMarksChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-  //   const value = e.target.value;
-  //   setGraceMarks(value);
-  //   debouncedGraceMarksSave(value);
-  // };
 
   const currentRoleIndex = hierarchy.indexOf(role?.toLowerCase());
   const lowerRoles = hierarchy.slice(0, currentRoleIndex)
@@ -335,7 +316,6 @@ const ApplicationDetails = () => {
       application_id: unitDetail?.id || 0,
     };
 
-    // If paramName is "__application__", treat it as an application-level comment
     if (paramName === "__application__") {
       body.comment = comment;
     } else {
@@ -347,7 +327,6 @@ const ApplicationDetails = () => {
       .catch(() => { });
   };
 
-  // Helper function to update priority
   const handlePriorityChange = async (value: string) => {
     const priorityPoints = parseInt(value);
 
@@ -422,7 +401,6 @@ const ApplicationDetails = () => {
   };
 
   const handleAddsignature = async (member: any, memberdecision: string) => {
-    //validation
     const newDecisions: { [memberId: string]: string } = {
       ...decisions,
       [member.id]: memberdecision,
@@ -437,11 +415,8 @@ const ApplicationDetails = () => {
     if (TokenValidation.fulfilled.match(result)) {
       const isValid = result.payload.vaildId;
       if (!isValid) {
-        // toast.error("Token is not valid");
         return;
       }
-      //sign
-
       const SignPayload = {
         data: {
           application_id,
@@ -487,49 +462,7 @@ const ApplicationDetails = () => {
         });
       }
     }
-    // } else {
-    //   toast.error(result.payload as string || "Token validation failed");
-    //   return;
-    // }
   };
-
-  // Development handleAddsignature
-  // const handleAddsignature = async (member: any, memberdecision: string) => {
-  //   const updatePayload = {
-  //     id: unitDetail?.id,
-  //     type: unitDetail?.type,
-  //     member: {
-  //       name: member.name,
-  //       ic_number: member.ic_number,
-  //       member_type: member.member_type,
-  //       member_id: member.id,
-  //       is_signature_added: true,
-  //       sign_digest: "something while developing",
-  //     },
-  //     level: profile?.user?.user_role,
-  //   };
-  //   if (memberdecision === "accepted") {
-  //     dispatch(updateApplication(updatePayload)).then(() => {
-  //       dispatch(fetchApplicationUnitDetail({ award_type, numericAppId }));
-  //       const allOthersAccepted = profile?.unit?.members
-  //         .filter((m: any) => m.id !== member.id)
-  //         .every((m: any) => decisions[m.id] === "accepted");
-  //       if (allOthersAccepted && memberdecision === "accepted") {
-  //         navigate("/applications/list");
-  //       }
-  //     });
-  //   } else if (memberdecision === "rejected") {
-  //     console.log(memberdecision);
-  //     dispatch(
-  //       updateApplication({
-  //         ...updatePayload,
-  //         status: "rejected",
-  //       })
-  //     ).then(() => {
-  //       navigate("/applications/list");
-  //     });
-  //   }
-  // };
 
   const renderHeaderRow = (header: string, index: number) => (
     <tr key={`header-${header}-${index}`}>
@@ -548,13 +481,16 @@ const ApplicationDetails = () => {
   );
 
   const renderUploads = (upload: any) => {
-    const uploads = Array.isArray(upload)
-      ? upload
-      : typeof upload === "string"
-        ? upload.split(",")
-        : [];
-    return uploads.map((filePath: string, idx: number) => (
-      <span key={idx} style={{ display: "block" }}>
+    let uploads: string[] = [];
+
+    if (Array.isArray(upload)) {
+      uploads = upload;
+    } else if (typeof upload === "string") {
+      uploads = upload.split(",");
+    }
+
+    return uploads.map((filePath: string) => (
+      <span key={filePath} style={{ display: "block" }}>
         {filePath.trim().split("/").pop()}
       </span>
     ));
@@ -593,17 +529,51 @@ const ApplicationDetails = () => {
     );
   };
 
-  const renderParameterRow = (param: any, index: number, display: any) => {
+  const renderParameterRow = (param: any, display: any) => {
     const rows: JSX.Element[] = [];
 
+    const isRejected = param?.clarification_details?.clarification_status === "rejected";
+    const approvedMarksValue = isRejected ? "0" : approvedMarksState[param.name] ?? "";
+    const clarificationDetails = param?.clarification_details;
+    const hasClarification = clarificationDetails?.clarification && clarificationDetails?.clarification_id;
+    const clarificationStatus = clarificationDetails?.clarification_status;
+    const canViewClarification =
+      param?.clarification_id ||
+      (param?.last_clarification_id &&
+        [role, lowerRole].includes(param?.last_clarification_handled_by));
+
+    let clarificationActionContent = null;
+    if (hasClarification) {
+      clarificationActionContent =
+        clarificationStatus === "pending" ? (
+          renderClarificationActions(param)
+        ) : (
+          <p className="fw-5 text-capitalize">{clarificationStatus}</p>
+        );
+    }
+
     rows.push(
-      <tr key={index}>
-        <td style={{ width: 150 }}><p className="fw-5 mb-0">{display.main}</p></td>
-        <td style={{ width: 100 }}><p className="fw-5">{param.count}</p></td>
-        <td style={{ width: 100 }}><p className="fw-5">{param.negative ? `-${param.marks}` : param.marks}</p></td>
+      <tr key={display.main}>
+        <td style={{ width: 150 }}>
+          <p className="fw-5 mb-0">{display.main}</p>
+        </td>
+
+        <td style={{ width: 100 }}>
+          <p className="fw-5">{param.count}</p>
+        </td>
+
+        <td style={{ width: 100 }}>
+          <p className="fw-5">{param.negative ? `-${param.marks}` : param.marks}</p>
+        </td>
+
         <td style={{ width: 200 }}>
           {param.upload && (
-            <a href={`${baseURL}${param.upload}`} target="_blank" rel="noopener noreferrer" style={{ fontSize: 18 }}>
+            <a
+              href={`${baseURL}${param.upload}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              style={{ fontSize: 18 }}
+            >
               <span style={{ fontSize: 14, wordBreak: "break-word" }}>
                 {renderUploads(param.upload)}
               </span>
@@ -619,21 +589,22 @@ const ApplicationDetails = () => {
                 className="form-control"
                 placeholder="Enter approved marks"
                 autoComplete="off"
-                value={param?.clarification_details?.clarification_status === "rejected" ? "0" : approvedMarksState[param.name] ?? ""}
-                disabled={param?.clarification_details?.clarification_status === "rejected"}
+                value={approvedMarksValue}
+                disabled={isRejected}
                 onChange={(e) => handleInputChange(param.name, e.target.value)}
               />
             </td>
 
             {!isRaisedScreen && (
               <td style={{ width: 120 }}>
-                {param?.clarification_id || (param?.last_clarification_id &&
-                  [role, lowerRole].includes(param?.last_clarification_handled_by)) ? (
+                {canViewClarification ? (
                   <button
                     className="action-btn bg-transparent d-inline-flex align-items-center justify-content-center"
                     onClick={() => {
                       setReqViewCreatedClarificationShow(true);
-                      setReviewerClarificationForView(param?.clarification_details?.reviewer_comment);
+                      setReviewerClarificationForView(
+                        clarificationDetails?.reviewer_comment
+                      );
                     }}
                   >
                     {SVGICON.app.eye}
@@ -645,8 +616,12 @@ const ApplicationDetails = () => {
                       setClarificationApplicationId(unitDetail?.id || 0);
                       setClarificationParameterName(param.name);
                       setClarificationParameterId(param.id);
-                      setClarificationDocForView(param?.clarification_details?.clarification_doc);
-                      setClarificationClarificationForView(param?.clarification_details?.clarification);
+                      setClarificationDocForView(
+                        clarificationDetails?.clarification_doc
+                      );
+                      setClarificationClarificationForView(
+                        clarificationDetails?.clarification
+                      );
                       setClarificationShow(true);
                     }}
                     className="fw-5 text-decoration-underline bg-transparent border-0"
@@ -661,29 +636,24 @@ const ApplicationDetails = () => {
             {isRaisedScreen && (
               <>
                 <td style={{ width: 200 }}>
-                  {param?.clarification_details?.clarification && (
+                  {clarificationDetails?.clarification && (
                     <button
                       className="action-btn bg-transparent d-inline-flex align-items-center justify-content-center"
                       onClick={() => {
                         setReqClarificationShow(true);
-                        setClarificationDocForView(param?.clarification_details?.clarification_doc);
-                        setClarificationClarificationForView(param?.clarification_details?.clarification);
+                        setClarificationDocForView(
+                          clarificationDetails?.clarification_doc
+                        );
+                        setClarificationClarificationForView(
+                          clarificationDetails?.clarification
+                        );
                       }}
                     >
                       {SVGICON.app.eye}
                     </button>
                   )}
                 </td>
-                <td style={{ width: 150 }}>
-                  {param?.clarification_details?.clarification &&
-                    param?.clarification_details?.clarification_id ? (
-                    param?.clarification_details?.clarification_status === "pending" ?
-                      renderClarificationActions(param) :
-                      <p className="fw-5 text-capitalize">
-                        {param?.clarification_details?.clarification_status}
-                      </p>
-                  ) : null}
-                </td>
+                <td style={{ width: 150 }}>{clarificationActionContent}</td>
               </>
             )}
           </>
@@ -693,7 +663,6 @@ const ApplicationDetails = () => {
 
     return rows;
   };
-
 
   // Show loader
   if (loading) return <Loader />;
@@ -809,7 +778,6 @@ const ApplicationDetails = () => {
                 <th style={{ width: 100 }}>Marks</th>
                 <th style={{ width: 100 }}>Document</th>
 
-                {/* {isCW2Role && <th style={{ width: 100 }}>Drop comment</th>} */}
                 {!isUnitRole && !isHeadquarter && (
                   <>
                     <th style={{ width: 200 }}>Approved Marks</th>
@@ -849,14 +817,12 @@ const ApplicationDetails = () => {
                   prevHeader = display.header;
                   prevSubheader = display.subheader;
 
-                  rows.push(...renderParameterRow(param, index, display));
+                  rows.push(...renderParameterRow(param, display));
                 });
 
                 return rows;
               })()}
             </tbody>
-
-
           </table>
         </div>
         {!isUnitRole && (
@@ -992,11 +958,9 @@ const ApplicationDetails = () => {
                     </thead>
                     <tbody>
                       {[
-                        // Always show all presiding officers first
                         ...profile.unit.members.filter(
                           (m) => m.member_type === "presiding_officer"
                         ),
-                        // Then show member officers, sorted by member_order
                         ...profile.unit.members
                           .filter((m) => m.member_type === "member_officer")
                           .sort(
@@ -1076,67 +1040,12 @@ const ApplicationDetails = () => {
                 </div>
               )}
             <div className="d-flex flex-sm-row flex-column gap-sm-3 gap-1 justify-content-end">
-              {/* Approved by roles below */}
               {displayedMarks.length > 0 && (
                 <div className="text-muted small me-auto align-self-center">
                   {displayedMarks.join(" | ")}
                 </div>
               )}
 
-              {!isHeadquarter && (
-                <>
-                  {/* <div className="d-flex align-items-center gap-2">
-                    <label
-                      className="fw-medium text-muted mb-0"
-                      style={{ whiteSpace: "nowrap" }}
-                    >
-                      Discretionary Points:
-                    </label>
-                    <input
-                      type="number"
-                      className="form-control"
-                      placeholder="Enter discretionary points"
-                      style={{ maxWidth: "200", minWidth: 200 }}
-                      value={graceMarks}
-                      onChange={handleGraceMarksChange}
-                    />
-                  </div> */}
-                  {/* <button
-                    type="button"
-                    className="_btn success"
-                    onClick={() => {
-                      dispatch(
-                        updateApplication({
-                          id: unitDetail?.id,
-                          type: unitDetail?.type,
-                          status: "shortlisted_approved",
-                        })
-                      ).then(() => {
-                        navigate("/applications/list");
-                      });
-                    }}
-                  >
-                    Accept
-                  </button>
-                  <button
-                    type="button"
-                    className="_btn danger"
-                    onClick={() => {
-                      dispatch(
-                        updateApplication({
-                          id: unitDetail?.id,
-                          type: unitDetail?.type,
-                          status: "rejected",
-                        })
-                      ).then(() => {
-                        navigate("/applications/list");
-                      });
-                    }}
-                  >
-                    Reject
-                  </button> */}
-                </>
-              )}
               {isHeadquarter && (
                 <>
                   <button
@@ -1261,7 +1170,7 @@ const ApplicationDetails = () => {
               <>
                 {(cw2_type === "mo" || cw2_type === "ol") && (
                   <div className="mb-2">
-                    <label htmlFor="priority" className="form-label mb-1" aria-hidden="true">Priority:</label>
+                    <label htmlFor="priority" className="form-label mb-1">Priority:</label>
                     <input
                       type="text"
                       className="form-control"
@@ -1283,7 +1192,7 @@ const ApplicationDetails = () => {
                     handleCommentChange("__application__", localComment);
                   }}
                 >
-                  <label className="form-label mb-1" aria-hidden="true">Drop Comment:</label>
+                  <div className="form-label mb-1">Drop Comment:</div>
                   <textarea
                     className="form-control"
                     placeholder="Enter comment"
@@ -1409,62 +1318,6 @@ const ApplicationDetails = () => {
                   </table>
                 </div>
               )}
-            {/* {isCW2Role &&
-              ((cw2_type === "mo" && !unitDetail?.is_mo_approved) ||
-                (cw2_type === "ol" && !unitDetail?.is_ol_approved)) && (
-                <div className="d-flex flex-sm-row flex-column gap-sm-3 gap-1 justify-content-end mt-2">
-                  <button
-                    type="button"
-                    className="_btn success"
-                    onClick={() => {
-                      const payload: {
-                        id: number | undefined;
-                        is_mo_approved?: boolean;
-                        is_ol_approved?: boolean;
-                        mo_approved_at?: string;
-                        ol_approved_at?: string;
-                      } = {
-                        id: unitDetail?.id,
-                      };
-
-                      if (cw2_type === "mo") {
-                        payload.is_mo_approved = true;
-                        payload.mo_approved_at = new Date().toISOString(); // send current date
-                      } else if (cw2_type === "ol") {
-                        payload.is_ol_approved = true;
-                        payload.ol_approved_at = new Date().toISOString(); // send current date
-                      }
-
-                      if (unitDetail?.type === "citation") {
-                        dispatch(updateCitation(payload));
-                      } else if (unitDetail?.type === "appreciation") {
-                        dispatch(updateAppreciation(payload));
-                      }
-
-                      navigate("/applications/list");
-                    }}
-                  >
-                    Accept
-                  </button>
-                  <button
-                    type="button"
-                    className="_btn danger"
-                    onClick={() => {
-                      dispatch(
-                        updateApplication({
-                          id: unitDetail?.id,
-                          type: unitDetail?.type,
-                          status: "rejected",
-                        })
-                      ).then(() => {
-                        navigate("/applications/list");
-                      });
-                    }}
-                  >
-                    Reject
-                  </button>
-                </div>
-              )} */}
           </div>
         )}
       </div>

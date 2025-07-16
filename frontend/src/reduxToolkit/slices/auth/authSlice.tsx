@@ -28,7 +28,6 @@ const adminSlice = createSlice({
     },
   },
   extraReducers: (builder) => {
-    // reqToLogin
     builder.addCase(reqToLogin.pending, (state) => {
       state.loader = true;
     });
@@ -42,7 +41,6 @@ const adminSlice = createSlice({
       state.error = action.payload || 'Login failed!';
     });
 
-    // reqToSignUp
     builder.addCase(reqToSignUp.pending, (state) => {
       state.loader = true;
     });
@@ -55,7 +53,6 @@ const adminSlice = createSlice({
       state.error = action.payload || 'Login failed!';
     });
 
-    // getProfile
     builder.addCase(getProfile.pending, (state) => {
       state.loader = true;
     });

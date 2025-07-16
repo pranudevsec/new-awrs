@@ -63,7 +63,6 @@ const CommandPanel = () => {
     };
   }, [searchTerm]);
 
-  // Get Scoreboard list function
   const fetchScoreboardList = async () => {
     await dispatch(getScoreBoards({ award_type: awardType || "", search: debouncedSearch, page, limit }));
   };
@@ -155,18 +154,6 @@ const CommandPanel = () => {
             <button className="_btn primary">Publish Winner</button>
           </div>
         </div>
-        {/* <div className="filter-wrapper d-flex align-items-center justify-content-between gap-2 mb-3">
-          <div className="search-wrapper position-relative">
-            <button className="border-0 bg-transparent position-absolute translate-middle-y top-50">
-              {SVGICON.app.search}
-            </button>
-            <input
-              type="text"
-              placeholder="search..."
-              className="form-control"
-            />
-          </div>
-        </div> */}
         <div className="filter-wrapper d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
           <div className="search-wrapper position-relative">
             <button className="border-0 bg-transparent position-absolute translate-middle-y top-50">
@@ -181,12 +168,6 @@ const CommandPanel = () => {
             />
           </div>
           <div className="d-flex flex-wrap align-items-center gap-2">
-            {/* <FormInput
-              name="unit"
-              placeholder="Search by unit"
-              value=""
-              readOnly={true}
-            /> */}
             <FormSelect
               name="awardType"
               options={awardTypeOptions}
@@ -194,15 +175,6 @@ const CommandPanel = () => {
               onChange={(option) => setAwardType(option?.value || null)}
               placeholder="Award Type"
             />
-            {/* <FormSelect
-              name="cyclePeriod"
-              options={cyclePeriodOptions}
-              value={
-                cyclePeriodOptions.find((opt) => opt.value === "citation") ||
-                null
-              }
-              placeholder="Cycle period"
-            /> */}
           </div>
         </div>
         <div className="table-responsive">
@@ -241,8 +213,8 @@ const CommandPanel = () => {
                     </div>
                   </td>
                 </tr> :
-                scoreboard.map((item, idx) => (
-                  <tr onClick={() => navigate(`/command-panel/${item.id}?award_type=${item.type}`)} key={idx}>
+                scoreboard.map((item) => (
+                  <tr onClick={() => navigate(`/command-panel/${item.id}?award_type=${item.type}`)} key={item.id}>
                     <td style={{ width: 200, minWidth: 200, maxWidth: 200 }}>
                       <p className="fw-4">#{item.id || "-"}</p>
                     </td>
@@ -272,10 +244,10 @@ const CommandPanel = () => {
                           checked={item.isshortlisted}
                           onChange={() => handleShortlistToggle(item)}
                         />
-                        <label
-                          htmlFor={`switch-${item.id}`}
-                          className="switch-label"
-                        ></label>
+                        <label htmlFor={`switch-${item.id}`} className="switch-label">
+                          <span className="opacity-0">Toggle Switch</span>
+                        </label>
+
                       </div>
                     </td>
                     <td style={{ width: 100, minWidth: 100, maxWidth: 100 }} >

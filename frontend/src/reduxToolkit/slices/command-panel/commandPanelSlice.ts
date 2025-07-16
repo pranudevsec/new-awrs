@@ -50,7 +50,6 @@ const commandPanelSlice = createSlice({
   initialState,
   reducers: {},
   extraReducers: (builder) => {
-    // ✅ Get Clarifications for Units
     builder.addCase(getScoreBoards.pending, (state) => {
       state.loading = true;
     });
@@ -70,7 +69,6 @@ const commandPanelSlice = createSlice({
       }
     );
 
-    // getDashboardStats
     builder.addCase(getDashboardStats.pending, (state) => {
       state.loading = true;
     });
@@ -90,7 +88,6 @@ const commandPanelSlice = createSlice({
       }
     );
 
-    // getDashboardUnitScores
     builder.addCase(getDashboardUnitScores.pending, (state) => {
       state.loading = true;
     });

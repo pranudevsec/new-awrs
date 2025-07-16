@@ -102,7 +102,6 @@ const ApplicationsList = () => {
             onChange={(e) => setSearchTerm(e.target.value)}
           />
         </div>
-
         <FormSelect
           name="awardType"
           options={awardTypeOptions}
@@ -110,7 +109,6 @@ const ApplicationsList = () => {
           onChange={(option) => setAwardType(option?.value || null)}
           placeholder="Select Type"
         />
-
       </div>
 
       <div className="table-responsive">
@@ -191,14 +189,6 @@ const ApplicationsList = () => {
                       </p>
                     </td>
                   )}
-
-
-                  {/* <td style={{ width: 200, minWidth: 200, maxWidth: 200 }}>
-                    <div className="status-content approved pending d-flex align-items-center gap-3">
-                      <span></span>
-                      <p className="text-capitalize fw-5">Accepted</p>
-                    </div>
-                  </td> */}
                   <td style={{ width: 100, minWidth: 100, maxWidth: 100 }}>
                     {unit?.status_flag === "draft" ? (
                       <Link
@@ -224,6 +214,7 @@ const ApplicationsList = () => {
           </tbody>
         </table>
       </div>
+      
       {/* Empty Data */}
       {!loading && units.length === 0 && <EmptyTable />}
 

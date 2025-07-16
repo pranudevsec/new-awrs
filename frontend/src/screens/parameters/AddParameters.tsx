@@ -173,9 +173,9 @@ const AddParameters = () => {
                         />
                     </div>
                     <div className="col-sm-6 mb-3">
-                        <label className="form-label mb-1" aria-hidden="true">
+                        <div className="form-label mb-1">
                             Negative
-                        </label>
+                        </div>
                         <div className="d-flex align-items-center gap-xxl-4 gap-2 flex-grow-1">
                             <FormRadioButton
                                 id="negative_yes"
@@ -199,9 +199,9 @@ const AddParameters = () => {
                         )}
                     </div>
                     <div className="col-sm-6 mb-3">
-                        <label className="form-label mb-1" aria-hidden="true">
+                        <div className="form-label mb-1">
                             Proof required
-                        </label>
+                        </div>
                         <div className="d-flex align-items-center gap-xxl-4 gap-2 flex-grow-1">
                             <FormRadioButton
                                 id="proof_reqd_yes"
