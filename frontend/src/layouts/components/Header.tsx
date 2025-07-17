@@ -47,17 +47,23 @@ const Header = () => {
     return (
         <>
             <header className="main-header position-sticky top-0">
-                <div className="d-flex align-items-center justify-content-xl-end justify-content-between gap-4">
+                <div className="d-flex align-items-center justify-content-xl-end justify-content-between gap-2">
                     <button className="d-xl-none d-inline-flex align-items-center justify-content-center bg-transparent border-0 text-white"
                         onClick={() => setMobileMenuShow(true)}>
                         {SVGICON.header.togglemenu}
                     </button>
-                    <div className="d-flex align-items-center gap-sm-4 gap-3">
+                    <div className="d-flex align-items-center gap-sm-4 gap-3 "   style={{
+                        backgroundColor: '#780000',
+                        // border: '2px solid #004080', 
+                        borderRadius: '12px',            
+                        padding: '2px 12px',           
+                        color: 'white',                      
+                    }}>
                         <div className="position-relative" ref={notifRef}>
                             <button className="nav-icon-btn d-inline-flex align-items-center justify-content-center bg-transparent border-0 text-white" onClick={() => setNotifOpen((prev) => !prev)}>
                                 {SVGICON.header.notification}
                             </button>
-                            <div className={`notification-dropdown-menu ${notifOpen ? "show" : ""}`}>
+                            <div className={`notification-dropdown-menu ${notifOpen ? "show" : ""}`} >
                                 <div className="top-header mb-3 d-flex align-items-center justify-content-between gap-2">
                                     <h5 className="fw-6">Notifications</h5>
                                     <label className="ios-checkbox text-nowrap" aria-hidden="true">

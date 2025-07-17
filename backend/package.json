@@ -12,6 +12,10 @@
     "prod": "pm2 start App.js -i max"
   },
   "dependencies": {
+    "@langchain/community": "^0.3.48",
+    "@langchain/core": "^0.3.62",
+    "@langchain/langgraph": "^0.3.8",
+    "@langchain/ollama": "^0.2.3",
     "axios": "^1.7.7",
     "bcrypt": "^5.1.0",
     "bcryptjs": "^3.0.2",
@@ -31,8 +35,10 @@
     "ms": "^2.1.3",
     "multer": "^2.0.0",
     "nodemon": "^3.1.7",
+    "pdf-parse": "^1.1.1",
     "pg": "^8.13.1",
-    "prettier": "^2.8.7"
+    "prettier": "^2.8.7",
+    "uuid": "^11.1.0"
   },
   "keywords": [],
   "author": "",

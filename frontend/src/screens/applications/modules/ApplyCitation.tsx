@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, type JSX } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useFormik } from "formik";
 import { Tabs, Tab } from "react-bootstrap";
@@ -29,58 +29,6 @@ const groupParametersByCategory = (params: Parameter[]) => {
     acc[category].push(param);
     return acc;
   }, {});
-};
-
-type UploadedFileListProps = {
-  files: string[];
-  paramId: number;
-  onRemove: (paramId: number, index: number) => void;
-};
-
-const UploadedFileList = ({ files, paramId, onRemove }: UploadedFileListProps) => {
-  return (
-    <div className="mb-1" style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-      {files.map((fileUrl, idx) => (
-        <div
-          key={fileUrl}
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            gap: '0.5rem',
-            fontSize: 14,
-            wordBreak: 'break-all',
-            background: '#f1f5f9',
-            padding: '4px 8px',
-            borderRadius: 4,
-          }}
-        >
-          <a
-            href={`${baseURL}${fileUrl}`}
-            target="_blank"
-            rel="noopener noreferrer"
-            style={{ flex: 1, color: '#1d4ed8', textDecoration: 'underline' }}
-          >
-            {fileUrl.split("/").pop()}
-          </a>
-          <button
-            type="button"
-            onClick={() => onRemove(paramId, idx)}
-            style={{
-              background: 'transparent',
-              border: 'none',
-              color: '#dc2626',
-              cursor: 'pointer',
-              fontSize: 16,
-            }}
-            title="Remove file"
-          >
-            🗑️
-          </button>
-        </div>
-      ))}
-    </div>
-  );
 };
 
 const ApplyCitation = () => {
@@ -453,7 +401,7 @@ const ApplyCitation = () => {
             // comd: "",
             unit_type: profile?.unit?.unit_type ?? undefined,
             page: 1,
-            limit: 1000
+            limit: 5000
           })).unwrap(),
         ]);
 
@@ -579,162 +527,6 @@ const ApplyCitation = () => {
       setUploadedFiles({});
     }
   };
-
-  const renderParameterRows = (params: any[]) => {
-    let prevHeader: string | null = null;
-    let prevSubheader: string | null = null;
-
-    return params.flatMap((param: any, idx: number) => {
-      const rows: JSX.Element[] = [];
-      const display = getParamDisplay(param);
-      const showHeader = display.header && display.header !== prevHeader;
-      const showSubheader = display.subheader && display.subheader !== prevSubheader;
-
-      if (showHeader) {
-        rows.push(
-          <tr key={`header-${display.header}-${idx}`}>
-            <td
-              colSpan={4}
-              style={{
-                fontWeight: 500,
-                fontSize: 15,
-                backgroundColor: "#ebeae8",
-                lineHeight: "1",
-              }}
-            >
-              {display.header}
-            </td>
-          </tr>
-        );
-      }
-
-      if (showSubheader) {
-        rows.push(
-          <tr key={`subheader-${display.subheader}-${idx}`}>
-            <td
-              colSpan={4}
-              style={{
-                color: display.header ? "black" : "#888",
-                fontSize: 15,
-                fontWeight: 700,
-              }}
-            >
-              {display.subheader}
-            </td>
-          </tr>
-        );
-      }
-
-      prevHeader = display.header;
-      prevSubheader = display.subheader;
-
-      const markRawValue = marks[param.param_id];
-      let displayMarkValue = 0;
-
-      if (param.negative) {
-        displayMarkValue =
-          markRawValue === 0 || markRawValue === undefined ? 0 : -Math.abs(markRawValue);
-      } else {
-        displayMarkValue = markRawValue ?? 0;
-      }
-
-      rows.push(
-        <tr key={param.param_id}>
-          <td
-            style={{
-              width: 250,
-              minWidth: 250,
-              maxWidth: 250,
-              verticalAlign: "top",
-            }}
-          >
-            <p className="fw-5 mb-0">{display.main}</p>
-          </td>
-          <td
-            style={{
-              width: 300,
-              minWidth: 300,
-              maxWidth: 300,
-              verticalAlign: "top",
-            }}
-          >
-            <input
-              type="text"
-              className="form-control"
-              placeholder="Enter count"
-              autoComplete="off"
-              value={counts[param.param_id] ?? ""}
-              onChange={(e) => handleCountChange(param.param_id, e.target.value)}
-              inputMode="numeric"
-              pattern="[0-9]*"
-            />
-          </td>
-          <td
-            style={{
-              width: 300,
-              minWidth: 300,
-              maxWidth: 300,
-              verticalAlign: "top",
-            }}
-          >
-            <div className="input-with-tooltip">
-              <input
-                type="number"
-                className="form-control"
-                placeholder="Marks"
-                value={displayMarkValue}
-                readOnly
-              />
-              <div className="tooltip-icon">
-                <i className="info-circle">i</i>
-                <span className="tooltip-text">
-                  {`1 unit = ${param.per_unit_mark} marks, max ${param.max_marks} marks`}
-                </span>
-              </div>
-            </div>
-          </td>
-          <td
-            style={{
-              width: 300,
-              minWidth: 300,
-              maxWidth: 300,
-              verticalAlign: "top",
-            }}
-          >
-            {param.proof_reqd ? (
-              <>
-                {uploadedFiles[param.param_id]?.length > 0 && (
-                  <UploadedFileList
-                    files={uploadedFiles[param.param_id]}
-                    paramId={param.param_id}
-                    onRemove={handleRemoveUploadedFile}
-                  />
-                )}
-                <input
-                  type="file"
-                  className="form-control"
-                  placeholder="not more than 5 MB"
-                  multiple
-                  onChange={(e) => {
-                    const display = getParamDisplay(param);
-                    handleFileChange(e, param.param_id, display.main);
-                  }}
-                />
-                <span style={{ fontSize: 12, color: "red" }}>
-                  *not more than 5 MB
-                </span>
-              </>
-            ) : (
-              <span>Not required</span>
-            )}
-          </td>
-        </tr>
-      );
-
-      return rows;
-    });
-  };
-
 
   // Show loader
   if (loading) return <Loader />
@@ -889,7 +681,138 @@ const ApplyCitation = () => {
                     </tr>
                   </thead>
                   <tbody>
-                    {renderParameterRows(params)}
+                    {(() => {
+                      let prevHeader: string | null = null;
+                      let prevSubheader: string | null = null;
+                      const rows: any = [];
+                      params.forEach((param: any, idx: number) => {
+                        const display = getParamDisplay(param);
+                        const showHeader = display.header && display.header !== prevHeader;
+                        const showSubheader = display.subheader && display.subheader !== prevSubheader;
+
+                        if (showHeader) {
+                          rows.push(
+                            <tr key={`header-${display.header}-${idx}`}>
+                              <td colSpan={4} style={{ fontWeight: 500, fontSize: 15, backgroundColor: "#ebeae8", lineHeight: "1" }}>
+                                {display.header}
+                              </td>
+                            </tr>
+                          );
+                        }
+                        if (showSubheader) {
+                          rows.push(
+                            <tr key={`subheader-${display.subheader}-${idx}`}>
+                              <td colSpan={4} style={{ color: display.header ? "black" : "#888", fontSize: 15, fontWeight: 700 }}>
+                                {display.subheader}
+                              </td>
+                            </tr>
+                          );
+                        }
+
+                        prevHeader = display.header;
+                        prevSubheader = display.subheader;
+
+                        rows.push(
+                          <tr key={param.param_id}>
+                            <td style={{ width: 250, minWidth: 250, maxWidth: 250, verticalAlign: "top" }}>
+                              <p className="fw-5 mb-0">{display.main}</p>
+                            </td>
+                            <td style={{ width: 300, minWidth: 300, maxWidth: 300, verticalAlign: "top" }}>
+                              <input
+                                type="text"
+                                className="form-control"
+                                placeholder="Enter count"
+                                autoComplete="off"
+                                value={counts[param.param_id] ?? ""}
+                                onChange={(e) => handleCountChange(param.param_id, e.target.value)}
+                                inputMode="numeric"
+                                pattern="[0-9]*"
+                              />
+                            </td>
+                            <td style={{ width: 300, minWidth: 300, maxWidth: 300, verticalAlign: "top" }}>
+                              <div className="input-with-tooltip">
+                                <input
+                                  type="number"
+                                  className="form-control"
+                                  placeholder="Marks"
+                                  value={Number(marks[param.param_id] ?? 0).toFixed(2)}
+                                  readOnly
+                                />
+                                <div className="tooltip-icon">
+                                  <i className="info-circle">i</i>
+                                  <span className="tooltip-text">
+                                    {`1 unit = ${param.per_unit_mark} marks, max ${param.max_marks} marks`}
+                                  </span>
+                                </div>
+                              </div>
+                            </td>
+                            <td style={{ width: 300, minWidth: 300, maxWidth: 300, verticalAlign: "top" }}>
+                              {param.proof_reqd ? (
+                                <>
+                                  {uploadedFiles[param.param_id]?.length > 0 && (
+                                    <div className="mb-1" style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                                      {uploadedFiles[param.param_id].map((fileUrl, idx) => (
+                                        <div
+                                          key={param.param_id}
+                                          style={{
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            justifyContent: 'space-between',
+                                            gap: '0.5rem',
+                                            fontSize: 14,
+                                            wordBreak: 'break-all',
+                                            background: '#f1f5f9',
+                                            padding: '4px 8px',
+                                            borderRadius: 4,
+                                          }}
+                                        >
+                                          <a
+                                            href={`${baseURL}${fileUrl}`}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            style={{ flex: 1, color: '#1d4ed8', textDecoration: 'underline' }}
+                                          >
+                                            {fileUrl.split("/").pop()}
+                                          </a>
+                                          <button
+                                            type="button"
+                                            onClick={() => handleRemoveUploadedFile(param.param_id, idx)}
+                                            style={{
+                                              background: 'transparent',
+                                              border: 'none',
+                                              color: '#dc2626',
+                                              cursor: 'pointer',
+                                              fontSize: 16,
+                                            }}
+                                            title="Remove file"
+                                          >
+                                            🗑️
+                                          </button>
+                                        </div>
+                                      ))}
+                                    </div>
+                                  )}
+                                  <input
+                                    type="file"
+                                    className="form-control"
+                                    placeholder="not more than 5 MB"
+                                    multiple
+                                    onChange={(e) => {
+                                      const display = getParamDisplay(param);
+                                      handleFileChange(e, param.param_id, display.main);
+                                    }}
+                                  /><span style={{ fontSize: 12, color: 'red' }}>*File not more than 5 MB</span>
+                                </>
+                              ) : (
+                                <span>Not required</span>
+                              )}
+
+                            </td>
+                          </tr>
+                        );
+                      });
+                      return rows;
+                    })()}
                   </tbody>
                 </table>
               </div>

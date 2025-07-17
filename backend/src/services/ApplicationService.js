@@ -173,7 +173,8 @@ exports.getAllApplicationsForUnit = async (user, query) => {
 exports.getAllApplicationsForHQ = async (user, query) => {
   const client = await dbService.getClient();
   try {
-    const { award_type, search, page = 1, limit = 10 } = query;
+    const { award_type, search, command_type, page = 1, limit = 10 } = query;
+    console.log(command_type);
 
     const citations = await client.query(`
       SELECT 
@@ -218,6 +219,14 @@ exports.getAllApplicationsForHQ = async (user, query) => {
       allApps = allApps.filter(
         (app) => app.type?.toLowerCase() === award_type.toLowerCase()
       );
+      console.log("Filtering by award_type:", award_type);
+    }
+
+    if (command_type) {
+      allApps = allApps.filter(
+        (app) => app.fds?.command?.toLowerCase() === command_type.toLowerCase()
+      );
+      console.log("Filtering by command_type:", command_type);
     }
 
     // Normalize and filter by search if provided
@@ -743,6 +752,7 @@ exports.getApplicationsOfSubordinates = async (user, query) => {
       };
     });
 
+
     // Add clarification count per application
     let total_pending_clarifications = 0;
     allApps = allApps.map((app) => {
@@ -791,42 +801,41 @@ exports.getApplicationsOfSubordinates = async (user, query) => {
         unit_details: unitDetailsMap[app.unit_id] || null,
       }));
 
+      
       const allParameterNames = Array.from(
         new Set(
           allApps.flatMap(
             (app) =>
-              app.fds?.parameters?.map((p) => p.name?.trim().toLowerCase()) ||
+              app.fds?.parameters?.map((p) => p.id) ||
               []
           )
         )
       );
 
       const parameterMasterRes = await client.query(
-        `SELECT name, negative FROM Parameter_Master WHERE LOWER(TRIM(name)) = ANY($1)`,
+        `SELECT param_id, name, negative FROM Parameter_Master WHERE param_id = ANY($1)`,
         [allParameterNames]
       );
-
       const negativeParamMap = parameterMasterRes.rows.reduce((acc, row) => {
-        acc[row.name.trim().toLowerCase()] = row.negative;
+        acc[row.param_id] = row.negative;
         return acc;
       }, {});
-
       // --- Calculate totalNegativeMarks, totalMarks, netMarks
       allApps = allApps.map((app) => {
         const parameters = app.fds?.parameters || [];
-
         const totalMarks = parameters.reduce(
-          (sum, param) => sum + (param.marks || 0),
-          0
-        );
+          (sum, param) =>  {
+            const isNegative = negativeParamMap[param.id];
+            return !isNegative ? sum + (param.marks || 0) : sum;
+          }
+        , 0);
 
         const totalNegativeMarks = parameters.reduce((sum, param) => {
-          const isNegative = negativeParamMap[param.name.trim().toLowerCase()];
+          const isNegative = negativeParamMap[param.id];
           return isNegative ? sum + (param.marks || 0) : sum;
         }, 0);
-
+        
         const netMarks = totalMarks - totalNegativeMarks;
-
         return {
           ...app,
           totalMarks,
@@ -858,19 +867,19 @@ exports.getApplicationsOfSubordinates = async (user, query) => {
         new Set(
           allApps.flatMap(
             (app) =>
-              app.fds?.parameters?.map((p) => p.name?.trim().toLowerCase()) ||
+              app.fds?.parameters?.map((p) => p.id) ||
               []
           )
         )
       );
 
       const parameterMasterRes = await client.query(
-        `SELECT name, negative FROM Parameter_Master WHERE LOWER(TRIM(name)) = ANY($1)`,
+        `SELECT param_id, name, negative FROM Parameter_Master WHERE param_id = ANY($1)`,
         [allParameterNames]
       );
 
       const negativeParamMap = parameterMasterRes.rows.reduce((acc, row) => {
-        acc[row.name.trim().toLowerCase()] = row.negative;
+        acc[row.param_id] = row.negative;
         return acc;
       }, {});
 
@@ -879,17 +888,19 @@ exports.getApplicationsOfSubordinates = async (user, query) => {
         const parameters = app.fds?.parameters || [];
 
         const totalMarks = parameters.reduce(
-          (sum, param) => sum + (param.marks || 0),
+          (sum, param) => {
+            const isNegative = negativeParamMap[param.id];
+          return !isNegative ? sum + (param.marks || 0) : sum;
+          },
           0
         );
 
         const totalNegativeMarks = parameters.reduce((sum, param) => {
-          const isNegative = negativeParamMap[param.name.trim().toLowerCase()];
+          const isNegative = negativeParamMap[param.id];
           return isNegative ? sum + (param.marks || 0) : sum;
         }, 0);
 
         const netMarks = totalMarks - totalNegativeMarks;
-
         return {
           ...app,
           totalMarks,
@@ -1172,7 +1183,7 @@ exports.getApplicationsScoreboard = async (user, query) => {
       if (isCommand) {
         return `${alias}.unit_id = ANY($1) AND ${alias}.status_flag = 'approved' AND ${alias}.last_approved_by_role = 'command'`;
       } else {
-        return `${alias}.status_flag = 'approved' AND ${alias}.last_approved_by_role = 'command'`;
+        return `${alias}.status_flag = 'approved' AND ${alias}.last_approved_by_role = 'cw2'`;
       }
     }
 
@@ -1238,18 +1249,18 @@ exports.getApplicationsScoreboard = async (user, query) => {
       new Set(
         allApps.flatMap(
           (app) =>
-            app.fds?.parameters?.map((p) => p.name?.trim().toLowerCase()) || []
+            app.fds?.parameters?.map((p) => p.param_id) || []
         )
       )
     );
 
     const parameterMasterRes = await client.query(
-      `SELECT name, negative FROM Parameter_Master WHERE LOWER(TRIM(name)) = ANY($1)`,
+      `SELECT param_id, name, negative FROM Parameter_Master WHERE param_id = ANY($1)`,
       [allParameterNames]
     );
 
     const negativeParamMap = parameterMasterRes.rows.reduce((acc, row) => {
-      acc[row.name.trim().toLowerCase()] = row.negative;
+      acc[row.param_id] = row.negative;
       return acc;
     }, {});
 
@@ -1257,12 +1268,15 @@ exports.getApplicationsScoreboard = async (user, query) => {
       const parameters = app.fds?.parameters || [];
 
       const totalMarks = parameters.reduce(
-        (sum, param) => sum + (param.marks || 0),
+        (sum, param) => {
+          const isNegative = negativeParamMap[param.id];
+        return !isNegative ? sum + (param.marks || 0) : sum;
+        },
         0
       );
 
       const totalNegativeMarks = parameters.reduce((sum, param) => {
-        const isNegative = negativeParamMap[param.name.trim().toLowerCase()];
+        const isNegative = negativeParamMap[param.id];
         return isNegative ? sum + (param.marks || 0) : sum;
       }, 0);
 
@@ -1302,19 +1316,19 @@ exports.getApplicationsScoreboard = async (user, query) => {
         new Set(
           allApps.flatMap(
             (app) =>
-              app.fds?.parameters?.map((p) => p.name?.trim().toLowerCase()) ||
+              app.fds?.parameters?.map((p) => p.id) ||
               []
           )
         )
       );
 
       const parameterMasterRes = await client.query(
-        `SELECT name, negative FROM Parameter_Master WHERE LOWER(TRIM(name)) = ANY($1)`,
+        `SELECT param_id, name, negative FROM Parameter_Master WHERE param_id = ANY($1)`,
         [allParameterNames]
       );
 
       const negativeParamMap = parameterMasterRes.rows.reduce((acc, row) => {
-        acc[row.name.trim().toLowerCase()] = row.negative;
+        acc[row.param_id] = row.negative;
         return acc;
       }, {});
 
@@ -1323,17 +1337,19 @@ exports.getApplicationsScoreboard = async (user, query) => {
         const parameters = app.fds?.parameters || [];
 
         const totalMarks = parameters.reduce(
-          (sum, param) => sum + (param.marks || 0),
+          (sum, param) => {
+           const isNegative = negativeParamMap[param.id];
+          return !isNegative ? sum + (param.marks || 0) : sum;
+          },
           0
         );
 
         const totalNegativeMarks = parameters.reduce((sum, param) => {
-          const isNegative = negativeParamMap[param.name.trim().toLowerCase()];
+          const isNegative = negativeParamMap[param.id];
           return isNegative ? sum + (param.marks || 0) : sum;
         }, 0);
 
         const netMarks = totalMarks - totalNegativeMarks;
-
         return {
           ...app,
           totalMarks,
@@ -1365,19 +1381,19 @@ exports.getApplicationsScoreboard = async (user, query) => {
         new Set(
           allApps.flatMap(
             (app) =>
-              app.fds?.parameters?.map((p) => p.name?.trim().toLowerCase()) ||
+              app.fds?.parameters?.map((p) => p.id) ||
               []
           )
         )
       );
 
       const parameterMasterRes = await client.query(
-        `SELECT name, negative FROM Parameter_Master WHERE LOWER(TRIM(name)) = ANY($1)`,
+        `SELECT param_id, name, negative FROM Parameter_Master WHERE param_id = ANY($1)`,
         [allParameterNames]
       );
 
       const negativeParamMap = parameterMasterRes.rows.reduce((acc, row) => {
-        acc[row.name.trim().toLowerCase()] = row.negative;
+        acc[row.param_id] = row.negative;
         return acc;
       }, {});
 
@@ -1386,12 +1402,13 @@ exports.getApplicationsScoreboard = async (user, query) => {
         const parameters = app.fds?.parameters || [];
 
         const totalMarks = parameters.reduce(
-          (sum, param) => sum + (param.marks || 0),
-          0
-        );
+          (sum, param) => {
+            const isNegative = negativeParamMap[param.id];
+            return !isNegative ? sum + (param.marks || 0) : sum;
+          }, 0);
 
         const totalNegativeMarks = parameters.reduce((sum, param) => {
-          const isNegative = negativeParamMap[param.name.trim().toLowerCase()];
+          const isNegative = negativeParamMap[param.id];
           return isNegative ? sum + (param.marks || 0) : sum;
         }, 0);
 
@@ -1466,6 +1483,9 @@ exports.updateApplicationStatus = async (
   const client = await dbService.getClient();
 
   try {
+    const iscdr = member?.iscdr ?? false;
+
+
     const validTypes = {
       citation: {
         table: "Citation_tab",
@@ -1481,7 +1501,6 @@ exports.updateApplicationStatus = async (
 
     const config = validTypes[type];
     if (!config) throw new Error("Invalid application type");
-
     // If withdraw requested, handle it
     if (withdrawRequested) {
       const now = new Date();
@@ -1584,21 +1603,19 @@ exports.updateApplicationStatus = async (
       "shortlisted_approved",
     ];
     let statusLower = status ? status.toLowerCase() : null;
+
     const isStatusValid = statusLower && allowedStatuses.includes(statusLower);
     let isMemberStatusUpdate = false;
     let updatedFds = null;
-
     // If status is "approved" or member is provided, fetch FDS
     if (statusLower === "approved" || member) {
       const fetchRes = await client.query(
         `SELECT ${config.fdsColumn} FROM ${config.table} WHERE ${config.column} = $1`,
         [id]
       );
-
       if (fetchRes.rowCount === 0) throw new Error("Application not found");
 
       const fds = fetchRes.rows[0][config.fdsColumn];
-
       // Handle FDS parameter clarifications if approved
       if (
         statusLower === "approved" &&
@@ -1623,7 +1640,8 @@ exports.updateApplicationStatus = async (
       const profile = await AuthService.getProfile(user);
       const unit = profile?.data?.unit;
 
-      if (member) {
+      if (member && !iscdr) {
+
         if (!fds.accepted_members || !Array.isArray(fds.accepted_members)) {
           fds.accepted_members = [];
         }
@@ -1659,44 +1677,65 @@ exports.updateApplicationStatus = async (
           });
 
           if (allSigned) {
+          
             if (user.user_role === "cw2") {
-              const now = new Date().toISOString();
-              let is_mo_approved = false;
-              let is_ol_approved = false;
-              let mo_approved_at = null;
-              let ol_approved_at = null;
-            
+                 const now = new Date().toISOString();
+              let approvedAt= new Date().toISOString();
               if (user.cw2_type === "mo") {
-                is_mo_approved = true;
-                mo_approved_at = new Date().toISOString();
-              } else if (user.cw2_type === "ol") {
-                is_ol_approved = true;
-                ol_approved_at = new Date().toISOString();
-              }
-            
-              query = `
+                  const  query = `
                 UPDATE ${config.table}
                 SET 
-                  is_mo_approved = $3,
-                  mo_approved_at = $4,
-                  is_ol_approved = $5,
-                  ol_approved_at = $6,
-                  last_approved_by_role = $2,
-                  last_approved_at = $7
+                  is_mo_approved = $2,
+                  mo_approved_at = $3,
+                  last_approved_at = $4
                 WHERE ${config.column} = $1
                 RETURNING *;
               `;
             
-              values = [
+              const values = [
                 id,                // $1 (WHERE condition)
-                user.user_role,    // $2
-                is_mo_approved,    // $3
-                mo_approved_at,    // $4
-                is_ol_approved,    // $5
-                ol_approved_at,    // $6
-                now                // $7
+                true,    // $2
+                approvedAt,    // $3
+                now                // $4
               ];
               await client.query(query, values);
+
+              } else if (user.cw2_type === "ol") {
+                  const  query = `
+                UPDATE ${config.table}
+                SET 
+                  is_ol_approved = $2,
+                  ol_approved_at = $3,
+                  last_approved_at = $4
+                WHERE ${config.column} = $1
+                RETURNING *;
+              `;
+            
+              const values = [
+                id,                // $1 (WHERE condition)
+                true,    // $2
+                approvedAt,    // $3
+                now                // $4
+              ];
+              await client.query(query, values);
+ 
+              }
+          
+              const  updateRoleQuery = `
+                UPDATE ${config.table}
+                SET 
+                  last_approved_by_role = $2
+                WHERE is_mo_approved= $3 AND is_ol_approved= $4 AND ${config.column} = $1
+                RETURNING *;`;
+            
+              const updateRoleValues = [
+                id,                // $1 (WHERE condition)
+                user.user_role,    // $2
+                true, // $3
+                true // $4
+              ];
+
+              await client.query(updateRoleQuery, updateRoleValues);
             }else {
                 if (status !== "rejected") {
                     statusLower = "shortlisted_approved";
@@ -1719,7 +1758,6 @@ exports.updateApplicationStatus = async (
         [updatedFds, id]
       );
     }
-
     // If status is valid, proceed with updating status_flag
     if (isStatusValid || isMemberStatusUpdate) {
       let query, values;
@@ -2601,33 +2639,35 @@ exports.getApplicationsHistory = async (user, query) => {
       new Set(
         allApps.flatMap(
           (app) =>
-            app.fds?.parameters?.map((p) => p.name?.trim().toLowerCase()) || []
+            app.fds?.parameters?.map((p) => p.id) || []
         )
       )
     );
 
     const parameterMasterRes = await client.query(
-      `SELECT name, negative FROM Parameter_Master WHERE LOWER(TRIM(name)) = ANY($1)`,
+      `SELECT param_id, name, negative FROM Parameter_Master WHERE param_id = ANY($1)`,
       [allParameterNames]
     );
 
     const negativeParamMap = parameterMasterRes.rows.reduce((acc, row) => {
-      acc[row.name.trim().toLowerCase()] = row.negative;
+      acc[row.param_id] = row.negative;
       return acc;
     }, {});
 
     allApps = allApps.map((app) => {
       const parameters = app.fds?.parameters || [];
       const totalMarks = parameters.reduce(
-        (sum, param) => sum + (param.marks || 0),
+        (sum, param) => {
+          const isNegative = negativeParamMap[param.id];
+        return !isNegative ? sum + (param.marks || 0) : sum;
+        },
         0
       );
       const totalNegativeMarks = parameters.reduce((sum, param) => {
-        const isNegative = negativeParamMap[param.name?.trim().toLowerCase()];
+        const isNegative = negativeParamMap[param.id];
         return isNegative ? sum + (param.marks || 0) : sum;
       }, 0);
       const netMarks = totalMarks - totalNegativeMarks;
-
       return {
         ...app,
         totalMarks,

@@ -27,7 +27,7 @@ exports.createCitation = async (data, user) => {
     const { award_type, parameters } = citation_fds;
 
     const paramResult = await client.query(
-      `SELECT name, subsubcategory, subcategory, category, per_unit_mark, max_marks,negative
+      `SELECT param_id, name, subsubcategory, subcategory, category, per_unit_mark, max_marks,negative
        FROM Parameter_Master
        WHERE award_type = $1`,
       [award_type]
@@ -35,17 +35,15 @@ exports.createCitation = async (data, user) => {
 
     const paramList = paramResult.rows;
 
-const findMatchedParam = (frontendName) => {
-  frontendName = (frontendName || "").trim();
+const findMatchedParam = (paramId) => {
   return paramList.find(p =>
-    [p.name, p.subsubcategory, p.subcategory, p.category]
-      .map(x => (x || "").trim())
-      .includes(frontendName)
+    [p.param_id]
+      .map(x => (x))
+      .includes(paramId)
   );
 };
-
 const updatedParameters = parameters.map((p) => {
-  const matchedParam = findMatchedParam(p.name);
+  const matchedParam = findMatchedParam(p.id);
   if (!matchedParam) {
     throw new Error(
       `Parameter "${p.name}" not found in master for award_type "${award_type}"`
@@ -187,17 +185,16 @@ exports.updateCitation = async (id, data,user) => {
 
       const paramList = paramResult.rows;
 
-  const findMatchedParam = (frontendName) => {
-    frontendName = (frontendName || "").trim();
-    return paramList.find(p =>
-      [p.name, p.subsubcategory, p.subcategory, p.category]
-        .map(x => (x || "").trim())
-        .includes(frontendName)
-    );
-  };
+  const findMatchedParam = (paramId) => {
+  return paramList.find(p =>
+    [p.param_id]
+      .map(x => (x))
+      .includes(paramId)
+  );
+};
 
 const updatedParameters = parameters.map((p) => {
-  const matchedParam = findMatchedParam(p.name);
+  const matchedParam = findMatchedParam(p.id);
   if (!matchedParam) {
     throw new Error(
       `Parameter "${p.name}" not found in master for award_type "${award_type}"`

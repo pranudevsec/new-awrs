@@ -27,35 +27,43 @@ exports.createAppre = async (data, user) => {
     const { award_type, parameters } = appre_fds;
 
     const paramResult = await client.query(
-      `SELECT name, per_unit_mark, max_marks
+      `SELECT name, subsubcategory, subcategory, category, per_unit_mark, max_marks, negative
        FROM Parameter_Master
        WHERE award_type = $1`,
       [award_type]
     );
 
-    const paramMap = {};
-    paramResult.rows.forEach((p) => {
-      paramMap[p.name.trim()] = {
-        per_unit_mark: p.per_unit_mark,
-        max_marks: p.max_marks,
-      };
-    });
+    const paramList = paramResult.rows;
+
+    const findMatchedParam = (frontendName) => {
+      frontendName = (frontendName || "").trim();
+      return paramList.find(p =>
+        [p.name, p.subsubcategory, p.subcategory, p.category]
+          .map(x => (x || "").trim())
+          .includes(frontendName)
+      );
+    };
 
     const enrichedParams = parameters.map((p) => {
-      const config = paramMap[p.name.trim()];
-      if (!config) {
+      const matchedParam = findMatchedParam(p.name);
+      if (!matchedParam) {
         throw new Error(
           `Parameter "${p.name}" not found in master for award_type "${award_type}"`
         );
       }
 
-      const rawMarks = p.count * config.per_unit_mark;
-      const finalMarks = Math.min(rawMarks, config.max_marks);
+      const calculatedMarks = p.count * matchedParam.per_unit_mark;
+      const cappedMarks = Math.min(calculatedMarks, matchedParam.max_marks);
 
       return {
         ...p,
-        marks: finalMarks,
-        info: `1 ${p.name} = ${config.per_unit_mark} marks (Max ${config.max_marks} marks)`,
+        name: matchedParam.name,
+        subcategory: matchedParam.subcategory,
+        subsubcategory: matchedParam.subsubcategory,
+        category: matchedParam.category,
+        marks: cappedMarks,
+        negative: matchedParam.negative,
+        info: `1 ${matchedParam.name} = ${matchedParam.per_unit_mark} marks (Max ${matchedParam.max_marks} marks)`,
       };
     });
 
@@ -181,35 +189,43 @@ exports.updateAppre = async (id, data,user) => {
       const { award_type, parameters } = data.appre_fds;
 
       const paramResult = await client.query(
-        `SELECT name, per_unit_mark, max_marks
+        `SELECT name, subsubcategory, subcategory, category, per_unit_mark, max_marks, negative
          FROM Parameter_Master
          WHERE award_type = $1`,
         [award_type]
       );
 
-      const paramMap = {};
-      paramResult.rows.forEach((p) => {
-        paramMap[p.name.trim()] = {
-          per_unit_mark: p.per_unit_mark,
-          max_marks: p.max_marks,
-        };
-      });
+      const paramList = paramResult.rows;
+
+      const findMatchedParam = (frontendName) => {
+        frontendName = (frontendName || "").trim();
+        return paramList.find(p =>
+          [p.name, p.subsubcategory, p.subcategory, p.category]
+            .map(x => (x || "").trim())
+            .includes(frontendName)
+        );
+      };
 
       const enrichedParams = parameters.map((p) => {
-        const config = paramMap[p.name.trim()];
-        if (!config) {
+        const matchedParam = findMatchedParam(p.name);
+        if (!matchedParam) {
           throw new Error(
             `Parameter "${p.name}" not found in master for award_type "${award_type}"`
           );
         }
 
-        const rawMarks = p.count * config.per_unit_mark;
-        const finalMarks = Math.min(rawMarks, config.max_marks);
+        const calculatedMarks = p.count * matchedParam.per_unit_mark;
+        const cappedMarks = Math.min(calculatedMarks, matchedParam.max_marks);
 
         return {
           ...p,
-          marks: finalMarks,
-          info: `1 ${p.name} = ${config.per_unit_mark} marks (Max ${config.max_marks} marks)`,
+          name: matchedParam.name,
+          subcategory: matchedParam.subcategory,
+          subsubcategory: matchedParam.subsubcategory,
+          category: matchedParam.category,
+          marks: cappedMarks,
+          negative: matchedParam.negative,
+          info: `1 ${matchedParam.name} = ${matchedParam.per_unit_mark} marks (Max ${matchedParam.max_marks} marks)`,
         };
       });
 

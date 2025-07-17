@@ -56,6 +56,7 @@ export interface UpdateApplicationParams {
   id?: number;
   type?: string;
   status?: string;
+  iscdr?:boolean;
   is_mo_approved?: boolean;
   is_ol_approved?: boolean;
   withdrawRequested?: boolean;

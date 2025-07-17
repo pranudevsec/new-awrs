@@ -14,8 +14,15 @@ const Topbar = () => {
             className="img-fluid logo-img"
           />
         </Link>
-        <h1 className="text-white fw-bold text-center m-0 flex-grow-1">
-          Indian Army e-Citation Application
+  <h1
+          className="text-center m-0 flex-grow-1 fw-bold"
+          style={{
+            background: 'linear-gradient(to top,rgb(4, 106, 56), rgb(255, 255, 255), rgb(255, 103, 31))', // gold to orange
+            WebkitBackgroundClip: 'text',
+            WebkitTextFillColor: 'transparent',
+            fontSize: '44px',
+          }}
+        >          Indian Army e-Citation Application
         </h1>
         <Link to="/">
           <img

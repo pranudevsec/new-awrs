@@ -6,7 +6,7 @@ import FormSelect from "../../../components/form/FormSelect";
 import EmptyTable from "../../../components/ui/empty-table/EmptyTable";
 import Loader from "../../../components/ui/loader/Loader";
 import Pagination from "../../../components/ui/pagination/Pagination";
-import { awardTypeOptions } from "../../../data/options";
+import { awardTypeOptions, commandOptions } from "../../../data/options";
 import { SVGICON } from "../../../constants/iconsList";
 import { useAppDispatch, useAppSelector } from "../../../reduxToolkit/hooks";
 import { fetchApplicationsForHQ, fetchApplicationUnits, fetchSubordinates } from "../../../reduxToolkit/services/application/applicationService";
@@ -17,10 +17,12 @@ const ApplicationsList = () => {
   const dispatch = useAppDispatch();
 
   const profile = useAppSelector((state) => state.admin.profile);
+  console.log("profile -> ", profile);
   const { units, loading, meta } = useAppSelector((state) => state.application);
 
   // States
   const [awardType, setAwardType] = useState<string | null>(null);
+  const [commandType, setCommandType] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState<string>("");
   const [debouncedSearch, setDebouncedSearch] = useState<string>("");
   const [page, setPage] = useState<number>(1);
@@ -45,6 +47,7 @@ const ApplicationsList = () => {
       const params = {
         award_type: awardType ?? '',
         search: debouncedSearch,
+        command_type: commandType ?? '',
         page,
         limit,
       };
@@ -75,7 +78,7 @@ const ApplicationsList = () => {
     };
 
     fetchData();
-  }, [awardType, debouncedSearch, profile, page, limit]);
+  }, [awardType, commandType, debouncedSearch, profile, page, limit]);
 
   return (
     <div className="clarification-section">
@@ -102,13 +105,24 @@ const ApplicationsList = () => {
             onChange={(e) => setSearchTerm(e.target.value)}
           />
         </div>
-        <FormSelect
+        <div className="d-flex flex-wrap align-items-center gap-2">
+          <FormSelect
           name="awardType"
           options={awardTypeOptions}
           value={awardTypeOptions.find((opt) => opt.value === awardType) || null}
           onChange={(option) => setAwardType(option?.value ?? null)}
-          placeholder="Select Type"
+          placeholder="Select Award Type"
         />
+        {profile?.user?.user_role === "headquarter" &&
+        <FormSelect
+          name="commandType"
+          options={commandOptions}
+          value={commandOptions.find((opt) => opt.value === commandType) || null}
+          onChange={(option) => setCommandType(option?.value ?? null) }
+          placeholder="Select Command Type"
+        />
+       }
+        </div>
       </div>
 
       <div className="table-responsive">

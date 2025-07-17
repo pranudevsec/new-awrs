@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, type JSX } from "react";
 import { useParams, useSearchParams } from "react-router-dom";
 import { useAppDispatch } from "../../reduxToolkit/hooks";
 import { fetchApplicationUnitDetail } from "../../reduxToolkit/services/application/applicationService";
@@ -32,6 +32,178 @@ const UnitClarificationDetail = () => {
         });
     }
   }, [award_type, numericAppId, isRefreshData]);
+
+  const getParamDisplay = (param: any) => {
+    if (param.name != "no") {
+      return {
+        main: param.name,
+        header: param.category ?? null,
+        subheader: param.subcategory ?? null,
+        subsubheader: param.subsubcategory ?? null,
+      };
+    } else if (param.subsubcategory) {
+      return {
+        main: param.subsubcategory,
+        header: param.category ?? null,
+        subheader: param.subcategory ?? null,
+        subsubheader: null,
+      };
+    } else if (param.subcategory) {
+      return {
+        main: param.subcategory,
+        header: param.category ?? null,
+        subheader: null,
+        subsubheader: null,
+      };
+    } else {
+      return {
+        main: param.category,
+        header: null,
+        subheader: null,
+        subsubheader: null,
+      };
+    }
+  };
+
+  const renderHeaderRow = (
+    text: string | null,
+    level: "header" | "subheader" | "subsubheader",
+    index: number
+  ): JSX.Element | null => {
+    if (!text) return null;
+
+    const styles = {
+      header: {
+        colSpan: 6,
+        style: {
+          fontWeight: 600,
+          color: "#555",
+          fontSize: 15,
+          background: "#f5f5f5",
+        },
+      },
+      subheader: {
+        colSpan: 6,
+        style: {
+          color: "#1976d2",
+          fontSize: 13,
+          background: "#f8fafc",
+        },
+      },
+      subsubheader: {
+        colSpan: 6,
+        style: {
+          color: "#666",
+          fontSize: 12,
+          background: "#fafbfc",
+          fontStyle: "italic",
+        },
+      },
+    };
+
+    return (
+      <tr key={`${level}-${text}-${index}`}>
+        <td {...styles[level]}>{text}</td>
+      </tr>
+    );
+  };
+
+  const renderParamRow = (param: any, display: any): JSX.Element => (
+    <tr key={display.main}>
+      <td style={{ width: 150 }}>
+        <p className="fw-5">{display.main}</p>
+      </td>
+      <td style={{ width: 100 }}>
+        <p className="fw-5">{param.count}</p>
+      </td>
+      <td style={{ width: 100 }}>
+        <p className="fw-5">{param.marks}</p>
+      </td>
+      <td style={{ width: 200 }}>
+        <p className="fw-5">{param.marks}</p>
+      </td>
+      <td style={{ width: 200 }}>
+        {param.upload ? (
+          <a
+            href={`${baseURL}${param.upload}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            style={{ fontSize: 18 }}
+          >
+            <span style={{ fontSize: 14, wordBreak: "break-word" }}>
+              {Array.isArray(param?.upload)
+                ? param.upload.map((filePath: any) => (
+                  <span key={filePath} style={{ display: "block" }}>
+                    {filePath.split("/").pop()}
+                  </span>
+                ))
+                : param?.upload
+                  ?.toString()
+                  .split(",")
+                  .map((filePath: any) => (
+                    <span key={filePath} style={{ display: "block" }}>
+                      {filePath.trim().split("/").pop()}
+                    </span>
+                  ))}
+            </span>
+          </a>
+        ) : (
+          "--"
+        )}
+      </td>
+      <td style={{ width: 200 }}>
+        <p className="fw-4">{param.clarification_details?.reviewer_comment ?? "—"}</p>
+      </td>
+      <td style={{ width: 200 }}>
+        {param?.clarification_details?.clarification ? (
+          <div>{param.clarification_details.clarification.slice(0, 10)}...</div>
+        ) : (
+          <button
+            className="_btn outline"
+            onClick={() => {
+              setClarificationId(param?.clarification_id);
+              setClarificationShow(true);
+            }}
+          >
+            Add Clarification
+          </button>
+        )}
+      </td>
+    </tr>
+  );
+
+  const generateParameterRows = (parameters: any[]): JSX.Element[] => {
+    let prevHeader: string | null = null;
+    let prevSubheader: string | null = null;
+    let prevSubsubheader: string | null = null;
+
+    return parameters.flatMap((param: any, index: number) => {
+      const display = getParamDisplay(param);
+      const rows: JSX.Element[] = [];
+
+      const headerRow = renderHeaderRow(display.header, "header", index);
+      const subheaderRow = renderHeaderRow(display.subheader, "subheader", index);
+      const subsubheaderRow = renderHeaderRow(display.subsubheader, "subsubheader", index);
+
+      if (display.header && display.header !== prevHeader && headerRow) {
+        rows.push(headerRow);
+        prevHeader = display.header;
+      }
+
+      if (display.subheader && display.subheader !== prevSubheader && subheaderRow) {
+        rows.push(subheaderRow);
+        prevSubheader = display.subheader;
+      }
+
+      if (display.subsubheader && display.subsubheader !== prevSubsubheader && subsubheaderRow) {
+        rows.push(subsubheaderRow);
+        prevSubsubheader = display.subsubheader;
+      }
+
+      rows.push(renderParamRow(param, display));
+      return rows;
+    });
+  };
 
   return (
     <>
@@ -105,74 +277,7 @@ const UnitClarificationDetail = () => {
               </tr>
             </thead>
             <tbody>
-              {unitDetail?.fds?.parameters
-                ?.filter((param: any) => param.clarification_id)
-                .map((param: any) => {
-                  // ✅ Extract upload rendering logic
-                  let renderedUploadContent: React.ReactNode = "--";
-                  if (param.upload) {
-                    const uploads = Array.isArray(param.upload)
-                      ? param.upload
-                      : param.upload.toString().split(",");
-
-                    renderedUploadContent = (
-                      <a
-                        href={`${baseURL}${param.upload}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        style={{ fontSize: 18 }}
-                      >
-                        <span style={{ fontSize: 14, wordBreak: "break-word" }}>
-                          {uploads.map((filePath: any) => (
-                            <span key={filePath} style={{ display: "block" }}>
-                              {filePath.trim().split("/").pop()}
-                            </span>
-                          ))}
-                        </span>
-                      </a>
-                    );
-                  }
-
-                  return (
-                    <tr key={param.name}>
-                      <td style={{ width: 150 }}>
-                        <p className="fw-5">{param.name}</p>
-                      </td>
-                      <td style={{ width: 100 }}>
-                        <p className="fw-5">{param.count}</p>
-                      </td>
-                      <td style={{ width: 100 }}>
-                        <p className="fw-5">{param.marks}</p>
-                      </td>
-                      <td style={{ width: 200 }}>
-                        <p className="fw-5">{param.marks}</p>
-                      </td>
-                      <td style={{ width: 200 }}>{renderedUploadContent}</td>
-                      <td style={{ width: 200 }}>
-                        <p className="fw-4">
-                          {param.clarification_details?.reviewer_comment ?? "—"}
-                        </p>
-                      </td>
-                      <td style={{ width: 200 }}>
-                        {param?.clarification_details?.clarification ? (
-                          <div>
-                            {param.clarification_details.clarification.slice(0, 10)}...
-                          </div>
-                        ) : (
-                          <button
-                            className="_btn outline"
-                            onClick={() => {
-                              setClarificationId(param?.clarification_id);
-                              setClarificationShow(true);
-                            }}
-                          >
-                            Add Clarification
-                          </button>
-                        )}
-                      </td>
-                    </tr>
-                  );
-                })}
+              {generateParameterRows(unitDetail?.fds?.parameters || [])}
             </tbody>
           </table>
         </div>

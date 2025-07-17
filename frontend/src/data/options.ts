@@ -11,6 +11,11 @@ export const unitOptions: OptionType[] = [
   { value: "unit3", label: "Unit 3" },
   { value: "unit4", label: "Unit 4" },
   { value: "unit5", label: "Unit 5" },
+  { value: "unit6", label: "Unit 6" },
+  { value: "unit7", label: "Unit 7" },
+  { value: "unit8", label: "Unit 8" },
+  { value: "unit9", label: "Unit 9" },
+  { value: "unit10", label: "Unit 10" },
 ];
 
 export const brigadeOptions: OptionType[] = [
@@ -21,26 +26,51 @@ export const brigadeOptions: OptionType[] = [
   { value: "brigade3", label: "Brigade 3" },
   { value: "brigade4", label: "Brigade 4" },
   { value: "brigade5", label: "Brigade 5" },
-];
-
-export const divisonOptions: OptionType[] = [
-  { value: "n/a", label: "N/A" },
-  { value: "mydiv", label: "My Division" },
-  { value: "divison1", label: "Divison 1" },
-  { value: "divison2", label: "Divison 2" },
-  { value: "divison3", label: "Divison 3" },
-  { value: "divison4", label: "Divison 4" },
-  { value: "divison5", label: "Divison 5" },
+  { value: "brigade6", label: "Brigade 6" },
+  { value: "brigade7", label: "Brigade 7" },
+  { value: "brigade8", label: "Brigade 8" },
+  { value: "brigade9", label: "Brigade 9" },
+  { value: "brigade10", label: "Brigade 10" },
 ];
 
 export const divisionOptions: OptionType[] = [
   { value: "n/a", label: "N/A" },
-  { value: "mydiv", label: "My Division" },
   { value: "divison1", label: "Divison 1" },
   { value: "divison2", label: "Divison 2" },
   { value: "divison3", label: "Divison 3" },
   { value: "divison4", label: "Divison 4" },
   { value: "divison5", label: "Divison 5" },
+  { value: "divison6", label: "Divison 6" },
+  { value: "divison7", label: "Divison 7" },
+  { value: "divison8", label: "Divison 8" },
+  { value: "divison9", label: "Divison 9" },
+  { value: "divison10", label: "Divison 10" },
+  { value: "divison11", label: "Divison 11" },
+  { value: "divison12", label: "Divison 12" },
+  { value: "divison14", label: "Divison 14" },
+  { value: "divison15", label: "Divison 15" },
+  { value: "divison16", label: "Divison 16" },
+  { value: "divison17", label: "Divison 17" },
+  { value: "divison18", label: "Divison 18" },
+  { value: "divison19", label: "Divison 19" },
+  { value: "divison20", label: "Divison 20" },
+  { value: "divison21", label: "Divison 21" },
+  { value: "divison22", label: "Divison 22" },
+  { value: "divison23", label: "Divison 23" },
+  { value: "divison24", label: "Divison 24" },
+  { value: "divison25", label: "Divison 25" },
+  { value: "divison26", label: "Divison 26" },
+  { value: "divison27", label: "Divison 27" },
+  { value: "divison28", label: "Divison 28" },
+  { value: "divison31", label: "Divison 31" },
+  { value: "divison36", label: "Divison 36" },
+  { value: "divison40", label: "Divison 40" },
+  { value: "divison41", label: "Divison 41" },
+  { value: "divison42", label: "Divison 42" },
+  { value: "divison56", label: "Divison 56" },
+  { value: "divison59", label: "Divison 59" },
+  { value: "divison71", label: "Divison 71" },
+  { value: "divison72", label: "Divison 72" },
 ];
 
 export const corpsOptions: OptionType[] = [
@@ -50,7 +80,15 @@ export const corpsOptions: OptionType[] = [
   { value: "corps2", label: "Corps 2" },
   { value: "corps3", label: "Corps 3" },
   { value: "corps4", label: "Corps 4" },
-  { value: "corps5", label: "Corps 5" },
+  { value: "corps9", label: "Corps 9" },
+  { value: "corps10", label: "Corps 10" },
+  { value: "corps11", label: "Corps 11" },
+  { value: "corps14", label: "Corps 14" },
+  { value: "corps15", label: "Corps 15" },
+  { value: "corps16", label: "Corps 16" },
+  { value: "corps17", label: "Corps 17" },
+  { value: "corps33", label: "Corps 33" },
+  { value: "corps21", label: "Corps 21" },
 ];
 
 export const commandOptions: OptionType[] = [
@@ -70,6 +108,25 @@ export const hierarchicalStructure = [
   ["eastern", "corps3", "divison3", "brigade3", "unit3"],
   ["southern", "corps4", "divison4", "brigade4", "unit4"],
   ["training", "corps5", "divison5", "brigade5", "unit5"],
+  ["southwestern", "corps6", "divison6", "brigade6", "unit6"],
+  ["northern", "corps7", "divison7", "brigade7", "unit7"],
+  ["western", "corps8", "divison8", "brigade8", "unit8"],
+  ["central", "corps9", "divison9", "brigade9", "unit9"],
+  ["eastern", "corps10", "divison10", "brigade10", "unit10"],
+  ["southern", "corps11", "divison11", "brigade11", "unit11"],
+  ["southwestern", "corps12", "divison12", "brigade12", "unit12"],
+  ["training", "corps13", "divison13", "brigade13", "unit13"],
+  ["northern", "corps14", "divison14", "brigade14", "unit14"],
+  ["western", "corps15", "divison15", "brigade15", "unit15"],
+  ["central", "corps16", "divison16", "brigade16", "unit16"],
+  ["eastern", "corps17", "divison17", "brigade17", "unit17"],
+  ["southern", "corps18", "divison18", "brigade18", "unit18"],
+  ["southwestern", "corps19", "divison19", "brigade19", "unit19"],
+  ["training", "corps20", "divison20", "brigade20", "unit20"],
+  ["northern", "corps21", "divison21", "brigade21", "unit21"],
+  ["western", "corps22", "divison22", "brigade22", "unit22"],
+  ["central", "corps23", "divison23", "brigade23", "unit23"],
+  ["eastern", "corps24", "divison24", "brigade24", "unit24"],
 ];
 
 export const hierarchicalStructure2 = {
@@ -291,4 +348,15 @@ export const matrixUnitOptions = [
   { label: "LC/AIOS/LAC/HAA/AGPL", value: "LC/AIOS/LAC/HAA/AGPL" },
   { label: "IS", value: "IS" },
   { label: "NM", value: "NM" },
+];
+
+export const rank = [
+  { label: "Lt Gen", value: "Lt Gen" },
+  { label: "Maj Gen", value: "Maj Gen" },
+  { label: "Brig", value: "Brig" },
+  { label: "Col", value: "Col" },
+  { label: "Lt Col", value: "Lt Col" },
+  { label: "Maj", value: "Maj" },
+  { label: "Capt", value: "Capt" },
+  { label: "Lt", value: "Lt" },
 ];

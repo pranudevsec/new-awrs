@@ -302,7 +302,8 @@ const CitationReviewPage = () => {
         }
 
         if (paramsRes.success && paramsRes.data) {
-          setParameters(paramsRes.data);
+          const revParams = [...paramsRes.data].reverse();
+          setParameters(revParams);
         }
       } catch (err) {
         console.error("Failed to fetch data", err);
@@ -339,8 +340,6 @@ const CitationReviewPage = () => {
   }
 
   totalMarks = totalMarks - negativeMarks;
-
-  if (totalMarks < 0) totalMarks = 0;
 
   // Total Parameters
   const totalParams = parameters.length;

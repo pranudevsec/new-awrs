@@ -355,26 +355,30 @@ const SubmittedFormDetail = () => {
         if (param.name != "no") {
             return {
                 main: param.name,
-                header: param.subcategory ?? null,
-                subheader: param.subsubcategory ?? null,
+                header: param.category ?? null,
+                subheader: param.subcategory ?? null,
+                subsubheader: param.subsubcategory ?? null,
             };
         } else if (param.subsubcategory) {
             return {
                 main: param.subsubcategory,
-                header: param.subcategory ?? null,
-                subheader: null,
+                header: param.category ?? null,
+                subheader: param.subcategory ?? null,
+                subsubheader: null,
             };
         } else if (param.subcategory) {
             return {
                 main: param.subcategory,
-                header: null,
+                header: param.category ?? null,
                 subheader: null,
+                subsubheader: null,
             };
         } else {
             return {
                 main: param.category,
                 header: null,
                 subheader: null,
+                subsubheader: null,
             };
         }
     };
@@ -441,22 +445,6 @@ const SubmittedFormDetail = () => {
             }
         }
     };
-
-    const renderHeaderRow = (header: string, index: number) => (
-        <tr key={`header-${header}-${index}`}>
-            <td colSpan={6} style={{ fontWeight: 600, color: "#555", fontSize: 15, background: "#f5f5f5" }}>
-                {header}
-            </td>
-        </tr>
-    );
-
-    const renderSubHeaderRow = (subheader: string, header: string, index: number) => (
-        <tr key={`subheader-${subheader}-${index}`}>
-            <td colSpan={6} style={{ color: header ? "#1976d2" : "#888", fontSize: 13, background: "#f8fafc" }}>
-                {subheader}
-            </td>
-        </tr>
-    );
 
     const renderUploads = (upload: any) => {
         let uploads: string[] = [];
@@ -749,27 +737,79 @@ const SubmittedFormDetail = () => {
                         {(() => {
                             let prevHeader: string | null = null;
                             let prevSubheader: string | null = null;
-                            const rows: JSX.Element[] = [];
+                            let prevSubsubheader: string | null = null;
+                            const rows: any[] = [];
 
-                            unitDetail?.fds?.parameters?.forEach((param: any, index: number) => {
-                                const display = getParamDisplay(param);
+                            unitDetail?.fds?.parameters?.forEach(
+                                (param: any, index: number) => {
+                                    const display = getParamDisplay(param);
 
-                                const showHeader = display.header && display.header !== prevHeader;
-                                const showSubheader = display.subheader && display.subheader !== prevSubheader;
+                                    const showHeader =
+                                        display.header && display.header !== prevHeader;
+                                    const showSubheader =
+                                        display.subheader && display.subheader !== prevSubheader;
+                                    const showSubsubheader =
+                                        display.subsubheader && display.subsubheader !== prevSubsubheader;
 
-                                if (showHeader) {
-                                    rows.push(renderHeaderRow(display.header, index));
-                                }
+                                    if (showHeader) {
+                                        rows.push(
+                                            <tr key={`header-${display.header}-${index}`}>
+                                                <td
+                                                    colSpan={6}
+                                                    style={{
+                                                        fontWeight: 600,
+                                                        color: "#555",
+                                                        fontSize: 15,
+                                                        background: "#f5f5f5",
+                                                    }}
+                                                >
+                                                    {display.header}
+                                                </td>
+                                            </tr>
+                                        );
+                                    }
 
-                                if (showSubheader) {
-                                    rows.push(renderSubHeaderRow(display.subheader, display.header, index));
-                                }
+                                    if (showSubheader) {
+                                        rows.push(
+                                            <tr key={`subheader-${display.subheader}-${index}`}>
+                                                <td
+                                                    colSpan={6}
+                                                    style={{
+                                                        color: display.header ? "#1976d2" : "#888",
+                                                        fontSize: 13,
+                                                        background: "#f8fafc",
+                                                    }}
+                                                >
+                                                    {display.subheader}
+                                                </td>
+                                            </tr>
+                                        );
+                                    }
 
-                                prevHeader = display.header;
-                                prevSubheader = display.subheader;
+                                    if (showSubsubheader) {
+                                        rows.push(
+                                            <tr key={`subsubheader-${display.subsubheader}-${index}`}>
+                                                <td
+                                                    colSpan={6}
+                                                    style={{
+                                                        color: "#666",
+                                                        fontSize: 12,
+                                                        background: "#fafbfc",
+                                                        fontStyle: "italic",
+                                                    }}
+                                                >
+                                                    {display.subsubheader}
+                                                </td>
+                                            </tr>
+                                        );
+                                    }
 
-                                rows.push(...renderParameterRow(param, display));
-                            });
+                                    prevHeader = display.header;
+                                    prevSubheader = display.subheader;
+                                    prevSubsubheader = display.subsubheader;
+
+                                    rows.push(...renderParameterRow(param, display));
+                                });
 
                             return rows;
                         })()}

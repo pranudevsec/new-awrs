@@ -33,6 +33,7 @@ interface FetchUnitsParams {
 
 interface FetchHQApplicationsParams {
   award_type?: string;
+  command_type?: string;
   search?: string;
   page?: number;
   limit?: number;
@@ -165,6 +166,7 @@ export const fetchApplicationsForHQ = createAsyncThunk<
 >(
   "applications/fetchApplicationsForHQ",
   async (params, { rejectWithValue }) => {
+    console.log(params);
     try {
       const queryParams = new URLSearchParams();
 
@@ -179,6 +181,9 @@ export const fetchApplicationsForHQ = createAsyncThunk<
       }
       if (params?.limit) {
         queryParams.append("limit", String(params.limit));
+      }
+      if( params?.command_type) {
+        queryParams.append("command_type", params.command_type);
       }
 
       const response = await Axios.get(
@@ -294,6 +299,7 @@ export const updateApplication = createAsyncThunk<
         status: params.status,
         member: params.member,
         level: params.level,
+        iscdr:params.iscdr,
         withdrawRequested: params.withdrawRequested,
         withdraw_status: params.withdraw_status,
       }

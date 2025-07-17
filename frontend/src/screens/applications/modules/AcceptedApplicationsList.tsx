@@ -16,6 +16,8 @@ import {
   fetchApplicationUnits,
   fetchSubordinates,
   updateApplication,
+  TokenValidation,
+  getSignedData,
 } from "../../../reduxToolkit/services/application/applicationService";
 
 const hierarchy = ["unit", "brigade", "division", "corps", "command"];
@@ -26,6 +28,7 @@ const AcceptedApplicationsList = () => {
   const navigate = useNavigate();
 
   const profile = useAppSelector((state) => state.admin.profile);
+  console.log("Profile:", profile);
   const { units, loading, meta } = useAppSelector((state) => state.application);
   const role = profile?.user?.user_role?.toLowerCase() ?? "";
 
@@ -82,7 +85,7 @@ const AcceptedApplicationsList = () => {
 
   const fetchData = () => {
     const params = {
-      award_type: awardType ??"",
+      award_type: awardType ?? "",
       search: debouncedSearch,
       page,
       limit,
@@ -111,7 +114,7 @@ const AcceptedApplicationsList = () => {
         (acc: number, item: any) => acc + (item?.marks ?? 0),
         0
       ) ?? 0;
-
+    let totalNegativeMarks = 0;
     const totalParameterMarks = parameters.reduce((acc: number, param: any) => {
       const isRejected =
         param?.clarification_details?.clarification_status === "rejected";
@@ -123,14 +126,16 @@ const AcceptedApplicationsList = () => {
         param?.approved_marks !== null &&
         param?.approved_marks !== "" &&
         !isNaN(Number(param?.approved_marks));
-
       const approved = hasValidApproved ? Number(param.approved_marks) : null;
-      const original = Number(param?.marks ?? 0);
-
+      let original = 0;
+      if (param?.negative) {
+        totalNegativeMarks += Number(param?.marks ?? 0);
+      } else {
+        original = Number(param?.marks ?? 0);
+      }
       return acc + (approved ?? original);
     }, 0);
-
-    return totalParameterMarks + graceMarks;
+    return totalParameterMarks + graceMarks - totalNegativeMarks;
   };
 
   const getDiscretionaryMarksByRole = (unit: any, role: string): number => {
@@ -260,6 +265,64 @@ const AcceptedApplicationsList = () => {
     };
 
     dispatch(approveMarks(body)).unwrap().then(() => { fetchData() });
+  };
+
+  const handleAddsignature = async (decision: string, unit: any) => {
+    //validation
+    const result = await dispatch(
+      TokenValidation({ inputPersID: profile?.user?.pers_no ?? "" })
+    );
+
+    if (TokenValidation.fulfilled.match(result)) {
+      const isValid = result.payload.vaildId;
+      if (!isValid) {
+        return;
+      }
+      //sign
+
+      const SignPayload = {
+        data: {
+          id: unit?.id,
+          user: profile?.user,
+          type: profile?.user?.user_role,
+        },
+      };
+      const response = await dispatch(getSignedData(SignPayload));
+
+      const updatePayload = {
+        id: unit?.id,
+        type: unit?.type,
+        member: {
+          name: profile?.user?.name,
+          ic_number: profile?.user?.pers_no,
+          member_type: profile?.user?.user_role,
+          iscdr: true,
+          member_id: profile?.user?.user_id,
+          is_signature_added: true,
+          sign_digest: response.payload,
+        },
+        level: profile?.user?.user_role,
+      };
+      if (decision === "approved") {
+        await dispatch(
+          updateApplication({
+            ...updatePayload,
+            status: "approved",
+          })
+        ).then(() => {
+          navigate("/applications/list");
+        });
+      } else if (decision === "rejected") {
+        dispatch(
+          updateApplication({
+            ...updatePayload,
+            status: "rejected",
+          })
+        ).then(() => {
+          navigate("/applications/list");
+        });
+      }
+    }
   };
 
   return (
@@ -593,14 +656,7 @@ const AcceptedApplicationsList = () => {
                                 );
                                 return;
                               }
-                              await dispatch(
-                                updateApplication({
-                                  id: unit?.id,
-                                  type: unit?.type,
-                                  status: "approved",
-                                })
-                              ).unwrap();
-                              navigate("/applications/list");
+                              await handleAddsignature("approved", unit);
                             } catch (error) {
                               console.log("error ->", error)
                               toast.error("Error while approving the application.");
@@ -612,16 +668,8 @@ const AcceptedApplicationsList = () => {
 
                         <button
                           className="_btn danger"
-                          onClick={() => {
-                            dispatch(
-                              updateApplication({
-                                id: unit?.id,
-                                type: unit?.type,
-                                status: "rejected",
-                              })
-                            ).then(() => {
-                              navigate("/applications/list");
-                            });
+                          onClick={async () => {
+                            await handleAddsignature("rejected", unit);
                           }}
                         >
                           Reject

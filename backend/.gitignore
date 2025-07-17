@@ -12,6 +12,8 @@ dist
 dist-ssr
 *.local
 token_storage
+src/chatbot/chatbot_uploads
+.env
 
 # Editor directories and files
 .vscode/*

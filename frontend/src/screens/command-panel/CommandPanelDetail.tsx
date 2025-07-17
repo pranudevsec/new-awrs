@@ -62,26 +62,30 @@ const CommandPanelDetail = () => {
     if (param.name != "no") {
       return {
         main: param.name,
-        header: param.subcategory ?? null,
-        subheader: param.subsubcategory ?? null,
+        header: param.category ?? null,
+        subheader: param.subcategory ?? null,
+        subsubheader: param.subsubcategory ?? null,
       };
     } else if (param.subsubcategory) {
       return {
         main: param.subsubcategory,
-        header: param.subcategory ?? null,
-        subheader: null,
+        header: param.category ?? null,
+        subheader: param.subcategory ?? null,
+        subsubheader: null,
       };
     } else if (param.subcategory) {
       return {
         main: param.subcategory,
-        header: null,
+        header: param.category ?? null,
         subheader: null,
+        subsubheader: null,
       };
     } else {
       return {
         main: param.category,
         header: null,
         subheader: null,
+        subsubheader: null,
       };
     }
   };
@@ -148,6 +152,7 @@ const CommandPanelDetail = () => {
               {(() => {
                 let prevHeader: string | null = null;
                 let prevSubheader: string | null = null;
+                let prevSubsubheader: string | null = null;
                 const rows: any[] = [];
 
                 unitDetail?.fds?.parameters?.forEach((param: any, index: number) => {
@@ -155,6 +160,7 @@ const CommandPanelDetail = () => {
 
                   const showHeader = display.header && display.header !== prevHeader;
                   const showSubheader = display.subheader && display.subheader !== prevSubheader;
+                  const showSubsubheader = display.subsubheader && display.subsubheader !== prevSubsubheader;
 
                   if (showHeader) {
                     rows.push(
@@ -191,36 +197,19 @@ const CommandPanelDetail = () => {
                     );
                   }
 
-                  prevHeader = display.header;
-                  prevSubheader = display.subheader;
-
-                  // ✅ Extracted upload rendering logic
-                  let renderedUploadContent: React.ReactNode = (
-                    <span className="text-muted">--</span>
-                  );
-
-                  if (param.upload) {
-                    const uploads = Array.isArray(param.upload)
-                      ? param.upload
-                      : param.upload.toString().split(",");
-
-                    renderedUploadContent = (
-                      <a
-                        href={param.upload}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        style={{ fontSize: 18 }}
-                      >
-                        <span style={{ fontSize: 14, wordBreak: "break-word" }}>
-                          {uploads.map((filePath: any) => (
-                            <span key={filePath} style={{ display: "block" }}>
-                              {filePath.trim().split("/").pop()}
-                            </span>
-                          ))}
-                        </span>
-                      </a>
+                  if (showSubsubheader) {
+                    rows.push(
+                      <tr key={`subsubheader-${display.subsubheader}-${index}`}>
+                        <td colSpan={4} style={{ color: "#666", fontSize: 12, background: "#fafbfc", fontStyle: "italic" }}>
+                          {display.subsubheader}
+                        </td>
+                      </tr>
                     );
                   }
+
+                  prevHeader = display.header;
+                  prevSubheader = display.subheader;
+                  prevSubsubheader = display.subsubheader;
 
                   rows.push(
                     <tr key={display.main}>
@@ -233,7 +222,7 @@ const CommandPanelDetail = () => {
                       <td style={{ width: 100 }}>
                         <p className="fw-5">{param.marks}</p>
                       </td>
-                      <td style={{ width: 200 }}>{renderedUploadContent}</td>
+                      {/* <td style={{ width: 200 }}>{renderedUploadContent}</td> */}
                     </tr>
                   );
                 });

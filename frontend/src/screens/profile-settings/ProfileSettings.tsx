@@ -17,6 +17,7 @@ import {
   hierarchicalStructure,
   unitTypeOptions,
   matrixUnitOptions,
+  rank
 } from "../../data/options";
 import { useAppSelector, useAppDispatch } from "../../reduxToolkit/hooks";
 import {
@@ -81,7 +82,7 @@ const ProfileSettings = () => {
     if (profile?.unit?.awards && Array.isArray(profile.unit.awards)) {
       const processedAwards = profile.unit.awards.map((award) => ({
         award_id: award.award_id ?? undefined,
-        award_type: award.award_type ?? "goc",
+        award_type: award.award_type ?? "GOC-in-C",
         award_title: award.award_title ?? "",
         award_year: award.award_year ?? "",
       }));
@@ -140,10 +141,6 @@ const ProfileSettings = () => {
   useEffect(() => {
     if (profile) setFirstLoad(false);
   }, [profile]);
-
-  const handleRemoveAward = (idx: number) => {
-    setAwards((prev) => prev.filter((_, i) => i !== idx));
-  };
 
   const getVisibleFields = (
     role: string,
@@ -337,6 +334,10 @@ const ProfileSettings = () => {
     }));
   };
 
+  const handleRemoveAward = (indexToRemove: number) => {
+    setAwards((prevAwards) => prevAwards.filter((_, i) => i !== indexToRemove));
+  };
+
   const buildUnitPayload = (
     members?: UpdateUnitProfileRequest["members"]
   ): UpdateUnitProfileRequest => ({
@@ -498,7 +499,12 @@ const ProfileSettings = () => {
               <table className="table table-bordered">
                 <thead>
                   {awards.length !== 0 && (
-                    <tr>                      </tr>
+                    <tr>
+                      {/* <th>Type</th>
+                      <th>Brigade</th>
+                      <th>Year</th>
+                      <th>Action</th> */}
+                    </tr>
                   )}
                 </thead>
                 <tbody>
@@ -511,15 +517,15 @@ const ProfileSettings = () => {
                           onChange={(e) => {
                             const updated = [...awards];
                             updated[idx].award_type = e.target.value as
-                              | "goc"
-                              | "coas"
-                              | "cds";
+                              | "GOC-in-C"
+                              | "COAS"
+                              | "CDS";
                             setAwards(updated);
                           }}
                         >
-                          <option value="goc">GOC-in-C</option>
-                          <option value="coas">COAS</option>
-                          <option value="cds">CDS</option>
+                          <option value="GOC-in-C">GOC-in-C</option>
+                          <option value="COAS">COAS</option>
+                          <option value="CDS">CDS</option>
                         </select>
                       </td>
                       <td>
@@ -579,7 +585,7 @@ const ProfileSettings = () => {
                 onClick={() => {
                   setAwards((prev) => [
                     ...prev,
-                    { award_type: "goc", award_title: "", award_year: "" },
+                    { award_type: "GOC-in-C", award_title: "", award_year: "" },
                   ]);
                 }}
               >
@@ -678,14 +684,15 @@ const ProfileSettings = () => {
                     />
                   </div>
                   <div className="col-sm-6 mb-3">
-                    <FormInput
+                    <FormSelect
                       label="Rank"
                       name="rank"
-                      placeholder="Enter Rank"
-                      value={presidingOfficer.rank}
-                      onChange={(e) =>
-                        handlePresidingChange("rank", e.target.value)
+                      options={rank}
+                      value={rank.find((opt: any) => opt.value === presidingOfficer.rank) || null}
+                      onChange={(selected: any) =>
+                        handlePresidingChange("rank", selected?.value ?? "")
                       }
+                      placeholder="Select Rank"
                     />
                   </div>
                   <div className="col-sm-6 mb-3">
@@ -783,14 +790,15 @@ const ProfileSettings = () => {
                         />
                       </div>
                       <div className="col-sm-6 mb-3">
-                        <FormInput
+                        <FormSelect
                           label="Rank"
                           name={`rank-${index}`}
-                          placeholder="Enter Rank"
-                          value={officer.rank}
-                          onChange={(e) =>
-                            handleChange(index, "rank", e.target.value)
+                          options={rank}
+                          value={rank.find((opt: any) => opt.value === officer.rank) || null}
+                          onChange={(selected: any) =>
+                            handleChange(index, "rank", selected?.value ?? "")
                           }
+                          placeholder="Select Rank"
                         />
                       </div>
                       <div className="col-sm-6 mb-3">
@@ -850,23 +858,25 @@ const ProfileSettings = () => {
 
       {["brigade", "division", "corps", "command"].includes(role) && (
         <>
-          <div className="d-flex flex-sm-row flex-column align-items-sm-center justify-content-between mb-4">
-            <Breadcrumb title="Staff Register" />
-          </div>
 
           {profile?.user?.is_member_added ? (
-            <div className="mb-5">
-              <div className="row">
-                <div className="col-sm-6 mb-3">
-                  <FormInput
-                    label="Registered Member Username"
-                    name="memberUsername"
-                    value={profile.user.member_username ?? ""}
-                    disabled
-                  />
+            <>
+              <div className="d-flex flex-sm-row flex-column align-items-sm-center justify-content-between mb-4">
+                <Breadcrumb title="Staff Officer Register" />
+              </div>
+              <div className="mb-5">
+                <div className="row">
+                  <div className="col-sm-6 mb-3">
+                    <FormInput
+                      label="Registered Member Username"
+                      name="memberUsername"
+                      value={profile.user.member_username ?? ""}
+                      disabled
+                    />
+                  </div>
                 </div>
               </div>
-            </div>
+            </>
           ) : (
             !profile?.user?.is_member && (
               <form className="mb-5" onSubmit={memberFormik.handleSubmit}>
