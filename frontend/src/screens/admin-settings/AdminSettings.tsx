@@ -22,7 +22,7 @@ const AdminSettings = () => {
   const formik = useFormik({
     initialValues: {
       lastDate: config?.deadline ? config.deadline.split("T")[0] : "",
-      cycle_period: config?.cycle_period || [],
+      cycle_period: config?.cycle_period ?? [],
       current_cycle_period: config?.current_cycle_period ?? "",
     },
     enableReinitialize: true,
@@ -109,7 +109,7 @@ const AdminSettings = () => {
               value={
                 cyclePeriodOptions.find(
                   (opt) => opt.value === formik.values.current_cycle_period
-                ) || null
+                ) ?? null
               }
               onChange={(selected) =>
                 formik.setFieldValue("current_cycle_period", selected?.value)

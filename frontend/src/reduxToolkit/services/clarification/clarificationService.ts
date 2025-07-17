@@ -40,7 +40,7 @@ export const getClarifications = createAsyncThunk<
     try {
       const response = await Axios.get(
         `${apiEndPoints.clarification}?awardType=${
-          awardType || ""
+          awardType ?? ""
         }&search=${search}&page=${page ?? 1}&limit=${limit ?? 10}`
       );
       return response.data;
@@ -62,7 +62,7 @@ export const getSubordinateClarifications = createAsyncThunk<
     try {
       const response = await Axios.get(
         `${apiEndPoints.clarification}/for-subordinates?awardType=${
-          awardType || ""
+          awardType ?? ""
         }&search=${search}&page=${page ?? 1}&limit=${limit ?? 10}`
       );
       return response.data;

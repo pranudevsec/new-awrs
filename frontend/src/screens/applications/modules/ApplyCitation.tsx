@@ -213,7 +213,7 @@ const ApplyCitation = () => {
   const [cyclePerios, setCyclePerios] = useState("");
   const [command, setCommand] = useState("");
   const groupedParams = groupParametersByCategory(parameters);
-  const [activeTab, setActiveTab] = useState(Object.keys(groupedParams)[0] || "");
+  const [activeTab, setActiveTab] = useState(Object.keys(groupedParams)[0] ?? "");
   const [uploadedFiles, setUploadedFiles] = useState<Record<number, string[]>>(() => {
     try {
       return JSON.parse(localStorage.getItem(DRAFT_FILE_UPLOAD_KEY) ?? "{}");
@@ -443,7 +443,7 @@ const ApplyCitation = () => {
     if (uploadedUrls.length > 0) {
       const newUploads = {
         ...uploadedFiles,
-        [paramId]: [...(uploadedFiles[paramId] || []), ...uploadedUrls]
+        [paramId]: [...(uploadedFiles[paramId] ?? []), ...uploadedUrls]
       };
       setUploadedFiles(newUploads);
       localStorage.setItem(DRAFT_FILE_UPLOAD_KEY, JSON.stringify(newUploads));
@@ -485,9 +485,9 @@ const ApplyCitation = () => {
   const formik = useFormik({
     enableReinitialize: true,
     initialValues: {
-      cyclePeriod: cyclePerios || "",
-      lastDate: lastDate || "",
-      command: command || "",
+      cyclePeriod: cyclePerios ?? "",
+      lastDate: lastDate ?? "",
+      command: command ?? "",
     },
     onSubmit: async (values) => {
       try {
@@ -497,7 +497,7 @@ const ApplyCitation = () => {
             const display = getParamDisplay(param);
             const count = Number(counts[param.param_id] ?? 0);
             const calculatedMarks = marks[param.param_id] ?? 0;
-            const uploadPaths = uploadedFiles[param.param_id] || [];
+            const uploadPaths = uploadedFiles[param.param_id] ?? [];
 
             return {
               name: display.main,
@@ -572,7 +572,7 @@ const ApplyCitation = () => {
 
         if (configRes?.success && configRes.data) {
           setCyclePerios(configRes.data.current_cycle_period);
-          const formattedDate = configRes.data.deadline?.split("T")[0] || "";
+          const formattedDate = configRes.data.deadline?.split("T")[0] ?? "";
           setLastDate(formattedDate);
           if (profile) {
             setCommand(profile?.unit?.comd)
@@ -720,7 +720,7 @@ const ApplyCitation = () => {
                   label="Award Type"
                   name="awardType"
                   options={awardTypeOptions}
-                  value={awardTypeOptions.find((opt) => opt.value === "citation") || null}
+                  value={awardTypeOptions.find((opt) => opt.value === "citation") ?? null}
                   placeholder="Select"
                   isDisabled
                 />

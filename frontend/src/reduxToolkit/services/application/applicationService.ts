@@ -166,7 +166,6 @@ export const fetchApplicationsForHQ = createAsyncThunk<
 >(
   "applications/fetchApplicationsForHQ",
   async (params, { rejectWithValue }) => {
-    console.log(params);
     try {
       const queryParams = new URLSearchParams();
 

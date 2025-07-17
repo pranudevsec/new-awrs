@@ -5,14 +5,7 @@ import ClarificationModal from "../../../modals/ClarificationModal";
 import FormSelect from "../../../components/form/FormSelect";
 import FormInput from "../../../components/form/FormInput";
 import { SVGICON } from "../../../constants/iconsList";
-import { awardTypeOptions } from "../../../data/options";
-
-const cyclePeriodOptions: OptionType[] = [
-    { value: "2024 - H1", label: "2024 - H1" },
-    { value: "2024 - H2", label: "2024 - H2" },
-    { value: "2025 - H1", label: "2025 - H1" },
-    { value: "2025 - H2", label: "2025 - H2" },
-];
+import { awardTypeOptions, cyclePeriodOptions } from "../../../data/options";
 
 const ClarificationDetails = () => {
     // States
@@ -50,7 +43,7 @@ const ClarificationDetails = () => {
                                 name="awardType"
                                 options={awardTypeOptions}
                                 value={
-                                    awardTypeOptions.find((opt) => opt.value === "citation") ||
+                                    awardTypeOptions.find((opt) => opt.value === "citation") ??
                                     null
                                 }
                                 placeholder="Select"
@@ -63,7 +56,7 @@ const ClarificationDetails = () => {
                                 name="cyclePeriod"
                                 options={cyclePeriodOptions}
                                 value={
-                                    cyclePeriodOptions.find((opt) => opt.value === "2024 - H1") ||
+                                    cyclePeriodOptions.find((opt) => opt.value === "2024 - H1") ??
                                     null
                                 }
                                 placeholder="Select"

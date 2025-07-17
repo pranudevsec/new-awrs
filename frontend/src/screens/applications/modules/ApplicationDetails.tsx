@@ -80,7 +80,7 @@ const ApplicationDetails = () => {
   const [decisions, setDecisions] = useState<{ [memberId: string]: string }>({});
   const [priority, setPriority] = useState(userPriority);
   const [commentsState, setCommentsState] = useState<Record<string, string>>({});
-  const [localComment, setLocalComment] = useState(commentsState?.__application__ || "");
+  const [localComment, setLocalComment] = useState(commentsState?.__application__ ?? "");
   const [unitRemarks, setUnitRemarks] = useState("");
   const [paramStats, setParamStats] = useState({
     totalParams: 0,
@@ -413,8 +413,6 @@ const ApplicationDetails = () => {
     const result = await dispatch(
       TokenValidation({ inputPersID: member.ic_number })
     );
-    const decision = decisions[member.id];
-    console.log(decision);
     if (TokenValidation.fulfilled.match(result)) {
       const isValid = result.payload.vaildId;
       if (!isValid) {
@@ -454,7 +452,6 @@ const ApplicationDetails = () => {
           }
         });
       } else if (memberdecision === "rejected") {
-        console.log(memberdecision);
         dispatch(
           updateApplication({
             ...updatePayload,

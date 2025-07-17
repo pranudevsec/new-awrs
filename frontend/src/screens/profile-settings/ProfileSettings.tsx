@@ -8,6 +8,8 @@ import Breadcrumb from "../../components/ui/breadcrumb/Breadcrumb";
 import Loader from "../../components/ui/loader/Loader";
 import FormInput from "../../components/form/FormInput";
 import type { UpdateUnitProfileRequest } from "../../reduxToolkit/services/auth/authInterface";
+import { useAppSelector, useAppDispatch } from "../../reduxToolkit/hooks";
+import { getProfile, reqToUpdateUnitProfile } from "../../reduxToolkit/services/auth/authService";
 import {
   unitOptions,
   brigadeOptions,
@@ -19,11 +21,6 @@ import {
   matrixUnitOptions,
   rank
 } from "../../data/options";
-import { useAppSelector, useAppDispatch } from "../../reduxToolkit/hooks";
-import {
-  getProfile,
-  reqToUpdateUnitProfile,
-} from "../../reduxToolkit/services/auth/authService";
 
 interface Officer {
   id?: string;
@@ -380,7 +377,7 @@ const ProfileSettings = () => {
                   division: divisionOptions,
                   corps: corpsOptions,
                   command: commandOptions,
-                }[profile?.user?.user_role ?? "unit"] || []
+                }[profile?.user?.user_role ?? "unit"] ?? []
                 : optionsMap[field] ?? [];
 
             const getDynamicLabel = (
@@ -396,7 +393,7 @@ const ProfileSettings = () => {
               };
 
               if (field === "unit") {
-                const roleLabel = roleMap[userRole] || "Unit";
+                const roleLabel = roleMap[userRole] ?? "Unit";
                 return `My ${roleLabel}`;
               }
 
@@ -500,10 +497,6 @@ const ProfileSettings = () => {
                 <thead>
                   {awards.length !== 0 && (
                     <tr>
-                      {/* <th>Type</th>
-                      <th>Brigade</th>
-                      <th>Year</th>
-                      <th>Action</th> */}
                     </tr>
                   )}
                 </thead>
@@ -688,7 +681,7 @@ const ProfileSettings = () => {
                       label="Rank"
                       name="rank"
                       options={rank}
-                      value={rank.find((opt: any) => opt.value === presidingOfficer.rank) || null}
+                      value={rank.find((opt: any) => opt.value === presidingOfficer.rank) ?? null}
                       onChange={(selected: any) =>
                         handlePresidingChange("rank", selected?.value ?? "")
                       }
@@ -717,15 +710,6 @@ const ProfileSettings = () => {
                       }
                     />
                   </div>
-                  {/* <div className="col-sm-6 mb-3">
-                <FormInput
-                  label="Digital Sign"
-                  name="digitalSign"
-                  placeholder="Enter Digital Sign"
-                  value={presidingOfficer.digitalSign}
-                  onChange={(e) => handlePresidingChange("digitalSign", e.target.value)}
-                />
-              </div> */}
                   <div className="col-12 mt-2">
                     <button type="submit" className="_btn _btn-lg primary">
                       Add Presiding Officer
@@ -747,7 +731,7 @@ const ProfileSettings = () => {
                   const officersPayload: UpdateUnitProfileRequest["members"] =
                     officers.map((officer, index) => ({
                       ...(officer.id ? { id: officer.id } : {}),
-                      member_type: "member_officer", // narrowed type
+                      member_type: "member_officer",
                       member_order: String(index + 1),
                       ic_number: officer.icNumber,
                       rank: officer.rank,
@@ -794,7 +778,7 @@ const ProfileSettings = () => {
                           label="Rank"
                           name={`rank-${index}`}
                           options={rank}
-                          value={rank.find((opt: any) => opt.value === officer.rank) || null}
+                          value={rank.find((opt: any) => opt.value === officer.rank) ?? null}
                           onChange={(selected: any) =>
                             handleChange(index, "rank", selected?.value ?? "")
                           }
@@ -823,17 +807,6 @@ const ProfileSettings = () => {
                           }
                         />
                       </div>
-                      {/* <div className="col-sm-6 mb-3">
-                    <FormInput
-                      label="Digital Sign"
-                      name={`digitalSign-${index}`}
-                      placeholder="Enter Digital Sign"
-                      value={officer.digitalSign}
-                      onChange={(e) =>
-                        handleChange(index, "digitalSign", e.target.value)
-                      }
-                    />
-                  </div> */}
                     </div>
                   </div>
                 ))}
@@ -919,7 +892,6 @@ const ProfileSettings = () => {
           )}
         </>
       )}
-
     </div>
   );
 };

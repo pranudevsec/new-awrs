@@ -33,7 +33,7 @@ const GiveClarificationModal: React.FC<ClarificationModalProps> = ({
       toast.error("File size should be less than 5MB");
       e.target.value = "";
     } else {
-      setFile(selectedFile || null);
+      setFile(selectedFile ?? null);
     }
   };
 
@@ -49,7 +49,7 @@ const GiveClarificationModal: React.FC<ClarificationModalProps> = ({
       updateClarification({
         id: clarificationId,
         clarification,
-        clarification_doc: file || undefined,
+        clarification_doc: file ?? undefined,
       })
     );
 

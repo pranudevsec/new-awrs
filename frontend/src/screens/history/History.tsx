@@ -28,6 +28,7 @@ const History = () => {
 
   const profile = useAppSelector((state) => state.admin.profile);
   const { units, loading, meta } = useAppSelector((state) => state.application);
+  const role = profile?.user?.user_role?.toLowerCase() ?? "";
 
   // States
   const [awardType, setAwardType] = useState<string | null>(null);
@@ -35,16 +36,13 @@ const History = () => {
   const [debouncedSearch, setDebouncedSearch] = useState<string>("");
   const [page, setPage] = useState<number>(1);
   const [limit, setLimit] = useState<number>(10);
-  const role = profile?.user?.user_role?.toLowerCase() ?? "";
 
   useEffect(() => {
     const handler = setTimeout(() => {
       setDebouncedSearch(searchTerm);
     }, 500);
 
-    return () => {
-      clearTimeout(handler);
-    };
+    return () => { clearTimeout(handler) };
   }, [searchTerm]);
 
   useEffect(() => {
@@ -70,7 +68,6 @@ const History = () => {
           toast.error(errorMessage);
         }
       }
-
     };
 
     fetchData();

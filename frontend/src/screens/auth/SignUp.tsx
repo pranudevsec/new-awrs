@@ -72,7 +72,7 @@ const SignUp = () => {
                                             label="Role"
                                             name="user_role"
                                             options={roleOptions}
-                                            value={roleOptions.find((opt) => opt.value === formik.values.user_role) || null}
+                                            value={roleOptions.find((opt) => opt.value === formik.values.user_role) ?? null}
                                             onChange={(selectedOption) =>
                                                 formik.setFieldValue(
                                                     "user_role",

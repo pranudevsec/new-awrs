@@ -66,7 +66,7 @@ const Clarification = () => {
         <FormSelect
           name="awardType"
           options={awardTypeOptions}
-          value={awardTypeOptions.find((opt) => opt.value === awardType) || null}
+          value={awardTypeOptions.find((opt) => opt.value === awardType) ?? null}
           onChange={(option) => setAwardType(option?.value ?? null)}
           placeholder="Select Type"
         />

@@ -41,7 +41,7 @@ const AcceptedApplicationsList = () => {
   const [priorityValues, setPriorityValues] = useState<{ [key: string]: { [type: string]: string } }>({});
   const [graceMarksValues, setGraceMarksValues] = useState<{ [key: string]: { [type: string]: string } }>({});
 
-  const lowerRole = hierarchy[hierarchy.indexOf(role) - 1] || null;
+  const lowerRole = hierarchy[hierarchy.indexOf(role) - 1] ?? null;
   const currentRole = profile?.user?.user_role?.toLowerCase() ?? "";
   const allowedRoles = allRoles.slice(0, allRoles.indexOf(currentRole));
 
@@ -56,7 +56,7 @@ const AcceptedApplicationsList = () => {
   useEffect(() => {
     const initialValues: { [key: string]: { [type: string]: string } } = {};
 
-    units.forEach((unit) => {
+    units.forEach((unit: any) => {
       const found = unit?.fds?.applicationPriority?.find(
         (p: any) => p.role?.toLowerCase() === role
       );
@@ -248,7 +248,7 @@ const AcceptedApplicationsList = () => {
     setGraceMarksValues((prev) => ({
       ...prev,
       [unitId]: {
-        ...(prev[unitId] || {}),
+        ...(prev[unitId] ?? {}),
         [unitType]: value,
       },
     }));
@@ -256,7 +256,7 @@ const AcceptedApplicationsList = () => {
     if (value === undefined || value === "") return;
 
     const body: any = {
-      type: unitType || "citation",
+      type: unitType ?? "citation",
       application_id: unitId,
       applicationGraceMarks: Number(value),
       role,
@@ -349,7 +349,7 @@ const AcceptedApplicationsList = () => {
         <FormSelect
           name="awardType"
           options={awardTypeOptions}
-          value={awardTypeOptions.find((opt) => opt.value === awardType) || null}
+          value={awardTypeOptions.find((opt) => opt.value === awardType) ?? null}
           placeholder="Select Type"
           onChange={(option: OptionType | null) =>
             setAwardType(option ? option.value : null)
@@ -510,7 +510,7 @@ const AcceptedApplicationsList = () => {
                         )
                         ?.reduce(
                           (sum: number, p: { marks: number }) =>
-                            sum + (p.marks || 0),
+                            sum + (p.marks ?? 0),
                           0
                         ) ?? "-"}
                     </p>
@@ -531,7 +531,7 @@ const AcceptedApplicationsList = () => {
                         )
                         ?.reduce(
                           (sum: number, p: { marks: number }) =>
-                            sum + (p.marks || 0),
+                            sum + (p.marks ?? 0),
                           0
                         ) ?? "-"}
                     </p>
@@ -606,7 +606,7 @@ const AcceptedApplicationsList = () => {
                         setPriorityValues((prev) => ({
                           ...prev,
                           [String(unit.id)]: {
-                            ...(prev[String(unit.id)] || {}),
+                            ...(prev[String(unit.id)] ?? {}),
                             [unit.type]: value,
                           },
                         }));

@@ -108,7 +108,7 @@ const ApplicationsList = () => {
           <FormSelect
             name="awardType"
             options={awardTypeOptions}
-            value={awardTypeOptions.find((opt) => opt.value === awardType) || null}
+            value={awardTypeOptions.find((opt) => opt.value === awardType) ?? null}
             onChange={(option) => setAwardType(option?.value ?? null)}
             placeholder="Select Award Type"
           />
@@ -116,7 +116,7 @@ const ApplicationsList = () => {
             <FormSelect
               name="commandType"
               options={commandOptions}
-              value={commandOptions.find((opt) => opt.value === commandType) || null}
+              value={commandOptions.find((opt) => opt.value === commandType)?? null}
               onChange={(option) => setCommandType(option?.value ?? null)}
               placeholder="Select Command Type"
             />

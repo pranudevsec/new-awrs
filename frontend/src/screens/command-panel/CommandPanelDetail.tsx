@@ -222,7 +222,6 @@ const CommandPanelDetail = () => {
                       <td style={{ width: 100 }}>
                         <p className="fw-5">{param.marks}</p>
                       </td>
-                      {/* <td style={{ width: 200 }}>{renderedUploadContent}</td> */}
                     </tr>
                   );
                 });

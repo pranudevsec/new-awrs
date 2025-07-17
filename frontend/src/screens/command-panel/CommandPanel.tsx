@@ -170,7 +170,7 @@ const CommandPanel = () => {
           <FormSelect
             name="awardType"
             options={awardTypeOptions}
-            value={awardTypeOptions.find((opt) => opt.value === awardType) || null}
+            value={awardTypeOptions.find((opt) => opt.value === awardType) ?? null}
             onChange={(option) => setAwardType(option?.value ?? null)}
             placeholder="Award Type"
           />
@@ -215,13 +215,13 @@ const CommandPanel = () => {
               scoreboard.map((item) => (
                 <tr onClick={() => navigate(`/command-panel/${item.id}?award_type=${item.type}`)} key={item.id}>
                   <td style={{ width: 200, minWidth: 200, maxWidth: 200 }}>
-                    <p className="fw-4">#{item.id || "-"}</p>
+                    <p className="fw-4">#{item.id ?? "-"}</p>
                   </td>
                   <td style={{ width: 150, minWidth: 150, maxWidth: 150 }}>
-                    <p className="fw-4">#{item.unit_id || "-"}</p>
+                    <p className="fw-4">#{item.unit_id ?? "-"}</p>
                   </td>
                   <td style={{ width: 150, minWidth: 150, maxWidth: 150 }}>
-                    <p className="fw-4">{item.total_marks || 0}</p>
+                    <p className="fw-4">{item.total_marks ?? 0}</p>
                   </td>
                   <td style={{ width: 150, minWidth: 150, maxWidth: 150 }}>
                     <p className="fw-4">
@@ -231,7 +231,7 @@ const CommandPanel = () => {
                     </p>
                   </td>
                   <td style={{ width: 200, minWidth: 200, maxWidth: 200 }}>
-                    <p className="fw-4">{item.type || "-"}</p>
+                    <p className="fw-4">{item.type ?? "-"}</p>
                   </td>
                   <td onClick={(e) => e.stopPropagation()}>
                     <div className="d-flex align-items-center flex-grow-1 gap-2">

@@ -15,22 +15,21 @@ const Withdraw = () => {
   const profile = useAppSelector((state) => state.admin.profile);
   const { units, loading, meta } = useAppSelector((state) => state.application);
 
+  const role = profile?.user?.user_role?.toLowerCase() ?? "";
+
   // States
   const [awardType, setAwardType] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState<string>("");
   const [debouncedSearch, setDebouncedSearch] = useState<string>("");
   const [page, setPage] = useState<number>(1);
   const [limit, setLimit] = useState<number>(10);
-  const role = profile?.user?.user_role?.toLowerCase() ?? "";
 
   useEffect(() => {
     const handler = setTimeout(() => {
       setDebouncedSearch(searchTerm);
     }, 500);
 
-    return () => {
-      clearTimeout(handler);
-    };
+    return () => { clearTimeout(handler) };
   }, [searchTerm]);
 
   useEffect(() => {
@@ -46,9 +45,7 @@ const Withdraw = () => {
         limit,
         isGetWithdrawRequests: true,
       };
-      if (role !== "unit") {
-        dispatch(fetchSubordinates(params));
-      }
+      if (role !== "unit") dispatch(fetchSubordinates(params));
     };
 
     fetchData();
@@ -196,7 +193,6 @@ const Withdraw = () => {
                   <td style={{ width: 150, minWidth: 150, maxWidth: 150 }}>
                     <p className="fw-4">#{unit.id}</p>
                   </td>
-
                   <td style={{ width: 150, minWidth: 150, maxWidth: 150 }}>
                     <p className="fw-4">#{unit.unit_id}</p>
                   </td>
@@ -222,13 +218,11 @@ const Withdraw = () => {
                       {unit.type.charAt(0).toUpperCase() + unit.type.slice(1)}
                     </p>
                   </td>
-
                   <td>
                     <div className="d-flex flex-sm-row flex-column gap-sm-3 gap-1">
                       {renderWithdrawActions(unit)}
                     </div>
                   </td>
-
                 </tr>
               ))
             )}

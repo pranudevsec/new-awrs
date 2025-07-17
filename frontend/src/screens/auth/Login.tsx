@@ -141,7 +141,7 @@ const Login = () => {
                                             label="Role"
                                             name="user_role"
                                             options={roleOptions}
-                                            value={roleOptions.find((opt) => opt.value === formik.values.user_role) || null}
+                                            value={roleOptions.find((opt) => opt.value === formik.values.user_role) ?? null}
                                             onChange={handleRoleChange}
                                             placeholder="Select"
                                             errors={formik.errors.user_role}
@@ -154,7 +154,7 @@ const Login = () => {
                                                 label="CW2 Type"
                                                 name="cw2_type"
                                                 options={cw2TypeOptions}
-                                                value={cw2TypeOptions.find((opt) => opt.value === formik.values.cw2_type) || null}
+                                                value={cw2TypeOptions.find((opt) => opt.value === formik.values.cw2_type) ?? null}
                                                 onChange={handleCw2TypeChange}
                                                 placeholder="Select CW2 Type"
                                                 errors={formik.errors.cw2_type}

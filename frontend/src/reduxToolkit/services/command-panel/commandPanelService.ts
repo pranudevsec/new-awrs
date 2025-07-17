@@ -27,7 +27,7 @@ export const getScoreBoards = createAsyncThunk<
     try {
       const response = await Axios.get(
         `${apiEndPoints.scoreBoard}?award_type=${
-          award_type || ""
+          award_type ?? ""
         }&search=${search}&page=${page ?? 1}&limit=${
           limit ?? 10
         }&isShortlisted=${isShortlisted ?? ""}`

@@ -73,7 +73,7 @@ const EditParameters = () => {
                             label="Award Type"
                             name="award_type"
                             options={awardTypeOptions}
-                            value={awardTypeOptions.find((opt) => opt.value === formik.values.award_type) || null}
+                            value={awardTypeOptions.find((opt) => opt.value === formik.values.award_type) ?? null}
                             placeholder="Select"
                             onChange={(selectedOption) => formik.setFieldValue("award_type", selectedOption?.value ?? "")}
                             {...getErrorProps("award_type")}
@@ -84,7 +84,7 @@ const EditParameters = () => {
                             label="Applicability"
                             name="applicability"
                             options={roleOptions2}
-                            value={roleOptions2.find((opt) => opt.value === formik.values.applicability) || null}
+                            value={roleOptions2.find((opt) => opt.value === formik.values.applicability) ?? null}
                             onChange={(selectedOption) =>
                                 formik.setFieldValue(
                                     "applicability",

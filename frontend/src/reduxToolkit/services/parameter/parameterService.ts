@@ -24,7 +24,7 @@ export const fetchParameters = createAsyncThunk<
     try {
       const response = await Axios.get(
         `${apiEndPoints.parameter}?awardType=${
-          awardType || ""
+          awardType ?? ""
         }&search=${search}&matrix_unit=${matrix_unit ?? ""}&comd=${
           comd ?? ""
         }&unit_type=${unit_type ?? ""}&page=${page ?? 1}&limit=${limit ?? 10}`

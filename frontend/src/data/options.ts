@@ -306,6 +306,7 @@ export const roleOptions = [
   { label: "MP", value: "cw2_mp" },
   { label: "Admin", value: "admin" },
 ];
+
 export const roleOptions2: OptionType[] = [
   { value: "all", label: "All" },
   { value: "unit", label: "Unit" },
@@ -359,4 +360,11 @@ export const rank = [
   { label: "Maj", value: "Maj" },
   { label: "Capt", value: "Capt" },
   { label: "Lt", value: "Lt" },
+];
+
+export const cyclePeriodOptions: OptionType[] = [
+  { value: "2024 - H1", label: "2024 - H1" },
+  { value: "2024 - H2", label: "2024 - H2" },
+  { value: "2025 - H1", label: "2025 - H1" },
+  { value: "2025 - H2", label: "2025 - H2" },
 ];

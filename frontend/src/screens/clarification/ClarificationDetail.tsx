@@ -1,18 +1,11 @@
-import { useEffect, useState } from "react";
+import { useEffect} from "react";
 import { useParams, useSearchParams } from "react-router-dom";
 import { SVGICON } from "../../constants/iconsList";
 import { useAppDispatch } from "../../reduxToolkit/hooks";
-import { awardTypeOptions } from "../../data/options";
+import { awardTypeOptions, cyclePeriodOptions } from "../../data/options";
 import { fetchApplicationUnitDetail } from "../../reduxToolkit/services/application/applicationService";
 import Breadcrumb from "../../components/ui/breadcrumb/Breadcrumb";
 import FormSelect from "../../components/form/FormSelect";
-
-const cyclePeriodOptions: OptionType[] = [
-  { value: "2024 - H1", label: "2024 - H1" },
-  { value: "2024 - H2", label: "2024 - H2" },
-  { value: "2025 - H1", label: "2025 - H1" },
-  { value: "2025 - H2", label: "2025 - H2" },
-];
 
 const ClarificationDetail = () => {
   const dispatch = useAppDispatch();
@@ -20,8 +13,6 @@ const ClarificationDetail = () => {
   const { application_id } = useParams();
 
   // States
-  const [clarificationShow, setClarificationShow] = useState(false);
-  console.log(clarificationShow)
   const award_type = searchParams.get("award_type") ?? "";
   const numericAppId = Number(application_id);
 
@@ -56,7 +47,7 @@ const ClarificationDetail = () => {
               name="awardType"
               options={awardTypeOptions}
               value={
-                awardTypeOptions.find((opt) => opt.value === "citation") ||
+                awardTypeOptions.find((opt) => opt.value === "citation") ??
                 null
               }
               placeholder="Select"
@@ -69,7 +60,7 @@ const ClarificationDetail = () => {
               name="cyclePeriod"
               options={cyclePeriodOptions}
               value={
-                cyclePeriodOptions.find((opt) => opt.value === "citation") ||
+                cyclePeriodOptions.find((opt) => opt.value === "citation") ??
                 null
               }
               placeholder="Select"
@@ -129,7 +120,6 @@ const ClarificationDetail = () => {
                 <button
                   className="border-0 bg-transparent"
                   style={{ color: "var(--secondary-default)" }}
-                  onClick={() => setClarificationShow(true)}
                 >
                   {SVGICON.app.clarification}
                 </button>
@@ -162,7 +152,6 @@ const ClarificationDetail = () => {
                 <button
                   className="border-0 bg-transparent"
                   style={{ color: "var(--secondary-default)" }}
-                  onClick={() => setClarificationShow(true)}
                 >
                   {SVGICON.app.clarification}
                 </button>
@@ -195,7 +184,6 @@ const ClarificationDetail = () => {
                 <button
                   className="border-0 bg-transparent"
                   style={{ color: "var(--secondary-default)" }}
-                  onClick={() => setClarificationShow(true)}
                 >
                   {SVGICON.app.clarification}
                 </button>
@@ -228,7 +216,6 @@ const ClarificationDetail = () => {
                 <button
                   className="border-0 bg-transparent"
                   style={{ color: "var(--secondary-default)" }}
-                  onClick={() => setClarificationShow(true)}
                 >
                   {SVGICON.app.clarification}
                 </button>
@@ -261,7 +248,6 @@ const ClarificationDetail = () => {
                 <button
                   className="border-0 bg-transparent"
                   style={{ color: "var(--secondary-default)" }}
-                  onClick={() => setClarificationShow(true)}
                 >
                   {SVGICON.app.clarification}
                 </button>
@@ -294,7 +280,6 @@ const ClarificationDetail = () => {
                 <button
                   className="border-0 bg-transparent"
                   style={{ color: "var(--secondary-default)" }}
-                  onClick={() => setClarificationShow(true)}
                 >
                   {SVGICON.app.clarification}
                 </button>
@@ -327,7 +312,6 @@ const ClarificationDetail = () => {
                 <button
                   className="border-0 bg-transparent"
                   style={{ color: "var(--secondary-default)" }}
-                  onClick={() => setClarificationShow(true)}
                 >
                   {SVGICON.app.clarification}
                 </button>
@@ -360,7 +344,6 @@ const ClarificationDetail = () => {
                 <button
                   className="border-0 bg-transparent"
                   style={{ color: "var(--secondary-default)" }}
-                  onClick={() => setClarificationShow(true)}
                 >
                   {SVGICON.app.clarification}
                 </button>

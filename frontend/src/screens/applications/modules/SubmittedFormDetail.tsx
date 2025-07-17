@@ -62,7 +62,7 @@ const SubmittedFormDetail = () => {
     const [decisions, setDecisions] = useState<{ [memberId: string]: string }>({});
     const [priority, setPriority] = useState(userPriority);
     const [commentsState, setCommentsState] = useState<Record<string, string>>({});
-    const [localComment, setLocalComment] = useState(commentsState?.__application__ || "");
+    const [localComment, setLocalComment] = useState(commentsState?.__application__ ?? "");
     const [unitRemarks, setUnitRemarks] = useState("");
     const [paramStats, setParamStats] = useState({
         totalParams: 0,
@@ -393,8 +393,6 @@ const SubmittedFormDetail = () => {
         const result = await dispatch(
             TokenValidation({ inputPersID: member.ic_number })
         );
-        const decision = decisions[member.id];
-        console.log(decision);
         if (TokenValidation.fulfilled.match(result)) {
             const isValid = result.payload.vaildId;
             if (!isValid) {
@@ -1056,7 +1054,6 @@ const SubmittedFormDetail = () => {
                             <tbody>
                                 {["HR", "DV", "MP"].map((category) => {
                                     let isAlreadySent: any = false;
-                                    console.log(unitDetail);
                                     if (category === "HR") {
                                         isAlreadySent = unitDetail?.is_hr_review;
                                     } else if (category === "DV") {

@@ -89,7 +89,7 @@ const History = () => {
           <FormSelect
             name="awardType"
             options={awardTypeOptions}
-            value={awardTypeOptions.find((opt) => opt.value === awardType) || null}
+            value={awardTypeOptions.find((opt) => opt.value === awardType) ?? null}
             placeholder="Select Type"
             onChange={(option) => setAwardType(option?.value ?? null)}
           />
@@ -184,11 +184,11 @@ const History = () => {
                       <p
                         className="fw-4"
                         style={{
-                          color:
-                            unit?.status_flag === "approved" || unit?.status_flag === "shortlisted_approved" || unit?.status_flag === "in_review"
-                              ? "green"
-                              : "red",
+                          color: ["approved", "shortlisted_approved", "in_review"].includes(unit?.status_flag)
+                            ? "green"
+                            : "red",
                         }}
+
                       >
                         {unit.status_flag === "shortlisted_approved" || unit?.status_flag === "in_review"
                           ? "Approved"
