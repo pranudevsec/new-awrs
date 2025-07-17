@@ -35,7 +35,6 @@ const MSG = {
   PASSWORD_MISMATCH: "Passwords do not match",
   INVALID_ACCESS_TOKEN: "Invalid access token.",
   EMAIL_NOT_VERIFIED: "Please verify your email to log in",
-  PASSWORD_RESET_SUCCESS: "Your password has been successfully reset.",
   VALIDATION_ERROR:
     "Validation errors occurred. Please check your input and try again.",
   USER_NOT_FOUND: "User not found.",
