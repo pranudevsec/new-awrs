@@ -35,13 +35,14 @@ exports.createCitation = async (data, user) => {
 
     const paramList = paramResult.rows;
 
-const findMatchedParam = (paramId) => {
-  return paramList.find(p =>
-    [p.param_id]
-      .map(x => (x))
-      .includes(paramId)
-  );
-};
+    const findMatchedParam = (paramId) => {
+      for (const p of paramList) {
+        if (p.param_id === paramId) {
+          return p;
+        }
+      }
+      return undefined;
+    };
 const updatedParameters = parameters.map((p) => {
   const matchedParam = findMatchedParam(p.id);
   if (!matchedParam) {

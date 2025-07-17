@@ -60,7 +60,7 @@ exports.getApplicationsScoreboard = async (req, res) => {
   
   exports.updateApplicationStatus = async (req, res) => {
     try {
-      const { type, status,member,iscdr ,withdrawRequested,withdraw_status,level} = req.body;
+      const { type, status,member ,withdrawRequested,withdraw_status,level} = req.body;
       const id=req.params.id;
 
 
