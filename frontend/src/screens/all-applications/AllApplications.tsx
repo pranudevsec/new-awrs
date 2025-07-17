@@ -36,7 +36,6 @@ const History = () => {
 
   useEffect(() => {
     if (!profile?.user?.user_role) return;
-
     const fetchData = async () => {
       const params = {
         award_type: awardType ?? "",
@@ -44,7 +43,6 @@ const History = () => {
         page,
         limit,
       };
-
       try {
         await dispatch(fetchAllApplications(params)).unwrap();
       } catch (error: any) {
@@ -57,7 +55,6 @@ const History = () => {
           toast.error(errorMessage);
         }
       }
-
     };
 
     fetchData();

@@ -43,7 +43,6 @@ function areAllClarificationsResolved(unitDetail: any): boolean {
   return true;
 }
 
-
 const hierarchy = ["brigade", "division", "corps", "command", "headquarter"];
 
 const ApplicationDetails = () => {

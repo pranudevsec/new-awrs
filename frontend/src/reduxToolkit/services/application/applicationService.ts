@@ -182,7 +182,7 @@ export const fetchApplicationsForHQ = createAsyncThunk<
       if (params?.limit) {
         queryParams.append("limit", String(params.limit));
       }
-      if( params?.command_type) {
+      if (params?.command_type) {
         queryParams.append("command_type", params.command_type);
       }
 
@@ -299,7 +299,7 @@ export const updateApplication = createAsyncThunk<
         status: params.status,
         member: params.member,
         level: params.level,
-        iscdr:params.iscdr,
+        iscdr: params.iscdr,
         withdrawRequested: params.withdrawRequested,
         withdraw_status: params.withdraw_status,
       }

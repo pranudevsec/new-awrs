@@ -28,7 +28,6 @@ const AcceptedApplicationsList = () => {
   const navigate = useNavigate();
 
   const profile = useAppSelector((state) => state.admin.profile);
-  console.log("Profile:", profile);
   const { units, loading, meta } = useAppSelector((state) => state.application);
   const role = profile?.user?.user_role?.toLowerCase() ?? "";
 
@@ -168,7 +167,6 @@ const AcceptedApplicationsList = () => {
       console.error("approveMarks error:", error);
       toast.error("Failed to update priority");
     }
-
   };
 
   const handleBulkApprove = async () => {
@@ -268,7 +266,6 @@ const AcceptedApplicationsList = () => {
   };
 
   const handleAddsignature = async (decision: string, unit: any) => {
-    //validation
     const result = await dispatch(
       TokenValidation({ inputPersID: profile?.user?.pers_no ?? "" })
     );
@@ -278,7 +275,6 @@ const AcceptedApplicationsList = () => {
       if (!isValid) {
         return;
       }
-      //sign
 
       const SignPayload = {
         data: {

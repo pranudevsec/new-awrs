@@ -26,7 +26,7 @@ const AuthLayout = ({ children }: { children: React.ReactNode }) => {
                     </div>
                 </div>
             </main>
-            <Footer/>
+            <Footer />
         </>
     );
 }

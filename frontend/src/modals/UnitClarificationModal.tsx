@@ -27,6 +27,7 @@ const UnitClarificationModal: React.FC<ClarificationModalProps> = ({
   isRefreshData
 }) => {
   const dispatch = useAppDispatch();
+
   const [comment, setComment] = useState("");
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -49,7 +50,6 @@ const UnitClarificationModal: React.FC<ClarificationModalProps> = ({
       console.error("Clarification creation failed", err);
     }
   };
-
 
   return (
     <Modal
@@ -85,7 +85,6 @@ const UnitClarificationModal: React.FC<ClarificationModalProps> = ({
               }}
             />
           </div>
-
           <div className="d-flex align-items-center justify-content-end gap-3">
             <button type="submit" className="_btn primary">
               Send Clarification

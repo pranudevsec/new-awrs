@@ -76,7 +76,7 @@ export function UploadDocs() {
 
           {isUploading && (
             <div className="mt-3 d-flex flex-column align-items-center">
-              <div className="spinner-border text-primary" role="status" style={{ width: "2rem", height: "2rem" }}>
+              <div className="spinner-border text-primary" aria-hidden="true" style={{ width: "2rem", height: "2rem" }}>
                 <span className="visually-hidden">Uploading...</span>
               </div>
               <div aria-live="polite">

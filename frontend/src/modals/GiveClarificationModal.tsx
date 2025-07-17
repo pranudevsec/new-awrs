@@ -1,11 +1,10 @@
 import { useState, type ChangeEvent } from "react";
-import { useDispatch } from "react-redux";
 import Modal from "react-bootstrap/Modal";
 import toast from "react-hot-toast";
 import FormInput from "../components/form/FormInput";
-import type { AppDispatch } from "../reduxToolkit";
 import { SVGICON } from "../constants/iconsList";
 import { updateClarification } from "../reduxToolkit/services/clarification/clarificationService";
+import { useAppDispatch } from "../reduxToolkit/hooks";
 
 interface ClarificationModalProps {
   show: boolean;
@@ -22,7 +21,7 @@ const GiveClarificationModal: React.FC<ClarificationModalProps> = ({
   setIsRefreshData,
   isRefreshData
 }) => {
-  const dispatch = useDispatch<AppDispatch>();
+  const dispatch = useAppDispatch();
 
   // States
   const [clarification, setClarification] = useState("");
@@ -108,7 +107,6 @@ const GiveClarificationModal: React.FC<ClarificationModalProps> = ({
             </button>
           </div>
         </form>
-
       </div>
     </Modal>
   );

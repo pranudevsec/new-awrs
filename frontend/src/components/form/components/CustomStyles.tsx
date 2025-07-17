@@ -22,14 +22,12 @@ const CustomStyles = (isInvalid: boolean) => ({
       },
     };
   },
-
   menu: (provided: any) => ({
     ...provided,
     borderRadius: '6px',
     padding: '2px 6px',
     boxShadow: '0px 4px 10px rgba(0, 0, 0, 0.1)',
   }),
-
   option: (provided: any, state: { isFocused: boolean; isSelected: boolean }) => {
     let backgroundColor = 'transparent';
     if (!state.isSelected && state.isFocused) {
@@ -50,11 +48,9 @@ const CustomStyles = (isInvalid: boolean) => ({
       },
     };
   },
-
   indicatorSeparator: () => ({
     display: 'none',
   }),
-
   placeholder: (provided: any) => ({
     ...provided,
     color: 'var(--gray-900)',

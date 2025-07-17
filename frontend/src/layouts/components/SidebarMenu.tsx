@@ -4,7 +4,6 @@ import { useAppSelector } from "../../reduxToolkit/hooks";
 import { SVGICON } from "../../constants/iconsList";
 import { Chatbot } from "../../screens/Chatbot/Chatbot";
 
-
 const commandExtraLabels = ["Scoreboard", "Winners", "Home", "Profile Settings"];
 const headquarterExtraLabels = ["Dashboard", "Home", "Awards", "Scoreboard", "Profile Settings"];
 
@@ -60,8 +59,8 @@ const SidebarMenu = () => {
   }
 
   return (
-    <aside className="sidebar-menu flex-shrink-0 d-xl-block d-none bg-dark text-white p-3">
-      <div className="d-flex flex-column justify-content-inbetween align-items-center">
+    <aside className="sidebar-menu flex-shrink-0 d-xl-block d-none bg-dark text-white p-3 px-0">
+      <div className="d-flex flex-column justify-content-between align-items-center">
         <div className="d-flex flex-column justify-content-center align-items-center gap-2 mb-2">
           <h5 className="text-white" >Menu</h5>
           <div className="w-50" style={{ height: "4px", backgroundColor: "#dc3545", borderRadius: "50px" }}></div>

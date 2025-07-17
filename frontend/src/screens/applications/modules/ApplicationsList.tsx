@@ -17,8 +17,8 @@ const ApplicationsList = () => {
   const dispatch = useAppDispatch();
 
   const profile = useAppSelector((state) => state.admin.profile);
-  console.log("profile -> ", profile);
   const { units, loading, meta } = useAppSelector((state) => state.application);
+  const role = profile?.user?.user_role?.toLowerCase() ?? "";
 
   // States
   const [awardType, setAwardType] = useState<string | null>(null);
@@ -27,7 +27,6 @@ const ApplicationsList = () => {
   const [debouncedSearch, setDebouncedSearch] = useState<string>("");
   const [page, setPage] = useState<number>(1);
   const [limit, setLimit] = useState<number>(10);
-  const role = profile?.user?.user_role?.toLowerCase() ?? "";
 
   useEffect(() => {
     const handler = setTimeout(() => {
@@ -107,21 +106,21 @@ const ApplicationsList = () => {
         </div>
         <div className="d-flex flex-wrap align-items-center gap-2">
           <FormSelect
-          name="awardType"
-          options={awardTypeOptions}
-          value={awardTypeOptions.find((opt) => opt.value === awardType) || null}
-          onChange={(option) => setAwardType(option?.value ?? null)}
-          placeholder="Select Award Type"
-        />
-        {profile?.user?.user_role === "headquarter" &&
-        <FormSelect
-          name="commandType"
-          options={commandOptions}
-          value={commandOptions.find((opt) => opt.value === commandType) || null}
-          onChange={(option) => setCommandType(option?.value ?? null) }
-          placeholder="Select Command Type"
-        />
-       }
+            name="awardType"
+            options={awardTypeOptions}
+            value={awardTypeOptions.find((opt) => opt.value === awardType) || null}
+            onChange={(option) => setAwardType(option?.value ?? null)}
+            placeholder="Select Award Type"
+          />
+          {profile?.user?.user_role === "headquarter" &&
+            <FormSelect
+              name="commandType"
+              options={commandOptions}
+              value={commandOptions.find((opt) => opt.value === commandType) || null}
+              onChange={(option) => setCommandType(option?.value ?? null)}
+              placeholder="Select Command Type"
+            />
+          }
         </div>
       </div>
 
@@ -222,7 +221,6 @@ const ApplicationsList = () => {
                       </Link>
                     )}
                   </td>
-
                 </tr>
               ))}
           </tbody>

@@ -19,7 +19,6 @@ const Header = () => {
     const [notifOpen, setNotifOpen] = useState(false);
     const [mobileMenuShow, setMobileMenuShow] = useState<boolean>(false);
 
-    // Sign out function
     const handleSignOut = () => {
         dispatch(signOut());
         localStorage.removeItem("persist:admin");
@@ -52,12 +51,10 @@ const Header = () => {
                         onClick={() => setMobileMenuShow(true)}>
                         {SVGICON.header.togglemenu}
                     </button>
-                    <div className="d-flex align-items-center gap-sm-4 gap-3 "   style={{
+                    <div className="d-flex align-items-center gap-sm-4 gap-3 text-white " style={{
                         backgroundColor: '#780000',
-                        // border: '2px solid #004080', 
-                        borderRadius: '12px',            
-                        padding: '2px 12px',           
-                        color: 'white',                      
+                        borderRadius: '12px',
+                        padding: '2px 12px',
                     }}>
                         <div className="position-relative" ref={notifRef}>
                             <button className="nav-icon-btn d-inline-flex align-items-center justify-content-center bg-transparent border-0 text-white" onClick={() => setNotifOpen((prev) => !prev)}>

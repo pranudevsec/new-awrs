@@ -277,7 +277,7 @@ const UnitClarificationDetail = () => {
               </tr>
             </thead>
             <tbody>
-              {generateParameterRows(unitDetail?.fds?.parameters || [])}
+              {generateParameterRows(unitDetail?.fds?.parameters ?? [])}
             </tbody>
           </table>
         </div>

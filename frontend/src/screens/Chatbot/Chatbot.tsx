@@ -89,8 +89,7 @@ export function Chatbot() {
             />
             {isLoading ? (
               <div className="d-flex justify-content-center align-items-center p-3">
-                <div className="spinner-border text-primary" style={{ width: '1.5rem', height: '1.5rem' }} role="status" aria-live="polite"
-                >
+                <div className="spinner-border text-primary" aria-hidden="true" style={{ width: '1.5rem', height: '1.5rem' }}>
                   <span className="visually-hidden">Loading...</span>
                 </div>
               </div>

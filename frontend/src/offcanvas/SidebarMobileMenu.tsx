@@ -11,7 +11,6 @@ interface SidebarMobileMenuProps {
 }
 
 const SidebarMobileMenu: FC<SidebarMobileMenuProps> = ({ show, handleClose }) => {
-
     const profile = useAppSelector((state) => state.admin.profile);
     const userRole = profile?.user?.user_role;
     const isMember = profile?.user?.is_member ?? false;
@@ -24,7 +23,6 @@ const SidebarMobileMenu: FC<SidebarMobileMenuProps> = ({ show, handleClose }) =>
         userRole !== "headquarter"
     ) {
         alwaysVisible.push("Clarification Received", "Home", "Profile Settings");
-
         if (userRole !== "unit") alwaysVisible.push("Clarification Raised");
     }
 
