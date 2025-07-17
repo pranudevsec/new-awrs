@@ -498,441 +498,36 @@ function shouldRemoveClarification(param, roleHierarchy, userRoleIndex) {
 
 exports.getApplicationsOfSubordinates = async (user, query) => {
   const client = await dbService.getClient();
-
   try {
-    const { user_role } = user;
-    const {
-      award_type,
-      search,
-      page = 1,
-      limit = 10,
-      isShortlisted,
-      isGetNotClarifications,
-      isGetWithdrawRequests,
-    } = query;
-
     const profile = await AuthService.getProfile(user);
     const unit = profile?.data?.unit;
+    const { unitIds, lowerRole } = await getSubordinateUnitIds(client, user, unit);
 
-    const roleFieldRequirements = {
-      unit: ["bde", "div", "corps", "comd", "name"],
-      brigade: ["div", "corps", "comd", "name"],
-      division: ["corps", "comd", "name"],
-      corps: ["comd", "name"],
-      command: ["name"],
-    };
-
-    const requiredFields = roleFieldRequirements[user_role.toLowerCase()] || [];
-    const missingFields = requiredFields.filter(
-      (field) => !unit?.[field] || unit[field] === ""
-    );
-    if (missingFields.length > 0) {
-      throw new Error("Please complete your unit profile before proceeding.");
-    }
-
-    const hierarchy = ["unit", "brigade", "division", "corps", "command"];
-    const currentIndex = hierarchy.indexOf(user_role.toLowerCase());
-
-    if (currentIndex === -1 || currentIndex === 0) {
-      throw new Error("Invalid or lowest level user role");
-    }
-
-    const lowerRole = hierarchy[currentIndex - 1];
-    const subordinateFieldMap = {
-      brigade: "bde",
-      division: "div",
-      corps: "corps",
-      command: "comd",
-    };
-    const matchField = subordinateFieldMap[user_role.toLowerCase()];
-
-    if (!matchField || !unit?.name) {
-      throw new Error("Unit data or hierarchy mapping missing");
-    }
-
-    const subUnitsRes = await client.query(
-      `SELECT unit_id FROM Unit_tab WHERE ${matchField} = $1`,
-      [unit.name]
-    );
-
-    const unitIds = subUnitsRes.rows.map((u) => u.unit_id);
     if (unitIds.length === 0) {
-      return ResponseHelper.success(200, "No subordinate units found", [], {
-        totalItems: 0,
-      });
+      return ResponseHelper.success(200, "No subordinate units found", [], { totalItems: 0 });
     }
 
-    let baseFilters = "";
-    const queryParams = [unitIds];
+    const { baseFilters, queryParams } = buildBaseFiltersSubordinate(query, user, unitIds, lowerRole);
 
-    if (isGetWithdrawRequests) {
-      const ROLE_HIERARCHY = [
-        "unit",
-        "brigade",
-        "division",
-        "corps",
-        "command",
-      ];
+    const [citations, appreciations] = await fetchApplicationsSubordinates(client, baseFilters, queryParams);
 
-      const currentRole = user_role?.toLowerCase();
-      const currentRoleIndex = ROLE_HIERARCHY.indexOf(currentRole);
+    let allApps = mergeAndFilterApplications(citations.rows, appreciations.rows, query);
 
-      let lowerRole = null;
+    allApps = await enrichClarifications(client, allApps, query.isGetNotClarifications);
 
-      if (currentRoleIndex > 0) {
-        lowerRole = ROLE_HIERARCHY[currentRoleIndex - 1];
-      }
-      baseFilters = `
-        unit_id = ANY($1) AND (
-          (
-            is_withdraw_requested = TRUE AND withdraw_status = 'pending'
-          )
-          OR
-          (
-            withdraw_approved_by_role = $2 
-            AND withdraw_approved_by_user_id = $3 
-            AND (status_flag = 'approved' OR status_flag = 'rejected' OR status_flag = 'withdrawed')
-          )
-        )
-     AND status_flag IN ('approved', 'withdrawed')
-        AND last_approved_by_role = $4
-      `;
-
-      queryParams.push(user_role); // $2
-      queryParams.push(user.user_id); // $3Ù
-      queryParams.push(lowerRole); // $3Ù
-    } else if (isShortlisted && user_role.toLowerCase() === "command") {
-      baseFilters = `
-        unit_id = ANY($1)
-        AND (
-          (status_flag = 'shortlisted_approved' AND last_shortlisted_approved_role = $2)
-          OR
-          (status_flag = 'approved' AND last_approved_by_role = $2)
-        )
-      `;
-      queryParams.push(user_role); // $2
-    } else if (isShortlisted) {
-      baseFilters = `
-        unit_id = ANY($1)
-        AND status_flag = 'shortlisted_approved'
-        AND last_shortlisted_approved_role = $2
-      `;
-      queryParams.push(user_role);
-    } else if (user_role.toLowerCase() === "brigade") {
-      baseFilters = `unit_id = ANY($1) AND status_flag != 'approved' AND status_flag != 'draft' AND status_flag != 'shortlisted_approved' AND status_flag != 'rejected' AND (last_approved_by_role IS NULL OR last_approved_at IS NULL)`;
-    } else {
-      baseFilters = `unit_id = ANY($1) AND status_flag = 'approved' AND status_flag != 'draft' AND status_flag != 'shortlisted_approved' AND status_flag != 'rejected' AND last_approved_by_role = $2`;
-      queryParams.push(lowerRole);
+    if (query.isShortlisted) {
+      allApps = await enrichUnitDetailsAndMarks(client, allApps, user, query);
     }
 
-    const citationQuery = `
-    SELECT 
-      citation_id AS id,
-      'citation' AS type,
-      unit_id,
-      date_init,
-      citation_fds AS fds,
-      status_flag,
-      last_approved_by_role,
-      last_approved_at,
-      is_withdraw_requested,
-      withdraw_status,
-      withdraw_approved_by_role,
-      withdraw_approved_by_user_id
-    FROM Citation_tab
-    WHERE ${baseFilters}
-  `;
-
-    const appreQuery = `
-    SELECT 
-      appreciation_id AS id,
-      'appreciation' AS type,
-      unit_id,
-      date_init,
-      appre_fds AS fds,
-      status_flag,
-      last_approved_by_role,
-      last_approved_at,
-      is_withdraw_requested,
-      withdraw_status,
-      withdraw_approved_by_role,
-      withdraw_approved_by_user_id
-    FROM Appre_tab
-    WHERE ${baseFilters}
-  `;
-
-    const [citations, appreciations] = await Promise.all([
-      client.query(citationQuery, queryParams),
-      client.query(appreQuery, queryParams),
-    ]);
-
-    let allApps = [...citations.rows, ...appreciations.rows];
-
-    // Filter by award_type
-    if (award_type) {
-      allApps = allApps.filter(
-        (app) => app.fds?.award_type?.toLowerCase() === award_type.toLowerCase()
-      );
-    }
-
-    // Search filter
-    const normalize = (input) => {
-      if (input == null) return "";
-      return String(input).trim().toLowerCase().replace(/\s|-/g, "");
-    };
-    if (search) {
-      const searchLower = normalize(search);
-      allApps = allApps.filter((app) => {
-        const idMatch = app.id.toString().toLowerCase().includes(searchLower);
-        const cycleMatch = normalize(app.fds?.cycle_period || "").includes(
-          searchLower
-        );
-        return idMatch || cycleMatch;
-      });
-    }
-
-    // Clarification linking
-    const clarificationIds = [];
-    allApps.forEach((app) => {
-      app.fds?.parameters?.forEach((param) => {
-        if (param.clarification_id) {
-          clarificationIds.push(param.clarification_id);
-        }
-      });
-    });
-
-    let clarificationMap = {};
-    if (clarificationIds.length > 0) {
-      const clarificationsRes = await client.query(
-        `SELECT * FROM Clarification_tab WHERE clarification_id = ANY($1)`,
-        [clarificationIds]
-      );
-      clarificationMap = clarificationsRes.rows.reduce((acc, cur) => {
-        acc[cur.clarification_id] = cur;
-        return acc;
-      }, {});
-    }
-
-    // Map clarification data to parameters
-    allApps = allApps.map((app) => {
-      const updatedParams = app.fds?.parameters?.map((param) => {
-        if (param.clarification_id) {
-          return {
-            ...param,
-            clarification: clarificationMap[param.clarification_id] || null,
-          };
-        }
-        return param;
-      });
-
-      return {
-        ...app,
-        fds: {
-          ...app.fds,
-          parameters: updatedParams,
-        },
-      };
-    });
-
-
-    // Add clarification count per application
-    let total_pending_clarifications = 0;
-    allApps = allApps.map((app) => {
-      let clarifications_count = 0;
-      const cleanedParameters = app.fds.parameters.map((param) => {
-        const newParam = { ...param };
-        if (newParam.clarification?.clarification_status === "pending") {
-          clarifications_count++;
-          total_pending_clarifications++;
-        }
-        delete newParam.clarification;
-        return newParam;
-      });
-
-      return {
-        ...app,
-        clarifications_count,
-        total_pending_clarifications,
-        fds: {
-          ...app.fds,
-          parameters: cleanedParameters,
-        },
-      };
-    });
-    // Filter clarifications_count === 0 if isGetNotClarifications is true
-    if (isGetNotClarifications) {
-      allApps = allApps.filter((app) => app.clarifications_count === 0);
-    }
-    // Sort by date
-    allApps.sort((a, b) => new Date(b.date_init) - new Date(a.date_init));
-
-    if (isShortlisted) {
-      const unitIdSet = [...new Set(allApps.map((app) => app.unit_id))];
-      const unitDetailsRes = await client.query(
-        `SELECT * FROM Unit_tab WHERE unit_id = ANY($1)`,
-        [unitIdSet]
-      );
-      const unitDetailsMap = unitDetailsRes.rows.reduce((acc, unit) => {
-        acc[unit.unit_id] = unit;
-        return acc;
-      }, {});
-
-      allApps = allApps.map((app) => ({
-        ...app,
-        unit_details: unitDetailsMap[app.unit_id] || null,
-      }));
-
-      
-      const allParameterNames = Array.from(
-        new Set(
-          allApps.flatMap(
-            (app) =>
-              app.fds?.parameters?.map((p) => p.id) ||
-              []
-          )
-        )
-      );
-
-      const parameterMasterRes = await client.query(
-        `SELECT param_id, name, negative FROM Parameter_Master WHERE param_id = ANY($1)`,
-        [allParameterNames]
-      );
-      const negativeParamMap = parameterMasterRes.rows.reduce((acc, row) => {
-        acc[row.param_id] = row.negative;
-        return acc;
-      }, {});
-      // --- Calculate totalNegativeMarks, totalMarks, netMarks
-      allApps = allApps.map((app) => {
-        const parameters = app.fds?.parameters || [];
-        const totalMarks = parameters.reduce(
-          (sum, param) =>  {
-            const isNegative = negativeParamMap[param.id];
-            return !isNegative ? sum + (param.marks || 0) : sum;
-          }
-        , 0);
-
-        const totalNegativeMarks = parameters.reduce((sum, param) => {
-          const isNegative = negativeParamMap[param.id];
-          return isNegative ? sum + (param.marks || 0) : sum;
-        }, 0);
-        
-        const netMarks = totalMarks - totalNegativeMarks;
-        return {
-          ...app,
-          totalMarks,
-          totalNegativeMarks,
-          netMarks,
-        };
-      });
-    }
-    const ROLE_HIERARCHY = ["unit", "brigade", "division", "corps", "command"];
-
-    if (isShortlisted) {
-      const unitIdSet = [...new Set(allApps.map((app) => app.unit_id))];
-
-      const unitDetailsRes = await client.query(
-        `SELECT * FROM Unit_tab WHERE unit_id = ANY($1)`,
-        [unitIdSet]
-      );
-      const unitDetailsMap = unitDetailsRes.rows.reduce((acc, unit) => {
-        acc[unit.unit_id] = unit;
-        return acc;
-      }, {});
-
-      allApps = allApps.map((app) => ({
-        ...app,
-        unit_details: unitDetailsMap[app.unit_id] || null,
-      }));
-
-      const allParameterNames = Array.from(
-        new Set(
-          allApps.flatMap(
-            (app) =>
-              app.fds?.parameters?.map((p) => p.id) ||
-              []
-          )
-        )
-      );
-
-      const parameterMasterRes = await client.query(
-        `SELECT param_id, name, negative FROM Parameter_Master WHERE param_id = ANY($1)`,
-        [allParameterNames]
-      );
-
-      const negativeParamMap = parameterMasterRes.rows.reduce((acc, row) => {
-        acc[row.param_id] = row.negative;
-        return acc;
-      }, {});
-
-      // Calculate marks
-      allApps = allApps.map((app) => {
-        const parameters = app.fds?.parameters || [];
-
-        const totalMarks = parameters.reduce(
-          (sum, param) => {
-            const isNegative = negativeParamMap[param.id];
-          return !isNegative ? sum + (param.marks || 0) : sum;
-          },
-          0
-        );
-
-        const totalNegativeMarks = parameters.reduce((sum, param) => {
-          const isNegative = negativeParamMap[param.id];
-          return isNegative ? sum + (param.marks || 0) : sum;
-        }, 0);
-
-        const netMarks = totalMarks - totalNegativeMarks;
-        return {
-          ...app,
-          totalMarks,
-          totalNegativeMarks,
-          netMarks,
-        };
-      });
-
-      // Role-based priority sorting
-      const currentRole = user_role?.toLowerCase();
-      const currentRoleIndex = ROLE_HIERARCHY.indexOf(currentRole);
-      if (currentRoleIndex > 0) {
-        const lowerRole = ROLE_HIERARCHY[currentRoleIndex - 1];
-
-        allApps.sort((a, b) => {
-          const aPriorityEntry = a.fds?.applicationPriority?.find(
-            (p) => p.role === lowerRole
-          );
-          const bPriorityEntry = b.fds?.applicationPriority?.find(
-            (p) => p.role === lowerRole
-          );
-
-          const aPriority = aPriorityEntry?.priority ?? Number.MAX_SAFE_INTEGER;
-          const bPriority = bPriorityEntry?.priority ?? Number.MAX_SAFE_INTEGER;
-
-          return aPriority - bPriority;
-        });
-      }
-    }
-
-    // ✅ Pagination
-    const pageInt = parseInt(page);
-    const limitInt = parseInt(limit);
-    const startIndex = (pageInt - 1) * limitInt;
-    const endIndex = pageInt * limitInt;
-
-    const paginatedData = allApps.slice(startIndex, endIndex);
-
-    const pagination = {
-      totalItems: allApps.length,
-      totalPages: Math.ceil(allApps.length / limitInt),
-      currentPage: pageInt,
-      itemsPerPage: limitInt,
-    };
+    const paginatedData = paginate(allApps, query.page, query.limit);
 
     return ResponseHelper.success(
       200,
       "Fetched subordinate applications",
-      paginatedData,
-      pagination
+      paginatedData.data,
+      paginatedData.pagination
     );
+
   } catch (err) {
     return ResponseHelper.error(
       500,
@@ -943,6 +538,266 @@ exports.getApplicationsOfSubordinates = async (user, query) => {
     client.release();
   }
 };
+
+/* ====================== HELPERS ====================== */
+
+async function getSubordinateUnitIds(client, user, unit) {
+  const { user_role } = user;
+  const hierarchy = ["unit", "brigade", "division", "corps", "command"];
+  const currentIndex = hierarchy.indexOf(user_role.toLowerCase());
+
+  if (currentIndex <= 0) {
+    throw new Error("Invalid or lowest level user role");
+  }
+
+  const lowerRole = hierarchy[currentIndex - 1];
+  const subordinateFieldMap = { brigade: "bde", division: "div", corps: "corps", command: "comd" };
+  const matchField = subordinateFieldMap[user_role.toLowerCase()];
+
+  if (!matchField || !unit?.name) {
+    throw new Error("Unit data or hierarchy mapping missing");
+  }
+
+  const subUnitsRes = await client.query(
+    `SELECT unit_id FROM Unit_tab WHERE ${matchField} = $1`,
+    [unit.name]
+  );
+  const unitIds = subUnitsRes.rows.map((u) => u.unit_id);
+  return { unitIds, lowerRole };
+}
+
+function buildBaseFiltersSubordinate(query, user, unitIds, lowerRole) {
+  const { user_role, user_id } = user;
+  const isShortlisted = query.isShortlisted;
+  const isGetWithdrawRequests = query.isGetWithdrawRequests;
+
+  let baseFilters = "";
+  const queryParams = [unitIds];
+
+  if (isGetWithdrawRequests) {
+    const ROLE_HIERARCHY = ["unit", "brigade", "division", "corps", "command"];
+    const currentIndex = ROLE_HIERARCHY.indexOf(user_role.toLowerCase());
+    const lowerRole = currentIndex > 0 ? ROLE_HIERARCHY[currentIndex - 1] : null;
+
+    baseFilters = `
+      unit_id = ANY($1) AND (
+        (is_withdraw_requested = TRUE AND withdraw_status = 'pending')
+        OR
+        (withdraw_approved_by_role = $2 AND withdraw_approved_by_user_id = $3 AND (status_flag = 'approved' OR status_flag = 'rejected' OR status_flag = 'withdrawed'))
+      )
+      AND status_flag IN ('approved', 'withdrawed')
+      AND last_approved_by_role = $4
+    `;
+    queryParams.push(user_role, user_id, lowerRole);
+
+  } else if (isShortlisted && user_role.toLowerCase() === "command") {
+    baseFilters = `
+      unit_id = ANY($1)
+      AND (
+        (status_flag = 'shortlisted_approved' AND last_shortlisted_approved_role = $2)
+        OR
+        (status_flag = 'approved' AND last_approved_by_role = $2)
+      )
+    `;
+    queryParams.push(user_role);
+
+  } else if (isShortlisted) {
+    baseFilters = `
+      unit_id = ANY($1)
+      AND status_flag = 'shortlisted_approved'
+      AND last_shortlisted_approved_role = $2
+    `;
+    queryParams.push(user_role);
+
+  } else if (user_role.toLowerCase() === "brigade") {
+    baseFilters = `
+      unit_id = ANY($1)
+      AND status_flag NOT IN ('approved', 'draft', 'shortlisted_approved', 'rejected')
+      AND (last_approved_by_role IS NULL OR last_approved_at IS NULL)
+    `;
+
+  } else {
+    baseFilters = `
+      unit_id = ANY($1)
+      AND status_flag = 'approved'
+      AND status_flag NOT IN ('draft', 'shortlisted_approved', 'rejected')
+      AND last_approved_by_role = $2
+    `;
+    queryParams.push(lowerRole);
+  }
+
+  return { baseFilters, queryParams };
+}
+
+async function fetchApplicationsSubordinates(client, baseFilters, queryParams) {
+  const citationQuery = `
+    SELECT 
+      citation_id AS id, 'citation' AS type, unit_id, date_init, citation_fds AS fds,
+      status_flag, last_approved_by_role, last_approved_at,
+      is_withdraw_requested, withdraw_status, withdraw_approved_by_role, withdraw_approved_by_user_id
+    FROM Citation_tab
+    WHERE ${baseFilters}
+  `;
+
+  const appreQuery = `
+    SELECT 
+      appreciation_id AS id, 'appreciation' AS type, unit_id, date_init, appre_fds AS fds,
+      status_flag, last_approved_by_role, last_approved_at,
+      is_withdraw_requested, withdraw_status, withdraw_approved_by_role, withdraw_approved_by_user_id
+    FROM Appre_tab
+    WHERE ${baseFilters}
+  `;
+
+  return Promise.all([
+    client.query(citationQuery, queryParams),
+    client.query(appreQuery, queryParams),
+  ]);
+}
+
+function mergeAndFilterApplications(citations, appreciations, query) {
+  let allApps = [...citations, ...appreciations];
+
+  if (query.award_type) {
+    const awardType = query.award_type.toLowerCase();
+    allApps = allApps.filter(app => app.fds?.award_type?.toLowerCase() === awardType);
+  }
+
+  if (query.search) {
+    const normalizedSearch = normalize(query.search);
+    allApps = allApps.filter(app => 
+      app.id.toString().toLowerCase().includes(normalizedSearch) ||
+      normalize(app.fds?.cycle_period || "").includes(normalizedSearch)
+    );
+  }
+
+  return allApps;
+}
+
+async function enrichClarifications(client, allApps, isGetNotClarifications) {
+  const clarificationIds = allApps.flatMap(app =>
+    app.fds?.parameters?.filter(p => p.clarification_id).map(p => p.clarification_id) || []
+  );
+
+  let clarificationMap = {};
+  if (clarificationIds.length) {
+    const clarificationsRes = await client.query(
+      `SELECT * FROM Clarification_tab WHERE clarification_id = ANY($1)`,
+      [clarificationIds]
+    );
+    clarificationMap = clarificationsRes.rows.reduce((acc, cur) => {
+      acc[cur.clarification_id] = cur;
+      return acc;
+    }, {});
+  }
+
+  let total_pending_clarifications = 0;
+
+  allApps = allApps.map(app => {
+    let clarifications_count = 0;
+    const updatedParameters = app.fds?.parameters?.map(param => {
+      const clarification = clarificationMap[param.clarification_id] || null;
+      if (clarification?.clarification_status === "pending") {
+        clarifications_count++;
+        total_pending_clarifications++;
+      }
+      return { ...param };
+    }) || [];
+
+    return {
+      ...app,
+      clarifications_count,
+      total_pending_clarifications,
+      fds: { ...app.fds, parameters: updatedParameters },
+    };
+  });
+
+  if (isGetNotClarifications) {
+    allApps = allApps.filter(app => app.clarifications_count === 0);
+  }
+
+  allApps.sort((a, b) => new Date(b.date_init) - new Date(a.date_init));
+  return allApps;
+}
+
+async function enrichUnitDetailsAndMarks(client, allApps, user, query) {
+  const unitIds = [...new Set(allApps.map(app => app.unit_id))];
+  const unitDetailsRes = await client.query(
+    `SELECT * FROM Unit_tab WHERE unit_id = ANY($1)`,
+    [unitIds]
+  );
+  const unitDetailsMap = unitDetailsRes.rows.reduce((acc, unit) => {
+    acc[unit.unit_id] = unit;
+    return acc;
+  }, {});
+
+  const allParamIds = [
+    ...new Set(allApps.flatMap(app => app.fds?.parameters?.map(p => p.id) || [])),
+  ];
+  const parameterMasterRes = await client.query(
+    `SELECT param_id, name, negative FROM Parameter_Master WHERE param_id = ANY($1)`,
+    [allParamIds]
+  );
+  const negativeParamMap = parameterMasterRes.rows.reduce((acc, row) => {
+    acc[row.param_id] = row.negative;
+    return acc;
+  }, {});
+
+  const ROLE_HIERARCHY = ["unit", "brigade", "division", "corps", "command"];
+  const currentRoleIndex = ROLE_HIERARCHY.indexOf(user.user_role?.toLowerCase());
+  const lowerRole = currentRoleIndex > 0 ? ROLE_HIERARCHY[currentRoleIndex - 1] : null;
+
+  allApps = allApps.map(app => {
+    const parameters = app.fds?.parameters || [];
+    const totalMarks = parameters.reduce(
+      (sum, p) => (!negativeParamMap[p.id] ? sum + (p.marks || 0) : sum),
+      0
+    );
+    const totalNegativeMarks = parameters.reduce(
+      (sum, p) => (negativeParamMap[p.id] ? sum + (p.marks || 0) : sum),
+      0
+    );
+    const netMarks = totalMarks - totalNegativeMarks;
+    return {
+      ...app,
+      unit_details: unitDetailsMap[app.unit_id] || null,
+      totalMarks,
+      totalNegativeMarks,
+      netMarks,
+    };
+  });
+
+  if (currentRoleIndex > 0) {
+    allApps.sort((a, b) => {
+      const getPriority = (app) =>
+        app.fds?.applicationPriority?.find(p => p.role === lowerRole)?.priority ?? Number.MAX_SAFE_INTEGER;
+      return getPriority(a) - getPriority(b);
+    });
+  }
+
+  return allApps;
+}
+
+function paginate(data, page = 1, limit = 10) {
+  const pageInt = parseInt(page);
+  const limitInt = parseInt(limit);
+  const start = (pageInt - 1) * limitInt;
+  const end = pageInt * limitInt;
+
+  return {
+    data: data.slice(start, end),
+    pagination: {
+      totalItems: data.length,
+      totalPages: Math.ceil(data.length / limitInt),
+      currentPage: pageInt,
+      itemsPerPage: limitInt,
+    },
+  };
+}
+
+function normalize(str) {
+  return str?.toString().trim().toLowerCase().replace(/\s|-/g, "") ?? "";
+}
+
 
 exports.getApplicationsScoreboard = async (user, query) => {
   const client = await dbService.getClient();
@@ -1113,50 +968,55 @@ exports.updateApplicationStatus = async (
   withdraw_status = null
 ) => {
   const client = await dbService.getClient();
+
   try {
-    const config = getConfigForType(type);
+    const config = getTypeConfig(type);
 
     if (withdrawRequested) {
       return await handleWithdrawRequest(client, config, id, user);
     }
 
-    if (withdraw_status) {
-      return await handleWithdrawStatusUpdate(client, config, id, user, withdraw_status);
+    if (["approved", "rejected"].includes(withdraw_status)) {
+      return await handleWithdrawApproval(client, config, id, withdraw_status, user);
     }
 
-    const statusLower = status?.toLowerCase() ?? null;
-    const allowedStatuses = ["in_review", "in_clarification", "approved", "rejected", "shortlisted_approved"];
-    const isStatusValid = statusLower && allowedStatuses.includes(statusLower);
+    let { isStatusValid, statusLower } = validateStatus(status);
 
-    const fds = (statusLower === "approved" || member)
-      ? await fetchApplicationFds(client, config, id)
-      : null;
-
-    let updatedFds = fds;
+    let updatedFds = null;
     let isMemberStatusUpdate = false;
 
-    if (statusLower === "approved" && fds) {
-      updatedFds = handleFdsClarifications(fds, user);
+    if (statusLower === "approved" || member) {
+      const fds = await fetchFds(client, config, id);
+      let updatedFdsResult = fds;
+
+      if (statusLower === "approved") {
+        updatedFdsResult = clarifyParameters(fds, user);
+      }
+
+      if (member && !member?.iscdr) {
+        const profile = await AuthService.getProfile(user);
+        const unit = profile?.data?.unit;
+        updatedFdsResult = await mergeMemberSignature(updatedFdsResult, member);
+
+        if (await handleCw2ApprovalCheck(updatedFdsResult, unit, user, config, id, client)) {
+          statusLower = "shortlisted_approved";
+          isMemberStatusUpdate = true;
+        }
+      }
+
+      updatedFds = updatedFdsResult;
+      await updateFds(client, config, id, updatedFds);
     }
 
-    if (member && fds) {
-      updatedFds = await handleMemberAcceptance(client, config, id, fds, member, user);
-      isMemberStatusUpdate = true;
-    }
-
-    if (updatedFds) {
-      await updateApplicationFds(client, config, id, updatedFds);
-    }
-
-    if (isStatusValid || isMemberStatusUpdate) {
-      return await updateApplicationStatusFlag(client, config, id, statusLower, user);
-    }
-
-    if (member && !statusLower) {
-      return await fetchApplicationById(client, config, id);
-    }
-
-    throw new Error("Invalid status value and no member provided.");
+    return await updateStatusFlag(
+      client,
+      config,
+      id,
+      statusLower,
+      user,
+      isStatusValid,
+      isMemberStatusUpdate
+    );
   } catch (err) {
     console.error("Error updating status:", err);
     throw new Error(err.message);
@@ -1166,7 +1026,7 @@ exports.updateApplicationStatus = async (
 };
 
 // START HELPER OF updateApplicationStatus
-function getConfigForType(type) {
+function getTypeConfig(type) {
   const validTypes = {
     citation: { table: "Citation_tab", column: "citation_id", fdsColumn: "citation_fds" },
     appreciation: { table: "Appre_tab", column: "appreciation_id", fdsColumn: "appre_fds" },
@@ -1176,187 +1036,213 @@ function getConfigForType(type) {
   return config;
 }
 
-async function handleWithdrawRequest(client, config, id, user) {
-  const now = new Date();
-  const query = `
-    UPDATE ${config.table}
-    SET is_withdraw_requested = TRUE,
-        withdraw_requested_by = $1,
-        withdraw_requested_at = $2,
-        withdraw_status = 'pending',
-        withdraw_requested_by_user_id = $3
-    WHERE ${config.column} = $4
-    RETURNING *;`;
-  const values = [user.user_role, now, user.user_id, id];
-
-  const result = await client.query(query, values);
-  if (result.rowCount === 0) throw new Error("Withdraw request failed, application not found.");
-  return result.rows[0];
+function validateStatus(status) {
+  const allowedStatuses = [
+    "in_review",
+    "in_clarification",
+    "approved",
+    "rejected",
+    "shortlisted_approved",
+  ];
+  const statusLower = status ? status.toLowerCase() : null;
+  const isStatusValid = statusLower && allowedStatuses.includes(statusLower);
+  return { isStatusValid, statusLower };
 }
 
-async function handleWithdrawStatusUpdate(client, config, id, user, withdraw_status) {
-  const { rows } = await client.query(
-    `SELECT is_withdraw_requested FROM ${config.table} WHERE ${config.column} = $1`,
-    [id]
-  );
-  if (!rows.length || !rows[0].is_withdraw_requested) {
-    throw new Error("No withdraw request found for this application.");
-  }
-
-  const now = new Date();
-  const statusQuery = `
-    UPDATE ${config.table}
-    SET withdraw_status = $1,
-        withdraw_approved_by_role = $2,
-        withdraw_approved_by_user_id = $3,
-        withdraw_approved_at = $4
-        ${withdraw_status === "approved" ? `, status_flag = 'withdrawed'` : ``}
-    WHERE ${config.column} = $5
-    RETURNING *;`;
-  const values = [withdraw_status, user.user_role, user.user_id, now, id];
-
-  const result = await client.query(statusQuery, values);
-  if (result.rowCount === 0) throw new Error("Failed to update withdraw status.");
-  return result.rows[0];
-}
-
-async function fetchApplicationFds(client, config, id) {
-  const { rows } = await client.query(
+async function fetchFds(client, config, id) {
+  const res = await client.query(
     `SELECT ${config.fdsColumn} FROM ${config.table} WHERE ${config.column} = $1`,
     [id]
   );
-  if (!rows.length) throw new Error("Application not found.");
-  return rows[0][config.fdsColumn];
+  if (res.rowCount === 0) throw new Error("Application not found");
+  return res.rows[0][config.fdsColumn];
 }
 
-function handleFdsClarifications(fds, user) {
-  if (!fds?.parameters) return fds;
-  fds.parameters = fds.parameters.map(param => {
-    if (!param.clarification_id) return param;
-    const { clarification_id, ...rest } = param;
-    return {
-      ...rest,
-      last_clarification_handled_by: user.user_role,
-      last_clarification_status: "clarified",
-      last_clarification_id: clarification_id,
-    };
-  });
+function clarifyParameters(fds, user) {
+  if (Array.isArray(fds?.parameters)) {
+    fds.parameters = fds.parameters.map(param => {
+      if (param.clarification_id) {
+        const { clarification_id, ...rest } = param;
+        return {
+          ...rest,
+          last_clarification_handled_by: user.user_role,
+          last_clarification_status: "clarified",
+          last_clarification_id: clarification_id,
+        };
+      }
+      return param;
+    });
+  }
   return fds;
 }
 
-async function handleMemberAcceptance(client, config, id, fds, member, user) {
-  const profile = await AuthService.getProfile(user);
-  const unit = profile?.data?.unit;
-
-  if (!fds.accepted_members) fds.accepted_members = [];
-  const index = fds.accepted_members.findIndex(m => m.member_id === member.member_id);
-  const updatedMember = {
-    ...member,
-    is_signature_added: member.is_signature_added ?? false,
-  };
-
-  if (index !== -1) {
-    fds.accepted_members[index] = {
-      ...fds.accepted_members[index],
-      ...updatedMember,
-    };
-  } else {
-    fds.accepted_members.push(updatedMember);
-  }
-
-  const acceptedMap = new Map(fds.accepted_members.map(m => [m.member_id, m]));
-  const allSigned = unit?.members?.every(unitMember => acceptedMap.get(unitMember.id)?.is_signature_added);
-
-  if (allSigned && user.user_role === "cw2") {
-    await autoApproveForCW2(client, config, id, user);
-  }
-
-  return fds;
-}
-
-async function autoApproveForCW2(client, config, id, user) {
-  const now = new Date().toISOString();
-  const approveColumn = user.cw2_type === "mo" ? "is_mo_approved" : "is_ol_approved";
-  const approveAtColumn = user.cw2_type === "mo" ? "mo_approved_at" : "ol_approved_at";
-
-  const updateQuery = `
-    UPDATE ${config.table}
-    SET ${approveColumn} = TRUE,
-        ${approveAtColumn} = $2,
-        last_approved_at = $3
-    WHERE ${config.column} = $1;`;
-  await client.query(updateQuery, [id, now, now]);
-
-  const finalizeQuery = `
-    UPDATE ${config.table}
-    SET last_approved_by_role = $2
-    WHERE is_mo_approved = TRUE AND is_ol_approved = TRUE AND ${config.column} = $1;`;
-  await client.query(finalizeQuery, [id, user.user_role]);
-}
-
-async function updateApplicationFds(client, config, id, updatedFds) {
+async function updateFds(client, config, id, updatedFds) {
   await client.query(
     `UPDATE ${config.table} SET ${config.fdsColumn} = $1 WHERE ${config.column} = $2`,
     [updatedFds, id]
   );
 }
 
-async function updateApplicationStatusFlag(client, config, id, statusLower, user) {
+async function handleWithdrawRequest(client, config, id, user) {
   const now = new Date();
-  const queries = {
-    approved: {
-      query: `
-        UPDATE ${config.table}
-        SET status_flag = $1,
-            last_approved_by_role = $3,
-            last_approved_at = $4
-        WHERE ${config.column} = $2
-        RETURNING *;`,
-      values: [statusLower, id, user.user_role, now],
-    },
-    shortlisted_approved: {
-      query: `
-        UPDATE ${config.table}
-        SET status_flag = $1,
-            last_shortlisted_approved_role = $3
-        WHERE ${config.column} = $2
-        RETURNING *;`,
-      values: [statusLower, id, user.user_role],
-    },
-    rejected: {
-      query: `
-        UPDATE ${config.table}
-        SET status_flag = $1,
-            last_rejected_by_role = $3,
-            last_rejected_at = $4
-        WHERE ${config.column} = $2
-        RETURNING *;`,
-      values: [statusLower, id, user.user_role, now],
-    },
-    default: {
-      query: `
-        UPDATE ${config.table}
-        SET status_flag = $1
-        WHERE ${config.column} = $2
-        RETURNING *;`,
-      values: [statusLower, id],
-    },
-  };
-
-  const { query, values } = queries[statusLower] || queries.default;
-  const { rows } = await client.query(query, values);
-  if (!rows.length) throw new Error("Application not found or status update failed.");
-  return rows[0];
+  const query = `
+    UPDATE ${config.table}
+    SET
+      is_withdraw_requested = TRUE,
+      withdraw_requested_by = $1,
+      withdraw_requested_at = $2,
+      withdraw_status = 'pending',
+      withdraw_requested_by_user_id = $3
+    WHERE ${config.column} = $4
+    RETURNING *;
+  `;
+  const values = [user.user_role, now, user.user_id, id];
+  const res = await client.query(query, values);
+  if (res.rowCount === 0) throw new Error("Application not found or withdraw update failed");
+  return res.rows[0];
 }
 
-async function fetchApplicationById(client, config, id) {
-  const { rows } = await client.query(
-    `SELECT * FROM ${config.table} WHERE ${config.column} = $1`,
+async function handleWithdrawApproval(client, config, id, withdraw_status, user) {
+  const checkRes = await client.query(
+    `SELECT is_withdraw_requested FROM ${config.table} WHERE ${config.column} = $1`,
     [id]
   );
-  if (!rows.length) throw new Error("Application not found.");
-  return rows[0];
+  if (checkRes.rowCount === 0) throw new Error("Application not found for withdraw status update");
+  if (!checkRes.rows[0].is_withdraw_requested) throw new Error("No withdraw request found on this application.");
+
+  const now = new Date();
+  const statusFlag = withdraw_status === "approved" ? "withdrawed" : undefined;
+  const query = `
+    UPDATE ${config.table}
+    SET
+      withdraw_status = $1,
+      withdraw_approved_by_role = $2,
+      withdraw_approved_by_user_id = $3,
+      withdraw_approved_at = $4
+      ${statusFlag ? ", status_flag = 'withdrawed'" : ""}
+    WHERE ${config.column} = $5
+    RETURNING *;
+  `;
+  const values = [withdraw_status, user.user_role, user.user_id, now, id];
+  const res = await client.query(query, values);
+  if (res.rowCount === 0) throw new Error("Failed to update withdraw status");
+  return res.rows[0];
 }
+
+async function mergeMemberSignature(fds, member) {
+  if (!fds.accepted_members || !Array.isArray(fds.accepted_members)) {
+    fds.accepted_members = [];
+  }
+
+  const idx = fds.accepted_members.findIndex(m => m.member_id === member.member_id);
+  if (idx !== -1) {
+    fds.accepted_members[idx] = {
+      ...fds.accepted_members[idx],
+      ...member,
+      is_signature_added: member.is_signature_added ?? fds.accepted_members[idx].is_signature_added ?? false,
+    };
+  } else {
+    fds.accepted_members.push({
+      ...member,
+      is_signature_added: member.is_signature_added ?? false,
+    });
+  }
+
+  return fds;
+}
+
+async function handleCw2ApprovalCheck(fds, unit, user, config, id, client) {
+  if (!unit?.members?.length || !fds.accepted_members?.length) return false;
+
+  const acceptedMap = new Map(fds.accepted_members.map(m => [m.member_id, m]));
+  const allSigned = unit.members.every(unitMember => acceptedMap.get(unitMember.id)?.is_signature_added === true);
+
+  if (allSigned && user.user_role === "cw2") {
+    const now = new Date().toISOString();
+    const approvedAt = now;
+    let query;
+    const values = [id, true, approvedAt, now];
+
+    if (user.cw2_type === "mo") {
+      query = `
+        UPDATE ${config.table}
+        SET is_mo_approved = $2, mo_approved_at = $3, last_approved_at = $4
+        WHERE ${config.column} = $1
+      `;
+    } else if (user.cw2_type === "ol") {
+      query = `
+        UPDATE ${config.table}
+        SET is_ol_approved = $2, ol_approved_at = $3, last_approved_at = $4
+        WHERE ${config.column} = $1
+      `;
+    } else {
+      return false;
+    }
+
+    await client.query(query, values);
+
+    await client.query(`
+      UPDATE ${config.table}
+      SET last_approved_by_role = $2
+      WHERE is_mo_approved = TRUE AND is_ol_approved = TRUE AND ${config.column} = $1
+    `, [id, user.user_role]);
+
+    return false; // Status update is handled here
+  }
+
+  return allSigned;
+}
+
+async function updateStatusFlag(client, config, id, statusLower, user, isStatusValid, isMemberStatusUpdate) {
+  if (!isStatusValid && !isMemberStatusUpdate) throw new Error("Invalid status value and no member provided");
+
+  let query, values;
+  const now = new Date();
+
+  if (statusLower === "approved") {
+    query = `
+      UPDATE ${config.table}
+      SET status_flag = $1, last_approved_by_role = $3, last_approved_at = $4
+      WHERE ${config.column} = $2
+      RETURNING *;
+    `;
+    values = [statusLower, id, user.user_role, now];
+  } else if (statusLower === "shortlisted_approved") {
+    query = `
+      UPDATE ${config.table}
+      SET status_flag = $1, last_shortlisted_approved_role = $3
+      WHERE ${config.column} = $2
+      RETURNING *;
+    `;
+    values = [statusLower, id, user.user_role];
+  } else if (statusLower === "rejected") {
+    query = `
+      UPDATE ${config.table}
+      SET status_flag = $1, last_rejected_by_role = $3, last_rejected_at = $4
+      WHERE ${config.column} = $2
+      RETURNING *;
+    `;
+    values = [statusLower, id, user.user_role, now];
+  } else if (statusLower) {
+    query = `
+      UPDATE ${config.table}
+      SET status_flag = $1
+      WHERE ${config.column} = $2
+      RETURNING *;
+    `;
+    values = [statusLower, id];
+  } else {
+    query = `
+      SELECT * FROM ${config.table} WHERE ${config.column} = $1;
+    `;
+    values = [id];
+  }
+
+  const res = await client.query(query, values);
+  if (res.rowCount === 0) throw new Error("Application not found or update failed");
+  return res.rows[0];
+}
+
 // END HELPER OF updateApplicationStatus
 
 exports.approveApplicationMarks = async (user, body) => {
