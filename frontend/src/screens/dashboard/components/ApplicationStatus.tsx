@@ -48,9 +48,9 @@ const LegendFormatter: React.FC<LegendFormatterProps> = ({ value }) => (
 
 const ApplicationStatus: React.FC<ProductDetailProps> = ({ dashboardStats }) => {
     const data = [
-        { name: 'Pending', value: dashboardStats?.totalPendingApplications || 0 },
-        { name: 'Approved', value: dashboardStats?.approved || 0 },
-        { name: 'Rejected', value: dashboardStats?.rejected || 0 },
+        { name: 'Pending', value: dashboardStats?.totalPendingApplications ?? 0 },
+        { name: 'Approved', value: dashboardStats?.approved ?? 0 },
+        { name: 'Rejected', value: dashboardStats?.rejected ?? 0 },
     ];
 
     const renderLegendLabel = (value: string) => {
@@ -76,7 +76,7 @@ const ApplicationStatus: React.FC<ProductDetailProps> = ({ dashboardStats }) => 
                             dataKey="value"
                         >
                             {data.map((val, index) => (
-                                <Cell key={`cell-${val}`} fill={COLORS[index % COLORS.length]} />
+                                <Cell key={`cell-${val.name}`} fill={COLORS[index % COLORS.length]} />
                             ))}
                         </Pie>
                         <Tooltip content={<CustomTooltip />} />

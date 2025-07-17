@@ -21,13 +21,13 @@ export const createAppreciation = createAsyncThunk<
 
       return response.data;
     } else {
-      toast.error(response.data.message || "Failed to submit appreciation");
+      toast.error(response.data.message ?? "Failed to submit appreciation");
       return rejectWithValue(response.data.message);
     }
   } catch (error: any) {
-    toast.error(error.response?.data?.message || "Submission error");
+    toast.error(error.response?.data?.message ?? "Submission error");
     return rejectWithValue(
-      error.response?.data?.message || "Failed to submit appreciation"
+      error.response?.data?.message ?? "Failed to submit appreciation"
     );
   }
 });
@@ -45,7 +45,7 @@ export const fetchAppreciationById = createAsyncThunk<
       return rejectWithValue(response.data.message);
     }
   } catch (error: any) {
-    toast.error(error.response?.data?.message || "Error fetching appreciation");
+    toast.error(error.response?.data?.message ?? "Error fetching appreciation");
     return rejectWithValue("Failed to fetch appreciation");
   }
 });
@@ -68,7 +68,7 @@ export const updateAppreciation = createAsyncThunk<
       return rejectWithValue(response.data.message);
     }
   } catch (error: any) {
-    toast.error(error.response?.data?.message || "Error updating appreciation");
+    toast.error(error.response?.data?.message ?? "Error updating appreciation");
     return rejectWithValue("Failed to update appreciation");
   }
 });
@@ -88,7 +88,7 @@ export const deleteAppreciation = createAsyncThunk<
       return rejectWithValue(response.data.message);
     }
   } catch (error: any) {
-    toast.error(error.response?.data?.message || "Error deleting appreciation");
+    toast.error(error.response?.data?.message ?? "Error deleting appreciation");
     return rejectWithValue("Failed to delete appreciation");
   }
 });

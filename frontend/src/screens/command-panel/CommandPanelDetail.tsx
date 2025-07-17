@@ -17,23 +17,18 @@ const CommandPanelDetail = () => {
 
   // States
   const [clarificationShow, setClarificationShow] = useState(false);
-  const [clarificationType, _] = useState<string>("appreciation");
-  const [clarificationApplicationId, _1] = useState<number>(0);
-  const [clarificationParameterName, _2] = useState<string>("");
-  const [clarificationParameterId, _5] = useState<string>("");
-  const [clarificationDocForView, _3] = useState<string | null>(null);
-  const [clarificationClarificationForView, _4] = useState<string | null>(null);
   const [reqClarificationShow, setReqClarificationShow] = useState(false);
   const [isRefreshData, setIsRefreshData] = useState(false);
 
   const isUnitRole = profile?.user?.user_role === "unit";
-  const award_type = searchParams.get("award_type") || "";
+  const award_type = searchParams.get("award_type") ?? "";
   const numericAppId = Number(application_id);
+
   useEffect(() => {
     if (award_type && numericAppId) dispatch(fetchApplicationUnitDetail({ award_type, numericAppId }))
   }, [award_type, numericAppId, isRefreshData]);
 
-  const parameters = unitDetail?.fds?.parameters || [];
+  const parameters = unitDetail?.fds?.parameters ?? [];
   const totalParams = parameters.length;
 
   const filledParams = parameters.filter((param: any) =>
@@ -67,13 +62,13 @@ const CommandPanelDetail = () => {
     if (param.name != "no") {
       return {
         main: param.name,
-        header: param.subcategory || null,
-        subheader: param.subsubcategory || null,
+        header: param.subcategory ?? null,
+        subheader: param.subsubcategory ?? null,
       };
     } else if (param.subsubcategory) {
       return {
         main: param.subsubcategory,
-        header: param.subcategory || null,
+        header: param.subcategory ?? null,
         subheader: null,
       };
     } else if (param.subcategory) {
@@ -120,22 +115,22 @@ const CommandPanelDetail = () => {
 
             <div className="text-center flex-grow-1 flex-sm-grow-0 flex-basis-100 flex-sm-basis-auto" style={{ minWidth: '150px' }}>
               <div className="form-label fw-semibold">Cycle Period</div>
-              <p className="fw-5 mb-0">{unitDetail?.fds?.cycle_period || "--"}</p>
+              <p className="fw-5 mb-0">{unitDetail?.fds?.cycle_period ?? "--"}</p>
             </div>
 
             <div className="text-center flex-grow-1 flex-sm-grow-0 flex-basis-100 flex-sm-basis-auto" style={{ minWidth: '150px' }}>
               <div className="form-label fw-semibold">Last Date</div>
-              <p className="fw-5 mb-0">{unitDetail?.fds?.last_date || "--"}</p>
+              <p className="fw-5 mb-0">{unitDetail?.fds?.last_date ?? "--"}</p>
             </div>
 
             <div className="text-center flex-grow-1 flex-sm-grow-0 flex-basis-100 flex-sm-basis-auto" style={{ minWidth: '150px' }}>
               <div className="form-label fw-semibold">Command</div>
-              <p className="fw-5 mb-0">{unitDetail?.fds?.command || "--"}</p>
+              <p className="fw-5 mb-0">{unitDetail?.fds?.command ?? "--"}</p>
             </div>
 
             <div className="text-center flex-grow-1 flex-sm-grow-0 flex-basis-100 flex-sm-basis-auto" style={{ minWidth: '150px' }}>
               <div className="form-label fw-semibold">Unit Name</div>
-              <p className="fw-5 mb-0">{unitDetail?.unit_name || "--"}</p>
+              <p className="fw-5 mb-0">{unitDetail?.unit_name ?? "--"}</p>
             </div>
           </div>
         </div>
@@ -284,18 +279,18 @@ const CommandPanelDetail = () => {
       <UnitClarificationModal
         show={clarificationShow}
         handleClose={() => setClarificationShow(false)}
-        type={clarificationType}
-        application_id={clarificationApplicationId}
-        parameter_name={clarificationParameterName}
-        parameter_id={clarificationParameterId}
+        type="appreciation"
+        application_id={0}
+        parameter_name={""}
+        parameter_id={""}
         setIsRefreshData={setIsRefreshData}
         isRefreshData={isRefreshData}
       />
       <ReqClarificationModal
         show={reqClarificationShow}
         handleClose={() => setReqClarificationShow(false)}
-        clarification_doc={clarificationDocForView}
-        clarification={clarificationClarificationForView}
+        clarification_doc={null}
+        clarification={null}
       />
     </>
   );

@@ -53,19 +53,19 @@ const prepareExcelData = (scoreboard: any[], topN: number) => {
   const topCandidates = sorted.slice(0, topN);
 
   return topCandidates.map((candidate, index) => {
-    const parameters = candidate.fds?.parameters || [];
-    const graceMarks = candidate.fds?.applicationGraceMarks || [];
-    const priorities = candidate.fds?.applicationPriority || [];
+    const parameters = candidate.fds?.parameters ?? [];
+    const graceMarks = candidate.fds?.applicationGraceMarks ?? [];
+    const priorities = candidate.fds?.applicationPriority ?? [];
 
     return {
       'S. No.': index + 1,
-      Unit: candidate.unit_name || '',
-      Location: candidate.location || '',
-      Brigade: candidate.bde || '',
-      Division: candidate.div || '',
-      Corps: candidate.corps || '',
-      Command: candidate.comd || '',
-      'Unit Type': candidate.unit_type || '',
+      Unit: candidate.unit_name ?? '',
+      Location: candidate.location ?? '',
+      Brigade: candidate.bde ?? '',
+      Division: candidate.div ?? '',
+      Corps: candidate.corps ?? '',
+      Command: candidate.comd ?? '',
+      'Unit Type': candidate.unit_type ?? '',
       Tenure: getParamMarks(parameters, 'tenure'),
       Kills: getParamMarks(parameters, 'kills'),
       Surrendered: getParamMarks(parameters, 'surrendered'),
@@ -86,7 +86,7 @@ const TopCandidates: React.FC<TopCandidatesProps> = ({ setReportCount, reportCou
 
   // States
   const [selectedTop, setSelectedTop] = useState(() => {
-    return topCandidateOptions.find((opt: any) => opt.value === reportCount) || topCandidateOptions[1];
+    return topCandidateOptions.find((opt: any) => opt.value === reportCount) ?? topCandidateOptions[1];
   });
 
   useEffect(() => {
@@ -95,7 +95,7 @@ const TopCandidates: React.FC<TopCandidatesProps> = ({ setReportCount, reportCou
   }, [reportCount]);
 
   const handleDownload = () => {
-    const topN = selectedTop?.value || 5;
+    const topN = selectedTop?.value ?? 5;
     try {
       const excelData = prepareExcelData(scoreboard, topN);
       const worksheet = XLSX.utils.json_to_sheet(excelData);

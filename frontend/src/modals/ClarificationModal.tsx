@@ -13,7 +13,7 @@ const ClarificationModal: React.FC<ClarificationModalProps> = ({
   handleClose,
 }) => {
   // States
-  const [clarification, setSlarification] = useState("")
+  const [clarification, setClarification] = useState("")
 
   return (
     <Modal
@@ -38,7 +38,7 @@ const ClarificationModal: React.FC<ClarificationModalProps> = ({
               as="textarea"
               rows={8}
               value={clarification}
-              onChange={(e) => setSlarification(e.target.value)}
+              onChange={(e) => setClarification(e.target.value)}
             />
           </div>
           <div className="d-flex align-items-center justify-content-end gap-3">

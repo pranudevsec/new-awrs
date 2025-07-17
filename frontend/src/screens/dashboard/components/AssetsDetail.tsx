@@ -13,7 +13,7 @@ const AssetsDetail: React.FC<ProductDetailProps> = ({ dashboardStats }) => {
                         <div className="left-content d-flex flex-wrap flex-xxl-row flex-xl-column flex-md-row flex-sm-column align-items-center gap-2">
                             <div className="text ">
                                 <h6 className="fw-4 mb-2">Application Pending</h6>
-                                <h4 className="fw-6 font-lexend color-pending">{dashboardStats?.totalPendingApplications || 0}</h4>
+                                <h4 className="fw-6 font-lexend color-pending">{dashboardStats?.totalPendingApplications ?? 0}</h4>
                             </div>
                         </div>
                     </div>
@@ -23,7 +23,7 @@ const AssetsDetail: React.FC<ProductDetailProps> = ({ dashboardStats }) => {
                         <div className="left-content d-flex flex-wrap flex-xxl-row flex-xl-column flex-md-row flex-sm-column align-items-center gap-2">
                             <div className="text">
                                 <h6 className="fw-4 mb-2">Clarification Raised</h6>
-                                <h4 className="fw-6 font-lexend color-request">{dashboardStats?.clarificationRaised || 0}</h4>
+                                <h4 className="fw-6 font-lexend color-request">{dashboardStats?.clarificationRaised ?? 0}</h4>
                             </div>
                         </div>
                     </div>
@@ -33,7 +33,7 @@ const AssetsDetail: React.FC<ProductDetailProps> = ({ dashboardStats }) => {
                         <div className="left-content d-flex flex-wrap flex-xxl-row flex-xl-column flex-md-row flex-sm-column align-items-center gap-2">
                             <div className="text">
                                 <h6 className="fw-4 mb-2">Approved</h6>
-                                <h4 className="fw-6 font-lexend color-raised">{dashboardStats?.approved || 0}</h4>
+                                <h4 className="fw-6 font-lexend color-raised">{dashboardStats?.approved ?? 0}</h4>
                             </div>
                         </div>
                     </div>
@@ -43,7 +43,7 @@ const AssetsDetail: React.FC<ProductDetailProps> = ({ dashboardStats }) => {
                         <div className="left-content d-flex flex-wrap flex-xxl-row flex-xl-column flex-md-row flex-sm-column align-items-center gap-2">
                             <div className="text">
                                 <h6 className="fw-4 mb-2">Rejected</h6>
-                                <h4 className="fw-6 font-lexend color-rejected">{dashboardStats?.rejected || 0}</h4>
+                                <h4 className="fw-6 font-lexend color-rejected">{dashboardStats?.rejected ?? 0}</h4>
                             </div>
                         </div>
                     </div>

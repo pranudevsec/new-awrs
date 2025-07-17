@@ -38,7 +38,7 @@ const ParametersList = () => {
     }, [searchTerm]);
 
     const fetchParametersList = async () => {
-        await dispatch(fetchParameters({ awardType: awardType || "", search: debouncedSearch, page, limit }));
+        await dispatch(fetchParameters({ awardType: awardType ?? "", search: debouncedSearch, page, limit }));
     };
 
     const handleDelete = async () => {
@@ -78,7 +78,7 @@ const ParametersList = () => {
                         name="awardType"
                         options={awardTypeOptions}
                         value={awardTypeOptions.find((opt) => opt.value === awardType) || null}
-                        onChange={(option) => setAwardType(option?.value || null)}
+                        onChange={(option) => setAwardType(option?.value ?? null)}
                         placeholder="Select Type"
                     />
                 </div>

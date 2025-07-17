@@ -11,7 +11,7 @@ interface AppreciationState {
   success: boolean;
   error: string | null;
   data: any;
-  draftData: any | null;
+  draftData: any;
 }
 
 const initialState: AppreciationState = {
@@ -48,7 +48,7 @@ const appreciationSlice = createSlice({
         ) => {
           state.loading = false;
           state.success = action.payload.success;
-          state.data = action.payload.data || null;
+          state.data = action.payload.data ?? null;
         }
       )
       .addCase(
@@ -56,7 +56,7 @@ const appreciationSlice = createSlice({
         (state: AppreciationState, action: PayloadAction<any>) => {
           state.loading = false;
           state.success = false;
-          state.error = action.payload || "Failed to create appreciation";
+          state.error = action.payload ?? "Failed to create appreciation";
         }
       )
       .addCase(fetchAppreciationById.pending, (state: AppreciationState) => {
@@ -71,14 +71,14 @@ const appreciationSlice = createSlice({
         ) => {
           state.loading = false;
           state.success = action.payload.success;
-          state.draftData = action.payload.data || null;
+          state.draftData = action.payload.data ?? null;
         }
       )
       .addCase(
         fetchAppreciationById.rejected,
         (state: AppreciationState, action: PayloadAction<any>) => {
           state.loading = false;
-          state.error = action.payload || "Failed to fetch appreciation";
+          state.error = action.payload ?? "Failed to fetch appreciation";
         }
       )
       .addCase(updateAppreciation.pending, (state: AppreciationState) => {
@@ -93,14 +93,14 @@ const appreciationSlice = createSlice({
         ) => {
           state.loading = false;
           state.success = action.payload.success;
-          state.data = action.payload.data || null;
+          state.data = action.payload.data ?? null;
         }
       )
       .addCase(
         updateAppreciation.rejected,
         (state: AppreciationState, action: PayloadAction<any>) => {
           state.loading = false;
-          state.error = action.payload || "Failed to update appreciation";
+          state.error = action.payload ?? "Failed to update appreciation";
         }
       );
   },

@@ -17,7 +17,7 @@ const Header = () => {
     // States
     const [open, setOpen] = useState(false);
     const [notifOpen, setNotifOpen] = useState(false);
-    const [mobileMenuShow, setMobileMenu] = useState<boolean>(false);
+    const [mobileMenuShow, setMobileMenuShow] = useState<boolean>(false);
 
     // Sign out function
     const handleSignOut = () => {
@@ -49,7 +49,7 @@ const Header = () => {
             <header className="main-header position-sticky top-0">
                 <div className="d-flex align-items-center justify-content-xl-end justify-content-between gap-4">
                     <button className="d-xl-none d-inline-flex align-items-center justify-content-center bg-transparent border-0 text-white"
-                        onClick={() => setMobileMenu(true)}>
+                        onClick={() => setMobileMenuShow(true)}>
                         {SVGICON.header.togglemenu}
                     </button>
                     <div className="d-flex align-items-center gap-sm-4 gap-3">
@@ -193,8 +193,8 @@ const Header = () => {
                                     height={40}
                                 />
                                 <div>
-                                    <h6 className="font-lexend fw-6">{profile?.user?.name || 'User'}</h6>
-                                    <p className="fw-4">{profile?.user?.username || ''}</p>
+                                    <h6 className="font-lexend fw-6">{profile?.user?.name ?? 'User'}</h6>
+                                    <p className="fw-4">{profile?.user?.username ?? ''}</p>
                                 </div>
                                 <div className="text-white">
                                     {SVGICON.header.downArrow}
@@ -209,7 +209,7 @@ const Header = () => {
                     </div>
                 </div>
             </header >
-            <SidebarMobileMenu show={mobileMenuShow} handleClose={() => setMobileMenu(false)} />
+            <SidebarMobileMenu show={mobileMenuShow} handleClose={() => setMobileMenuShow(false)} />
         </>
     )
 }

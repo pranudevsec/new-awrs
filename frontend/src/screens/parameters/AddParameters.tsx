@@ -61,7 +61,7 @@ const AddParameters = () => {
                             options={awardTypeOptions}
                             value={awardTypeOptions.find((opt) => opt.value === formik.values.award_type) || null}
                             placeholder="Select"
-                            onChange={(selectedOption) => formik.setFieldValue("award_type", selectedOption?.value || "")}
+                            onChange={(selectedOption) => formik.setFieldValue("award_type", selectedOption?.value ?? "")}
                             errors={formik.errors.award_type}
                             touched={formik.touched.award_type}
                         />
@@ -75,7 +75,7 @@ const AddParameters = () => {
                             onChange={(selectedOption) =>
                                 formik.setFieldValue(
                                     "applicability",
-                                    selectedOption?.value || ""
+                                    selectedOption?.value ?? ""
                                 )
                             }
                             placeholder="Select"

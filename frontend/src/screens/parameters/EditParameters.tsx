@@ -24,18 +24,18 @@ const EditParameters = () => {
     // Formik
     const formik = useFormik({
         initialValues: {
-            award_type: parameters.award_type?.trim() || "",
-            applicability: parameters.applicability?.trim() || "",
-            name: parameters.name?.trim() || "",
-            category: parameters.category?.trim() || "",
-            description: parameters.description?.trim() || "",
-            negative: parameters.negative || false,
-            per_unit_mark: parameters.per_unit_mark || "",
-            max_marks: parameters.max_marks || "",
-            proof_reqd: parameters.proof_reqd || false,
-            weightage: parameters.weightage || "",
-            param_sequence: parameters.param_sequence || "",
-            param_mark: parameters.param_mark || ""
+            award_type: parameters.award_type?.trim() ?? "",
+            applicability: parameters.applicability?.trim() ?? "",
+            name: parameters.name?.trim() ?? "",
+            category: parameters.category?.trim() ?? "",
+            description: parameters.description?.trim() ?? "",
+            negative: parameters.negative ?? false,
+            per_unit_mark: parameters.per_unit_mark ?? "",
+            max_marks: parameters.max_marks ?? "",
+            proof_reqd: parameters.proof_reqd ?? false,
+            weightage: parameters.weightage ?? "",
+            param_sequence: parameters.param_sequence ?? "",
+            param_mark: parameters.param_mark ?? ""
         },
         validationSchema: ParametersSchema,
         onSubmit: async (values, { resetForm }) => {
@@ -75,7 +75,7 @@ const EditParameters = () => {
                             options={awardTypeOptions}
                             value={awardTypeOptions.find((opt) => opt.value === formik.values.award_type) || null}
                             placeholder="Select"
-                            onChange={(selectedOption) => formik.setFieldValue("award_type", selectedOption?.value || "")}
+                            onChange={(selectedOption) => formik.setFieldValue("award_type", selectedOption?.value ?? "")}
                             {...getErrorProps("award_type")}
                         />
                     </div>
@@ -88,7 +88,7 @@ const EditParameters = () => {
                             onChange={(selectedOption) =>
                                 formik.setFieldValue(
                                     "applicability",
-                                    selectedOption?.value || ""
+                                    selectedOption?.value ?? ""
                                 )
                             }
                             placeholder="Select"

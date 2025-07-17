@@ -28,14 +28,14 @@ export const getScoreBoards = createAsyncThunk<
       const response = await Axios.get(
         `${apiEndPoints.scoreBoard}?award_type=${
           award_type || ""
-        }&search=${search}&page=${page || 1}&limit=${
-          limit || 10
-        }&isShortlisted=${isShortlisted || ""}`
+        }&search=${search}&page=${page ?? 1}&limit=${
+          limit ?? 10
+        }&isShortlisted=${isShortlisted ?? ""}`
       );
       return response.data;
     } catch (error: any) {
       toast.error(
-        error.response?.data?.message || "Failed to fetch scoreboard"
+        error.response?.data?.message ?? "Failed to fetch scoreboard"
       );
       return rejectWithValue(error.response?.data?.message);
     }
@@ -50,11 +50,11 @@ export const getDashboardStats = createAsyncThunk<DashboardResponse>(
       if (response.data.success) {
         return response.data;
       } else {
-        return rejectWithValue(response.data.message || "Something went wrong");
+        return rejectWithValue(response.data.message ?? "Something went wrong");
       }
     } catch (error: any) {
       toast.error(
-        error.response.data.message ||
+        error.response.data.message ??
           "An error occurred while fetching dashboard stats."
       );
       return rejectWithValue(
@@ -73,12 +73,16 @@ export const getDashboardUnitScores =
         if (response.data.success) {
           return response.data;
         } else {
-          toast.error(response.data.message || "Something went wrong");
+          toast.error(response.data.message ?? "Something went wrong");
           return rejectWithValue(
-            response.data.message || "Something went wrong"
+            response.data.message ?? "Something went wrong"
           );
         }
       } catch (error: any) {
+        toast.error(
+          error.response.data.message ??
+            "An error occurred while fetching dashboard unit score."
+        );
         return rejectWithValue(
           "Failed to fetch dashboard unit score chart due to an error."
         );
@@ -94,12 +98,12 @@ export const getHomeCountStats = createAsyncThunk<HomeCountResponse>(
       if (response.data.success) {
         return response.data;
       } else {
-        toast.error(response.data.message || "Failed to fetch home counts");
+        toast.error(response.data.message ?? "Failed to fetch home counts");
         return rejectWithValue(response.data.message);
       }
     } catch (error: any) {
       toast.error(
-        error.response?.data?.message || "Error fetching home counts"
+        error.response?.data?.message ?? "Error fetching home counts"
       );
       return rejectWithValue(error.response?.data?.message);
     }

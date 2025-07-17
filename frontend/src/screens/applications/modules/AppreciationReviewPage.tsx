@@ -49,14 +49,14 @@ const AppreciationReviewPage = () => {
     const [command, setCommand] = useState("");
     const [uploadedFiles, setUploadedFiles] = useState<Record<number, string[]>>(() => {
         try {
-            return JSON.parse(localStorage.getItem(DRAFT_FILE_UPLOAD_KEY) || "{}");
+            return JSON.parse(localStorage.getItem(DRAFT_FILE_UPLOAD_KEY) ?? "{}");
         } catch {
             return {};
         }
     });
 
     const [unitRemarks, setUnitRemarks] = useState(() => {
-        return localStorage.getItem("applyAppreciationUnitRemarks") || "";
+        return localStorage.getItem("applyAppreciationUnitRemarks") ?? "";
     });
 
     useEffect(() => {
@@ -129,13 +129,13 @@ const AppreciationReviewPage = () => {
         if (param.name != "no") {
             return {
                 main: param.name,
-                header: param.subcategory || null,
-                subheader: param.subsubcategory || null,
+                header: param.subcategory ?? null,
+                subheader: param.subsubcategory ?? null,
             };
         } else if (param.subsubcategory) {
             return {
                 main: param.subsubcategory,
-                header: param.subcategory || null,
+                header: param.subcategory ?? null,
                 subheader: null,
             };
         } else if (param.subcategory) {
@@ -482,7 +482,7 @@ const AppreciationReviewPage = () => {
                                 <FormInput
                                     label="Command"
                                     name="command"
-                                    value={profile?.unit?.comd || "--"}
+                                    value={profile?.unit?.comd ?? "--"}
                                     onChange={formik.handleChange}
                                     readOnly
                                 />

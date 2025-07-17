@@ -29,7 +29,7 @@ const configSlice = createSlice({
     });
     builder.addCase(getConfig.rejected, (state, action: PayloadAction<any>) => {
       state.loader = false;
-      state.error = action.payload || 'Failed to load config';
+      state.error = action.payload ?? 'Failed to load config';
     });
 
     builder.addCase(updateConfig.pending, (state) => {
@@ -42,7 +42,7 @@ const configSlice = createSlice({
     });
     builder.addCase(updateConfig.rejected, (state, action: PayloadAction<any>) => {
       state.loader = false;
-      state.error = action.payload || 'Failed to update config';
+      state.error = action.payload ?? 'Failed to update config';
     });
   },
 });

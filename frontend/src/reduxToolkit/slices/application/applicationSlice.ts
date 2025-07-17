@@ -72,7 +72,7 @@ const applicationSlice = createSlice({
       (state, action: PayloadAction<any>) => {
         state.loading = false;
         state.success = false;
-        state.error = action.payload || "Failed to fetch application units";
+        state.error = action.payload ?? "Failed to fetch application units";
       }
     );
 
@@ -92,7 +92,7 @@ const applicationSlice = createSlice({
       (state, action: PayloadAction<any>) => {
         state.loading = false;
         state.unitDetail = null;
-        state.error = action.payload || "Failed to fetch unit detail";
+        state.error = action.payload ?? "Failed to fetch unit detail";
       }
     );
 
@@ -116,7 +116,7 @@ const applicationSlice = createSlice({
         state.loading = false;
         state.success = false;
         state.error =
-          action.payload || "Failed to fetch subordinate applications";
+          action.payload ?? "Failed to fetch subordinate applications";
       }
     );
 
@@ -139,7 +139,7 @@ const applicationSlice = createSlice({
       (state, action: PayloadAction<any>) => {
         state.loading = false;
         state.success = false;
-        state.error = action.payload || "Failed to fetch HQ applications";
+        state.error = action.payload ?? "Failed to fetch HQ applications";
       }
     );
 
@@ -162,7 +162,7 @@ const applicationSlice = createSlice({
       (state, action: PayloadAction<any>) => {
         state.loading = false;
         state.success = false;
-        state.error = action.payload || "Failed to fetch application history";
+        state.error = action.payload ?? "Failed to fetch application history";
       }
     );
 
@@ -185,7 +185,7 @@ const applicationSlice = createSlice({
       (state, action: PayloadAction<any>) => {
         state.loading = false;
         state.success = false;
-        state.error = action.payload || "Failed to fetch application history";
+        state.error = action.payload ?? "Failed to fetch application history";
       }
     );
   },

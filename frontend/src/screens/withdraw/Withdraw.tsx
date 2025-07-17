@@ -40,7 +40,7 @@ const Withdraw = () => {
       const role = profile.user.user_role;
 
       const params = {
-        award_type: awardType || "",
+        award_type: awardType ?? "",
         search: debouncedSearch,
         page,
         limit,
@@ -56,7 +56,7 @@ const Withdraw = () => {
 
   const renderWithdrawActions = (unit: any) => {
     const commonParams = {
-      award_type: awardType || "",
+      award_type: awardType ?? "",
       search: debouncedSearch,
       page,
       limit,
@@ -141,7 +141,7 @@ const Withdraw = () => {
         <FormSelect
           name="awardType"
           options={awardTypeOptions}
-          value={awardTypeOptions.find((opt) => opt.value === awardType) || null}
+          value={awardTypeOptions.find((opt) => opt.value === awardType) ?? null}
           placeholder="Select Type"
           onChange={(option: OptionType | null) =>
             setAwardType(option ? option.value : null)

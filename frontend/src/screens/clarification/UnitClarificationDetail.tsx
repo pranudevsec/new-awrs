@@ -17,7 +17,7 @@ const UnitClarificationDetail = () => {
   const [clarificationId, setClarificationId] = useState<number>(0);
   const [isRefreshData, setIsRefreshData] = useState(false);
 
-  const award_type = searchParams.get("award_type") || "";
+  const award_type = searchParams.get("award_type") ?? "";
   const numericAppId = Number(application_id);
 
   useEffect(() => {
@@ -58,22 +58,22 @@ const UnitClarificationDetail = () => {
 
             <div className="text-center flex-grow-1 flex-sm-grow-0 flex-basis-100 flex-sm-basis-auto" style={{ minWidth: '150px' }}>
               <div className="form-label fw-semibold">Cycle Period</div>
-              <p className="fw-5 mb-0">{unitDetail?.fds?.cycle_period || "--"}</p>
+              <p className="fw-5 mb-0">{unitDetail?.fds?.cycle_period ?? "--"}</p>
             </div>
 
             <div className="text-center flex-grow-1 flex-sm-grow-0 flex-basis-100 flex-sm-basis-auto" style={{ minWidth: '150px' }}>
               <div className="form-label fw-semibold">Last Date</div>
-              <p className="fw-5 mb-0">{unitDetail?.fds?.last_date || "--"}</p>
+              <p className="fw-5 mb-0">{unitDetail?.fds?.last_date ?? "--"}</p>
             </div>
 
             <div className="text-center flex-grow-1 flex-sm-grow-0 flex-basis-100 flex-sm-basis-auto" style={{ minWidth: '150px' }}>
               <div className="form-label fw-semibold" >Command</div>
-              <p className="fw-5 mb-0">{unitDetail?.fds?.command || "--"}</p>
+              <p className="fw-5 mb-0">{unitDetail?.fds?.command ?? "--"}</p>
             </div>
 
             <div className="text-center flex-grow-1 flex-sm-grow-0 flex-basis-100 flex-sm-basis-auto" style={{ minWidth: '150px' }}>
               <div className="form-label fw-semibold" >Unit Name</div>
-              <p className="fw-5 mb-0">{unitDetail?.unit_name || "--"}</p>
+              <p className="fw-5 mb-0">{unitDetail?.unit_name ?? "--"}</p>
             </div>
           </div>
         </div>
@@ -150,7 +150,7 @@ const UnitClarificationDetail = () => {
                       <td style={{ width: 200 }}>{renderedUploadContent}</td>
                       <td style={{ width: 200 }}>
                         <p className="fw-4">
-                          {param.clarification_details?.reviewer_comment || "—"}
+                          {param.clarification_details?.reviewer_comment ?? "—"}
                         </p>
                       </td>
                       <td style={{ width: 200 }}>

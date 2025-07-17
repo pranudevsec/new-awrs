@@ -57,7 +57,7 @@ const commandPanelSlice = createSlice({
       getScoreBoards.fulfilled,
       (state, action: PayloadAction<CommandPanelResponse>) => {
         state.loading = false;
-        state.scoreboard = action.payload.data || [];
+        state.scoreboard = action.payload.data ?? [];
         state.meta = action.payload.meta;
       }
     );
@@ -65,7 +65,7 @@ const commandPanelSlice = createSlice({
       getScoreBoards.rejected,
       (state, action: PayloadAction<any>) => {
         state.loading = false;
-        state.error = action.payload || "Failed to fetch scoreboard";
+        state.error = action.payload ?? "Failed to fetch scoreboard";
       }
     );
 
@@ -84,7 +84,7 @@ const commandPanelSlice = createSlice({
       getDashboardStats.rejected,
       (state, action: PayloadAction<any>) => {
         state.loading = false;
-        state.error = action.payload || "Something went wrong!";
+        state.error = action.payload ?? "Something went wrong!";
       }
     );
 
@@ -103,7 +103,7 @@ const commandPanelSlice = createSlice({
       getDashboardUnitScores.rejected,
       (state, action: PayloadAction<any>) => {
         state.loading = false;
-        state.error = action.payload || "Something went wrong!";
+        state.error = action.payload ?? "Something went wrong!";
       }
     );
 
@@ -122,7 +122,7 @@ const commandPanelSlice = createSlice({
       getHomeCountStats.rejected,
       (state, action: PayloadAction<any>) => {
         state.loading = false;
-        state.error = action.payload || "Failed to fetch home count data.";
+        state.error = action.payload ?? "Failed to fetch home count data.";
       }
     );
   },

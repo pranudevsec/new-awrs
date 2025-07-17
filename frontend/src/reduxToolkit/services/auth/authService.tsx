@@ -17,7 +17,7 @@ export const reqToLogin = createAsyncThunk<LoginResponse, LoginRequest>(
         return rejectWithValue(response.data.message);
       }
     } catch (error: any) {
-      toast.error(error.response.data.errors || error.response.data.message || 'An error occurred during login.');
+      toast.error(error.response.data.errors ?? error.response.data.message ?? 'An error occurred during login.');
       return rejectWithValue('Login failed due to an error.');
     }
   }
@@ -36,7 +36,7 @@ export const reqToSignUp = createAsyncThunk<SignUpResponse, SignUpRequest>(
         return rejectWithValue(response.data.message);
       }
     } catch (error: any) {
-      toast.error(error.response.data.errors || error.response.data.message || 'An error occurred during sign up.');
+      toast.error(error.response.data.errors ?? error.response.data.message ?? 'An error occurred during sign up.');
       return rejectWithValue('Sign up failed due to an error.');
     }
   }
@@ -54,7 +54,7 @@ export const getProfile = createAsyncThunk<ProfileResponse>(
         return rejectWithValue(response.data.message);
       }
     } catch (error: any) {
-      toast.error(error.response?.data?.message || 'Error fetching profile.');
+      toast.error(error.response?.data?.message ?? 'Error fetching profile.');
       return rejectWithValue('Failed to fetch profile.');
     }
   }
@@ -72,11 +72,11 @@ export const reqToUpdateUnitProfile = createAsyncThunk<
         toast.success('Unit profile updated successfully!');
         return response.data;
       } else {
-        toast.error(response.data.message || 'Failed to update unit profile.');
+        toast.error(response.data.message ?? 'Failed to update unit profile.');
         return rejectWithValue(response.data.message);
       }
     } catch (error: any) {
-      toast.error(error.response?.data?.message || 'Error updating unit profile.');
+      toast.error(error.response?.data?.message ?? 'Error updating unit profile.');
       return rejectWithValue('Failed to update unit profile.');
     }
   }

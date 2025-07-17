@@ -55,7 +55,7 @@ const parameterSlice = createSlice({
       fetchParameters.rejected,
       (state, action: PayloadAction<any>) => {
         state.loading = false;
-        state.error = action.payload || "Failed to fetch parameters";
+        state.error = action.payload ?? "Failed to fetch parameters";
       }
     );
 
@@ -71,7 +71,7 @@ const parameterSlice = createSlice({
       deleteParameter.rejected,
       (state, action: PayloadAction<any>) => {
         state.loading = false;
-        state.error = action.payload || "Failed to delete parameters";
+        state.error = action.payload ?? "Failed to delete parameters";
       }
     );
   },

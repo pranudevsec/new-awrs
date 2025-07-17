@@ -18,12 +18,12 @@ import {
   approveMarks,
   fetchApplicationUnitDetail,
   updateApplication,
+  TokenValidation,
+  getSignedData
 } from "../../../reduxToolkit/services/application/applicationService";
 import { updateClarification } from "../../../reduxToolkit/services/clarification/clarificationService";
 import { baseURL } from "../../../reduxToolkit/helper/axios";
 import { useDebounce } from "../../../hooks/useDebounce";
-import { TokenValidation } from "../../../reduxToolkit/services/application/applicationService";
-import { getSignedData } from "../../../reduxToolkit/services/application/applicationService";
 import { updateCitation } from "../../../reduxToolkit/services/citation/citationService";
 import { updateAppreciation } from "../../../reduxToolkit/services/appreciation/appreciationService";
 
@@ -92,14 +92,14 @@ const ApplicationDetails = () => {
     negativeMarks: 0,
   });
 
-  const isUnitRole = ["unit", "cw2"].includes(profile?.user?.user_role || "");
+  const isUnitRole = ["unit", "cw2"].includes(profile?.user?.user_role ?? "");
   const isCW2Role = profile?.user?.user_role === "cw2";
   const isHeadquarter = profile?.user?.user_role === "headquarter";
   const roleHierarchy = ["unit", "brigade", "division", "corps", "command"];
   const role = profile?.user?.user_role?.toLowerCase() ?? "";
   const cw2_type = profile?.user?.cw2_type?.toLowerCase() ?? "";
   const lowerRole = roleHierarchy[roleHierarchy.indexOf(role) - 1] ?? null;
-  const award_type = searchParams.get("award_type") || "";
+  const award_type = searchParams.get("award_type") ?? "";
   const numericAppId = Number(application_id);
 
   if (role === "cw2" && Array.isArray(unitDetail?.fds?.applicationPriority)) {
@@ -154,7 +154,7 @@ const ApplicationDetails = () => {
 
       const approved = hasValidApproved ? Number(param.approved_marks) : null;
       const original = param.marks ?? 0;
-      const valueToCheck = approved !== null ? approved : original;
+      const valueToCheck = approved ?? original;
       return acc + (param.negative === true ? valueToCheck : 0);
     }, 0);
 
@@ -173,7 +173,7 @@ const ApplicationDetails = () => {
       const approved = hasValidApproved ? Number(param.approved_marks) : null;
       const original = param.marks ?? 0;
 
-      return acc + (approved !== null ? approved : original);
+      return acc + (approved ?? original);
     }, 0);
 
     let totalMarks = totalParameterMarks + Number(graceMarks ?? 0) - negativeMarks;
@@ -189,7 +189,7 @@ const ApplicationDetails = () => {
   };
 
   useEffect(() => {
-    const parameters = unitDetail?.fds?.parameters || [];
+    const parameters = unitDetail?.fds?.parameters ?? [];
     const stats = calculateParameterStats(parameters);
     setParamStats(stats);
   }, [unitDetail, graceMarks]);
@@ -202,7 +202,7 @@ const ApplicationDetails = () => {
       unitDetail.fds.parameters.forEach((param: any) => {
         initialMarks[param.name] = param.approved_marks ?? "";
 
-        const matchingComments = (param.comments || []).filter(
+        const matchingComments = (param.comments ?? []).filter(
           (c: any) =>
             c.commented_by_role === profile?.user?.user_role &&
             c.commented_by_role_type === profile?.user?.cw2_type
@@ -212,7 +212,7 @@ const ApplicationDetails = () => {
           const latest = matchingComments.reduce((a: any, b: any) =>
             new Date(a.commented_at) > new Date(b.commented_at) ? a : b
           );
-          initialComments[param.name] = latest.comment || "";
+          initialComments[param.name] = latest.comment ?? "";
         } else {
           initialComments[param.name] = "";
         }
@@ -227,8 +227,8 @@ const ApplicationDetails = () => {
     if (marks === undefined) return;
 
     const body = {
-      type: unitDetail?.type || "citation",
-      application_id: unitDetail?.id || 0,
+      type: unitDetail?.type ?? "citation",
+      application_id: unitDetail?.id ?? 0,
       parameters: [{ name: paramName, approved_marks: marks }],
     };
 
@@ -265,7 +265,7 @@ const ApplicationDetails = () => {
         (r: any) => r.remark_added_by_role?.toLowerCase() === role
       );
       if (existing) {
-        setUnitRemarks(existing.remarks || "");
+        setUnitRemarks(existing.remarks ?? "");
       }
     }
   }, [unitDetail?.remarks, role]);
@@ -282,8 +282,8 @@ const ApplicationDetails = () => {
     }
 
     const body = {
-      type: unitDetail?.type || "citation",
-      application_id: unitDetail?.id || 0,
+      type: unitDetail?.type ?? "citation",
+      application_id: unitDetail?.id ?? 0,
       remark: value,
       parameters: [],
     };
@@ -297,7 +297,7 @@ const ApplicationDetails = () => {
 
   const currentRoleIndex = hierarchy.indexOf(role?.toLowerCase());
   const lowerRoles = hierarchy.slice(0, currentRoleIndex)
-  const roleMarksMap = unitDetail?.fds?.applicationGraceMarks || [];
+  const roleMarksMap = unitDetail?.fds?.applicationGraceMarks ?? [];
 
   const displayedMarks = lowerRoles
     .map((r) => {
@@ -312,8 +312,8 @@ const ApplicationDetails = () => {
     if (!comment) return;
 
     const body: any = {
-      type: unitDetail?.type || "citation",
-      application_id: unitDetail?.id || 0,
+      type: unitDetail?.type ?? "citation",
+      application_id: unitDetail?.id ?? 0,
     };
 
     if (paramName === "__application__") {
@@ -336,8 +336,8 @@ const ApplicationDetails = () => {
     }
 
     const body = {
-      type: unitDetail?.type || "citation",
-      application_id: unitDetail?.id || 0,
+      type: unitDetail?.type ?? "citation",
+      application_id: unitDetail?.id ?? 0,
       applicationPriorityPoints: priorityPoints,
       parameters: [],
     };
@@ -346,6 +346,7 @@ const ApplicationDetails = () => {
       await dispatch(approveMarks(body)).unwrap();
       toast.success("Priority updated successfully");
     } catch (error) {
+      console.log("error -> ", error);
       toast.error("Failed to update priority");
     }
   };
@@ -376,13 +377,13 @@ const ApplicationDetails = () => {
     if (param.name != "no") {
       return {
         main: param.name,
-        header: param.subcategory || null,
-        subheader: param.subsubcategory || null,
+        header: param.subcategory ?? null,
+        subheader: param.subsubcategory ?? null,
       };
     } else if (param.subsubcategory) {
       return {
         main: param.subsubcategory,
-        header: param.subcategory || null,
+        header: param.subcategory ?? null,
         subheader: null,
       };
     } else if (param.subcategory) {
@@ -612,8 +613,8 @@ const ApplicationDetails = () => {
                 ) : (
                   <button
                     onClick={() => {
-                      setClarificationType(unitDetail?.type || "");
-                      setClarificationApplicationId(unitDetail?.id || 0);
+                      setClarificationType(unitDetail?.type ?? "");
+                      setClarificationApplicationId(unitDetail?.id ?? 0);
                       setClarificationParameterName(param.name);
                       setClarificationParameterId(param.id);
                       setClarificationDocForView(
@@ -701,7 +702,7 @@ const ApplicationDetails = () => {
             >
               <div className="form-label fw-semibold">Cycle Period</div>
               <p className="fw-5 mb-0">
-                {unitDetail?.fds?.cycle_period || "--"}
+                {unitDetail?.fds?.cycle_period ?? "--"}
               </p>
             </div>
 
@@ -710,7 +711,7 @@ const ApplicationDetails = () => {
               style={{ minWidth: "150px" }}
             >
               <div className="form-label fw-semibold">Last Date</div>
-              <p className="fw-5 mb-0">{unitDetail?.fds?.last_date || "--"}</p>
+              <p className="fw-5 mb-0">{unitDetail?.fds?.last_date ?? "--"}</p>
             </div>
 
             <div
@@ -718,7 +719,7 @@ const ApplicationDetails = () => {
               style={{ minWidth: "150px" }}
             >
               <div className="form-label fw-semibold">Command</div>
-              <p className="fw-5 mb-0">{unitDetail?.fds?.command || "--"}</p>
+              <p className="fw-5 mb-0">{unitDetail?.fds?.command ?? "--"}</p>
             </div>
 
             <div
@@ -726,7 +727,7 @@ const ApplicationDetails = () => {
               style={{ minWidth: "150px" }}
             >
               <div className="form-label fw-semibold">Unit Name</div>
-              <p className="fw-5 mb-0">{unitDetail?.unit_name || "--"}</p>
+              <p className="fw-5 mb-0">{unitDetail?.unit_name ?? "--"}</p>
             </div>
           </div>
         </div>
@@ -826,54 +827,52 @@ const ApplicationDetails = () => {
           </table>
         </div>
         {!isUnitRole && (
-          <>
-            <ul
-              style={{
-                listStyleType: "none",
-                display: "flex",
-                alignItems: "center",
-                gap: "10px",
-                flexWrap: "wrap",
-                padding: 0,
-                marginBottom: "16px",
-              }}
-            >
-              {/* Unit Remark */}
-              {unitDetail?.fds?.unitRemarks && (
+          <ul
+            style={{
+              listStyleType: "none",
+              display: "flex",
+              alignItems: "center",
+              gap: "10px",
+              flexWrap: "wrap",
+              padding: 0,
+              marginBottom: "16px",
+            }}
+          >
+            {/* Unit Remark */}
+            {unitDetail?.fds?.unitRemarks && (
+              <li
+                style={{
+                  padding: "8px 12px",
+                  backgroundColor: "#e8f0fe",
+                  borderRadius: "6px",
+                  boxShadow: "0 1px 2px rgba(0,0,0,0.05)",
+                  fontSize: "14px",
+                  color: "#333",
+                }}
+              >
+                <strong>Unit:</strong> {unitDetail.fds.unitRemarks}
+              </li>
+            )}
+
+            {/* Other Remarks */}
+            {Array.isArray(unitDetail?.remarks) &&
+              unitDetail.remarks.map((item: any) => (
                 <li
+                  key={item?.remarks}
                   style={{
                     padding: "8px 12px",
-                    backgroundColor: "#e8f0fe",
+                    backgroundColor: "#f9f9f9",
                     borderRadius: "6px",
                     boxShadow: "0 1px 2px rgba(0,0,0,0.05)",
                     fontSize: "14px",
                     color: "#333",
                   }}
                 >
-                  <strong>Unit:</strong> {unitDetail.fds.unitRemarks}
+                  <strong>{item?.remark_added_by_role}:</strong>{" "}
+                  {item?.remarks}
                 </li>
-              )}
-
-              {/* Other Remarks */}
-              {Array.isArray(unitDetail?.remarks) &&
-                unitDetail.remarks.map((item: any) => (
-                  <li
-                    key={item?.remarks}
-                    style={{
-                      padding: "8px 12px",
-                      backgroundColor: "#f9f9f9",
-                      borderRadius: "6px",
-                      boxShadow: "0 1px 2px rgba(0,0,0,0.05)",
-                      fontSize: "14px",
-                      color: "#333",
-                    }}
-                  >
-                    <strong>{item?.remark_added_by_role}:</strong>{" "}
-                    {item?.remarks}
-                  </li>
-                ))}
-            </ul>
-          </>
+              ))}
+          </ul>
         )}
 
         {!isUnitRole && (
@@ -965,10 +964,10 @@ const ApplicationDetails = () => {
                           .filter((m) => m.member_type === "member_officer")
                           .sort(
                             (a, b) =>
-                              Number(a.member_order || 0) - Number(b.member_order || 0)
+                              Number(a.member_order ?? 0) - Number(b.member_order ?? 0)
                           ),
                       ].map((member) => {
-                        const acceptedMembers = unitDetail?.fds?.accepted_members || [];
+                        const acceptedMembers = unitDetail?.fds?.accepted_members ?? [];
                         const foundMember = acceptedMembers.find(
                           (m: any) => m.member_id === member.id
                         );
@@ -981,8 +980,8 @@ const ApplicationDetails = () => {
                                 ? "Presiding Officer"
                                 : "Member Officer"}
                             </td>
-                            <td>{member.name || "-"}</td>
-                            <td>{member.rank || "-"}</td>
+                            <td>{member.name ?? "-"}</td>
+                            <td>{member.rank ?? "-"}</td>
                             <td>
                               <div className="d-flex flex-sm-row flex-column gap-sm-3 gap-1 align-items-center">
                                 {member.member_type === "presiding_officer" &&
@@ -1047,18 +1046,16 @@ const ApplicationDetails = () => {
               )}
 
               {isHeadquarter && (
-                <>
-                  <button
-                    type="button"
-                    className="_btn success"
-                    onClick={() => {
-                      setReviewCommentsShow(true);
-                      setReviewCommentsData(unitDetail?.fds?.comments);
-                    }}
-                  >
-                    Review Comments
-                  </button>
-                </>
+                <button
+                  type="button"
+                  className="_btn success"
+                  onClick={() => {
+                    setReviewCommentsShow(true);
+                    setReviewCommentsData(unitDetail?.fds?.comments);
+                  }}
+                >
+                  Review Comments
+                </button>
               )}
             </div>
           </div>
@@ -1238,11 +1235,11 @@ const ApplicationDetails = () => {
                           .filter((m) => m.member_type === "member_officer")
                           .sort(
                             (a, b) =>
-                              Number(a.member_order || 0) - Number(b.member_order || 0)
+                              Number(a.member_order ?? 0) - Number(b.member_order ?? 0)
                           )
                       ].map((member) => {
                         const acceptedMembers =
-                          unitDetail?.fds?.accepted_members || [];
+                          unitDetail?.fds?.accepted_members ?? [];
                         const foundMember = acceptedMembers.find(
                           (m: any) => m.member_id === member.id
                         );
@@ -1256,8 +1253,8 @@ const ApplicationDetails = () => {
                                 ? "Presiding Officer"
                                 : "Member Officer"}
                             </td>
-                            <td>{member.name || "-"}</td>
-                            <td>{member.rank || "-"}</td>
+                            <td>{member.name ?? "-"}</td>
+                            <td>{member.rank ?? "-"}</td>
                             <td>
                               <div className="d-flex flex-sm-row flex-column gap-sm-3 gap-1 align-items-center">
                                 {member.member_type === "presiding_officer" &&

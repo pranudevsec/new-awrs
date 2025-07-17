@@ -43,7 +43,7 @@ const ApplicationsList = () => {
     const fetchData = async () => {
       const role = profile.user.user_role;
       const params = {
-        award_type: awardType || '',
+        award_type: awardType ?? '',
         search: debouncedSearch,
         page,
         limit,
@@ -60,7 +60,7 @@ const ApplicationsList = () => {
         try {
           await dispatch(fetchSubordinates(updatedParams)).unwrap();
         } catch (error: any) {
-          const errorMessage = error?.errors || error?.message || "An error occurred.";
+          const errorMessage = error?.errors ?? error?.message ?? "An error occurred.";
 
           if (error?.errors === "Please complete your unit profile before proceeding.") {
             navigate("/profile-settings");
@@ -106,7 +106,7 @@ const ApplicationsList = () => {
           name="awardType"
           options={awardTypeOptions}
           value={awardTypeOptions.find((opt) => opt.value === awardType) || null}
-          onChange={(option) => setAwardType(option?.value || null)}
+          onChange={(option) => setAwardType(option?.value ?? null)}
           placeholder="Select Type"
         />
       </div>
@@ -214,7 +214,7 @@ const ApplicationsList = () => {
           </tbody>
         </table>
       </div>
-      
+
       {/* Empty Data */}
       {!loading && units.length === 0 && <EmptyTable />}
 

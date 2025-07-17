@@ -87,7 +87,7 @@ const Login = () => {
     });
 
     const handleRoleChange = (selectedOption: any) => {
-        const role = selectedOption?.value || "";
+        const role = selectedOption?.value ?? "";
         formik.setFieldValue("user_role", role);
 
         if (role !== "cw2") {
@@ -104,7 +104,7 @@ const Login = () => {
     };
 
     const handleCw2TypeChange = (selectedOption: any) => {
-        const cw2_type = selectedOption?.value || "";
+        const cw2_type = selectedOption?.value ?? "";
         formik.setFieldValue("cw2_type", cw2_type);
 
         const key = `cw2_${cw2_type}`;

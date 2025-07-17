@@ -92,7 +92,7 @@ const ApplyAppreciation = () => {
   const categoryRefs = useRef<{ [key: string]: HTMLDivElement | null }>({});
 
   const [searchParams] = useSearchParams();
-  const id = searchParams.get("id") || "";
+  const id = searchParams.get("id") ?? "";
 
   const { draftData } = useAppSelector((state) => state.appreciation);
   const { profile } = useAppSelector((state) => state.admin);
@@ -114,13 +114,13 @@ const ApplyAppreciation = () => {
   const [activeTab, setActiveTab] = useState(Object.keys(groupedParams)[0] || "");
   const [uploadedFiles, setUploadedFiles] = useState<Record<number, string[]>>(() => {
     try {
-      return JSON.parse(localStorage.getItem(DRAFT_FILE_UPLOAD_KEY) || "{}");
+      return JSON.parse(localStorage.getItem(DRAFT_FILE_UPLOAD_KEY) ?? "{}");
     } catch {
       return {};
     }
   });
   const [unitRemarks, setUnitRemarks] = useState(() => {
-    return localStorage.getItem("applyAppreciationUnitRemarks") || "";
+    return localStorage.getItem("applyAppreciationUnitRemarks") ?? "";
   });
 
   useEffect(() => {
@@ -211,12 +211,12 @@ const ApplyAppreciation = () => {
       draftData.appre_fds.parameters.forEach((param: any, index: number) => {
         if (param.upload) {
           if (Array.isArray(param.upload)) {
-            uploads[param.param_id || index] = param.upload;
+            uploads[param.param_id ?? index] = param.upload;
           } else if (typeof param.upload === "string") {
             if (param.upload.includes(",")) {
-              uploads[param.param_id || index] = param.upload.split(",").map((u: any) => u.trim());
+              uploads[param.param_id ?? index] = param.upload.split(",").map((u: any) => u.trim());
             } else {
-              uploads[param.param_id || index] = [param.upload.trim()];
+              uploads[param.param_id ?? index] = [param.upload.trim()];
             }
           }
         }
@@ -500,6 +500,8 @@ const ApplyAppreciation = () => {
         setUploadedFiles({});
         navigate("/submitted-forms/list");
       } catch (error) {
+        console.log("error -> ", error);
+
       }
     } else {
       localStorage.removeItem(DRAFT_STORAGE_KEY);
@@ -512,7 +514,7 @@ const ApplyAppreciation = () => {
   };
 
   const handlePreviewClick = () => {
-    const uploadedDocs = JSON.parse(localStorage.getItem(DRAFT_FILE_UPLOAD_KEY) || "{}");
+    const uploadedDocs = JSON.parse(localStorage.getItem(DRAFT_FILE_UPLOAD_KEY) ?? "{}");
 
 
     const missingUploads = parameters.filter((param: any) => {
@@ -541,13 +543,13 @@ const ApplyAppreciation = () => {
     if (param.name != "no") {
       return {
         main: param.name,
-        header: param.subcategory || null,
-        subheader: param.subsubcategory || null,
+        header: param.subcategory ?? null,
+        subheader: param.subsubcategory ?? null,
       };
     } else if (param.subsubcategory) {
       return {
         main: param.subsubcategory,
-        header: param.subcategory || null,
+        header: param.subcategory ?? null,
         subheader: null,
       };
     } else if (param.subcategory) {
@@ -731,7 +733,7 @@ const ApplyAppreciation = () => {
                 <FormInput
                   label="Command"
                   name="command"
-                  value={profile?.unit?.comd || "--"}
+                  value={profile?.unit?.comd ?? "--"}
                   onChange={formik.handleChange}
                   readOnly
                 />

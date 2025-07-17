@@ -27,7 +27,7 @@ const ClarificationRaisedList = () => {
     if (!profile?.user?.user_role) return;
 
     const fetchData = () => {
-      const params = { award_type: awardType || '', search, page, limit };
+      const params = { award_type: awardType ?? '', search, page, limit };
       if (profile.user.user_role !== 'unit') {
         dispatch(fetchSubordinates(params));
       } else {
@@ -74,7 +74,7 @@ const ClarificationRaisedList = () => {
           options={awardTypeOptions}
           value={awardTypeOptions.find((opt) => opt.value === awardType) || null}
           placeholder="Select Type"
-          onChange={(option) => setAwardType(option?.value || null)}
+          onChange={(option) => setAwardType(option?.value ?? null)}
         />
       </div>
 
@@ -147,7 +147,7 @@ const ClarificationRaisedList = () => {
           </tbody>
         </table>
       </div>
-      
+
       {/* Empty Data */}
       {!loading && filteredUnits.length === 0 && <EmptyTable />}
 

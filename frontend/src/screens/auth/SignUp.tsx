@@ -76,7 +76,7 @@ const SignUp = () => {
                                             onChange={(selectedOption) =>
                                                 formik.setFieldValue(
                                                     "user_role",
-                                                    selectedOption?.value || ""
+                                                    selectedOption?.value ?? ""
                                                 )
                                             }
                                             placeholder="Select"

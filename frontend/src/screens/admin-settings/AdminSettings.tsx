@@ -23,7 +23,7 @@ const AdminSettings = () => {
     initialValues: {
       lastDate: config?.deadline ? config.deadline.split("T")[0] : "",
       cycle_period: config?.cycle_period || [],
-      current_cycle_period: config?.current_cycle_period || "",
+      current_cycle_period: config?.current_cycle_period ?? "",
     },
     enableReinitialize: true,
     validationSchema: AdminSettingSchema,

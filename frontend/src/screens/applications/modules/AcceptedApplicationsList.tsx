@@ -66,7 +66,7 @@ const AcceptedApplicationsList = () => {
         initialValues[unitId] = {};
       }
 
-      initialValues[unitId][unitType] = found?.priority?.toString() || "";
+      initialValues[unitId][unitType] = found?.priority?.toString() ?? "";
     });
 
     setPriorityValues(initialValues);
@@ -82,7 +82,7 @@ const AcceptedApplicationsList = () => {
 
   const fetchData = () => {
     const params = {
-      award_type: awardType || "",
+      award_type: awardType ??"",
       search: debouncedSearch,
       page,
       limit,
@@ -127,7 +127,7 @@ const AcceptedApplicationsList = () => {
       const approved = hasValidApproved ? Number(param.approved_marks) : null;
       const original = Number(param?.marks ?? 0);
 
-      return acc + (approved !== null ? approved : original);
+      return acc + (approved ?? original);
     }, 0);
 
     return totalParameterMarks + graceMarks;
@@ -149,8 +149,8 @@ const AcceptedApplicationsList = () => {
     }
 
     const body = {
-      type: unitDetail?.type || "citation",
-      application_id: unitDetail?.id || 0,
+      type: unitDetail?.type ?? "citation",
+      application_id: unitDetail?.id ?? 0,
       applicationPriorityPoints: priorityPoints,
       parameters: [],
     };
@@ -160,8 +160,10 @@ const AcceptedApplicationsList = () => {
       fetchData();
       toast.success("Priority updated successfully");
     } catch (error) {
+      console.error("approveMarks error:", error);
       toast.error("Failed to update priority");
     }
+
   };
 
   const handleBulkApprove = async () => {
@@ -200,7 +202,7 @@ const AcceptedApplicationsList = () => {
         )
       );
       const params = {
-        award_type: awardType || "",
+        award_type: awardType ?? "",
         search: debouncedSearch,
         page,
         limit,
@@ -209,6 +211,7 @@ const AcceptedApplicationsList = () => {
 
       dispatch(fetchSubordinates(params));
     } catch (err) {
+      console.error("error:", err)
       toast.error("One or more approvals failed");
     }
   };
@@ -228,7 +231,7 @@ const AcceptedApplicationsList = () => {
         initialGraceValues[unitId] = {};
       }
 
-      initialGraceValues[unitId][unitType] = found?.marks?.toString() || "";
+      initialGraceValues[unitId][unitType] = found?.marks?.toString() ?? "";
     });
 
     setGraceMarksValues(initialGraceValues);
@@ -402,22 +405,22 @@ const AcceptedApplicationsList = () => {
                   </td>
 
                   <td style={{ width: 200, minWidth: 200, maxWidth: 200 }}>
-                    <p className="fw-4">{unit.unit_details?.name || "-"}</p>
+                    <p className="fw-4">{unit.unit_details?.name ?? "-"}</p>
                   </td>
                   <td style={{ width: 200, minWidth: 200, maxWidth: 200 }}>
-                    <p className="fw-4">{unit.unit_details?.location || "-"}</p>
+                    <p className="fw-4">{unit.unit_details?.location ?? "-"}</p>
                   </td>
                   <td style={{ width: 150, minWidth: 150, maxWidth: 150 }}>
-                    <p className="fw-4">{unit.unit_details?.bde || "-"}</p>
+                    <p className="fw-4">{unit.unit_details?.bde ?? "-"}</p>
                   </td>
                   <td style={{ width: 150, minWidth: 150, maxWidth: 150 }}>
-                    <p className="fw-4">{unit.unit_details?.div || "-"}</p>
+                    <p className="fw-4">{unit.unit_details?.div ?? "-"}</p>
                   </td>
                   <td style={{ width: 150, minWidth: 150, maxWidth: 150 }}>
-                    <p className="fw-4">{unit.unit_details?.corps || "-"}</p>
+                    <p className="fw-4">{unit.unit_details?.corps ?? "-"}</p>
                   </td>
                   <td style={{ width: 150, minWidth: 150, maxWidth: 150 }}>
-                    <p className="fw-4">{unit.unit_details?.comd || "-"}</p>
+                    <p className="fw-4">{unit.unit_details?.comd ?? "-"}</p>
                   </td>
                   {/* Tenure */}
                   <td style={{ width: 150, minWidth: 150, maxWidth: 150 }}>
@@ -450,7 +453,7 @@ const AcceptedApplicationsList = () => {
                           (sum: number, p: { marks: number }) =>
                             sum + (p.marks || 0),
                           0
-                        ) || "-"}
+                        ) ?? "-"}
                     </p>
                   </td>
 
@@ -471,11 +474,11 @@ const AcceptedApplicationsList = () => {
                           (sum: number, p: { marks: number }) =>
                             sum + (p.marks || 0),
                           0
-                        ) || "-"}
+                        ) ?? "-"}
                     </p>
                   </td>
                   <td style={{ width: 200, minWidth: 200, maxWidth: 200 }}>
-                    <p className="fw-4">{unit?.totalNegativeMarks || "-"}</p>
+                    <p className="fw-4">{unit?.totalNegativeMarks ?? "-"}</p>
                   </td>
                   {allowedRoles.map((role) => (
                     <td
@@ -599,6 +602,7 @@ const AcceptedApplicationsList = () => {
                               ).unwrap();
                               navigate("/applications/list");
                             } catch (error) {
+                              console.log("error ->", error)
                               toast.error("Error while approving the application.");
                             }
                           }}
@@ -632,7 +636,7 @@ const AcceptedApplicationsList = () => {
           </tbody>
         </table>
       </div>
-      
+
       {/* Empty Data */}
       {!loading && units.length === 0 && <EmptyTable />}
 

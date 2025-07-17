@@ -39,7 +39,7 @@ const History = () => {
 
     const fetchData = async () => {
       const params = {
-        award_type: awardType || "",
+        award_type: awardType ?? "",
         search: debouncedSearch,
         page,
         limit,
@@ -48,7 +48,7 @@ const History = () => {
       try {
         await dispatch(fetchAllApplications(params)).unwrap();
       } catch (error: any) {
-        const errorMessage = error?.errors || error?.message || "An error occurred.";
+        const errorMessage = error?.errors ?? error?.message ?? "An error occurred.";
 
         if (error?.errors === "Please complete your unit profile before proceeding.") {
           navigate("/profile-settings");
@@ -94,7 +94,7 @@ const History = () => {
             options={awardTypeOptions}
             value={awardTypeOptions.find((opt) => opt.value === awardType) || null}
             placeholder="Select Type"
-            onChange={(option) => setAwardType(option?.value || null)}
+            onChange={(option) => setAwardType(option?.value ?? null)}
           />
         </div>
       </div>

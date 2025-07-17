@@ -14,12 +14,12 @@ import {
     approveMarks,
     fetchApplicationUnitDetail,
     updateApplication,
+    TokenValidation,
+    getSignedData
 } from "../../../reduxToolkit/services/application/applicationService";
 import { updateClarification } from "../../../reduxToolkit/services/clarification/clarificationService";
 import { baseURL } from "../../../reduxToolkit/helper/axios";
 import { useDebounce } from "../../../hooks/useDebounce";
-import { TokenValidation } from "../../../reduxToolkit/services/application/applicationService";
-import { getSignedData } from "../../../reduxToolkit/services/application/applicationService";
 import { updateCitation } from "../../../reduxToolkit/services/citation/citationService";
 import { updateAppreciation } from "../../../reduxToolkit/services/appreciation/appreciationService";
 
@@ -73,14 +73,14 @@ const SubmittedFormDetail = () => {
         negativeMarks: 0,
     });
 
-    const isUnitRole = ["unit", "cw2"].includes(profile?.user?.user_role || "");
+    const isUnitRole = ["unit", "cw2"].includes(profile?.user?.user_role ?? "");
     const isCW2Role = profile?.user?.user_role === "cw2";
     const isHeadquarter = profile?.user?.user_role === "headquarter";
     const roleHierarchy = ["unit", "brigade", "division", "corps", "command"];
     const role = profile?.user?.user_role?.toLowerCase() ?? "";
     const cw2_type = profile?.user?.cw2_type?.toLowerCase() ?? "";
     const lowerRole = roleHierarchy[roleHierarchy.indexOf(role) - 1] ?? null;
-    const award_type = searchParams.get("award_type") || "";
+    const award_type = searchParams.get("award_type") ?? "";
     const numericAppId = Number(application_id);
 
     if (role === "cw2" && Array.isArray(unitDetail?.fds?.applicationPriority)) {
@@ -134,7 +134,7 @@ const SubmittedFormDetail = () => {
 
             const approved = hasValidApproved ? Number(param.approved_marks) : null;
             const original = param.marks ?? 0;
-            const valueToCheck = approved !== null ? approved : original;
+            const valueToCheck = approved ?? original;
             return acc + (param.negative === true ? valueToCheck : 0);
         }, 0);
 
@@ -153,7 +153,7 @@ const SubmittedFormDetail = () => {
             const approved = hasValidApproved ? Number(param.approved_marks) : null;
             const original = param.marks ?? 0;
 
-            return acc + (approved !== null ? approved : original);
+            return acc + (approved ?? original);
         }, 0);
 
         let totalMarks = totalParameterMarks + Number(graceMarks ?? 0) - negativeMarks;
@@ -169,7 +169,7 @@ const SubmittedFormDetail = () => {
     };
 
     useEffect(() => {
-        const parameters = unitDetail?.fds?.parameters || [];
+        const parameters = unitDetail?.fds?.parameters ?? [];
         const stats = calculateParameterStats(parameters);
         setParamStats(stats);
     }, [unitDetail, graceMarks]);
@@ -182,7 +182,7 @@ const SubmittedFormDetail = () => {
             unitDetail.fds.parameters.forEach((param: any) => {
                 initialMarks[param.name] = param.approved_marks ?? "";
 
-                const matchingComments = (param.comments || []).filter(
+                const matchingComments = (param.comments ?? []).filter(
                     (c: any) =>
                         c.commented_by_role === profile?.user?.user_role &&
                         c.commented_by_role_type === profile?.user?.cw2_type
@@ -192,7 +192,7 @@ const SubmittedFormDetail = () => {
                     const latest = matchingComments.reduce((a: any, b: any) =>
                         new Date(a.commented_at) > new Date(b.commented_at) ? a : b
                     );
-                    initialComments[param.name] = latest.comment || "";
+                    initialComments[param.name] = latest.comment ?? "";
                 } else {
                     initialComments[param.name] = "";
                 }
@@ -207,8 +207,8 @@ const SubmittedFormDetail = () => {
         if (marks === undefined) return;
 
         const body = {
-            type: unitDetail?.type || "citation",
-            application_id: unitDetail?.id || 0,
+            type: unitDetail?.type ?? "citation",
+            application_id: unitDetail?.id ?? 0,
             parameters: [{ name: paramName, approved_marks: marks }],
         };
 
@@ -244,7 +244,7 @@ const SubmittedFormDetail = () => {
                 (r: any) => r.remark_added_by_role?.toLowerCase() === role
             );
             if (existing) {
-                setUnitRemarks(existing.remarks || "");
+                setUnitRemarks(existing.remarks ?? "");
             }
         }
     }, [unitDetail?.remarks, role]);
@@ -259,8 +259,8 @@ const SubmittedFormDetail = () => {
             setRemarksError(null);
         }
         const body = {
-            type: unitDetail?.type || "citation",
-            application_id: unitDetail?.id || 0,
+            type: unitDetail?.type ?? "citation",
+            application_id: unitDetail?.id ?? 0,
             remark: value,
             parameters: [],
         };
@@ -275,7 +275,7 @@ const SubmittedFormDetail = () => {
     const currentRoleIndex = hierarchy.indexOf(role?.toLowerCase());
 
     const lowerRoles = hierarchy.slice(0, currentRoleIndex);
-    const roleMarksMap = unitDetail?.fds?.applicationGraceMarks || [];
+    const roleMarksMap = unitDetail?.fds?.applicationGraceMarks ?? [];
 
     const displayedMarks = lowerRoles
         .map((r) => {
@@ -290,8 +290,8 @@ const SubmittedFormDetail = () => {
         if (!comment) return;
 
         const body: any = {
-            type: unitDetail?.type || "citation",
-            application_id: unitDetail?.id || 0,
+            type: unitDetail?.type ?? "citation",
+            application_id: unitDetail?.id ?? 0,
         };
 
         if (paramName === "__application__") {
@@ -314,8 +314,8 @@ const SubmittedFormDetail = () => {
         }
 
         const body = {
-            type: unitDetail?.type || "citation",
-            application_id: unitDetail?.id || 0,
+            type: unitDetail?.type ?? "citation",
+            application_id: unitDetail?.id ?? 0,
             applicationPriorityPoints: priorityPoints,
             parameters: [],
         };
@@ -324,6 +324,7 @@ const SubmittedFormDetail = () => {
             await dispatch(approveMarks(body)).unwrap();
             toast.success("Priority updated successfully");
         } catch (error) {
+            console.log("error -> ", error);
             toast.error("Failed to update priority");
         }
     };
@@ -354,13 +355,13 @@ const SubmittedFormDetail = () => {
         if (param.name != "no") {
             return {
                 main: param.name,
-                header: param.subcategory || null,
-                subheader: param.subsubcategory || null,
+                header: param.subcategory ?? null,
+                subheader: param.subsubcategory ?? null,
             };
         } else if (param.subsubcategory) {
             return {
                 main: param.subsubcategory,
-                header: param.subcategory || null,
+                header: param.subcategory ?? null,
                 subheader: null,
             };
         } else if (param.subcategory) {
@@ -619,454 +620,459 @@ const SubmittedFormDetail = () => {
     if (loading) return <Loader />;
 
     return (
-        <>
-            <div className="apply-citation-section">
-                <div className="d-flex flex-sm-row flex-column align-items-sm-center justify-content-between mb-4">
-                    <Breadcrumb
-                        title={`Application ID: #${unitDetail?.id}`}
-                        paths={[
-                            { label: "Home", href: "/applications" },
-                            { label: "Applications", href: "/applications/list" },
-                            { label: "Application Details", href: "/applications/list/1" },
-                        ]}
-                    />
-                </div>
-                <div className="table-filter-area mb-4">
-                    <div className="d-flex flex-wrap justify-content-between align-items-center gap-3">
-                        <div
-                            className="text-center flex-grow-1 flex-sm-grow-0 flex-basis-100 flex-sm-basis-auto"
-                            style={{ minWidth: "150px" }}
-                        >
-                            <div className="form-label fw-semibold">Award Type</div>
-                            <p className="fw-5 mb-0">
-                                {unitDetail?.type
-                                    ? unitDetail.type.charAt(0).toUpperCase() +
-                                    unitDetail.type.slice(1)
-                                    : "--"}
-                            </p>
-                        </div>
+        <div className="apply-citation-section">
+            <div className="d-flex flex-sm-row flex-column align-items-sm-center justify-content-between mb-4">
+                <Breadcrumb
+                    title={`Application ID: #${unitDetail?.id}`}
+                    paths={[
+                        { label: "Home", href: "/applications" },
+                        { label: "Applications", href: "/applications/list" },
+                        { label: "Application Details", href: "/applications/list/1" },
+                    ]}
+                />
+            </div>
+            <div className="table-filter-area mb-4">
+                <div className="d-flex flex-wrap justify-content-between align-items-center gap-3">
+                    <div
+                        className="text-center flex-grow-1 flex-sm-grow-0 flex-basis-100 flex-sm-basis-auto"
+                        style={{ minWidth: "150px" }}
+                    >
+                        <div className="form-label fw-semibold">Award Type</div>
+                        <p className="fw-5 mb-0">
+                            {unitDetail?.type
+                                ? unitDetail.type.charAt(0).toUpperCase() +
+                                unitDetail.type.slice(1)
+                                : "--"}
+                        </p>
+                    </div>
 
-                        <div
-                            className="text-center flex-grow-1 flex-sm-grow-0 flex-basis-100 flex-sm-basis-auto"
-                            style={{ minWidth: "150px" }}
-                        >
-                            <div className="form-label fw-semibold">Cycle Period</div>
-                            <p className="fw-5 mb-0">
-                                {unitDetail?.fds?.cycle_period || "--"}
-                            </p>
-                        </div>
+                    <div
+                        className="text-center flex-grow-1 flex-sm-grow-0 flex-basis-100 flex-sm-basis-auto"
+                        style={{ minWidth: "150px" }}
+                    >
+                        <div className="form-label fw-semibold">Cycle Period</div>
+                        <p className="fw-5 mb-0">
+                            {unitDetail?.fds?.cycle_period ?? "--"}
+                        </p>
+                    </div>
 
-                        <div
-                            className="text-center flex-grow-1 flex-sm-grow-0 flex-basis-100 flex-sm-basis-auto"
-                            style={{ minWidth: "150px" }}
-                        >
-                            <div className="form-label fw-semibold">Last Date</div>
-                            <p className="fw-5 mb-0">{unitDetail?.fds?.last_date || "--"}</p>
-                        </div>
+                    <div
+                        className="text-center flex-grow-1 flex-sm-grow-0 flex-basis-100 flex-sm-basis-auto"
+                        style={{ minWidth: "150px" }}
+                    >
+                        <div className="form-label fw-semibold">Last Date</div>
+                        <p className="fw-5 mb-0">{unitDetail?.fds?.last_date ?? "--"}</p>
+                    </div>
 
-                        <div
-                            className="text-center flex-grow-1 flex-sm-grow-0 flex-basis-100 flex-sm-basis-auto"
-                            style={{ minWidth: "150px" }}
-                        >
-                            <div className="form-label fw-semibold">Command</div>
-                            <p className="fw-5 mb-0">{unitDetail?.fds?.command || "--"}</p>
-                        </div>
+                    <div
+                        className="text-center flex-grow-1 flex-sm-grow-0 flex-basis-100 flex-sm-basis-auto"
+                        style={{ minWidth: "150px" }}
+                    >
+                        <div className="form-label fw-semibold">Command</div>
+                        <p className="fw-5 mb-0">{unitDetail?.fds?.command ?? "--"}</p>
+                    </div>
 
-                        <div
-                            className="text-center flex-grow-1 flex-sm-grow-0 flex-basis-100 flex-sm-basis-auto"
-                            style={{ minWidth: "150px" }}
-                        >
-                            <div className="form-label fw-semibold">Unit Name</div>
-                            <p className="fw-5 mb-0">{unitDetail?.unit_name || "--"}</p>
-                        </div>
+                    <div
+                        className="text-center flex-grow-1 flex-sm-grow-0 flex-basis-100 flex-sm-basis-auto"
+                        style={{ minWidth: "150px" }}
+                    >
+                        <div className="form-label fw-semibold">Unit Name</div>
+                        <p className="fw-5 mb-0">{unitDetail?.unit_name ?? "--"}</p>
                     </div>
                 </div>
-                {unitDetail?.fds?.awards?.length > 0 && (
-                    <div className="mt-4">
-                        <h5 className="mb-3">Awards</h5>
-                        <div className="table-responsive">
-                            <table className="table-style-2 w-100">
-                                <thead>
-                                    <tr>
-                                        <th style={{ width: 150, minWidth: 150, maxWidth: 150 }}>
-                                            Type
-                                        </th>
-                                        <th style={{ width: 200, minWidth: 200, maxWidth: 200 }}>
-                                            Year
-                                        </th>
-                                        <th style={{ width: 300, minWidth: 300, maxWidth: 300 }}>
-                                            Title
-                                        </th>
+            </div>
+            {unitDetail?.fds?.awards?.length > 0 && (
+                <div className="mt-4">
+                    <h5 className="mb-3">Awards</h5>
+                    <div className="table-responsive">
+                        <table className="table-style-2 w-100">
+                            <thead>
+                                <tr>
+                                    <th style={{ width: 150, minWidth: 150, maxWidth: 150 }}>
+                                        Type
+                                    </th>
+                                    <th style={{ width: 200, minWidth: 200, maxWidth: 200 }}>
+                                        Year
+                                    </th>
+                                    <th style={{ width: 300, minWidth: 300, maxWidth: 300 }}>
+                                        Title
+                                    </th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {unitDetail?.fds?.awards?.map((award: any) => (
+                                    <tr key={award.award_id} className="cursor-auto">
+                                        <td style={{ width: 150, minWidth: 150, maxWidth: 150 }}>
+                                            <p className="fw-4 text-capitalize">
+                                                {award.award_type}
+                                            </p>
+                                        </td>
+                                        <td style={{ width: 200, minWidth: 200, maxWidth: 200 }}>
+                                            <p className="fw-4">{award.award_year}</p>
+                                        </td>
+                                        <td style={{ width: 300, minWidth: 300, maxWidth: 300 }}>
+                                            <p className="fw-4">{award.award_title}</p>
+                                        </td>
                                     </tr>
-                                </thead>
-                                <tbody>
-                                    {unitDetail?.fds?.awards?.map((award: any) => (
-                                        <tr key={award.award_id} className="cursor-auto">
-                                            <td style={{ width: 150, minWidth: 150, maxWidth: 150 }}>
-                                                <p className="fw-4 text-capitalize">
-                                                    {award.award_type}
-                                                </p>
-                                            </td>
-                                            <td style={{ width: 200, minWidth: 200, maxWidth: 200 }}>
-                                                <p className="fw-4">{award.award_year}</p>
-                                            </td>
-                                            <td style={{ width: 300, minWidth: 300, maxWidth: 300 }}>
-                                                <p className="fw-4">{award.award_title}</p>
-                                            </td>
-                                        </tr>
-                                    ))}
-                                </tbody>
-                            </table>
-                        </div>
+                                ))}
+                            </tbody>
+                        </table>
                     </div>
-                )}
-                <div className="table-responsive mt-4">
-                    <table className="table-style-1 w-100">
-                        <thead>
-                            <tr>
-                                <th style={{ width: 150 }}>Parameter</th>
-                                <th style={{ width: 100 }}>Count</th>
-                                <th style={{ width: 100 }}>Marks</th>
-                                <th style={{ width: 100 }}>Document</th>
-
-                                {!isUnitRole && !isHeadquarter && (
-                                    <>
-                                        <th style={{ width: 200 }}>Approved Marks</th>
-                                        {!isRaisedScreen && (
-                                            <th style={{ width: 150 }}>Ask Clarification</th>
-                                        )}
-                                        {isRaisedScreen && (
-                                            <>
-                                                <th style={{ width: 200 }}>Requested Clarification</th>
-                                                <th style={{ width: 150 }}>Action</th>{" "}
-                                            </>
-                                        )}
-                                    </>
-                                )}
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {(() => {
-                                let prevHeader: string | null = null;
-                                let prevSubheader: string | null = null;
-                                const rows: JSX.Element[] = [];
-
-                                unitDetail?.fds?.parameters?.forEach((param: any, index: number) => {
-                                    const display = getParamDisplay(param);
-
-                                    const showHeader = display.header && display.header !== prevHeader;
-                                    const showSubheader = display.subheader && display.subheader !== prevSubheader;
-
-                                    if (showHeader) {
-                                        rows.push(renderHeaderRow(display.header, index));
-                                    }
-
-                                    if (showSubheader) {
-                                        rows.push(renderSubHeaderRow(display.subheader, display.header, index));
-                                    }
-
-                                    prevHeader = display.header;
-                                    prevSubheader = display.subheader;
-
-                                    rows.push(...renderParameterRow(param, display));
-                                });
-
-                                return rows;
-                            })()}
-                        </tbody>
-                    </table>
                 </div>
-                {!isUnitRole && (
-                    <>
-                        <ul
+            )}
+            <div className="table-responsive mt-4">
+                <table className="table-style-1 w-100">
+                    <thead>
+                        <tr>
+                            <th style={{ width: 150 }}>Parameter</th>
+                            <th style={{ width: 100 }}>Count</th>
+                            <th style={{ width: 100 }}>Marks</th>
+                            <th style={{ width: 100 }}>Document</th>
+
+                            {!isUnitRole && !isHeadquarter && (
+                                <>
+                                    <th style={{ width: 200 }}>Approved Marks</th>
+                                    {!isRaisedScreen && (
+                                        <th style={{ width: 150 }}>Ask Clarification</th>
+                                    )}
+                                    {isRaisedScreen && (
+                                        <>
+                                            <th style={{ width: 200 }}>Requested Clarification</th>
+                                            <th style={{ width: 150 }}>Action</th>{" "}
+                                        </>
+                                    )}
+                                </>
+                            )}
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {(() => {
+                            let prevHeader: string | null = null;
+                            let prevSubheader: string | null = null;
+                            const rows: JSX.Element[] = [];
+
+                            unitDetail?.fds?.parameters?.forEach((param: any, index: number) => {
+                                const display = getParamDisplay(param);
+
+                                const showHeader = display.header && display.header !== prevHeader;
+                                const showSubheader = display.subheader && display.subheader !== prevSubheader;
+
+                                if (showHeader) {
+                                    rows.push(renderHeaderRow(display.header, index));
+                                }
+
+                                if (showSubheader) {
+                                    rows.push(renderSubHeaderRow(display.subheader, display.header, index));
+                                }
+
+                                prevHeader = display.header;
+                                prevSubheader = display.subheader;
+
+                                rows.push(...renderParameterRow(param, display));
+                            });
+
+                            return rows;
+                        })()}
+                    </tbody>
+                </table>
+            </div>
+            {!isUnitRole && (
+                <ul
+                    style={{
+                        listStyleType: "none",
+                        display: "flex",
+                        alignItems: "center",
+                        gap: "10px",
+                        flexWrap: "wrap",
+                        padding: 0,
+                        marginBottom: "16px",
+                    }}
+                >
+                    {/* Unit Remark */}
+                    {unitDetail?.fds?.unitRemarks && (
+                        <li
                             style={{
-                                listStyleType: "none",
-                                display: "flex",
-                                alignItems: "center",
-                                gap: "10px",
-                                flexWrap: "wrap",
-                                padding: 0,
-                                marginBottom: "16px",
+                                padding: "8px 12px",
+                                backgroundColor: "#e8f0fe",
+                                borderRadius: "6px",
+                                boxShadow: "0 1px 2px rgba(0,0,0,0.05)",
+                                fontSize: "14px",
+                                color: "#333",
                             }}
                         >
-                            {/* Unit Remark */}
-                            {unitDetail?.fds?.unitRemarks && (
-                                <li
-                                    style={{
-                                        padding: "8px 12px",
-                                        backgroundColor: "#e8f0fe",
-                                        borderRadius: "6px",
-                                        boxShadow: "0 1px 2px rgba(0,0,0,0.05)",
-                                        fontSize: "14px",
-                                        color: "#333",
-                                    }}
-                                >
-                                    <strong>Unit:</strong> {unitDetail.fds.unitRemarks}
-                                </li>
-                            )}
+                            <strong>Unit:</strong> {unitDetail.fds.unitRemarks}
+                        </li>
+                    )}
 
-                            {/* Other Remarks */}
-                            {Array.isArray(unitDetail?.remarks) &&
-                                unitDetail.remarks.map((item: any) => (
-                                    <li
-                                        key={item?.remarks}
-                                        style={{
-                                            padding: "8px 12px",
-                                            backgroundColor: "#f9f9f9",
-                                            borderRadius: "6px",
-                                            boxShadow: "0 1px 2px rgba(0,0,0,0.05)",
-                                            fontSize: "14px",
-                                            color: "#333",
-                                        }}
-                                    >
-                                        <strong>{item?.remark_added_by_role}:</strong>{" "}
-                                        {item?.remarks}
-                                    </li>
-                                ))}
-                        </ul>
-                    </>
-                )}
-
-                {!isUnitRole && (
-                    <div
-                        style={{
-                            borderTop: "1px solid var(--gray-200)",
-                            paddingTop: "20px",
-                            paddingBottom: "20px",
-                        }}
-                    >
-                        <div className="row text-center text-sm-start mb-3">
-                            <div className="col-6 col-sm-2">
-                                <span className="fw-medium text-muted">Filled Params:</span>
-                                <div className="fw-bold">{paramStats.filledParams}</div>
-                            </div>
-                            <div className="col-6 col-sm-2">
-                                <span className="fw-medium text-muted">Marks:</span>
-                                <div className="fw-bold">{paramStats.marks}</div>
-                            </div>
-                            <div className="col-6 col-sm-2">
-                                <span className="fw-medium text-muted">Nagative Marks:</span>
-                                <div className="fw-bold text-danger">-{paramStats.negativeMarks}</div>
-                            </div>
-                            <div className="col-6 col-sm-2">
-                                <span className="fw-medium text-muted">Approved Marks:</span>
-                                <div className="fw-bold text-primary">
-                                    {paramStats.approvedMarks}
-                                </div>
-                            </div>
-                            <div className="col-6 col-sm-2">
-                                <span className="fw-medium text-muted">Total Marks:</span>
-                                <div className="fw-bold text-success">
-                                    {paramStats.totalMarks}
-                                </div>
+                    {/* Other Remarks */}
+                    {Array.isArray(unitDetail?.remarks) &&
+                        unitDetail.remarks.map((item: any) => (
+                            <li
+                                key={item?.remarks}
+                                style={{
+                                    padding: "8px 12px",
+                                    backgroundColor: "#f9f9f9",
+                                    borderRadius: "6px",
+                                    boxShadow: "0 1px 2px rgba(0,0,0,0.05)",
+                                    fontSize: "14px",
+                                    color: "#333",
+                                }}
+                            >
+                                <strong>{item?.remark_added_by_role}:</strong>{" "}
+                                {item?.remarks}
+                            </li>
+                        ))}
+                </ul>
+            )}
+            {!isUnitRole && (
+                <div
+                    style={{
+                        borderTop: "1px solid var(--gray-200)",
+                        paddingTop: "20px",
+                        paddingBottom: "20px",
+                    }}
+                >
+                    <div className="row text-center text-sm-start mb-3">
+                        <div className="col-6 col-sm-2">
+                            <span className="fw-medium text-muted">Filled Params:</span>
+                            <div className="fw-bold">{paramStats.filledParams}</div>
+                        </div>
+                        <div className="col-6 col-sm-2">
+                            <span className="fw-medium text-muted">Marks:</span>
+                            <div className="fw-bold">{paramStats.marks}</div>
+                        </div>
+                        <div className="col-6 col-sm-2">
+                            <span className="fw-medium text-muted">Nagative Marks:</span>
+                            <div className="fw-bold text-danger">-{paramStats.negativeMarks}</div>
+                        </div>
+                        <div className="col-6 col-sm-2">
+                            <span className="fw-medium text-muted">Approved Marks:</span>
+                            <div className="fw-bold text-primary">
+                                {paramStats.approvedMarks}
                             </div>
                         </div>
+                        <div className="col-6 col-sm-2">
+                            <span className="fw-medium text-muted">Total Marks:</span>
+                            <div className="fw-bold text-success">
+                                {paramStats.totalMarks}
+                            </div>
+                        </div>
+                    </div>
 
-                        {/* Grace Marks Field */}
-                        {!isHeadquarter && (
-                            <div className="w-100 mb-4">
+                    {/* Grace Marks Field */}
+                    {!isHeadquarter && (
+                        <div className="w-100 mb-4">
+                            <div
+                                className="fw-medium text-muted mb-2"
+                                style={{ whiteSpace: "nowrap" }}
+                            >
+                                Enter Your Remarks:
+                            </div>
+                            <textarea
+                                className="form-control"
+                                placeholder="Enter remarks (max 200 characters)"
+                                name="unitRemarks"
+                                value={unitRemarks}
+                                onChange={handleRemarksChange}
+                                rows={4}
+                            />
+                            {remarksError && <p className="error-text">{remarksError}</p>}
+                        </div>
+                    )}
+                    {isHeadquarter && (
+                        <StepProgressBar
+                            award_type={award_type}
+                            unitDetail={unitDetail}
+                        />
+                    )}
+                    {profile?.unit?.members &&
+                        Array.isArray(profile.unit.members) &&
+                        profile.unit.members.length > 0 && (
+                            <div className="table-responsive mb-3">
                                 <div
                                     className="fw-medium text-muted mb-2"
                                     style={{ whiteSpace: "nowrap" }}
                                 >
-                                    Enter Your Remarks:
+                                    Submit Signatures:
                                 </div>
-                                <textarea
-                                    className="form-control"
-                                    placeholder="Enter remarks (max 200 characters)"
-                                    name="unitRemarks"
-                                    value={unitRemarks}
-                                    onChange={handleRemarksChange}
-                                    rows={4}
-                                />
-                                {remarksError && <p className="error-text">{remarksError}</p>}
+                                <table className="table-style-1 w-100">
+                                    <thead className="table-light">
+                                        <tr>
+                                            <th style={{ width: "25%" }}>Member</th>
+                                            <th style={{ width: "25%" }}>Name</th>
+                                            <th style={{ width: "25%" }}>Rank</th>
+                                            <th style={{ width: "25%" }}>Signature</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {[
+                                            ...profile.unit.members.filter(
+                                                (m) => m.member_type === "presiding_officer"
+                                            ),
+                                            ...profile.unit.members
+                                                .filter((m) => m.member_type === "member_officer")
+                                                .sort(
+                                                    (a, b) =>
+                                                        Number(a.member_order ?? 0) - Number(b.member_order ?? 0)
+                                                ),
+                                        ].map((member) => {
+                                            const acceptedMembers = unitDetail?.fds?.accepted_members ?? [];
+                                            const foundMember = acceptedMembers.find(
+                                                (m: any) => m.member_id === member.id
+                                            );
+                                            const isSignatureAdded = foundMember?.is_signature_added === true;
+
+                                            return (
+                                                <tr key={member.id}>
+                                                    <td>
+                                                        {member.member_type === "presiding_officer"
+                                                            ? "Presiding Officer"
+                                                            : "Member Officer"}
+                                                    </td>
+                                                    <td>{member.name ?? "-"}</td>
+                                                    <td>{member.rank ?? "-"}</td>
+                                                    <td>
+                                                        <div className="d-flex flex-sm-row flex-column gap-sm-3 gap-1 align-items-center">
+                                                            {member.member_type === "presiding_officer" &&
+                                                                !isSignatureAdded && (
+                                                                    <>
+                                                                        {isReadyToSubmit && (
+                                                                            <button
+                                                                                type="button"
+                                                                                className="_btn success w-sm-auto"
+                                                                                onClick={() =>
+                                                                                    handleAddsignature(member, "accepted")
+                                                                                }
+                                                                            >
+                                                                                Accept
+                                                                            </button>
+                                                                        )}
+                                                                        <button
+                                                                            type="button"
+                                                                            className="_btn danger w-sm-auto"
+                                                                            onClick={() =>
+                                                                                handleAddsignature(member, "rejected")
+                                                                            }
+                                                                        >
+                                                                            Decline
+                                                                        </button>
+                                                                    </>
+                                                                )}
+
+                                                            {member.member_type !== "presiding_officer" &&
+                                                                !isSignatureAdded && (
+                                                                    <button
+                                                                        type="button"
+                                                                        className="_btn success text-nowrap w-sm-auto"
+                                                                        onClick={() =>
+                                                                            handleAddsignature(member, "accepted")
+                                                                        }
+                                                                    >
+                                                                        Add Signature
+                                                                    </button>
+                                                                )}
+
+                                                            {isSignatureAdded && (
+                                                                <span className="text-success fw-semibold text-nowrap d-flex align-items-center gap-1">
+                                                                    <FaCheckCircle className="fs-5" /> Signature Added
+                                                                </span>
+                                                            )}
+                                                        </div>
+                                                    </td>
+                                                </tr>
+                                            );
+                                        })}
+                                    </tbody>
+                                </table>
+
+                            </div>
+                        )}
+                    <div className="d-flex flex-sm-row flex-column gap-sm-3 gap-1 justify-content-end">
+                        {/* Approved by roles below */}
+                        {displayedMarks.length > 0 && (
+                            <div className="text-muted small me-auto align-self-center">
+                                {displayedMarks.join(" | ")}
                             </div>
                         )}
                         {isHeadquarter && (
-                            <StepProgressBar
-                                award_type={award_type}
-                                unitDetail={unitDetail}
-                            />
+                            <button type="button" className="_btn success">
+                                Review Comments
+                            </button>
                         )}
-                        {profile?.unit?.members &&
-                            Array.isArray(profile.unit.members) &&
-                            profile.unit.members.length > 0 && (
-                                <div className="table-responsive mb-3">
-                                    <div
-                                        className="fw-medium text-muted mb-2"
-                                        style={{ whiteSpace: "nowrap" }}
-                                    >
-                                        Submit Signatures:
-                                    </div>
-                                    <table className="table-style-1 w-100">
-                                        <thead className="table-light">
-                                            <tr>
-                                                <th style={{ width: "25%" }}>Member</th>
-                                                <th style={{ width: "25%" }}>Name</th>
-                                                <th style={{ width: "25%" }}>Rank</th>
-                                                <th style={{ width: "25%" }}>Signature</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            {[
-                                                ...profile.unit.members.filter(
-                                                    (m) => m.member_type === "presiding_officer"
-                                                ),
-                                                ...profile.unit.members
-                                                    .filter((m) => m.member_type === "member_officer")
-                                                    .sort(
-                                                        (a, b) =>
-                                                            Number(a.member_order || 0) - Number(b.member_order || 0)
-                                                    ),
-                                            ].map((member) => {
-                                                const acceptedMembers = unitDetail?.fds?.accepted_members || [];
-                                                const foundMember = acceptedMembers.find(
-                                                    (m: any) => m.member_id === member.id
-                                                );
-                                                const isSignatureAdded = foundMember?.is_signature_added === true;
-
-                                                return (
-                                                    <tr key={member.id}>
-                                                        <td>
-                                                            {member.member_type === "presiding_officer"
-                                                                ? "Presiding Officer"
-                                                                : "Member Officer"}
-                                                        </td>
-                                                        <td>{member.name || "-"}</td>
-                                                        <td>{member.rank || "-"}</td>
-                                                        <td>
-                                                            <div className="d-flex flex-sm-row flex-column gap-sm-3 gap-1 align-items-center">
-                                                                {member.member_type === "presiding_officer" &&
-                                                                    !isSignatureAdded && (
-                                                                        <>
-                                                                            {isReadyToSubmit && (
-                                                                                <button
-                                                                                    type="button"
-                                                                                    className="_btn success w-sm-auto"
-                                                                                    onClick={() =>
-                                                                                        handleAddsignature(member, "accepted")
-                                                                                    }
-                                                                                >
-                                                                                    Accept
-                                                                                </button>
-                                                                            )}
-                                                                            <button
-                                                                                type="button"
-                                                                                className="_btn danger w-sm-auto"
-                                                                                onClick={() =>
-                                                                                    handleAddsignature(member, "rejected")
-                                                                                }
-                                                                            >
-                                                                                Decline
-                                                                            </button>
-                                                                        </>
-                                                                    )}
-
-                                                                {member.member_type !== "presiding_officer" &&
-                                                                    !isSignatureAdded && (
-                                                                        <button
-                                                                            type="button"
-                                                                            className="_btn success text-nowrap w-sm-auto"
-                                                                            onClick={() =>
-                                                                                handleAddsignature(member, "accepted")
-                                                                            }
-                                                                        >
-                                                                            Add Signature
-                                                                        </button>
-                                                                    )}
-
-                                                                {isSignatureAdded && (
-                                                                    <span className="text-success fw-semibold text-nowrap d-flex align-items-center gap-1">
-                                                                        <FaCheckCircle className="fs-5" /> Signature Added
-                                                                    </span>
-                                                                )}
-                                                            </div>
-                                                        </td>
-                                                    </tr>
-                                                );
-                                            })}
-                                        </tbody>
-                                    </table>
-
-                                </div>
-                            )}
-                        <div className="d-flex flex-sm-row flex-column gap-sm-3 gap-1 justify-content-end">
-                            {/* Approved by roles below */}
-                            {displayedMarks.length > 0 && (
-                                <div className="text-muted small me-auto align-self-center">
-                                    {displayedMarks.join(" | ")}
-                                </div>
-                            )}
-                            {isHeadquarter && (
-                                <>
-                                    <button
-                                        type="button"
-                                        className="_btn success"
-                                    >
-                                        Review Comments
-                                    </button>
-                                </>
-                            )}
-                        </div>
                     </div>
-                )}
-                {isHeadquarter && (
-                    <div className="mt-4">
-                        <h5 className="mb-3">Send for Review</h5>
-                        <div className="table-responsive">
-                            <table className="table-style-2 w-100">
-                                <thead>
-                                    <tr>
-                                        <th style={{ width: 200, minWidth: 200 }}>Category</th>
-                                        <th style={{ width: 200, minWidth: 200 }}>Action</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {["HR", "DV", "MP"].map((category) => {
-                                        let isAlreadySent: any = false;
-                                        console.log(unitDetail);
-                                        if (category === "HR") {
-                                            isAlreadySent = unitDetail?.is_hr_review;
-                                        } else if (category === "DV") {
-                                            isAlreadySent = unitDetail?.is_dv_review;
-                                        } else if (category === "MP") {
-                                            isAlreadySent = unitDetail?.is_mp_review;
-                                        }
+                </div>
+            )}
+            {isHeadquarter && (
+                <div className="mt-4">
+                    <h5 className="mb-3">Send for Review</h5>
+                    <div className="table-responsive">
+                        <table className="table-style-2 w-100">
+                            <thead>
+                                <tr>
+                                    <th style={{ width: 200, minWidth: 200 }}>Category</th>
+                                    <th style={{ width: 200, minWidth: 200 }}>Action</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {["HR", "DV", "MP"].map((category) => {
+                                    let isAlreadySent: any = false;
+                                    console.log(unitDetail);
+                                    if (category === "HR") {
+                                        isAlreadySent = unitDetail?.is_hr_review;
+                                    } else if (category === "DV") {
+                                        isAlreadySent = unitDetail?.is_dv_review;
+                                    } else if (category === "MP") {
+                                        isAlreadySent = unitDetail?.is_mp_review;
+                                    }
 
-                                        return (
-                                            <tr key={category}>
-                                                <td>
-                                                    <p className="fw-4">{category}</p>
-                                                </td>
-                                                <td>
-                                                    {isAlreadySent ? (
-                                                        <span className="text-danger fw-semibold">
-                                                            Already Sent
-                                                        </span>
-                                                    ) : (
-                                                        <button
-                                                            type="button"
-                                                            className="_btn success"
-                                                            onClick={() => {
-                                                                const payload: {
-                                                                    id: number | undefined;
-                                                                    is_hr_review?: boolean;
-                                                                    is_dv_review?: boolean;
-                                                                    is_mp_review?: boolean;
-                                                                } = {
-                                                                    id: unitDetail?.id,
-                                                                };
+                                    return (
+                                        <tr key={category}>
+                                            <td>
+                                                <p className="fw-4">{category}</p>
+                                            </td>
+                                            <td>
+                                                {isAlreadySent ? (
+                                                    <span className="text-danger fw-semibold">
+                                                        Already Sent
+                                                    </span>
+                                                ) : (
+                                                    <button
+                                                        type="button"
+                                                        className="_btn success"
+                                                        onClick={() => {
+                                                            const payload: {
+                                                                id: number | undefined;
+                                                                is_hr_review?: boolean;
+                                                                is_dv_review?: boolean;
+                                                                is_mp_review?: boolean;
+                                                            } = {
+                                                                id: unitDetail?.id,
+                                                            };
 
-                                                                if (category === "HR") {
-                                                                    payload.is_hr_review = true;
-                                                                } else if (category === "DV") {
-                                                                    payload.is_dv_review = true;
-                                                                } else if (category === "MP") {
-                                                                    payload.is_mp_review = true;
-                                                                }
+                                                            if (category === "HR") {
+                                                                payload.is_hr_review = true;
+                                                            } else if (category === "DV") {
+                                                                payload.is_dv_review = true;
+                                                            } else if (category === "MP") {
+                                                                payload.is_mp_review = true;
+                                                            }
 
-                                                                if (unitDetail?.type === "citation") {
-                                                                    dispatch(updateCitation(payload)).then(() => {
+                                                            if (unitDetail?.type === "citation") {
+                                                                dispatch(updateCitation(payload)).then(() => {
+                                                                    if (award_type && numericAppId) {
+                                                                        dispatch(
+                                                                            fetchApplicationUnitDetail({
+                                                                                award_type,
+                                                                                numericAppId,
+                                                                            })
+                                                                        );
+                                                                    }
+                                                                });
+                                                            } else if (
+                                                                unitDetail?.type === "appreciation"
+                                                            ) {
+                                                                dispatch(updateAppreciation(payload)).then(
+                                                                    () => {
                                                                         if (award_type && numericAppId) {
                                                                             dispatch(
                                                                                 fetchApplicationUnitDetail({
@@ -1075,201 +1081,186 @@ const SubmittedFormDetail = () => {
                                                                                 })
                                                                             );
                                                                         }
-                                                                    });
-                                                                } else if (
-                                                                    unitDetail?.type === "appreciation"
-                                                                ) {
-                                                                    dispatch(updateAppreciation(payload)).then(
-                                                                        () => {
-                                                                            if (award_type && numericAppId) {
-                                                                                dispatch(
-                                                                                    fetchApplicationUnitDetail({
-                                                                                        award_type,
-                                                                                        numericAppId,
-                                                                                    })
-                                                                                );
-                                                                            }
-                                                                        }
-                                                                    );
-                                                                }
-                                                            }}
-                                                        >
-                                                            Send for Review
-                                                        </button>
-                                                    )}
-                                                </td>
-                                            </tr>
-                                        );
-                                    })}
-                                </tbody>
-                            </table>
-                        </div>
+                                                                    }
+                                                                );
+                                                            }
+                                                        }}
+                                                    >
+                                                        Send for Review
+                                                    </button>
+                                                )}
+                                            </td>
+                                        </tr>
+                                    );
+                                })}
+                            </tbody>
+                        </table>
                     </div>
-                )}
-                {isCW2Role && (
-                    <div
-                        style={{
-                            borderTop: "1px solid var(--gray-200)",
-                            paddingTop: "20px",
-                            paddingBottom: "20px",
-                        }}
-                    >
-                        {!isHeadquarter && (
-                            <>
-                                {(cw2_type === "mo" || cw2_type === "ol") && (
-                                    <div className="mb-2">
-                                        <label htmlFor="priority" className="form-label mb-1">Priority:</label>
-                                        <input
-                                            type="text"
-                                            className="form-control"
-                                            name="priority"
-                                            id="priority"
-                                            value={priority}
-                                            onChange={(e) => {
-                                                const value = e.target.value;
-                                                setPriority(value);
-                                                handlePriorityChange(value);
-                                            }}
-                                        />
-                                    </div>
-                                )}
-
-                                <form
-                                    onSubmit={(e) => {
-                                        e.preventDefault();
-                                        handleCommentChange("__application__", localComment);
-                                    }}
-                                >
-                                    <div className="form-label mb-1">Drop Comment:</div>
-                                    <textarea
+                </div>
+            )}
+            {isCW2Role && (
+                <div
+                    style={{
+                        borderTop: "1px solid var(--gray-200)",
+                        paddingTop: "20px",
+                        paddingBottom: "20px",
+                    }}
+                >
+                    {!isHeadquarter && (
+                        <>
+                            {(cw2_type === "mo" || cw2_type === "ol") && (
+                                <div className="mb-2">
+                                    <label htmlFor="priority" className="form-label mb-1">Priority:</label>
+                                    <input
+                                        type="text"
                                         className="form-control"
-                                        placeholder="Enter comment"
-                                        rows={4}
-                                        value={localComment}
-                                        onChange={(e) => setLocalComment(e.target.value)}
+                                        name="priority"
+                                        id="priority"
+                                        value={priority}
+                                        onChange={(e) => {
+                                            const value = e.target.value;
+                                            setPriority(value);
+                                            handlePriorityChange(value);
+                                        }}
                                     />
-                                    <div className="d-flex align-items-center justify-content-end mt-2">
-                                        <button type="submit" className="_btn success">
-                                            Submit
-                                        </button>
-                                    </div>
-                                </form>
-                            </>
-                        )}
-                        {profile?.unit?.members &&
-                            ((cw2_type === "mo" && !unitDetail?.is_mo_approved) ||
-                                (cw2_type === "ol" && !unitDetail?.is_ol_approved)) &&
-                            Array.isArray(profile.unit.members) &&
-                            profile.unit.members.length > 0 && (
-                                <div className="table-responsive mb-3">
-                                    <div
-                                        className="fw-medium text-muted mb-2"
-                                        style={{ whiteSpace: "nowrap" }}
-                                    >
-                                        Submit Signatures:
-                                    </div>
-                                    <table className="table-style-1 w-100">
-                                        <thead className="table-light">
-                                            <tr>
-                                                <th style={{ width: "25%" }}>Member</th>
-                                                <th style={{ width: "25%" }}>Name</th>
-                                                <th style={{ width: "25%" }}>Rank</th>
-                                                <th style={{ width: "25%" }}>Signature</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            {[
-                                                ...profile.unit.members.filter(
-                                                    (m) => m.member_type === "presiding_officer"
-                                                ),
-                                                ...profile.unit.members
-                                                    .filter((m) => m.member_type === "member_officer")
-                                                    .sort(
-                                                        (a, b) =>
-                                                            Number(a.member_order || 0) - Number(b.member_order || 0)
-                                                    )
-                                            ].map((member) => {
-                                                const acceptedMembers =
-                                                    unitDetail?.fds?.accepted_members || [];
-                                                const foundMember = acceptedMembers.find(
-                                                    (m: any) => m.member_id === member.id
-                                                );
-                                                const isSignatureAdded =
-                                                    foundMember?.is_signature_added === true;
-
-                                                return (
-                                                    <tr key={member.id}>
-                                                        <td>
-                                                            {member.member_type === "presiding_officer"
-                                                                ? "Presiding Officer"
-                                                                : "Member Officer"}
-                                                        </td>
-                                                        <td>{member.name || "-"}</td>
-                                                        <td>{member.rank || "-"}</td>
-                                                        <td>
-                                                            <div className="d-flex flex-sm-row flex-column gap-sm-3 gap-1 align-items-center">
-                                                                {member.member_type === "presiding_officer" &&
-                                                                    !profile?.user?.is_member &&
-                                                                    !isSignatureAdded && (
-                                                                        <>
-                                                                            {isReadyToSubmit && (
-                                                                                <button
-                                                                                    type="button"
-                                                                                    className="_btn success w-sm-auto"
-                                                                                    onClick={() =>
-                                                                                        handleAddsignature(
-                                                                                            member,
-                                                                                            "accepted"
-                                                                                        )
-                                                                                    }
-                                                                                >
-                                                                                    Accept
-                                                                                </button>
-                                                                            )}
-                                                                            <button
-                                                                                type="button"
-                                                                                className="_btn danger w-sm-auto"
-                                                                                onClick={() =>
-                                                                                    handleAddsignature(member, "rejected")
-                                                                                }
-                                                                            >
-                                                                                Decline
-                                                                            </button>
-                                                                        </>
-                                                                    )}
-
-                                                                {member.member_type !== "presiding_officer" &&
-                                                                    !isSignatureAdded && (
-                                                                        <button
-                                                                            type="button"
-                                                                            className="_btn success text-nowrap w-sm-auto"
-                                                                            onClick={() =>
-                                                                                handleAddsignature(member, "accepted")
-                                                                            }
-                                                                        >
-                                                                            Add Signature
-                                                                        </button>
-                                                                    )}
-
-                                                                {isSignatureAdded && (
-                                                                    <span className="text-success fw-semibold text-nowrap d-flex align-items-center gap-1">
-                                                                        <FaCheckCircle className="fs-5" /> Signature
-                                                                        Added
-                                                                    </span>
-                                                                )}
-                                                            </div>
-                                                        </td>
-                                                    </tr>
-                                                );
-                                            })}
-                                        </tbody>
-                                    </table>
                                 </div>
                             )}
-                    </div>
-                )}
-            </div>
-        </>
+
+                            <form
+                                onSubmit={(e) => {
+                                    e.preventDefault();
+                                    handleCommentChange("__application__", localComment);
+                                }}
+                            >
+                                <div className="form-label mb-1">Drop Comment:</div>
+                                <textarea
+                                    className="form-control"
+                                    placeholder="Enter comment"
+                                    rows={4}
+                                    value={localComment}
+                                    onChange={(e) => setLocalComment(e.target.value)}
+                                />
+                                <div className="d-flex align-items-center justify-content-end mt-2">
+                                    <button type="submit" className="_btn success">
+                                        Submit
+                                    </button>
+                                </div>
+                            </form>
+                        </>
+                    )}
+                    {profile?.unit?.members &&
+                        ((cw2_type === "mo" && !unitDetail?.is_mo_approved) ||
+                            (cw2_type === "ol" && !unitDetail?.is_ol_approved)) &&
+                        Array.isArray(profile.unit.members) &&
+                        profile.unit.members.length > 0 && (
+                            <div className="table-responsive mb-3">
+                                <div
+                                    className="fw-medium text-muted mb-2"
+                                    style={{ whiteSpace: "nowrap" }}
+                                >
+                                    Submit Signatures:
+                                </div>
+                                <table className="table-style-1 w-100">
+                                    <thead className="table-light">
+                                        <tr>
+                                            <th style={{ width: "25%" }}>Member</th>
+                                            <th style={{ width: "25%" }}>Name</th>
+                                            <th style={{ width: "25%" }}>Rank</th>
+                                            <th style={{ width: "25%" }}>Signature</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {[
+                                            ...profile.unit.members.filter(
+                                                (m) => m.member_type === "presiding_officer"
+                                            ),
+                                            ...profile.unit.members
+                                                .filter((m) => m.member_type === "member_officer")
+                                                .sort(
+                                                    (a, b) =>
+                                                        Number(a.member_order ?? 0) - Number(b.member_order ?? 0)
+                                                )
+                                        ].map((member) => {
+                                            const acceptedMembers =
+                                                unitDetail?.fds?.accepted_members ?? [];
+                                            const foundMember = acceptedMembers.find(
+                                                (m: any) => m.member_id === member.id
+                                            );
+                                            const isSignatureAdded =
+                                                foundMember?.is_signature_added === true;
+
+                                            return (
+                                                <tr key={member.id}>
+                                                    <td>
+                                                        {member.member_type === "presiding_officer"
+                                                            ? "Presiding Officer"
+                                                            : "Member Officer"}
+                                                    </td>
+                                                    <td>{member.name ?? "-"}</td>
+                                                    <td>{member.rank ?? "-"}</td>
+                                                    <td>
+                                                        <div className="d-flex flex-sm-row flex-column gap-sm-3 gap-1 align-items-center">
+                                                            {member.member_type === "presiding_officer" &&
+                                                                !profile?.user?.is_member &&
+                                                                !isSignatureAdded && (
+                                                                    <>
+                                                                        {isReadyToSubmit && (
+                                                                            <button
+                                                                                type="button"
+                                                                                className="_btn success w-sm-auto"
+                                                                                onClick={() =>
+                                                                                    handleAddsignature(
+                                                                                        member,
+                                                                                        "accepted"
+                                                                                    )
+                                                                                }
+                                                                            >
+                                                                                Accept
+                                                                            </button>
+                                                                        )}
+                                                                        <button
+                                                                            type="button"
+                                                                            className="_btn danger w-sm-auto"
+                                                                            onClick={() =>
+                                                                                handleAddsignature(member, "rejected")
+                                                                            }
+                                                                        >
+                                                                            Decline
+                                                                        </button>
+                                                                    </>
+                                                                )}
+
+                                                            {member.member_type !== "presiding_officer" &&
+                                                                !isSignatureAdded && (
+                                                                    <button
+                                                                        type="button"
+                                                                        className="_btn success text-nowrap w-sm-auto"
+                                                                        onClick={() =>
+                                                                            handleAddsignature(member, "accepted")
+                                                                        }
+                                                                    >
+                                                                        Add Signature
+                                                                    </button>
+                                                                )}
+
+                                                            {isSignatureAdded && (
+                                                                <span className="text-success fw-semibold text-nowrap d-flex align-items-center gap-1">
+                                                                    <FaCheckCircle className="fs-5" /> Signature
+                                                                    Added
+                                                                </span>
+                                                            )}
+                                                        </div>
+                                                    </td>
+                                                </tr>
+                                            );
+                                        })}
+                                    </tbody>
+                                </table>
+                            </div>
+                        )}
+                </div>
+            )}
+        </div>
     );
 };
 

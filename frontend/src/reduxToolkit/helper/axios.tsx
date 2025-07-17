@@ -10,7 +10,7 @@ Axios.interceptors.request.use(
   function (config) {
     const token = localStorage.getItem('persist:admin');
     const parsedData = token ? JSON.parse(token) : null;
-    const userToken = JSON.parse(parsedData?.admin || 'null')?.token ?? null;
+    const userToken = JSON.parse(parsedData?.admin ?? 'null')?.token ?? null;
 
     if (userToken) {
       config.headers.Authorization = `Bearer ${userToken}`;
@@ -37,7 +37,7 @@ Axios.interceptors.response.use(
     }
 
     if (!(error instanceof Error)) {
-      const customError = new Error(error.message || 'Unknown error');
+      const customError = new Error(error.message ?? 'Unknown error');
       (customError as any).originalError = error;
       return Promise.reject(customError);
     }

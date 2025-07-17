@@ -38,9 +38,9 @@ const Clarification = () => {
   useEffect(() => {
     if (profile?.user?.user_role) {
       if (profile?.user?.user_role?.trim() === "unit") {
-        dispatch(getClarifications({ awardType: awardType || "", search: debouncedSearch, page, limit }));
+        dispatch(getClarifications({ awardType: awardType ?? "", search: debouncedSearch, page, limit }));
       } else {
-        dispatch(getSubordinateClarifications({ awardType: awardType || "", search: debouncedSearch, page, limit }));
+        dispatch(getSubordinateClarifications({ awardType: awardType ?? "", search: debouncedSearch, page, limit }));
       }
     }
   }, [profile?.user?.user_role, awardType, debouncedSearch, page, limit]);
@@ -67,7 +67,7 @@ const Clarification = () => {
           name="awardType"
           options={awardTypeOptions}
           value={awardTypeOptions.find((opt) => opt.value === awardType) || null}
-          onChange={(option) => setAwardType(option?.value || null)}
+          onChange={(option) => setAwardType(option?.value ?? null)}
           placeholder="Select Type"
         />
       </div>

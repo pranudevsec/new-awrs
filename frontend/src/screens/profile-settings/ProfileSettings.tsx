@@ -24,8 +24,6 @@ import {
   reqToUpdateUnitProfile,
 } from "../../reduxToolkit/services/auth/authService";
 
-type UserRole = "unit" | "brigade" | "division" | "corps" | "command" | string;
-
 interface Officer {
   id?: string;
   serialNumber: string;
@@ -148,7 +146,7 @@ const ProfileSettings = () => {
   };
 
   const getVisibleFields = (
-    role: UserRole,
+    role: string,
     isSpecialUnit?: boolean
   ): string[] => {
     if (isSpecialUnit) {
@@ -247,16 +245,16 @@ const ProfileSettings = () => {
 
   const formik: any = useFormik({
     initialValues: {
-      unit: profile?.unit?.name || "",
-      brigade: profile?.unit?.bde || "",
-      division: profile?.unit?.div || "",
-      corps: profile?.unit?.corps || "",
-      command: profile?.unit?.comd || "",
-      adm_channel: profile?.unit?.adm_channel || "",
-      tech_channel: profile?.unit?.tech_channel || "",
-      unit_type: profile?.unit?.unit_type || "",
-      matrix_unit: profile?.unit?.matrix_unit || "",
-      location: profile?.unit?.location || "",
+      unit: profile?.unit?.name ?? "",
+      brigade: profile?.unit?.bde ?? "",
+      division: profile?.unit?.div ?? "",
+      corps: profile?.unit?.corps ?? "",
+      command: profile?.unit?.comd ?? "",
+      adm_channel: profile?.unit?.adm_channel ?? "",
+      tech_channel: profile?.unit?.tech_channel ?? "",
+      unit_type: profile?.unit?.unit_type ?? "",
+      matrix_unit: profile?.unit?.matrix_unit ?? "",
+      location: profile?.unit?.location ?? "",
     },
     enableReinitialize: true,
     onSubmit: async (values: any, { resetForm }) => {
@@ -342,7 +340,7 @@ const ProfileSettings = () => {
   const buildUnitPayload = (
     members?: UpdateUnitProfileRequest["members"]
   ): UpdateUnitProfileRequest => ({
-    name: profile?.unit?.name || "",
+    name: profile?.unit?.name ?? "",
     adm_channel: profile?.unit?.adm_channel ?? null,
     tech_channel: profile?.unit?.tech_channel ?? null,
     bde: profile?.unit?.bde ?? null,
@@ -382,7 +380,7 @@ const ProfileSettings = () => {
                   corps: corpsOptions,
                   command: commandOptions,
                 }[profile?.user?.user_role ?? "unit"] || []
-                : optionsMap[field] || [];
+                : optionsMap[field] ?? [];
 
             const getDynamicLabel = (
               userRole: string,
@@ -461,13 +459,13 @@ const ProfileSettings = () => {
                       )
                       : optionsForField.find(
                         (opt: any) => opt.value === formik.values[field]
-                      ) || null
+                      ) ?? null
                   }
                   onChange={(selectedOption: any) => {
                     const selectedValue =
                       field === "matrix_unit"
                         ? selectedOption.map((opt: any) => opt.value)
-                        : selectedOption?.value || "";
+                        : selectedOption?.value ?? "";
 
                     if (
                       field === "command" &&
@@ -495,101 +493,99 @@ const ProfileSettings = () => {
             );
           })}
           {role === "unit" && (
-            <>
-              <div className="col-12 mb-3">
-                <div className="form-label fw-6">Awards Received</div>
-                <table className="table table-bordered">
-                  <thead>
-                    {awards.length !== 0 && (
-                      <tr>                      </tr>
-                    )}
-                  </thead>
-                  <tbody>
-                    {awards.map((award, idx) => (
-                      <tr key={award.award_id ?? idx}>
-                        <td>
-                          <select
-                            className="form-select"
-                            value={award.award_type}
-                            onChange={(e) => {
-                              const updated = [...awards];
-                              updated[idx].award_type = e.target.value as
-                                | "goc"
-                                | "coas"
-                                | "cds";
-                              setAwards(updated);
-                            }}
-                          >
-                            <option value="goc">GOC-in-C</option>
-                            <option value="coas">COAS</option>
-                            <option value="cds">CDS</option>
-                          </select>
-                        </td>
-                        <td>
-                          <input
-                            type="text"
-                            className="form-control"
-                            value={award.award_title}
-                            onChange={(e) => {
-                              const updated = [...awards];
-                              updated[idx].award_title = e.target.value;
-                              setAwards(updated);
-                            }}
-                            placeholder="Enter award title"
-                          />
-                        </td>
-                        <td>
-                          <select
-                            className="form-select"
-                            value={award.award_year}
-                            onChange={(e) => {
-                              const updated = [...awards];
-                              updated[idx].award_year = e.target.value;
-                              setAwards(updated);
-                            }}
-                          >
-                            <option value="">Select Year</option>
-                            {yearOptions.map((year) => (
-                              <option key={year} value={year}>
-                                {year}
-                              </option>
-                            ))}
-                          </select>
-                        </td>
-                        <td>
-                          <button
-                            type="button"
-                            className="_btn danger btn-sm"
-                            onClick={() => handleRemoveAward(idx)}
-                          >
-                            Remove
-                          </button>
-                        </td>
-                      </tr>
-                    ))}
-                    {awards.length === 0 && (
-                      <tr>
-                        <td colSpan={4} className="text-center text-muted">
-                          No awards added
-                        </td>
-                      </tr>
-                    )}
-                  </tbody>
-                </table>
-                <button
-                  type="button"
-                  className="_btn success btn-sm"
-                  onClick={() => {
-                    setAwards((prev) => [
-                      ...prev,
-                      { award_type: "goc", award_title: "", award_year: "" },
-                    ]);
-                  }}
-                >
-                  Add Award
-                </button>
-              </div>
-            </>
+            <div className="col-12 mb-3">
+              <div className="form-label fw-6">Awards Received</div>
+              <table className="table table-bordered">
+                <thead>
+                  {awards.length !== 0 && (
+                    <tr>                      </tr>
+                  )}
+                </thead>
+                <tbody>
+                  {awards.map((award, idx) => (
+                    <tr key={award.award_id ?? idx}>
+                      <td>
+                        <select
+                          className="form-select"
+                          value={award.award_type}
+                          onChange={(e) => {
+                            const updated = [...awards];
+                            updated[idx].award_type = e.target.value as
+                              | "goc"
+                              | "coas"
+                              | "cds";
+                            setAwards(updated);
+                          }}
+                        >
+                          <option value="goc">GOC-in-C</option>
+                          <option value="coas">COAS</option>
+                          <option value="cds">CDS</option>
+                        </select>
+                      </td>
+                      <td>
+                        <input
+                          type="text"
+                          className="form-control"
+                          value={award.award_title}
+                          onChange={(e) => {
+                            const updated = [...awards];
+                            updated[idx].award_title = e.target.value;
+                            setAwards(updated);
+                          }}
+                          placeholder="Enter award title"
+                        />
+                      </td>
+                      <td>
+                        <select
+                          className="form-select"
+                          value={award.award_year}
+                          onChange={(e) => {
+                            const updated = [...awards];
+                            updated[idx].award_year = e.target.value;
+                            setAwards(updated);
+                          }}
+                        >
+                          <option value="">Select Year</option>
+                          {yearOptions.map((year) => (
+                            <option key={year} value={year}>
+                              {year}
+                            </option>
+                          ))}
+                        </select>
+                      </td>
+                      <td>
+                        <button
+                          type="button"
+                          className="_btn danger btn-sm"
+                          onClick={() => handleRemoveAward(idx)}
+                        >
+                          Remove
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                  {awards.length === 0 && (
+                    <tr>
+                      <td colSpan={4} className="text-center text-muted">
+                        No awards added
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+              <button
+                type="button"
+                className="_btn success btn-sm"
+                onClick={() => {
+                  setAwards((prev) => [
+                    ...prev,
+                    { award_type: "goc", award_title: "", award_year: "" },
+                  ]);
+                }}
+              >
+                Add Award
+              </button>
+            </div>
           )}
           {!isDisabled && role !== "cw2" && (
             <div className="col-12 mt-2">
@@ -865,7 +861,7 @@ const ProfileSettings = () => {
                   <FormInput
                     label="Registered Member Username"
                     name="memberUsername"
-                    value={profile.user.member_username || ""}
+                    value={profile.user.member_username ?? ""}
                     disabled
                   />
                 </div>
