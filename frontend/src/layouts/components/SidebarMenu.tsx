@@ -6,6 +6,7 @@ import { Chatbot } from "../../screens/Chatbot/Chatbot";
 
 const commandExtraLabels = ["Scoreboard", "Winners", "Home", "Profile Settings"];
 const headquarterExtraLabels = ["Dashboard", "Home", "Awards", "Scoreboard", "Profile Settings"];
+const extraDashboardLabels = ["Brigade Dashboard", "Division Dashboard", "Corps Dashboard"];
 
 type UserType = {
   user_role?: string;
@@ -22,12 +23,22 @@ const SidebarMenu = () => {
 
   const alwaysVisible = getAlwaysVisible(userRole);
 
-  const dashboardItem = sidebarStructure.find(item => item.label === "Dashboard");
+  // Show only the respective dashboard for each role
+  let dashboardItems: typeof sidebarStructure = [];
+  if (userRole === "brigade") {
+    dashboardItems = sidebarStructure.filter(item => item.label === "Brigade Dashboard");
+  } else if (userRole === "division") {
+    dashboardItems = sidebarStructure.filter(item => item.label === "Division Dashboard");
+  } else if (userRole === "corps") {
+    dashboardItems = sidebarStructure.filter(item => item.label === "Corps Dashboard");
+  }
 
   let filteredStructure = filterSidebarStructure(userRole, alwaysVisible);
+  // Remove dashboard items from filteredStructure if present
+  filteredStructure = filteredStructure.filter(item => !extraDashboardLabels.includes(item.label));
 
-  if ((userRole === "command" || userRole === "headquarter") && dashboardItem) {
-    filteredStructure = [dashboardItem, ...filteredStructure];
+  if ((userRole === "command" || userRole === "headquarter") && sidebarStructure.find(item => item.label === "Dashboard")) {
+    filteredStructure = ([sidebarStructure.find(item => item.label === "Dashboard")].filter(Boolean) as typeof sidebarStructure).concat(filteredStructure);
   }
 
   if (userRole === "unit") {
@@ -67,6 +78,22 @@ const SidebarMenu = () => {
         </div>
         <div className="scroll-style-85">
           <div className="sidebar-wrapper mt-3 pb-3">
+            {/* Render dashboard items at the top */}
+            {dashboardItems.map((item) => (
+              <NavLink
+                to={item.to}
+                className="nav-items d-flex align-items-center fw-5 position-relative text-white py-2"
+                key={item.to}
+              >
+                <div className="d-flex align-items-center text-truncate">
+                  <span className="nav-icon me-2 d-inline-flex align-items-center justify-content-center">
+                    {item.icon}
+                  </span>
+                  <span className="text-truncate">{item.label}</span>
+                </div>
+              </NavLink>
+            ))}
+            {/* Render the rest of the sidebar items */}
             {filteredStructure.map((item) => (
               <NavLink
                 to={item.to}
@@ -100,6 +127,10 @@ const getAlwaysVisible = (userRole: string): string[] => {
 
 const filterSidebarStructure = (userRole: string, alwaysVisible: string[]) => {
   return sidebarStructure.filter(item => {
+    if (["brigade", "division", "corps"].includes(userRole)) {
+      if (extraDashboardLabels.includes(item.label)) return true;
+    }
+    
     if (item.label === "Dashboard") return false;
     if (alwaysVisible.includes(item.label)) return true;
 

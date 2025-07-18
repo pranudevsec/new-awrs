@@ -3,6 +3,7 @@ import { useFormik } from "formik";
 import { unwrapResult } from "@reduxjs/toolkit";
 import toast from "react-hot-toast";
 import * as Yup from "yup";
+import { FaPlus } from "react-icons/fa";
 import FormSelect from "../../components/form/FormSelect";
 import Breadcrumb from "../../components/ui/breadcrumb/Breadcrumb";
 import Loader from "../../components/ui/loader/Loader";
@@ -583,7 +584,21 @@ const ProfileSettings = () => {
                 </table>
                 <button
                   type="button"
-                  className="_btn success btn-sm"
+                  
+                  style={{
+                    background: "#9c9c9cff",
+                    color: "#fff",
+                    borderRadius: "20px",
+                    width: "40px",
+                    height: "40px",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    fontSize: "1.3rem",
+                    boxShadow: "0 2px 8px rgba(59,130,246,0.15)",
+                    border: "none",
+                    padding: 0,
+                  }}
                   onClick={() => {
                     setAwards((prev) => [
                       ...prev,
@@ -591,7 +606,9 @@ const ProfileSettings = () => {
                     ]);
                   }}
                 >
-                  Add Award
+                  <span style={{ display: "inline-flex", alignItems: "center", gap: "0.5em" }}>
+                    <FaPlus />
+                  </span>
                 </button>
               </div>
             </>

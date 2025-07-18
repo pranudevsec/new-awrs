@@ -51,4 +51,19 @@ export const sidebarStructure = [
     icon: SVGICON.sidebar.profile,
     to: "/application/accepted",
   },
+  {
+    label: "Brigade Dashboard",
+    icon: SVGICON.sidebar.dashboard,
+    to: "/brigade-dashboard",
+  },
+  {
+    label: "Division Dashboard",
+    icon: SVGICON.sidebar.dashboard,
+    to: "/division-dashboard",
+  },
+  {
+    label: "Corps Dashboard",
+    icon: SVGICON.sidebar.dashboard,
+    to: "/corps-dashboard",
+  },
 ];

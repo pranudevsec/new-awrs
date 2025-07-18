@@ -227,7 +227,8 @@ const AppreciationReviewPage = () => {
                         last_date: values.lastDate,
                         command: values.command,
                         parameters: formattedParameters,
-                        unitRemarks: unitRemarks
+                        unitRemarks: unitRemarks,
+                        unit_type: profile?.unit?.unit_type
                     },
                 };
 

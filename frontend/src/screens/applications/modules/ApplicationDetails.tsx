@@ -2,6 +2,8 @@ import { useEffect, useState, type JSX } from "react";
 import { MdClose } from "react-icons/md";
 import { IoMdCheckmark } from "react-icons/io";
 import { FaCheckCircle } from "react-icons/fa";
+import { SVGICON } from "../../../constants/iconsList";
+import { FaDownload } from "react-icons/fa";
 import toast from "react-hot-toast";
 import Breadcrumb from "../../../components/ui/breadcrumb/Breadcrumb";
 import Loader from "../../../components/ui/loader/Loader";
@@ -10,7 +12,7 @@ import ReqClarificationModal from "../../../modals/ReqClarificationModal";
 import ReviewCommentModal from "../../../modals/ReviewCommentModal";
 import ViewCreatedClarificationModal from "../../../modals/ViewCreatedClarificationModal";
 import StepProgressBar from "../../../components/ui/stepProgressBar/StepProgressBar";
-import { SVGICON } from "../../../constants/iconsList";
+// import { SVGICON } from "../../../constants/iconsList";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { useAppDispatch, useAppSelector } from "../../../reduxToolkit/hooks";
 import {
@@ -26,6 +28,8 @@ import { baseURL } from "../../../reduxToolkit/helper/axios";
 import { useDebounce } from "../../../hooks/useDebounce";
 import { updateCitation } from "../../../reduxToolkit/services/citation/citationService";
 import { updateAppreciation } from "../../../reduxToolkit/services/appreciation/appreciationService";
+import * as XLSX from "xlsx";
+import { saveAs } from "file-saver";
 
 function areAllClarificationsResolved(unitDetail: any): boolean {
   const parameters = unitDetail?.fds?.parameters;
@@ -402,66 +406,104 @@ const ApplicationDetails = () => {
       };
     }
   };
+  // with token
+  // const handleAddsignature = async (member: any, memberdecision: string) => {
+  //   const newDecisions: { [memberId: string]: string } = {
+  //     ...decisions,
+  //     [member.id]: memberdecision,
+  //   };
+  //   setDecisions(newDecisions);
 
+  //   const result = await dispatch(
+  //     TokenValidation({ inputPersID: member.ic_number })
+  //   );
+  //   if (TokenValidation.fulfilled.match(result)) {
+  //     const isValid = result.payload.vaildId;
+  //     if (!isValid) {
+  //       return;
+  //     }
+  //     const SignPayload = {
+  //       data: {
+  //         application_id,
+  //         member,
+  //         type: unitDetail?.type,
+  //       },
+  //     };
+  //     const response = await dispatch(getSignedData(SignPayload));
+
+  //     const updatePayload = {
+  //       id: unitDetail?.id,
+  //       type: unitDetail?.type,
+  //       member: {
+  //         name: member.name,
+  //         ic_number: member.ic_number,
+  //         member_type: member.member_type,
+  //         member_id: member.id,
+  //         is_signature_added: true,
+  //         sign_digest: response.payload,
+  //       },
+  //       level: profile?.user?.user_role,
+  //     };
+  //     console.log(updatePayload);
+  //     if (memberdecision === "accepted") {
+  //       dispatch(updateApplication(updatePayload)).then(() => {
+  //         dispatch(fetchApplicationUnitDetail({ award_type, numericAppId }));
+  //         const allOthersAccepted = profile?.unit?.members
+  //           .filter((m: any) => m.id !== member.id)
+  //           .every((m: any) => decisions[m.id] === "accepted");
+
+  //         if (allOthersAccepted && memberdecision === "accepted") {
+  //           navigate("/applications/list");
+  //         }
+  //       });
+  //     } else if (memberdecision === "rejected") {
+  //       dispatch(
+  //         updateApplication({
+  //           ...updatePayload,
+  //           status: "rejected",
+  //         })
+  //       ).then(() => {
+  //         navigate("/applications/list");
+  //       });
+  //     }
+  //   }
+  // };
+
+  // without token
   const handleAddsignature = async (member: any, memberdecision: string) => {
-    const newDecisions: { [memberId: string]: string } = {
-      ...decisions,
-      [member.id]: memberdecision,
+    const updatePayload = {
+      id: unitDetail?.id,
+      type: unitDetail?.type,
+      member: {
+        name: member.name,
+        ic_number: member.ic_number,
+        member_type: member.member_type,
+        member_id: member.id,
+        is_signature_added: true,
+        sign_digest: "something while developing",
+      },
+      level: profile?.user?.user_role,
     };
-    setDecisions(newDecisions);
-
-    const result = await dispatch(
-      TokenValidation({ inputPersID: member.ic_number })
-    );
-    if (TokenValidation.fulfilled.match(result)) {
-      const isValid = result.payload.vaildId;
-      if (!isValid) {
-        return;
-      }
-      const SignPayload = {
-        data: {
-          application_id,
-          member,
-          type: unitDetail?.type,
-        },
-      };
-      const response = await dispatch(getSignedData(SignPayload));
-
-      const updatePayload = {
-        id: unitDetail?.id,
-        type: unitDetail?.type,
-        member: {
-          name: member.name,
-          ic_number: member.ic_number,
-          member_type: member.member_type,
-          member_id: member.id,
-          is_signature_added: true,
-          sign_digest: response.payload,
-        },
-        level: profile?.user?.user_role,
-      };
-      console.log(updatePayload);
-      if (memberdecision === "accepted") {
-        dispatch(updateApplication(updatePayload)).then(() => {
-          dispatch(fetchApplicationUnitDetail({ award_type, numericAppId }));
-          const allOthersAccepted = profile?.unit?.members
-            .filter((m: any) => m.id !== member.id)
-            .every((m: any) => decisions[m.id] === "accepted");
-
-          if (allOthersAccepted && memberdecision === "accepted") {
-            navigate("/applications/list");
-          }
-        });
-      } else if (memberdecision === "rejected") {
-        dispatch(
-          updateApplication({
-            ...updatePayload,
-            status: "rejected",
-          })
-        ).then(() => {
+    if (memberdecision === "accepted") {
+      dispatch(updateApplication(updatePayload)).then(() => {
+        dispatch(fetchApplicationUnitDetail({ award_type, numericAppId }));
+        const allOthersAccepted = profile?.unit?.members
+          .filter((m: any) => m.id !== member.id)
+          .every((m: any) => decisions[m.id] === "accepted");
+        if (allOthersAccepted && memberdecision === "accepted") {
           navigate("/applications/list");
-        });
-      }
+        }
+      });
+    } else if (memberdecision === "rejected") {
+      console.log(memberdecision);
+      dispatch(
+        updateApplication({
+          ...updatePayload,
+          status: "rejected",
+        })
+      ).then(() => {
+        navigate("/applications/list");
+      });
     }
   };
 
@@ -660,6 +702,43 @@ const ApplicationDetails = () => {
   // Show loader
   if (loading) return <Loader />;
 
+  // Excel export handler
+  const handleDownloadExcel = () => {
+    const parameters = unitDetail?.fds?.parameters || [];
+    const members = profile?.unit?.members || [];
+
+    // Prepare parameter data
+    const paramData = parameters.map((param: any) => ({
+      category: param.category || "",
+      subcategory: param.subcategory || "",
+      subsubcategory: param.subsubcategory || "",
+      name: param.name || "",
+      marks: param.marks ?? "",
+    }));
+
+    // Prepare member data
+    const memberData = members.map((member: any) => ({
+      name: member.name || "",
+      rank: member.rank || "",
+      member_type: member.member_type === "presiding_officer" ? "Presiding Officer" : "Member Officer",
+    }));
+
+    // Create workbook and sheets
+    const wb = XLSX.utils.book_new();
+    const wsParams = XLSX.utils.json_to_sheet(paramData);
+    XLSX.utils.book_append_sheet(wb, wsParams, "Parameters");
+
+    if (memberData.length > 0) {
+      const wsMembers = XLSX.utils.json_to_sheet(memberData);
+      XLSX.utils.book_append_sheet(wb, wsMembers, "Members");
+    }
+
+    // Write and download
+    const excelBuffer = XLSX.write(wb, { bookType: "xlsx", type: "array" });
+    const data = new Blob([excelBuffer], { type: "application/octet-stream" });
+    saveAs(data, `Application_${unitDetail?.id || ""}_Details.xlsx`);
+  };
+
   return (
     <>
       <div className="apply-citation-section">
@@ -672,7 +751,12 @@ const ApplicationDetails = () => {
               { label: "Application Details", href: "/applications/list/1" },
             ]}
           />
+          <button className="_btn primary mb-3 d-flex align-items-center gap-2" onClick={handleDownloadExcel}>
+            <FaDownload />
+            <span>Report</span>
+          </button>
         </div>
+      
         <div className="table-filter-area mb-4">
           <div className="d-flex flex-wrap justify-content-between align-items-center gap-3">
             <div
@@ -729,14 +813,14 @@ const ApplicationDetails = () => {
             <div className="table-responsive">
               <table className="table-style-2 w-100">
                 <thead>
-                  <tr style={{ background: "#007bff" }}>
-                    <th style={{ width: 150, minWidth: 150, maxWidth: 150, color: "white" }}>
+                  <tr style={{ backgroundColor: "#007bff" }}>
+                    <th style={{ width: 150, minWidth: 150, maxWidth: 150, fontSize: "17", color: "white" }}>
                       Type
                     </th>
-                    <th style={{ width: 200, minWidth: 200, maxWidth: 200, color: "white" }}>
+                    <th style={{ width: 200, minWidth: 200, maxWidth: 200, fontSize: "17", color: "white" }}>
                       Year
                     </th>
-                    <th style={{ width: 300, minWidth: 300, maxWidth: 300, color: "white" }}>
+                    <th style={{ width: 300, minWidth: 300, maxWidth: 300, fontSize: "17", color: "white" }}>
                       Title
                     </th>
                   </tr>
@@ -765,17 +849,17 @@ const ApplicationDetails = () => {
         <div className="table-responsive mt-4">
           <table className="table-style-1 w-100">
             <thead>
-              <tr style={{ background: "#007bff" }}>
-                <th style={{ width: 150, color: "white" }}>Parameter</th>
-                <th style={{ width: 100, color: "white" }}>Count</th>
-                <th style={{ width: 100, color: "white" }}>Marks</th>
-                <th style={{ width: 100, color: "white" }}>Document</th>
+              <tr style={{ backgroundColor: "#007bff" }}>
+                <th style={{ width: 150, fontSize: "17", color: "white" }}>Parameter</th>
+                <th style={{ width: 100, fontSize: "17", color: "white" }}>Count</th>
+                <th style={{ width: 100, fontSize: "17", color: "white" }}>Marks</th>
+                <th style={{ width: 100, fontSize: "17", color: "white" }}>Document</th>
 
                 {!isUnitRole && !isHeadquarter && (
                   <>
-                    <th style={{ width: 200 }}>Approved Marks</th>
+                    <th style={{ width: 200, color: "white" }}>Approved Marks</th>
                     {!isRaisedScreen && (
-                      <th style={{ width: 150 }}>Ask Clarification</th>
+                      <th style={{ width: 150, color: "white" }}>Ask Clarification</th>
                     )}
                     {isRaisedScreen && (
                       <>
@@ -919,7 +1003,7 @@ const ApplicationDetails = () => {
               </div>
               <div className="col-6 col-sm-2">
                 <span className="fw-medium text-muted">Marks:</span>
-                <div className="fw-bold">{paramStats.marks}</div>
+                <div className="fw-bold">{Number(paramStats.marks).toFixed(3)}</div>
               </div>
               <div className="col-6 col-sm-2">
                 <span className="fw-medium text-muted">Negative Marks:</span>

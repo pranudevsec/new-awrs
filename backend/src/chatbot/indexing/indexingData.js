@@ -12,11 +12,11 @@ const initializeVectorStore = async () => {
   vectorStore = await PGVectorStore.initialize(embeddings, {
     postgresConnectionOptions: {
       type: 'postgres',
-      host: process.env.DB_HOST || 'localhost',
-      port: parseInt(process.env.DB_PORT, 10) || 5432,
-      user: process.env.DB_USER || 'postgres',
-      password: process.env.DB_PASSWORD || 'nakul',
-      database: process.env.DB_NAME || 'newcitation',
+      host: 'localhost',
+      port: 5432,
+      user: 'postgres',
+      password: process.env.DB_PASSWORD || '123',
+      database: 'newcitation',
     },
     tableName: 'documents',
     columns: {

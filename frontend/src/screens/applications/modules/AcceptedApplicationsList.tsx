@@ -628,6 +628,52 @@ const AcceptedApplicationsList = () => {
                         </p>
                       </div>
                     ) : (
+                      // with token
+                      // <div className="d-flex align-items-center gap-2">
+                      //   <button
+                      //     className="_btn success"
+                      //     onClick={async () => {
+                      //       const priorityExists = unit?.fds?.applicationPriority?.some(
+                      //         (p: any) => p.role === role && p.priority != null
+                      //       );
+
+                      //       if (!priorityExists) {
+                      //         toast.error(`Please add priority for the ${role} role before approving.`);
+                      //         return;
+                      //       }
+
+                      //       try {
+                      //         const graceMarksExist = unit?.fds?.applicationGraceMarks?.some(
+                      //           (m: any) => m.role === role && m.marks != null
+                      //         );
+
+                      //         if (!graceMarksExist) {
+                      //           toast.error(
+                      //             `Please add Discretionary Points for the ${role} role before approving.`
+                      //           );
+                      //           return;
+                      //         }
+                      //         await handleAddsignature("approved", unit);
+                      //       } catch (error) {
+                      //         console.log("error ->", error)
+                      //         toast.error("Error while approving the application.");
+                      //       }
+                      //     }}
+                      //   >
+                      //     Approve
+                      //   </button>
+
+                      //   <button
+                      //     className="_btn danger"
+                      //     onClick={async () => {
+                      //       await handleAddsignature("rejected", unit);
+                      //     }}
+                      //   >
+                      //     Reject
+                      //   </button>
+                      // </div>
+
+                      // without token 
                       <div className="d-flex align-items-center gap-2">
                         <button
                           className="_btn success"
@@ -652,9 +698,16 @@ const AcceptedApplicationsList = () => {
                                 );
                                 return;
                               }
-                              await handleAddsignature("approved", unit);
+                              await dispatch(
+                                updateApplication({
+                                  id: unit?.id,
+                                  type: unit?.type,
+                                  status: "approved",
+                                })
+                              ).unwrap();
+                              // If all checks pass, navigate
+                              navigate("/applications/list");
                             } catch (error) {
-                              console.log("error ->", error)
                               toast.error("Error while approving the application.");
                             }
                           }}
@@ -664,8 +717,16 @@ const AcceptedApplicationsList = () => {
 
                         <button
                           className="_btn danger"
-                          onClick={async () => {
-                            await handleAddsignature("rejected", unit);
+                          onClick={() => {
+                            dispatch(
+                              updateApplication({
+                                id: unit?.id,
+                                type: unit?.type,
+                                status: "rejected",
+                              })
+                            ).then(() => {
+                              navigate("/applications/list");
+                            });
                           }}
                         >
                           Reject

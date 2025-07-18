@@ -36,7 +36,11 @@ const Dashboard = () => {
             <AssetsDetail dashboardStats={dashboardStats} />
             <div className="row mb-4 row-gap-4">
                 <div className="col-lg-4">
-                    <UnitScoreChart unitScores={unitScores} />
+                <UnitScoreChart
+                    data={unitScores}
+                    dataKey="score"
+                    title="Unit Scores"
+                />
                 </div>
                 <div className="col-lg-5">
                     <ApplicationStatus dashboardStats={dashboardStats} />

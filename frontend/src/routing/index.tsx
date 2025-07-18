@@ -36,6 +36,9 @@ const AddParameters = lazy(() => import("../screens/parameters/AddParameters"));
 const EditParameters = lazy(() => import("../screens/parameters/EditParameters"));
 
 const Dashboard = lazy(() => import("../screens/dashboard/Dashboard"));
+const BrigadeDashboard = lazy(() => import("../screens/dashboard/BrigadeDashboard"));
+const DivisionDashboard = lazy(() => import("../screens/dashboard/DivisionDashboard"));
+const CorpsDashboard = lazy(() => import("../screens/dashboard/CorpsDashboard"));
 
 const History = lazy(() => import("../screens/history/History"));
 const AllApplications = lazy(() => import("../screens/all-applications/AllApplications"));
@@ -95,6 +98,9 @@ export const authProtectedRoutes: RouteConfig[] = [
 
   // Dashboard
   { path: "/dashboard", element: <Dashboard /> },
+  { path: "/brigade-dashboard", element: <BrigadeDashboard /> },
+  { path: "/division-dashboard", element: <DivisionDashboard /> },
+  { path: "/corps-dashboard", element: <CorpsDashboard /> },
 
   // History
   { path: "/history", element: <History /> },

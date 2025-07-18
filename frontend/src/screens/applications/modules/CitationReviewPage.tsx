@@ -215,13 +215,13 @@ const CitationReviewPage = () => {
               id: param.param_id,
               name: display.main,
               count,
-              marks: calculatedMarks,
+              marks: Number(calculatedMarks.toFixed(3)),
               upload: uploadPaths,
               negative: param.negative,
             };
           })
           .filter((param) => param.count > 0 || param.marks != 0);
-
+          
         const payload = {
           date_init: new Date().toISOString().split("T")[0],
           citation_fds: {
@@ -232,6 +232,7 @@ const CitationReviewPage = () => {
             parameters: formattedParameters,
             unitRemarks: unitRemarks,
             awards: profile?.unit?.awards,
+            unit_type: profile?.unit?.unit_type
           },
         };
 

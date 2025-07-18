@@ -749,9 +749,9 @@ const ApplyAppreciation = () => {
                 <table className="table-style-2 w-100">
                   <thead>
                     <tr style={{ backgroundColor: "#007bff" }}>
-                      <th style={{ width: 150, minWidth: 150, maxWidth: 150, color: "white" }}>Type</th>
-                      <th style={{ width: 200, minWidth: 200, maxWidth: 200, color: "white" }}>Year</th>
-                      <th style={{ width: 300, minWidth: 300, maxWidth: 300, color: "white" }}>Title</th>
+                      <th style={{ width: 150, minWidth: 150, maxWidth: 150, fontSize: "17", color: "white" }}>Type</th>
+                      <th style={{ width: 200, minWidth: 200, maxWidth: 200, fontSize: "17", color: "white" }}>Year</th>
+                      <th style={{ width: 300, minWidth: 300, maxWidth: 300, fontSize: "17", color: "white" }}>Title</th>
                     </tr>
                   </thead>
                   <tbody>
