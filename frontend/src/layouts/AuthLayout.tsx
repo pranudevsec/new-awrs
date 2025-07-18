@@ -48,38 +48,4 @@ const AuthLayout = ({ children }: { children: React.ReactNode }) => {
     );
 };
 
-
-
-// const AuthLayout = ({ children }: { children: React.ReactNode }) => {
-//     const token = !!useAppSelector((state) => state.admin).admin?.token;
-
-//     if (!token) return <Navigate to="/authentication/sign-in" />;
-
-//     return (
-//         <div className="d-flex flex-column vh-100">
-//             {/* Topbar */}
-//             <Topbar />
-
-//             <div className="d-flex flex-grow-1 overflow-hidden">
-//                 {/* Sidebar */}
-//                 <SidebarMenu />
-
-//                 {/* Main content column */}
-//                 <div className="d-flex flex-column flex-grow-1 position-relative overflow-hidden">
-//                     {/* Header */}
-//                     <Header />
-
-//                     {/* Page content */}
-//                     <div className="flex-grow-1 overflow-auto scroll-style-110">
-//                         {children}
-//                     </div>
-
-//                     {/* Footer */}
-//                     <Footer />
-//                 </div>
-//             </div>
-//         </div>
-//     );
-// };
-
 export default AuthLayout;

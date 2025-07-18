@@ -11,7 +11,6 @@ interface SidebarMobileMenuProps {
 }
 
 const SidebarMobileMenu: FC<SidebarMobileMenuProps> = ({ show, handleClose }) => {
-
     const profile = useAppSelector((state) => state.admin.profile);
     const userRole = profile?.user?.user_role;
     const isMember = profile?.user?.is_member ?? false;
@@ -24,7 +23,6 @@ const SidebarMobileMenu: FC<SidebarMobileMenuProps> = ({ show, handleClose }) =>
         userRole !== "headquarter"
     ) {
         alwaysVisible.push("Clarification Received", "Home", "Profile Settings");
-
         if (userRole !== "unit") alwaysVisible.push("Clarification Raised");
     }
 
@@ -121,8 +119,8 @@ const SidebarMobileMenu: FC<SidebarMobileMenuProps> = ({ show, handleClose }) =>
                     <div className="w-50" style={{ height: "4px", backgroundColor: "#dc3545", borderRadius: "50px" }}></div>
                 </div>
                 <div className="sidebar-wrapper">
-                    {filteredStructure.map((item, index) => (
-                        <NavLink to={item.to} className="nav-items d-flex align-items-center fw-5 position-relative" key={index} onClick={handleClose}>
+                    {filteredStructure.map((item) => (
+                        <NavLink to={item.to} className="nav-items d-flex align-items-center fw-5 position-relative" key={item.to} onClick={handleClose}>
                             <div className="d-flex align-items-center text-truncate">
                                 <span className="nav-icon me-2 d-inline-flex align-items-center justify-content-center">
                                     {item.icon}

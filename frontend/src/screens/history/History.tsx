@@ -11,12 +11,24 @@ import { SVGICON } from "../../constants/iconsList";
 import { useAppDispatch, useAppSelector } from "../../reduxToolkit/hooks";
 import { fetchApplicationHistory, updateApplication, } from "../../reduxToolkit/services/application/applicationService";
 
+const getStatusColor = (status: string) => {
+  if (["pending", "in_review", "shortlisted_approved"].includes(status)) return "orange";
+  if (status === "approved") return "green";
+  return "red";
+};
+
+const getStatusLabel = (status: string) => {
+  if (["pending", "in_review", "shortlisted_approved"].includes(status)) return "Pending";
+  return status.charAt(0).toUpperCase() + status.slice(1);
+};
+
 const History = () => {
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
 
   const profile = useAppSelector((state) => state.admin.profile);
   const { units, loading, meta } = useAppSelector((state) => state.application);
+  const role = profile?.user?.user_role?.toLowerCase() ?? "";
 
   // States
   const [awardType, setAwardType] = useState<string | null>(null);
@@ -24,16 +36,13 @@ const History = () => {
   const [debouncedSearch, setDebouncedSearch] = useState<string>("");
   const [page, setPage] = useState<number>(1);
   const [limit, setLimit] = useState<number>(10);
-  const role = profile?.user?.user_role?.toLowerCase() ?? "";
 
   useEffect(() => {
     const handler = setTimeout(() => {
       setDebouncedSearch(searchTerm);
     }, 500);
 
-    return () => {
-      clearTimeout(handler);
-    };
+    return () => { clearTimeout(handler) };
   }, [searchTerm]);
 
   useEffect(() => {
@@ -41,7 +50,7 @@ const History = () => {
 
     const fetchData = () => {
       const params = {
-        award_type: awardType || "",
+        award_type: awardType ?? "",
         search: debouncedSearch,
         page,
         limit,
@@ -50,7 +59,7 @@ const History = () => {
       try {
         dispatch(fetchApplicationHistory(params)).unwrap();
       } catch (error: any) {
-        const errorMessage = error?.errors || error?.message || "An error occurred.";
+        const errorMessage = error?.errors ?? error?.message ?? "An error occurred.";
 
         if (error?.errors === "Please complete your unit profile before proceeding.") {
           navigate("/profile-settings");
@@ -59,7 +68,6 @@ const History = () => {
           toast.error(errorMessage);
         }
       }
-
     };
 
     fetchData();
@@ -94,7 +102,7 @@ const History = () => {
           <FormSelect
             name="awardType"
             options={awardTypeOptions}
-            value={awardTypeOptions.find((opt) => opt.value === awardType) || null}
+            value={awardTypeOptions.find((opt) => opt.value === awardType) ?? null}
             placeholder="Select Type"
             onChange={(option: OptionType | null) =>
               setAwardType(option ? option.value : null)
@@ -148,124 +156,105 @@ const History = () => {
               </tr>
             ) : (
               units.length > 0 &&
-              units.map((unit: any, idx) => (
-                <tr key={idx} style={{ height: 75 }} className="cursor-auto">
-                  <td style={{ width: 150, minWidth: 150, maxWidth: 150 }}>
-                    <p className="fw-4">#{unit.id}</p>
-                  </td>
-                  <td style={{ width: 150, minWidth: 150, maxWidth: 150 }}>
-                    <p className="fw-4">#{unit.unit_id}</p>
-                  </td>
-                  {role === "headquarter" && (
-                    <td style={{ width: 150, minWidth: 150, maxWidth: 150 }}>
-                      <p className="fw-4">{unit?.fds?.command}</p>
-                    </td>
-                  )}
-                  <td style={{ width: 200, minWidth: 200, maxWidth: 200 }}>
-                    <p className="fw-4">
-                      {new Date(unit.date_init).toLocaleDateString()}
-                    </p>
-                  </td>
-                  <td style={{ width: 200, minWidth: 200, maxWidth: 200 }}>
-                    <p className="fw-4">
-                      {unit.fds?.last_date
-                        ? new Date(unit.fds.last_date).toLocaleDateString()
-                        : "-"}
-                    </p>
-                  </td>
-                  <td style={{ width: 150, minWidth: 150, maxWidth: 150 }}>
-                    <p className="fw-4">
-                      {unit?.type
-                        ? unit.type.charAt(0).toUpperCase() + unit.type.slice(1)
-                        : "-"}
-                    </p>
-                  </td>
-                  <td style={{ width: 150, minWidth: 150, maxWidth: 150 }}>
-                    <p
-                      className="fw-4"
-                      style={{
-                        color: ['pending', 'in_review', 'shortlisted_approved'].includes(unit?.status_flag)
-                          ? "orange"
-                          : unit?.status_flag === "approved"
-                            ? "green"
-                            : "red",
+              units.map((unit: any) => {
+                const submissionDate = new Date(unit.date_init).toLocaleDateString();
+                const deadline = unit.fds?.last_date
+                  ? new Date(unit.fds.last_date).toLocaleDateString()
+                  : "-";
+                const typeLabel = unit?.type
+                  ? unit.type.charAt(0).toUpperCase() + unit.type.slice(1)
+                  : "-";
+                const statusLabel = unit?.status_flag
+                  ? getStatusLabel(unit.status_flag)
+                  : "-";
+                const statusColor = getStatusColor(unit?.status_flag);
+
+                let roleDisplay = "-";
+                if (unit?.status_flag === "rejected") {
+                  if (unit?.last_rejected_by_role) {
+                    roleDisplay =
+                      unit.last_rejected_by_role.charAt(0).toUpperCase() +
+                      unit.last_rejected_by_role.slice(1);
+                  }
+                } else if (unit?.last_approved_by_role) {
+                  roleDisplay =
+                    unit.last_approved_by_role.charAt(0).toUpperCase() +
+                    unit.last_approved_by_role.slice(1);
+                }
+
+                let withdrawAction = null;
+                if (unit?.status_flag !== "rejected") {
+                  withdrawAction = (
+                    <button
+                      type="button"
+                      className="_btn success text-nowrap w-sm-auto"
+                      onClick={() => {
+                        dispatch(
+                          updateApplication({
+                            id: unit?.id,
+                            type: unit?.type,
+                            withdrawRequested: true,
+                          })
+                        ).then(() => {
+                          const params = {
+                            award_type: awardType ?? "",
+                            search: debouncedSearch,
+                            page,
+                            limit,
+                          };
+                          dispatch(fetchApplicationHistory(params));
+                        });
                       }}
                     >
-                      {unit?.status_flag
-                        ? ['pending', 'in_review', 'shortlisted_approved'].includes(unit.status_flag)
-                          ? 'Pending'
-                          : unit.status_flag.charAt(0).toUpperCase() + unit.status_flag.slice(1)
-                        : "-"}
+                      Withdraw
+                    </button>
+                  );
+                } else {
+                  withdrawAction = (
+                    <p className="fw-4" style={{ color: "red" }}>
+                      Rejected
                     </p>
-                  </td>
-                  {/* <td style={{ width: 200, minWidth: 200, maxWidth: 200 }}>
-                    <div className="status-content approved pending d-flex align-items-center gap-3">
-                      <span></span>
-                      <p className="text-capitalize fw-5">Accepted</p>
-                    </div>
-                  </td> */}
-                  <td style={{ width: 150, minWidth: 150, maxWidth: 150 }}>
-                    <p className="fw-4">
-                      {unit?.status_flag === "rejected"
-                        ? unit?.last_rejected_by_role
-                          ? unit.last_rejected_by_role.charAt(0).toUpperCase() + unit.last_rejected_by_role.slice(1)
-                          : "-"
-                        : unit?.last_approved_by_role
-                          ? unit.last_approved_by_role.charAt(0).toUpperCase() + unit.last_approved_by_role.slice(1)
-                          : "-"}
-                    </p>
-                  </td>
-                  {role !== 'cw2' && <td>
-                    {unit?.is_withdraw_requested ? (
-                      <>
-                        {unit.withdraw_status === 'approved' && (
-                          <span className="badge bg-success text-nowrap">Withdraw Approved</span>
-                        )}
-                        {unit.withdraw_status === 'rejected' && (
-                          <span className="badge bg-danger text-nowrap">Withdraw Rejected</span>
-                        )}
-                        {['pending', 'in_review', 'shortlisted_approved'].includes(unit.withdraw_status) && (
-                          <span className="badge bg-warning text-white text-nowrap">Withdraw Pending</span>
-                        )}
-                      </>
-                    ) : (
-                      unit?.status_flag !== "rejected" ? (
-                        <button
-                          type="button"
-                          className="_btn success text-nowrap w-sm-auto"
-                          onClick={() => {
-                            dispatch(
-                              updateApplication({
-                                id: unit?.id,
-                                type: unit?.type,
-                                withdrawRequested: true,
-                              })
-                            ).then(() => {
-                              const params = {
-                                award_type: awardType || "",
-                                search: debouncedSearch,
-                                page,
-                                limit,
-                              };
-                              dispatch(fetchApplicationHistory(params));
-                            });
-                          }}
-                        >
-                          Withdraw
-                        </button>
-                      ) : <p
-                        className="fw-4"
-                        style={{
-                          color: "red",
-                        }}
-                      >
-                        Rejected
-                      </p>
-                    )}
+                  );
+                }
 
-                  </td>}
-                </tr>
-              ))
+                return (
+                  <tr key={unit.id} style={{ height: 75 }} className="cursor-auto">
+                    <td><p className="fw-4">#{unit.id}</p></td>
+                    <td><p className="fw-4">#{unit.unit_id}</p></td>
+                    {role === "headquarter" && (
+                      <td><p className="fw-4">{unit?.fds?.command}</p></td>
+                    )}
+                    <td><p className="fw-4">{submissionDate}</p></td>
+                    <td><p className="fw-4">{deadline}</p></td>
+                    <td><p className="fw-4">{typeLabel}</p></td>
+                    <td>
+                      <p className="fw-4" style={{ color: statusColor }}>
+                        {statusLabel}
+                      </p>
+                    </td>
+                    <td><p className="fw-4">{roleDisplay}</p></td>
+                    {role !== "cw2" && (
+                      <td>
+                        {unit?.is_withdraw_requested ? (
+                          <>
+                            {unit.withdraw_status === "approved" && (
+                              <span className="badge bg-success text-nowrap">Withdraw Approved</span>
+                            )}
+                            {unit.withdraw_status === "rejected" && (
+                              <span className="badge bg-danger text-nowrap">Withdraw Rejected</span>
+                            )}
+                            {["pending", "in_review", "shortlisted_approved"].includes(unit.withdraw_status) && (
+                              <span className="badge bg-warning text-white text-nowrap">Withdraw Pending</span>
+                            )}
+                          </>
+                        ) : (
+                          withdrawAction
+                        )}
+                      </td>
+                    )}
+                  </tr>
+                );
+              })
             )}
           </tbody>
         </table>

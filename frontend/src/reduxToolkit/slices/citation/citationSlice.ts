@@ -10,7 +10,7 @@ interface CitationState {
   success: boolean;
   error: string | null;
   data: any;
-  draftData: any | null;
+  draftData: any;
 }
 
 const initialState: CitationState = {
@@ -52,7 +52,7 @@ const citationSlice = createSlice({
       (state, action: PayloadAction<any>) => {
         state.loading = false;
         state.success = false;
-        state.error = action.payload || "Failed to create citation";
+        state.error = action.payload ?? "Failed to create citation";
       }
     );
 
@@ -75,7 +75,7 @@ const citationSlice = createSlice({
       (state, action: PayloadAction<any>) => {
         state.loading = false;
         state.success = false;
-        state.error = action.payload || "Failed to fetch citation";
+        state.error = action.payload ?? "Failed to fetch citation";
       }
     );
   },

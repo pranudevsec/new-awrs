@@ -1,7 +1,8 @@
 import { createAsyncThunk } from "@reduxjs/toolkit";
+import { create } from "xmlbuilder2";
 import toast from "react-hot-toast";
-import Axios from "../../helper/axios";
 import axios from "axios";
+import Axios from "../../helper/axios";
 import type {
   AddCommentParam,
   AddCommentResponse,
@@ -17,7 +18,6 @@ import type {
   TokenValidationResponse,
 } from "./applicationInterface";
 import { apiEndPoints } from "../../../constants";
-import { create } from "xmlbuilder2";
 
 const URL = import.meta.env.VITE_VALIDATE_TOKEN_URL;
 
@@ -65,15 +65,15 @@ export const fetchApplicationUnits = createAsyncThunk<
     if (response.data.success) {
       return response.data;
     } else {
-      toast.error(response.data.message || "Failed to fetch application units");
+      toast.error(response.data.message ?? "Failed to fetch application units");
       return rejectWithValue(response.data.message);
     }
   } catch (error: any) {
     toast.error(
-      error.response?.data?.message || "Error fetching application units"
+      error.response?.data?.message ?? "Error fetching application units"
     );
     return rejectWithValue(
-      error.response?.data?.message || "Failed to fetch application units"
+      error.response?.data?.message ?? "Failed to fetch application units"
     );
   }
 });
@@ -106,14 +106,14 @@ export const fetchApplicationHistory = createAsyncThunk<
       return response.data;
     } else {
       return rejectWithValue({
-        message: response.data.message || "Failed to fetch all applications",
+        message: response.data.message ?? "Failed to fetch all applications",
         errors: response.data.errors,
       });
     }
   } catch (error: any) {
     return rejectWithValue({
       message:
-        error.response?.data?.message || "Failed to fetch all applications",
+        error.response?.data?.message ?? "Failed to fetch all applications",
       errors: error.response?.data?.errors,
     });
   }
@@ -146,19 +146,15 @@ export const fetchAllApplications = createAsyncThunk<
     if (response.data.success) {
       return response.data;
     } else {
-      // toast.error(response.data.message || "Failed to fetch all applications");
       return rejectWithValue({
-        message: response.data.message || "Failed to fetch all applications",
+        message: response.data.message ?? "Failed to fetch all applications",
         errors: response.data.errors,
       });
     }
   } catch (error: any) {
-    // toast.error(
-    //   error.response?.data?.message || "Error fetching all applications"
-    // );
     return rejectWithValue({
       message:
-        error.response?.data?.message || "Failed to fetch all applications",
+        error.response?.data?.message ?? "Failed to fetch all applications",
       errors: error.response?.data?.errors,
     });
   }
@@ -170,7 +166,6 @@ export const fetchApplicationsForHQ = createAsyncThunk<
 >(
   "applications/fetchApplicationsForHQ",
   async (params, { rejectWithValue }) => {
-    console.log(params);
     try {
       const queryParams = new URLSearchParams();
 
@@ -186,7 +181,7 @@ export const fetchApplicationsForHQ = createAsyncThunk<
       if (params?.limit) {
         queryParams.append("limit", String(params.limit));
       }
-      if( params?.command_type) {
+      if (params?.command_type) {
         queryParams.append("command_type", params.command_type);
       }
 
@@ -197,15 +192,15 @@ export const fetchApplicationsForHQ = createAsyncThunk<
       if (response.data.success) {
         return response.data;
       } else {
-        toast.error(response.data.message || "Failed to fetch HQ applications");
+        toast.error(response.data.message ?? "Failed to fetch HQ applications");
         return rejectWithValue(response.data.message);
       }
     } catch (error: any) {
       toast.error(
-        error.response?.data?.message || "Error fetching HQ applications"
+        error.response?.data?.message ?? "Error fetching HQ applications"
       );
       return rejectWithValue(
-        error.response?.data?.message || "Failed to fetch HQ applications"
+        error.response?.data?.message ?? "Failed to fetch HQ applications"
       );
     }
   }
@@ -233,13 +228,13 @@ export const fetchApplicationUnitDetail = createAsyncThunk<
     if (response.data.success) {
       return response.data;
     } else {
-      toast.error(response.data.message || "Failed to fetch unit detail");
+      toast.error(response.data.message ?? "Failed to fetch unit detail");
       return rejectWithValue(response.data.message);
     }
   } catch (error: any) {
-    toast.error(error.response?.data?.message || "Error fetching unit detail");
+    toast.error(error.response?.data?.message ?? "Error fetching unit detail");
     return rejectWithValue(
-      error.response?.data?.message || "Failed to fetch unit detail"
+      error.response?.data?.message ?? "Failed to fetch unit detail"
     );
   }
 });
@@ -278,14 +273,14 @@ export const fetchSubordinates = createAsyncThunk<
       return response.data;
     } else {
       return rejectWithValue({
-        message: response.data.message || "Failed to fetch all applications",
+        message: response.data.message ?? "Failed to fetch all applications",
         errors: response.data.errors,
       });
     }
   } catch (error: any) {
     return rejectWithValue({
       message:
-        error.response?.data?.message || "Failed to fetch all applications",
+        error.response?.data?.message ?? "Failed to fetch all applications",
       errors: error.response?.data?.errors,
     });
   }
@@ -303,7 +298,7 @@ export const updateApplication = createAsyncThunk<
         status: params.status,
         member: params.member,
         level: params.level,
-        iscdr:params.iscdr,
+        iscdr: params.iscdr,
         withdrawRequested: params.withdrawRequested,
         withdraw_status: params.withdraw_status,
       }
@@ -311,25 +306,25 @@ export const updateApplication = createAsyncThunk<
 
     if (response.data.success) {
       toast.success(
-        response.data.message || "Application updated successfully"
+        response.data.message ?? "Application updated successfully"
       );
       return response.data;
     } else {
       toast.error(
-        response.data.errors ||
-          response.data.message ||
+        response.data.errors ??
+          response.data.message ??
           "Failed to update application"
       );
       return rejectWithValue(response.data.message);
     }
   } catch (error: any) {
     toast.error(
-      error.response?.data?.errors ||
-        error.response?.data?.message ||
+      error.response?.data?.errors ??
+        error.response?.data?.message ??
         "Error updating application"
     );
     return rejectWithValue(
-      error.response?.data?.message || "Failed to update application"
+      error.response?.data?.message ?? "Failed to update application"
     );
   }
 });
@@ -341,7 +336,7 @@ export const approveApplications = createAsyncThunk<
   try {
     const payload: any = {
       type: params.type,
-      status: params.status || "approved",
+      status: params.status ?? "approved",
     };
 
     if (params.id) {
@@ -359,19 +354,19 @@ export const approveApplications = createAsyncThunk<
 
     if (response.data.success) {
       toast.success(
-        response.data.message || "Applications approved successfully"
+        response.data.message ?? "Applications approved successfully"
       );
       return response.data;
     } else {
-      toast.error(response.data.message || "Failed to approve applications");
+      toast.error(response.data.message ?? "Failed to approve applications");
       return rejectWithValue(response.data.message);
     }
   } catch (error: any) {
     toast.error(
-      error.response?.data?.message || "Error approving applications"
+      error.response?.data?.message ?? "Error approving applications"
     );
     return rejectWithValue(
-      error.response?.data?.message || "Failed to approve applications"
+      error.response?.data?.message ?? "Failed to approve applications"
     );
   }
 });
@@ -389,13 +384,13 @@ export const approveMarks = createAsyncThunk<
     if (response.data.success) {
       return response.data;
     } else {
-      toast.error(response.data.message || "Failed to approve marks");
+      toast.error(response.data.message ?? "Failed to approve marks");
       return rejectWithValue(response.data.message);
     }
   } catch (error: any) {
-    toast.error(error.response?.data?.message || "Error approving marks");
+    toast.error(error.response?.data?.message ?? "Error approving marks");
     return rejectWithValue(
-      error.response?.data?.message || "Failed to approve marks"
+      error.response?.data?.message ?? "Failed to approve marks"
     );
   }
 });
@@ -411,24 +406,24 @@ export const addApplicationComment = createAsyncThunk<
     );
 
     if (response.data.success) {
-      toast.success(response.data.message || "Comment(s) added successfully");
+      toast.success(response.data.message ?? "Comment(s) added successfully");
       return response.data;
     } else {
-      toast.error(response.data.message || "Failed to add comment(s)");
+      toast.error(response.data.message ?? "Failed to add comment(s)");
       return rejectWithValue(response.data.message);
     }
   } catch (error: any) {
-    toast.error(error.response?.data?.message || "Error adding comment(s)");
+    toast.error(error.response?.data?.message ?? "Error adding comment(s)");
     return rejectWithValue(
-      error.response?.data?.message || "Failed to add comment(s)"
+      error.response?.data?.message ?? "Failed to add comment(s)"
     );
   }
 });
 export const TokenValidation = createAsyncThunk<
-  TokenValidationResponse, // Return type
-  TokenValidationParam, // Argument type
+  TokenValidationResponse,
+  TokenValidationParam,
   {
-    rejectValue: string; // Rejection type
+    rejectValue: string;
   }
 >(
   "applications/validateToken",
@@ -450,15 +445,15 @@ export const TokenValidation = createAsyncThunk<
       const result = response.data?.ValidatePersIDResult?.[0];
 
       if (result?.Status === "201" && result?.vaildId) {
-        toast.success(result?.Remark || "Token Matched");
+        toast.success(result?.Remark ?? "Token Matched");
         return result as TokenValidationResponse;
       } else {
-        toast.error(result?.Remark || "Token does not match!!");
-        return rejectWithValue(result?.Remark || "Token validation failed");
+        toast.error(result?.Remark ?? "Token does not match!!");
+        return rejectWithValue(result?.Remark ?? "Token validation failed");
       }
     } catch (error: any) {
       const message =
-        error?.response?.data?.message || "Error validating token";
+        error?.response?.data?.message ?? "Error validating token";
       toast.error(message);
       return rejectWithValue(message);
     }
@@ -494,7 +489,7 @@ export const getSignedData = createAsyncThunk<any, any>(
       }
     } catch (error: any) {
       console.error("Data signing error:", error);
-      const message = error?.response?.data?.message || "Error signing data";
+      const message = error?.response?.data?.message ?? "Error signing data";
       toast.error(message);
       return rejectWithValue(message);
     }

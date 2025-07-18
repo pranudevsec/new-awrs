@@ -21,38 +21,38 @@ const EditParameters = () => {
         if (!parameters) navigate('/parameters', { replace: true });
     }, [parameters, navigate]);
 
-    if (!parameters) return null;
-
     // Formik
     const formik = useFormik({
         initialValues: {
-            award_type: parameters.award_type?.trim() || "",
-            applicability: parameters.applicability?.trim() || "",
-            name: parameters.name?.trim() || "",
-            category: parameters.category?.trim() || "",
-            description: parameters.description?.trim() || "",
-            negative: parameters.negative || false,
-            per_unit_mark: parameters.per_unit_mark || "",
-            max_marks: parameters.max_marks || "",
-            proof_reqd: parameters.proof_reqd || false,
-            weightage: parameters.weightage || "",
-            param_sequence: parameters.param_sequence || "",
-            param_mark: parameters.param_mark || ""
+            award_type: parameters.award_type?.trim() ?? "",
+            applicability: parameters.applicability?.trim() ?? "",
+            name: parameters.name?.trim() ?? "",
+            category: parameters.category?.trim() ?? "",
+            description: parameters.description?.trim() ?? "",
+            negative: parameters.negative ?? false,
+            per_unit_mark: parameters.per_unit_mark ?? "",
+            max_marks: parameters.max_marks ?? "",
+            proof_reqd: parameters.proof_reqd ?? false,
+            weightage: parameters.weightage ?? "",
+            param_sequence: parameters.param_sequence ?? "",
+            param_mark: parameters.param_mark ?? ""
         },
         validationSchema: ParametersSchema,
         onSubmit: async (values, { resetForm }) => {
-            const resultAction = await dispatch(
-                updateParameter({
-                    id: parameters.param_id,
-                    payload: values,
-                })
-            );
+            const resultAction = await dispatch(updateParameter({ id: parameters.param_id, payload: values }));
             const result = unwrapResult(resultAction);
             if (result.success) {
                 resetForm();
                 navigate('/parameters');
             }
         },
+    });
+
+    if (!parameters) return <p>Loading...</p>;
+
+    const getErrorProps = (name: keyof typeof formik.values) => ({
+        errors: typeof formik.errors[name] === 'string' ? formik.errors[name] : undefined,
+        touched: typeof formik.touched[name] === 'boolean' ? formik.touched[name] : undefined,
     });
 
     return (
@@ -73,11 +73,10 @@ const EditParameters = () => {
                             label="Award Type"
                             name="award_type"
                             options={awardTypeOptions}
-                            value={awardTypeOptions.find((opt) => opt.value === formik.values.award_type) || null}
+                            value={awardTypeOptions.find((opt) => opt.value === formik.values.award_type) ?? null}
                             placeholder="Select"
-                            onChange={(selectedOption) => formik.setFieldValue("award_type", selectedOption?.value || "")}
-                            errors={typeof formik.errors.award_type === 'string' ? formik.errors.award_type : undefined}
-                            touched={typeof formik.touched.award_type === 'boolean' ? formik.touched.award_type : undefined}
+                            onChange={(selectedOption) => formik.setFieldValue("award_type", selectedOption?.value ?? "")}
+                            {...getErrorProps("award_type")}
                         />
                     </div>
                     <div className="col-sm-6 mb-3">
@@ -85,16 +84,15 @@ const EditParameters = () => {
                             label="Applicability"
                             name="applicability"
                             options={roleOptions2}
-                            value={roleOptions2.find((opt) => opt.value === formik.values.applicability) || null}
+                            value={roleOptions2.find((opt) => opt.value === formik.values.applicability) ?? null}
                             onChange={(selectedOption) =>
                                 formik.setFieldValue(
                                     "applicability",
-                                    selectedOption?.value || ""
+                                    selectedOption?.value ?? ""
                                 )
                             }
                             placeholder="Select"
-                            errors={typeof formik.errors.applicability === 'string' ? formik.errors.applicability : undefined}
-                            touched={typeof formik.touched.applicability === 'boolean' ? formik.touched.applicability : undefined}
+                            {...getErrorProps("applicability")}
                         />
                     </div>
                     <div className="col-sm-6 mb-3">
@@ -105,8 +103,7 @@ const EditParameters = () => {
                             value={formik.values.name}
                             onChange={formik.handleChange}
                             onBlur={formik.handleBlur}
-                            errors={typeof formik.errors.name === 'string' ? formik.errors.name : undefined}
-                            touched={typeof formik.touched.name === 'boolean' ? formik.touched.name : undefined}
+                            {...getErrorProps("name")}
                         />
                     </div>
                     <div className="col-sm-6 mb-3">
@@ -117,8 +114,7 @@ const EditParameters = () => {
                             value={formik.values.category}
                             onChange={formik.handleChange}
                             onBlur={formik.handleBlur}
-                            errors={typeof formik.errors.category === 'string' ? formik.errors.category : undefined}
-                            touched={typeof formik.touched.category === 'boolean' ? formik.touched.category : undefined}
+                            {...getErrorProps("category")}
                         />
                     </div>
                     <div className="col-sm-6 mb-3">
@@ -130,8 +126,7 @@ const EditParameters = () => {
                             value={formik.values.per_unit_mark}
                             onChange={formik.handleChange}
                             onBlur={formik.handleBlur}
-                            errors={typeof formik.errors.per_unit_mark === 'string' ? formik.errors.per_unit_mark : undefined}
-                            touched={typeof formik.touched.per_unit_mark === 'boolean' ? formik.touched.per_unit_mark : undefined}
+                            {...getErrorProps("per_unit_mark")}
                         />
                     </div>
                     <div className="col-sm-6 mb-3">
@@ -143,8 +138,7 @@ const EditParameters = () => {
                             value={formik.values.max_marks}
                             onChange={formik.handleChange}
                             onBlur={formik.handleBlur}
-                            errors={typeof formik.errors.max_marks === 'string' ? formik.errors.max_marks : undefined}
-                            touched={typeof formik.touched.max_marks === 'boolean' ? formik.touched.max_marks : undefined}
+                            {...getErrorProps("max_marks")}
                         />
                     </div>
                     <div className="col-sm-6 mb-3">
@@ -156,8 +150,7 @@ const EditParameters = () => {
                             value={formik.values.weightage}
                             onChange={formik.handleChange}
                             onBlur={formik.handleBlur}
-                            errors={typeof formik.errors.weightage === 'string' ? formik.errors.weightage : undefined}
-                            touched={typeof formik.touched.weightage === 'boolean' ? formik.touched.weightage : undefined}
+                            {...getErrorProps("weightage")}
                         />
                     </div>
                     <div className="col-sm-6 mb-3">
@@ -169,8 +162,7 @@ const EditParameters = () => {
                             value={formik.values.param_sequence}
                             onChange={formik.handleChange}
                             onBlur={formik.handleBlur}
-                            errors={typeof formik.errors.param_sequence === 'string' ? formik.errors.param_sequence : undefined}
-                            touched={typeof formik.touched.param_sequence === 'boolean' ? formik.touched.param_sequence : undefined}
+                            {...getErrorProps("param_sequence")}
                         />
                     </div>
                     <div className="col-sm-6 mb-3">
@@ -182,14 +174,13 @@ const EditParameters = () => {
                             value={formik.values.param_mark}
                             onChange={formik.handleChange}
                             onBlur={formik.handleBlur}
-                            errors={typeof formik.errors.param_mark === 'string' ? formik.errors.param_mark : undefined}
-                            touched={typeof formik.touched.param_mark === 'boolean' ? formik.touched.param_mark : undefined}
+                            {...getErrorProps("param_mark")}
                         />
                     </div>
                     <div className="col-sm-6 mb-3">
-                        <label className="form-label mb-1">
+                        <div className="form-label mb-1">
                             Negative
-                        </label>
+                        </div>
                         <div className="d-flex align-items-center gap-xxl-4 gap-2 flex-grow-1">
                             <FormRadioButton
                                 id="negative_yes"
@@ -213,9 +204,9 @@ const EditParameters = () => {
                         )}
                     </div>
                     <div className="col-sm-6 mb-3">
-                        <label className="form-label mb-1">
+                        <div className="form-label mb-1">
                             Proof required
-                        </label>
+                        </div>
                         <div className="d-flex align-items-center gap-xxl-4 gap-2 flex-grow-1">
                             <FormRadioButton
                                 id="proof_reqd_yes"
@@ -247,18 +238,20 @@ const EditParameters = () => {
                             value={formik.values.description}
                             onChange={formik.handleChange}
                             onBlur={formik.handleBlur}
-                            errors={typeof formik.errors.description === 'string' ? formik.errors.description : undefined}
-                            touched={typeof formik.touched.description === 'boolean' ? formik.touched.description : undefined}
+                            {...getErrorProps("description")}
                         />
                     </div>
                     <div className="col-12 mt-2">
                         <div className="d-flex align-items-center">
                             <button type="submit" className="_btn _btn-lg primary" disabled={formik.isSubmitting}>
                                 {formik.isSubmitting ? (
-                                    <span>
-                                        <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
-                                        Saving changes...
-                                    </span>
+                                    <>
+                                        <span
+                                            className="spinner-border spinner-border-sm me-2"
+                                            aria-hidden="true"
+                                        ></span>
+                                        {' '}Saving changes...
+                                    </>
                                 ) : (
                                     "Save Changes"
                                 )}

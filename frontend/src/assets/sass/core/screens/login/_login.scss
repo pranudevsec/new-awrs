@@ -52,7 +52,6 @@
       font-size: 16px;
       font-weight: 500;
       color: var(--gray-0);
-      // background-color: var(--primary-default);
       background: var(--blue-primary-clr);
       border-radius: 5px;
       padding: 10px 20px;
@@ -70,7 +69,6 @@
 }
 
 // Media query
-
 @media (max-width: 1199px) {
   .auth-section .auth-form-wrapper {
     padding: 30px 20px;

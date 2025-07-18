@@ -15,22 +15,21 @@ const Withdraw = () => {
   const profile = useAppSelector((state) => state.admin.profile);
   const { units, loading, meta } = useAppSelector((state) => state.application);
 
+  const role = profile?.user?.user_role?.toLowerCase() ?? "";
+
   // States
   const [awardType, setAwardType] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState<string>("");
   const [debouncedSearch, setDebouncedSearch] = useState<string>("");
   const [page, setPage] = useState<number>(1);
   const [limit, setLimit] = useState<number>(10);
-  const role = profile?.user?.user_role?.toLowerCase() ?? "";
 
   useEffect(() => {
     const handler = setTimeout(() => {
       setDebouncedSearch(searchTerm);
     }, 500);
 
-    return () => {
-      clearTimeout(handler);
-    };
+    return () => { clearTimeout(handler) };
   }, [searchTerm]);
 
   useEffect(() => {
@@ -40,19 +39,75 @@ const Withdraw = () => {
       const role = profile.user.user_role;
 
       const params = {
-        award_type: awardType || "",
+        award_type: awardType ?? "",
         search: debouncedSearch,
         page,
         limit,
         isGetWithdrawRequests: true,
       };
-      if (role !== "unit") {
-        dispatch(fetchSubordinates(params));
-      }
+      if (role !== "unit") dispatch(fetchSubordinates(params));
     };
 
     fetchData();
   }, [awardType, debouncedSearch, profile, page, limit]);
+
+  const renderWithdrawActions = (unit: any) => {
+    const commonParams = {
+      award_type: awardType ?? "",
+      search: debouncedSearch,
+      page,
+      limit,
+      isGetWithdrawRequests: true,
+    };
+
+    if (unit?.withdraw_status === "approved") {
+      return (
+        <span className="badge bg-success text-white text-nowrap">Approved</span>
+      );
+    }
+
+    if (unit?.withdraw_status === "rejected") {
+      return (
+        <span className="badge bg-danger text-white text-nowrap">Rejected</span>
+      );
+    }
+
+    return (
+      <>
+        <button
+          type="button"
+          className="_btn success text-nowrap w-sm-auto"
+          onClick={() => {
+            dispatch(
+              updateApplication({
+                id: unit?.id,
+                type: unit?.type,
+                withdraw_status: "approved",
+              })
+            ).then(() => dispatch(fetchSubordinates(commonParams)));
+          }}
+        >
+          Accept
+        </button>
+
+        <button
+          type="button"
+          className="_btn danger text-nowrap w-sm-auto"
+          onClick={() => {
+            dispatch(
+              updateApplication({
+                id: unit?.id,
+                type: unit?.type,
+                withdraw_status: "rejected",
+              })
+            ).then(() => dispatch(fetchSubordinates(commonParams)));
+          }}
+        >
+          Reject
+        </button>
+      </>
+    );
+  };
 
   return (
     <div className="clarification-section">
@@ -83,7 +138,7 @@ const Withdraw = () => {
         <FormSelect
           name="awardType"
           options={awardTypeOptions}
-          value={awardTypeOptions.find((opt) => opt.value === awardType) || null}
+          value={awardTypeOptions.find((opt) => opt.value === awardType) ?? null}
           placeholder="Select Type"
           onChange={(option: OptionType | null) =>
             setAwardType(option ? option.value : null)
@@ -130,25 +185,14 @@ const Withdraw = () => {
               </tr>
             ) : (
               units.length > 0 &&
-              units.map((unit: any, idx) => (
+              units.map((unit: any) => (
                 <tr
-                  key={idx}
+                  key={unit.id}
                   className="cursor-auto"
-                //   onClick={() => {
-                //     if (unit.status_flag === "draft") {
-                //       navigate(`/applications/${unit.type}?id=${unit.id}`);
-                //     } else {
-                //       navigate(
-                //         `/applications/list/${unit.id}?award_type=${unit.type}`
-                //       );
-                //     }
-                //   }}
-                //   style={{ cursor: "pointer" }}
                 >
                   <td style={{ width: 150, minWidth: 150, maxWidth: 150 }}>
                     <p className="fw-4">#{unit.id}</p>
                   </td>
-
                   <td style={{ width: 150, minWidth: 150, maxWidth: 150 }}>
                     <p className="fw-4">#{unit.unit_id}</p>
                   </td>
@@ -174,69 +218,11 @@ const Withdraw = () => {
                       {unit.type.charAt(0).toUpperCase() + unit.type.slice(1)}
                     </p>
                   </td>
-
                   <td>
                     <div className="d-flex flex-sm-row flex-column gap-sm-3 gap-1">
-                      {unit?.withdraw_status === 'approved' ? (
-                        <span className="badge bg-success text-white text-nowrap">Approved</span>
-                      ) : unit?.withdraw_status === 'rejected' ? (
-                        <span className="badge bg-danger text-white text-nowrap">Rejected</span>
-                      ) : (
-                        <>
-                          <button
-                            type="button"
-                            className="_btn success text-nowrap w-sm-auto"
-                            onClick={() => {
-                              dispatch(
-                                updateApplication({
-                                  id: unit?.id,
-                                  type: unit?.type,
-                                  withdraw_status: 'approved',
-                                })
-                              ).then(() => {
-                                const params = {
-                                  award_type: awardType || "",
-                                  search: debouncedSearch,
-                                  page,
-                                  limit,
-                                  isGetWithdrawRequests: true,
-                                };
-                                dispatch(fetchSubordinates(params));
-                              });
-                            }}
-                          >
-                            Accept
-                          </button>
-
-                          <button
-                            type="button"
-                            className="_btn danger text-nowrap w-sm-auto"
-                            onClick={() => {
-                              dispatch(
-                                updateApplication({
-                                  id: unit?.id,
-                                  type: unit?.type,
-                                  withdraw_status: 'rejected',
-                                })
-                              ).then(() => {
-                                const params = {
-                                  award_type: awardType || "",
-                                  search: debouncedSearch,
-                                  page,
-                                  limit,
-                                  isGetWithdrawRequests: true,
-                                };
-                                dispatch(fetchSubordinates(params));
-                              });
-                            }}
-                          >
-                            Reject
-                          </button>
-                        </>
-                      )}
+                      {renderWithdrawActions(unit)}
                     </div>
                   </td>
-
                 </tr>
               ))
             )}

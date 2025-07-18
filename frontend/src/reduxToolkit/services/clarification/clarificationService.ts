@@ -17,21 +17,20 @@ export const createClarification = createAsyncThunk<
   try {
     const response = await Axios.post(apiEndPoints.clarification, payload);
     if (response.data.success) {
-      toast.success(response.data.message || "Clarification submitted");
+      toast.success(response.data.message ?? "Clarification submitted");
       return response.data;
     } else {
-      toast.error(response.data.message || "Failed to submit clarification");
+      toast.error(response.data.message ?? "Failed to submit clarification");
       return rejectWithValue(response.data.message);
     }
   } catch (error: any) {
-    toast.error(error.response?.data?.message || "Submission error");
+    toast.error(error.response?.data?.message ?? "Submission error");
     return rejectWithValue(
-      error.response?.data?.message || "Failed to submit clarification"
+      error.response?.data?.message ?? "Failed to submit clarification"
     );
   }
 });
 
-// ✅ Get Clarification for Units
 export const getClarifications = createAsyncThunk<
   GetClarificationListResponse,
   { awardType: string; search: string; page?: number; limit?: number }
@@ -41,20 +40,19 @@ export const getClarifications = createAsyncThunk<
     try {
       const response = await Axios.get(
         `${apiEndPoints.clarification}?awardType=${
-          awardType || ""
-        }&search=${search}&page=${page || 1}&limit=${limit || 10}`
+          awardType ?? ""
+        }&search=${search}&page=${page ?? 1}&limit=${limit ?? 10}`
       );
       return response.data;
     } catch (error: any) {
       toast.error(
-        error.response?.data?.message || "Failed to fetch clarifications"
+        error.response?.data?.message ?? "Failed to fetch clarifications"
       );
       return rejectWithValue(error.response?.data?.message);
     }
   }
 );
 
-// ✅ Get Clarification for Subordinates
 export const getSubordinateClarifications = createAsyncThunk<
   GetClarificationListResponse,
   { awardType: string; search: string; page?: number; limit?: number }
@@ -64,13 +62,13 @@ export const getSubordinateClarifications = createAsyncThunk<
     try {
       const response = await Axios.get(
         `${apiEndPoints.clarification}/for-subordinates?awardType=${
-          awardType || ""
-        }&search=${search}&page=${page || 1}&limit=${limit || 10}`
+          awardType ?? ""
+        }&search=${search}&page=${page ?? 1}&limit=${limit ?? 10}`
       );
       return response.data;
     } catch (error: any) {
       toast.error(
-        error.response?.data?.message ||
+        error.response?.data?.message ??
           "Failed to fetch subordinate clarifications"
       );
       return rejectWithValue(error.response?.data?.message);
@@ -78,7 +76,6 @@ export const getSubordinateClarifications = createAsyncThunk<
   }
 );
 
-// ✅ Update Clarification
 export const updateClarification = createAsyncThunk<
   UpdateClarificationResponse,
   UpdateClarificationPayload
@@ -114,14 +111,14 @@ export const updateClarification = createAsyncThunk<
       );
 
       if (response.data.success) {
-        toast.success(response.data.message || "Clarification updated");
+        toast.success(response.data.message ?? "Clarification updated");
         return response.data;
       } else {
-        toast.error(response.data.message || "Failed to update clarification");
+        toast.error(response.data.message ?? "Failed to update clarification");
         return rejectWithValue(response.data.message);
       }
     } catch (error: any) {
-      toast.error(error.response?.data?.message || "Update error");
+      toast.error(error.response?.data?.message ?? "Update error");
       return rejectWithValue(error.response?.data?.message);
     }
   }

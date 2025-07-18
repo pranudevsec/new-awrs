@@ -57,7 +57,6 @@ exports.getDashboardStats = async (user) => {
     const query = { page: 1, limit: 10000 };
 
     let result;
-    console.log(user.user_role);
     if (user.user_role === "command") {
       result = await ApplicationService.getApplicationsOfSubordinates(
         user,
@@ -133,7 +132,6 @@ exports.getUnitScores = async (user) => {
 
     // Aggregate total marks by unit_id
     const unitScoresMap = {};
-    console.log(applications);
     applications.forEach((app) => {
       const { unit_id, total_marks } = app;
 

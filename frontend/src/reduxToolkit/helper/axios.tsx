@@ -10,14 +10,15 @@ Axios.interceptors.request.use(
   function (config) {
     const token = localStorage.getItem('persist:admin');
     const parsedData = token ? JSON.parse(token) : null;
-    const userToken = parsedData && parsedData.admin ? JSON.parse(parsedData.admin)?.token : null;
+    const userToken = JSON.parse(parsedData?.admin ?? 'null')?.token ?? null;
+
     if (userToken) {
       config.headers.Authorization = `Bearer ${userToken}`;
     }
     return config;
   },
   function (error) {
-    return Promise.reject(error);
+    return Promise.reject(error instanceof Error ? error : new Error(String(error)));
   }
 );
 
@@ -26,10 +27,21 @@ Axios.interceptors.response.use(
     return response;
   },
   function (error) {
-    if (error.response && error.response.status === 401 && error.response.data.message === "Invalid access token.") {
+    if (
+      error.response &&
+      error.response.status === 401 &&
+      error.response.data?.message === 'Invalid access token.'
+    ) {
       localStorage.clear();
       window.location.href = '/authentication/sign-in';
     }
+
+    if (!(error instanceof Error)) {
+      const customError = new Error(error.message ?? 'Unknown error');
+      (customError as any).originalError = error;
+      return Promise.reject(customError);
+    }
+
     return Promise.reject(error);
   }
 );

@@ -63,14 +63,14 @@ export function Chatbot() {
 
           {/* Messages */}
           <div className="p-3 overflow-auto" style={{ maxHeight: '300px' }}>
-            {messages.map((msg, idx) => (
+            {messages.map((msg) => (
               <div
-                key={idx}
+                key={msg.text}
                 className={`mb-2 p-2 rounded ${msg.from === 'user'
                   ? 'text-white text-end ms-auto'
                   : 'text-white bg-secondary text-start me-auto'
                   }`}
-                style={{ maxWidth: '80%' , backgroundColor: 'var(--blue-primary-clr)' }}
+                style={{ maxWidth: '80%', backgroundColor: 'var(--blue-primary-clr)' }}
               >
                 {msg.text}
               </div>
@@ -90,7 +90,7 @@ export function Chatbot() {
             />
             {isLoading ? (
               <div className="d-flex justify-content-center align-items-center p-3">
-                <div className="spinner-border text-primary" style={{ width: '1.5rem', height: '1.5rem' }} role="status">
+                <div className="spinner-border text-primary" aria-hidden="true" style={{ width: '1.5rem', height: '1.5rem' }}>
                   <span className="visually-hidden">Loading...</span>
                 </div>
               </div>

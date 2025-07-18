@@ -1,11 +1,10 @@
 import { useState, type ChangeEvent } from "react";
-import { useDispatch } from "react-redux";
 import Modal from "react-bootstrap/Modal";
 import toast from "react-hot-toast";
 import FormInput from "../components/form/FormInput";
-import type { AppDispatch } from "../reduxToolkit";
 import { SVGICON } from "../constants/iconsList";
 import { updateClarification } from "../reduxToolkit/services/clarification/clarificationService";
+import { useAppDispatch } from "../reduxToolkit/hooks";
 
 interface ClarificationModalProps {
   show: boolean;
@@ -22,7 +21,9 @@ const GiveClarificationModal: React.FC<ClarificationModalProps> = ({
   setIsRefreshData,
   isRefreshData
 }) => {
-  const dispatch = useDispatch<AppDispatch>();
+  const dispatch = useAppDispatch();
+
+  // States
   const [clarification, setClarification] = useState("");
   const [file, setFile] = useState<File | null>(null);
 
@@ -32,7 +33,7 @@ const GiveClarificationModal: React.FC<ClarificationModalProps> = ({
       toast.error("File size should be less than 5MB");
       e.target.value = "";
     } else {
-      setFile(selectedFile || null);
+      setFile(selectedFile ?? null);
     }
   };
 
@@ -48,7 +49,7 @@ const GiveClarificationModal: React.FC<ClarificationModalProps> = ({
       updateClarification({
         id: clarificationId,
         clarification,
-        clarification_doc: file || undefined,
+        clarification_doc: file ?? undefined,
       })
     );
 
@@ -106,7 +107,6 @@ const GiveClarificationModal: React.FC<ClarificationModalProps> = ({
             </button>
           </div>
         </form>
-
       </div>
     </Modal>
   );

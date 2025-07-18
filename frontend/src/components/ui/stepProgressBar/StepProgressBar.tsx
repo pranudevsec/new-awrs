@@ -1,4 +1,3 @@
-import React from "react";
 import { format } from "date-fns";
 
 const steps = [
@@ -35,7 +34,7 @@ const StepProgressBar: React.FC<StepProgressBarProps> = ({
     let step = (roleToStepIndex[lastApprovedRole] ?? -1) + 1;
 
     if (unitDetail.is_ol_approved) {
-      step = 7; // ✅ All completed including CW2
+      step = 7;
     } else if (unitDetail.is_mo_approved) {
       step = 5;
     }
@@ -55,7 +54,6 @@ const StepProgressBar: React.FC<StepProgressBarProps> = ({
       return format(new Date(unitDetail.ol_approved_at), "dd MMM yyyy");
     }
 
-    // ✅ Show OL approved date for CW2 when auto-completed
     if (lowerLabel === "cw2" && unitDetail.is_ol_approved && unitDetail.ol_approved_at) {
       return format(new Date(unitDetail.ol_approved_at), "dd MMM yyyy");
     }
@@ -80,33 +78,38 @@ const StepProgressBar: React.FC<StepProgressBarProps> = ({
 
   return (
     <div className="step-progress-container d-flex align-items-center justify-content-center position-relative">
-      {steps.map((step, index) => (
-        <div className="step-item position-relative text-center" key={index}>
-          <div
-            className={`step-circle d-flex align-items-center justify-content-center fw-6 ${index < currentStep
-              ? "completed"
-              : index === currentStep
-                ? "current"
-                : ""
-              }`}
-          >
-            {index < currentStep ? "✔" : index + 1}
-          </div>
+      {steps.map((step, index) => {
+        const isCompleted = index < currentStep;
+        const isCurrent = index === currentStep;
 
-          {index < steps.length - 1 && (
-            <div
-              className={`step-line ${index < currentStep ? "completed" : ""}`}
-            ></div>
-          )}
+        let stepStatusClass = "";
+        if (isCompleted) {
+          stepStatusClass = "completed";
+        } else if (isCurrent) {
+          stepStatusClass = "current";
+        }
 
-          <div className="step-label">
-            <div>{step.label}</div>
-            <div className="text-muted small">
-              {getStepDate(step.label) ?? "Pending"}
+        const stepCircleClass = `step-circle d-flex align-items-center justify-content-center fw-6 ${stepStatusClass}`;
+
+        return (
+          <div className="step-item position-relative text-center" key={step.label}>
+            <div className={stepCircleClass}>
+              {isCompleted ? "✔" : index + 1}
+            </div>
+
+            {index < steps.length - 1 && (
+              <div className={`step-line ${isCompleted ? "completed" : ""}`}></div>
+            )}
+
+            <div className="step-label">
+              <div>{step.label}</div>
+              <div className="text-muted small">
+                {getStepDate(step.label) ?? "Pending"}
+              </div>
             </div>
           </div>
-        </div>
-      ))}
+        );
+      })}
     </div>
   );
 };

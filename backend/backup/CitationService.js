@@ -27,7 +27,7 @@ exports.createCitation = async (data, user) => {
     const { award_type, parameters } = citation_fds;
 
     const paramResult = await client.query(
-      `SELECT param_id, name, subsubcategory, subcategory, category, per_unit_mark, max_marks,negative
+      `SELECT name, subsubcategory, subcategory, category, per_unit_mark, max_marks,negative
        FROM Parameter_Master
        WHERE award_type = $1`,
       [award_type]
@@ -35,16 +35,27 @@ exports.createCitation = async (data, user) => {
 
     const paramList = paramResult.rows;
 
-    const findMatchedParam = (paramId) => {
+    function findMatchedParam(frontendName) {
+      const cleanedName = (frontendName ?? "").trim();
+    
       for (const p of paramList) {
-        if (p.param_id === paramId) {
+        if (!p) continue;
+    
+        if (
+          (p.name ?? "").trim() === cleanedName ||
+          (p.subsubcategory ?? "").trim() === cleanedName ||
+          (p.subcategory ?? "").trim() === cleanedName ||
+          (p.category ?? "").trim() === cleanedName
+        ) {
           return p;
         }
       }
+    
       return undefined;
-    };
+    }
+    
 const updatedParameters = parameters.map((p) => {
-  const matchedParam = findMatchedParam(p.id);
+  const matchedParam = findMatchedParam(p.name);
   if (!matchedParam) {
     throw new Error(
       `Parameter "${p.name}" not found in master for award_type "${award_type}"`
@@ -186,16 +197,26 @@ exports.updateCitation = async (id, data,user) => {
 
       const paramList = paramResult.rows;
 
-  const findMatchedParam = (paramId) => {
-  return paramList.find(p =>
-    [p.param_id]
-      .map(x => (x))
-      .includes(paramId)
-  );
-};
+      function findMatchedParam(frontendName) {
+        const nameToMatch = (frontendName ?? "").trim();
+      
+        for (const p of paramList) {
+          if (!p) continue;
+      
+          for (const key of ["name", "subsubcategory", "subcategory", "category"]) {
+            const field = (p[key] ?? "").trim();
+            if (field === nameToMatch) {
+              return p;
+            }
+          }
+        }
+      
+        return null;
+      }
+      
 
 const updatedParameters = parameters.map((p) => {
-  const matchedParam = findMatchedParam(p.id);
+  const matchedParam = findMatchedParam(p.name);
   if (!matchedParam) {
     throw new Error(
       `Parameter "${p.name}" not found in master for award_type "${award_type}"`

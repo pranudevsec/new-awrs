@@ -8,9 +8,6 @@ function sanitizeReqBody(req, res, next) {
     if (typeof body[key] === "string") {
       body[key] = body[key].replace(/s{2,}/g, " ").trim();
     }
-    // if (body[key] === '') {
-    //   delete body[key];
-    // }
   }
 
   // Parse query fields

@@ -23,7 +23,7 @@ export const createCitation = createAsyncThunk<
       return rejectWithValue(response.data.message);
     }
   } catch (error: any) {
-    toast.error(error.response?.data?.message || "Error creating citation");
+    toast.error(error.response?.data?.message ?? "Error creating citation");
     return rejectWithValue("Failed to create citation");
   }
 });
@@ -41,7 +41,7 @@ export const fetchCitationById = createAsyncThunk<
       return rejectWithValue(response.data.message);
     }
   } catch (error: any) {
-    toast.error(error.response?.data?.message || "Error fetching citation");
+    toast.error(error.response?.data?.message ?? "Error fetching citation");
     return rejectWithValue("Failed to fetch citation");
   }
 });
@@ -59,14 +59,13 @@ export const updateCitation = createAsyncThunk<
     );
 
     if (response.data.success) {
-      // toast.success("Citation updated successfully!");
       return response.data;
     } else {
       toast.error("Failed to update citation");
       return rejectWithValue(response.data.message);
     }
   } catch (error: any) {
-    toast.error(error.response?.data?.message || "Error updating citation");
+    toast.error(error.response?.data?.message ?? "Error updating citation");
     return rejectWithValue("Failed to update citation");
   }
 });
@@ -86,7 +85,7 @@ export const deleteCitation = createAsyncThunk<
       return rejectWithValue(response.data.message);
     }
   } catch (error: any) {
-    toast.error(error.response?.data?.message || "Error deleting citation");
+    toast.error(error.response?.data?.message ?? "Error deleting citation");
     return rejectWithValue("Failed to delete citation");
   }
 });

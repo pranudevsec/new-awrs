@@ -17,8 +17,8 @@ const ApplicationsList = () => {
   const dispatch = useAppDispatch();
 
   const profile = useAppSelector((state) => state.admin.profile);
-  console.log("profile -> ", profile);
   const { units, loading, meta } = useAppSelector((state) => state.application);
+  const role = profile?.user?.user_role?.toLowerCase() ?? "";
 
   // States
   const [awardType, setAwardType] = useState<string | null>(null);
@@ -27,22 +27,6 @@ const ApplicationsList = () => {
   const [debouncedSearch, setDebouncedSearch] = useState<string>("");
   const [page, setPage] = useState<number>(1);
   const [limit, setLimit] = useState<number>(10);
-  const role = profile?.user?.user_role?.toLowerCase() ?? "";
-
-  console.log("awardType -> ", awardType);
-
-
-  // const isCW2Role = profile?.user?.user_role === "cw2";
-  // const cw2_type = profile?.user?.cw2_type?.toLowerCase() ?? "";
-  // useEffect(() => {
-  //   if (isCW2Role) {
-  //     if (cw2_type === "mo") {
-  //       setAwardType("citations");
-  //     } else if (cw2_type === "ol") {
-  //       setAwardType("appreciations");
-  //     }
-  //   }
-  // }, [isCW2Role, cw2_type]);
 
   useEffect(() => {
     const handler = setTimeout(() => {
@@ -59,13 +43,6 @@ const ApplicationsList = () => {
 
     const fetchData = async () => {
       const role = profile.user.user_role;
-
-      // const effectiveAwardType =
-      //   isCW2Role
-      //     ? (cw2_type === "mo" ? "citation" : cw2_type === "ol" ? "appreciation" : '')
-      //     : awardType || '';
-      console.log(commandType);
-
       const params = {
         award_type: awardType === "All" ? "" : awardType || undefined,
         command_type: commandType === "All" ? "" : commandType || undefined,
@@ -85,7 +62,7 @@ const ApplicationsList = () => {
         try {
           await dispatch(fetchSubordinates(updatedParams)).unwrap();
         } catch (error: any) {
-          const errorMessage = error?.errors || error?.message || "An error occurred.";
+          const errorMessage = error?.errors ?? error?.message ?? "An error occurred.";
 
           if (error?.errors === "Please complete your unit profile before proceeding.") {
             navigate("/profile-settings");
@@ -129,21 +106,21 @@ const ApplicationsList = () => {
         </div>
         <div className="d-flex flex-wrap align-items-center gap-2">
           <FormSelect
-          name="awardType"
-          options={awardTypeOptions}
-          value={awardTypeOptions.find((opt) => opt.value === awardType) || null}
-          onChange={(option) => setAwardType(option?.value || null)}
-          placeholder="Select Award Type"
-        />
-        {profile?.user?.user_role === "headquarter" &&
-        <FormSelect
-          name="commandType"
-          options={commandOptions}
-          value={commandOptions.find((opt) => opt.value === commandType) || null}
-          onChange={(option) => setCommandType(option?.value || null) }
-          placeholder="Select Command Type"
-        />
-       }
+            name="awardType"
+            options={awardTypeOptions}
+            value={awardTypeOptions.find((opt) => opt.value === awardType) ?? null}
+            onChange={(option) => setAwardType(option?.value ?? null)}
+            placeholder="Select Award Type"
+          />
+          {profile?.user?.user_role === "headquarter" &&
+            <FormSelect
+              name="commandType"
+              options={commandOptions}
+              value={commandOptions.find((opt) => opt.value === commandType)?? null}
+              onChange={(option) => setCommandType(option?.value ?? null)}
+              placeholder="Select Command Type"
+            />
+          }
         </div>
       </div>
 
@@ -177,9 +154,9 @@ const ApplicationsList = () => {
                   </div>
                 </td>
               </tr>
-              : units.length > 0 && units.map((unit: any, idx) => (
+              : units.length > 0 && units.map((unit: any) => (
                 <tr
-                  key={idx}
+                  key={unit.id}
                   onClick={() => {
                     if (location.pathname === "/submitted-forms/list") {
                       navigate(`/submitted-forms/list/${unit.id}?award_type=${unit.type}`);
@@ -225,14 +202,6 @@ const ApplicationsList = () => {
                       </p>
                     </td>
                   )}
-
-
-                  {/* <td style={{ width: 200, minWidth: 200, maxWidth: 200 }}>
-                    <div className="status-content approved pending d-flex align-items-center gap-3">
-                      <span></span>
-                      <p className="text-capitalize fw-5">Accepted</p>
-                    </div>
-                  </td> */}
                   <td style={{ width: 100, minWidth: 100, maxWidth: 100 }}>
                     {unit?.status_flag === "draft" ? (
                       <Link
@@ -252,12 +221,12 @@ const ApplicationsList = () => {
                       </Link>
                     )}
                   </td>
-
                 </tr>
               ))}
           </tbody>
         </table>
       </div>
+
       {/* Empty Data */}
       {!loading && units.length === 0 && <EmptyTable />}
 

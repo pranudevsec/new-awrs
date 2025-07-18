@@ -1,12 +1,9 @@
 import { useEffect, useState } from "react";
 import { useFormik } from "formik";
 import { unwrapResult } from "@reduxjs/toolkit";
-import { useAppDispatch, useAppSelector } from "../../reduxToolkit/hooks";
-import {
-  getConfig,
-  updateConfig,
-} from "../../reduxToolkit/services/config/configService";
 import { AdminSettingSchema } from "../../validations/validations";
+import { useAppDispatch, useAppSelector } from "../../reduxToolkit/hooks";
+import { getConfig, updateConfig } from "../../reduxToolkit/services/config/configService";
 import Breadcrumb from "../../components/ui/breadcrumb/Breadcrumb";
 import FormInput from "../../components/form/FormInput";
 import TagInput from "../../components/form/TagInput";
@@ -23,29 +20,23 @@ const AdminSettings = () => {
 
   // Formik form
   const formik = useFormik({
-    enableReinitialize: true,
     initialValues: {
       lastDate: config?.deadline ? config.deadline.split("T")[0] : "",
-      cycle_period: config?.cycle_period || [],
-      current_cycle_period: config?.current_cycle_period || "",
+      cycle_period: config?.cycle_period ?? [],
+      current_cycle_period: config?.current_cycle_period ?? "",
     },
+    enableReinitialize: true,
     validationSchema: AdminSettingSchema,
     onSubmit: async (values, { resetForm }) => {
-      try {
-        const resultAction = await dispatch(
-          updateConfig({
-            deadline: values.lastDate,
-            cycle_period: values.cycle_period,
-            current_cycle_period: values.current_cycle_period,
-          })
-        );
-        const result = unwrapResult(resultAction);
-        if (result.success) {
-          resetForm();
-        }
-      } catch (err) {
-        console.error("Update failed", err);
-      }
+      const resultAction = await dispatch(
+        updateConfig({
+          deadline: values.lastDate,
+          cycle_period: values.cycle_period,
+          current_cycle_period: values.current_cycle_period,
+        })
+      );
+      const result = unwrapResult(resultAction);
+      if (result.success) resetForm();
     },
   });
 
@@ -61,6 +52,16 @@ const AdminSettings = () => {
     label: item,
     value: item,
   }));
+
+  let cyclePeriodError = "";
+
+  if (formik.touched.cycle_period && formik.errors.cycle_period) {
+    if (typeof formik.errors.cycle_period === "string") {
+      cyclePeriodError = formik.errors.cycle_period;
+    } else {
+      cyclePeriodError = formik.errors.cycle_period.join(", ");
+    }
+  }
 
   // Show loader
   if (firstLoad) return <Loader />;
@@ -89,7 +90,6 @@ const AdminSettings = () => {
               }
             />
           </div>
-
           <div className="col-sm-6 mb-3">
             <TagInput
               label="Cycle Period"
@@ -98,13 +98,7 @@ const AdminSettings = () => {
               value={formik.values.cycle_period}
               onChange={(val) => formik.setFieldValue("cycle_period", val)}
               onBlur={() => formik.setFieldTouched("cycle_period", true)}
-              error={
-                formik.touched.cycle_period && formik.errors.cycle_period
-                  ? typeof formik.errors.cycle_period === "string"
-                    ? formik.errors.cycle_period
-                    : formik.errors.cycle_period.join(", ")
-                  : ""
-              }
+              error={cyclePeriodError}
             />
           </div>
           <div className="col-sm-6 mb-3">
@@ -115,7 +109,7 @@ const AdminSettings = () => {
               value={
                 cyclePeriodOptions.find(
                   (opt) => opt.value === formik.values.current_cycle_period
-                ) || null
+                ) ?? null
               }
               onChange={(selected) =>
                 formik.setFieldValue("current_cycle_period", selected?.value)
@@ -123,15 +117,14 @@ const AdminSettings = () => {
               placeholder="Select current cycle"
             />
           </div>
-
           <div className="col-12">
             <div className="d-flex align-items-center">
               <button type="submit" className="_btn _btn-lg primary" disabled={formik.isSubmitting}>
                 {formik.isSubmitting ? (
-                  <span>
-                    <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
-                    Submitting...
-                  </span>
+                  <>
+                    <span className="spinner-border spinner-border-sm me-2" aria-hidden="true"></span>
+                    {' '}Submitting...
+                  </>
                 ) : (
                   "Submit"
                 )}

@@ -129,7 +129,6 @@ const TopWinnersList = () => {
                     </tbody>
                 </table>
             </div>
-            {/* <Pagination /> */}
         </div>
     )
 }

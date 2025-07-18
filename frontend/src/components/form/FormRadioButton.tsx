@@ -17,7 +17,7 @@ const FormRadioButton: React.FC<FormRadioButtonProps> = ({ id, name, value, chec
                 name={name}
                 className="custom-radio-btn"
                 checked={checked}
-                onChange={() => onChange && onChange(value)}
+                onChange={() => onChange?.(value)}
             />
             <label htmlFor={id} className="form-label">
                 {label}

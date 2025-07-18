@@ -17,7 +17,7 @@ const Breadcrumb: React.FC<BreadcrumbProps> = ({ title, paths = [] }) => {
             {paths.length > 0 && (
                 <div className="d-inline-flex align-items-center gap-2 flex-wrap mt-2">
                     {paths.map((path, index) => (
-                        <div key={index} className="d-inline-flex align-items-center gap-2">
+                        <div key={path.href} className="d-inline-flex align-items-center gap-2">
                             <Link to={path.href} className="fw-5">{path.label}</Link>
                             {index !== paths.length - 1 && <span className="rounded-circle"></span>}
                         </div>

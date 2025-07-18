@@ -7,18 +7,18 @@ import { UploadDocs } from "./screens/Chatbot/UploadDocs";
 const App = () => {
   return (
     <Routes>
-      {publicRoutes.map((route, idx) => (
+      {publicRoutes.map((route) => (
         <Route
           path={route.path}
           element={<PublicLayout>{route.element}</PublicLayout>}
-          key={idx}
+          key={route.path}
         />
       ))}
-      {authProtectedRoutes.map((route, idx) => (
+      {authProtectedRoutes.map((route) => (
         <Route
           path={route.path}
           element={<AuthLayout>{route.element}</AuthLayout>}
-          key={idx}
+          key={route.path}
         />
       ))}
       <Route path="/upload-docs" element={<UploadDocs />} />

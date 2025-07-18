@@ -28,7 +28,6 @@ const adminSlice = createSlice({
     },
   },
   extraReducers: (builder) => {
-    // reqToLogin
     builder.addCase(reqToLogin.pending, (state) => {
       state.loader = true;
     });
@@ -39,10 +38,9 @@ const adminSlice = createSlice({
     });
     builder.addCase(reqToLogin.rejected, (state, action: PayloadAction<any>) => {
       state.loader = false;
-      state.error = action.payload || 'Login failed!';
+      state.error = action.payload ?? 'Login failed!';
     });
 
-    // reqToSignUp
     builder.addCase(reqToSignUp.pending, (state) => {
       state.loader = true;
     });
@@ -52,10 +50,9 @@ const adminSlice = createSlice({
     });
     builder.addCase(reqToSignUp.rejected, (state, action: PayloadAction<any>) => {
       state.loader = false;
-      state.error = action.payload || 'Login failed!';
+      state.error = action.payload ?? 'Login failed!';
     });
 
-    // getProfile
     builder.addCase(getProfile.pending, (state) => {
       state.loader = true;
     });
@@ -66,7 +63,7 @@ const adminSlice = createSlice({
     });
     builder.addCase(getProfile.rejected, (state, action: PayloadAction<any>) => {
       state.loader = false;
-      state.error = action.payload || 'Failed to fetch profile.';
+      state.error = action.payload ?? 'Failed to fetch profile.';
     });
   },
 });

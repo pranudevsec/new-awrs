@@ -8,6 +8,8 @@ import Breadcrumb from "../../components/ui/breadcrumb/Breadcrumb";
 import Loader from "../../components/ui/loader/Loader";
 import FormInput from "../../components/form/FormInput";
 import type { UpdateUnitProfileRequest } from "../../reduxToolkit/services/auth/authInterface";
+import { useAppSelector, useAppDispatch } from "../../reduxToolkit/hooks";
+import { getProfile, reqToUpdateUnitProfile } from "../../reduxToolkit/services/auth/authService";
 import {
   unitOptions,
   brigadeOptions,
@@ -17,15 +19,8 @@ import {
   hierarchicalStructure,
   unitTypeOptions,
   matrixUnitOptions,
+  rank
 } from "../../data/options";
-import { useAppSelector, useAppDispatch } from "../../reduxToolkit/hooks";
-import {
-  getProfile,
-  reqToUpdateUnitProfile,
-} from "../../reduxToolkit/services/auth/authService";
-import { rank } from "../../data/options";
-
-type UserRole = "unit" | "brigade" | "division" | "corps" | "command" | string;
 
 interface Officer {
   id?: string;
@@ -42,6 +37,7 @@ interface Award {
   award_title: string;
   award_year: string;
 }
+
 const hierarchyMap: Record<string, string[]> = {};
 hierarchicalStructure.forEach(([command, corps, division, brigade, unit]) => {
   hierarchyMap[command] = [corps, division, brigade, unit];
@@ -50,11 +46,16 @@ hierarchicalStructure.forEach(([command, corps, division, brigade, unit]) => {
 const ProfileSettings = () => {
   const dispatch = useAppDispatch();
   const { profile } = useAppSelector((state) => state.admin);
-  console.log("profile - > ", profile);
 
   const isMember = profile?.user?.is_member ?? false;
+  const role = profile?.user?.user_role?.toLowerCase() ?? "";
+
+  const currentYear = new Date().getFullYear();
+  const yearOptions = Array.from({ length: 50 }, (_, i) => `${currentYear - i}`);
+
   // States
   const [firstLoad, setFirstLoad] = useState(true);
+  const [awards, setAwards] = useState<Award[]>(profile?.unit?.awards ?? []);
   const [presidingOfficer, setPresidingOfficer] = useState<Officer>({
     id: undefined,
     serialNumber: "",
@@ -64,21 +65,16 @@ const ProfileSettings = () => {
     appointment: "",
     // digitalSign: "",
   });
+  const [officers, setOfficers] = useState<Officer[]>([{
+    id: undefined,
+    serialNumber: "",
+    icNumber: "",
+    rank: "",
+    name: "",
+    appointment: "",
+    // digitalSign: "",
+  }]);
 
-  const [officers, setOfficers] = useState<Officer[]>([
-    {
-      id: undefined,
-      serialNumber: "",
-      icNumber: "",
-      rank: "",
-      name: "",
-      appointment: "",
-      // digitalSign: "",
-    },
-  ]);
-  const [awards, setAwards] = useState<Award[]>(profile?.unit?.awards ?? []);
-
-  const role = profile?.user?.user_role?.toLowerCase() ?? "";
   useEffect(() => {
     if (profile?.unit?.awards && Array.isArray(profile.unit.awards)) {
       const processedAwards = profile.unit.awards.map((award) => ({
@@ -92,9 +88,9 @@ const ProfileSettings = () => {
       setAwards([]);
     }
   }, [profile?.unit?.awards]);
+
   useEffect(() => {
     if (profile?.unit?.members && Array.isArray(profile.unit.members)) {
-      // Extract presiding officer
       const presiding = profile.unit.members.find(
         (member) => member.member_type === "presiding_officer"
       );
@@ -111,7 +107,6 @@ const ProfileSettings = () => {
         });
       }
 
-      // Extract other officers
       const otherOfficers = profile.unit.members
         .filter((member) => member.member_type !== "presiding_officer")
         .map((member) => ({
@@ -127,17 +122,15 @@ const ProfileSettings = () => {
       if (otherOfficers.length > 0) {
         setOfficers(otherOfficers);
       } else {
-        setOfficers([
-          {
-            id: undefined,
-            serialNumber: "",
-            icNumber: "",
-            rank: "",
-            name: "",
-            appointment: "",
-            // digitalSign: "",
-          },
-        ]);
+        setOfficers([{
+          id: undefined,
+          serialNumber: "",
+          icNumber: "",
+          rank: "",
+          name: "",
+          appointment: "",
+          // digitalSign: "",
+        }]);
       }
     }
   }, [profile?.unit?.members]);
@@ -147,11 +140,10 @@ const ProfileSettings = () => {
   }, [profile]);
 
   const getVisibleFields = (
-    role: UserRole,
+    role: string,
     isSpecialUnit?: boolean
   ): string[] => {
     if (isSpecialUnit) {
-      // If it's a special unit, exclude brigade, division, corps
       switch (role) {
         case "unit":
           return [
@@ -245,19 +237,18 @@ const ProfileSettings = () => {
     ]);
   };
 
-  // Formik form
   const formik: any = useFormik({
     initialValues: {
-      unit: profile?.unit?.name || "",
-      brigade: profile?.unit?.bde || "",
-      division: profile?.unit?.div || "",
-      corps: profile?.unit?.corps || "",
-      command: profile?.unit?.comd || "",
-      adm_channel: profile?.unit?.adm_channel || "",
-      tech_channel: profile?.unit?.tech_channel || "",
-      unit_type: profile?.unit?.unit_type || "",
-      matrix_unit: profile?.unit?.matrix_unit || "",
-      location: profile?.unit?.location || "",
+      unit: profile?.unit?.name ?? "",
+      brigade: profile?.unit?.bde ?? "",
+      division: profile?.unit?.div ?? "",
+      corps: profile?.unit?.corps ?? "",
+      command: profile?.unit?.comd ?? "",
+      adm_channel: profile?.unit?.adm_channel ?? "",
+      tech_channel: profile?.unit?.tech_channel ?? "",
+      unit_type: profile?.unit?.unit_type ?? "",
+      matrix_unit: profile?.unit?.matrix_unit ?? "",
+      location: profile?.unit?.location ?? "",
     },
     enableReinitialize: true,
     onSubmit: async (values: any, { resetForm }) => {
@@ -265,7 +256,6 @@ const ProfileSettings = () => {
         const role = profile?.user?.user_role ?? "";
         const visibleFields = getVisibleFields(role);
 
-        // Map to backend field names
         const fieldMap: Record<string, string> = {
           unit: "name",
           brigade: "bde",
@@ -274,10 +264,8 @@ const ProfileSettings = () => {
           command: "comd",
         };
 
-        // Prepare payload with visible fields only; others as null
         const payload: any = {};
-
-        // Include all relevant fields
+        let matrixUnit = "";
         Object.entries(fieldMap).forEach(([formField, backendField]) => {
           if (visibleFields.includes(formField)) {
             payload[backendField] = values[formField];
@@ -286,16 +274,16 @@ const ProfileSettings = () => {
           }
         });
 
-        // Add other values
+        if (Array.isArray(values.matrix_unit)) {
+          matrixUnit = values.matrix_unit.join(",");
+        } else if (typeof values.matrix_unit === "string" && values.matrix_unit.length > 0) {
+          matrixUnit = values.matrix_unit;
+        }
+
         payload["adm_channel"] = values.adm_channel;
         payload["tech_channel"] = values.tech_channel;
         payload["unit_type"] = values.unit_type;
-        payload["matrix_unit"] = Array.isArray(values.matrix_unit)
-          ? values.matrix_unit.join(",")
-          : typeof values.matrix_unit === "string" &&
-            values.matrix_unit.length > 0
-            ? values.matrix_unit
-            : "";
+        payload["matrix_unit"] = matrixUnit;
         payload["location"] = values.location;
         payload["awards"] = awards;
 
@@ -336,12 +324,6 @@ const ProfileSettings = () => {
     }
   })
 
-  const currentYear = new Date().getFullYear();
-  const yearOptions = Array.from(
-    { length: 79 },
-    (_, i) => `${currentYear - i}`
-  );
-
   const handlePresidingChange = (field: keyof Officer, value: string) => {
     setPresidingOfficer((prev) => ({
       ...prev,
@@ -349,13 +331,14 @@ const ProfileSettings = () => {
     }));
   };
 
-  // Show loader
-  if (firstLoad) return <Loader />;
+  const handleRemoveAward = (indexToRemove: number) => {
+    setAwards((prevAwards) => prevAwards.filter((_, i) => i !== indexToRemove));
+  };
 
   const buildUnitPayload = (
     members?: UpdateUnitProfileRequest["members"]
   ): UpdateUnitProfileRequest => ({
-    name: profile?.unit?.name || "",
+    name: profile?.unit?.name ?? "",
     adm_channel: profile?.unit?.adm_channel ?? null,
     tech_channel: profile?.unit?.tech_channel ?? null,
     bde: profile?.unit?.bde ?? null,
@@ -372,6 +355,9 @@ const ProfileSettings = () => {
   });
 
   const isDisabled = !!isMember;
+
+  // Show loader
+  if (firstLoad) return <Loader />;
 
   return (
     <div className="profile-settings-section">
@@ -391,8 +377,8 @@ const ProfileSettings = () => {
                   division: divisionOptions,
                   corps: corpsOptions,
                   command: commandOptions,
-                }[profile?.user?.user_role ?? "unit"] || []
-                : optionsMap[field] || [];
+                }[profile?.user?.user_role ?? "unit"] ?? []
+                : optionsMap[field] ?? [];
 
             const getDynamicLabel = (
               userRole: string,
@@ -471,13 +457,13 @@ const ProfileSettings = () => {
                       )
                       : optionsForField.find(
                         (opt: any) => opt.value === formik.values[field]
-                      ) || null
+                      ) ?? null
                   }
                   onChange={(selectedOption: any) => {
                     const selectedValue =
                       field === "matrix_unit"
                         ? selectedOption.map((opt: any) => opt.value)
-                        : selectedOption?.value || "";
+                        : selectedOption?.value ?? "";
 
                     if (
                       field === "command" &&
@@ -614,59 +600,6 @@ const ProfileSettings = () => {
               </div>
             </>
           )}
-
-          {/* {role !== "unit" && (
-            <>
-              {" "}
-              <div className="col-sm-6 mb-3">
-                <label htmlFor="adm_channel" className="form-label mb-1">
-                  Adm Channel
-                </label>
-                <input
-                  id="adm_channel"
-                  name="adm_channel"
-                  type="text"
-                  className={`form-control ${formik.touched.adm_channel && formik.errors.adm_channel
-                    ? "is-invalid"
-                    : ""
-                    }`}
-                  value={formik.values.adm_channel}
-                  onChange={formik.handleChange}
-                  onBlur={formik.handleBlur}
-                  placeholder="Enter Adm Channel"
-                />
-                {formik.touched.adm_channel && formik.errors.adm_channel && (
-                  <div className="invalid-feedback">
-                    {formik.errors.adm_channel}
-                  </div>
-                )}
-              </div>
-              <div className="col-sm-6 mb-3">
-                <label htmlFor="tech_channel" className="form-label mb-1">
-                  Tech Channel
-                </label>
-                <input
-                  id="tech_channel"
-                  name="tech_channel"
-                  type="text"
-                  className={`form-control ${formik.touched.tech_channel && formik.errors.tech_channel
-                    ? "is-invalid"
-                    : ""
-                    }`}
-                  value={formik.values.tech_channel}
-                  onChange={formik.handleChange}
-                  onBlur={formik.handleBlur}
-                  placeholder="Enter Tech Channel"
-                />
-                {formik.touched.tech_channel && formik.errors.tech_channel && (
-                  <div className="invalid-feedback">
-                    {formik.errors.tech_channel}
-                  </div>
-                )}
-              </div>
-            </>
-          )} */}
-
           {!isDisabled && role !== "cw2" && (
             <div className="col-12 mt-2">
               <div className="d-flex align-items-center">
@@ -676,14 +609,10 @@ const ProfileSettings = () => {
                   disabled={formik.isSubmitting}
                 >
                   {formik.isSubmitting ? (
-                    <span>
-                      <span
-                        className="spinner-border spinner-border-sm me-2"
-                        role="status"
-                        aria-hidden="true"
-                      ></span>
-                      Submitting...
-                    </span>
+                    <>
+                      <span className="spinner-border spinner-border-sm me-2" aria-hidden="true"></span>
+                      {' '}Submitting...
+                    </>
                   ) : (
                     "Submit"
                   )}
@@ -696,73 +625,8 @@ const ProfileSettings = () => {
 
       {!["unit", "headquarter"].includes(role) && (
         <>
-          {/* Commander */}
-          {/* <div className="d-flex flex-sm-row flex-column align-items-sm-center justify-content-between mb-4">
-        <Breadcrumb title="Commander" />
-      </div>
-      <form className="mb-5">
-        <div className="row">
-          <div className="col-sm-6 mb-3">
-            <FormInput
-              label="Serial Number"
-              name="serialNumber"
-              placeholder="Enter Serial Number"
-              value=""
-            />
-          </div>
-          <div className="col-sm-6 mb-3">
-            <FormInput
-              label="IC Number"
-              name="icNumber"
-              placeholder="Enter IC Number"
-              value=""
-            />
-          </div>
-          <div className="col-sm-6 mb-3">
-            <FormInput
-              label="Rank"
-              name="rank"
-              placeholder="Enter Rank"
-              value=""
-            />
-          </div>
-          <div className="col-sm-6 mb-3">
-            <FormInput
-              label="Name"
-              name="name"
-              placeholder="Enter Name"
-              value=""
-            />
-          </div>
-          <div className="col-sm-6 mb-3">
-            <FormInput
-              label="Appointment"
-              name="appointment"
-              placeholder="Enter Appointment"
-              value=""
-            />
-          </div>
-          <div className="col-sm-6 mb-3">
-            <FormInput
-              label="Digital Sign"
-              name="digitalSign"
-              placeholder="Enter Digital Sign"
-              value=""
-            />
-          </div>
-          <div className="col-12 mt-2">
-            <div className="d-flex align-items-center">
-              <button type="submit" className="_btn _btn-lg primary">
-                Add  Commander
-              </button>
-            </div>
-          </div>
-        </div>
-      </form> */}
-
           {!isMember && (
             <>
-              {" "}
               {/* Presiding Officer */}
               <div className="d-flex flex-sm-row flex-column align-items-sm-center justify-content-between mb-4">
                 <Breadcrumb title="Presiding Officer" />
@@ -832,9 +696,9 @@ const ProfileSettings = () => {
                       label="Rank"
                       name="rank"
                       options={rank}
-                      value={rank.find((opt: any) => opt.value === presidingOfficer.rank) || null}
+                      value={rank.find((opt: any) => opt.value === presidingOfficer.rank) ?? null}
                       onChange={(selected: any) =>
-                        handlePresidingChange("rank", selected?.value || "")
+                        handlePresidingChange("rank", selected?.value ?? "")
                       }
                       placeholder="Select Rank"
                     />
@@ -861,15 +725,6 @@ const ProfileSettings = () => {
                       }
                     />
                   </div>
-                  {/* <div className="col-sm-6 mb-3">
-                <FormInput
-                  label="Digital Sign"
-                  name="digitalSign"
-                  placeholder="Enter Digital Sign"
-                  value={presidingOfficer.digitalSign}
-                  onChange={(e) => handlePresidingChange("digitalSign", e.target.value)}
-                />
-              </div> */}
                   <div className="col-12 mt-2">
                     <button type="submit" className="_btn _btn-lg primary">
                       Add Presiding Officer
@@ -891,7 +746,7 @@ const ProfileSettings = () => {
                   const officersPayload: UpdateUnitProfileRequest["members"] =
                     officers.map((officer, index) => ({
                       ...(officer.id ? { id: officer.id } : {}),
-                      member_type: "member_officer", // narrowed type
+                      member_type: "member_officer",
                       member_order: String(index + 1),
                       ic_number: officer.icNumber,
                       rank: officer.rank,
@@ -917,7 +772,7 @@ const ProfileSettings = () => {
                 }}
               >
                 {officers.map((officer, index) => (
-                  <div key={index} className="mb-4">
+                  <div key={officer.name} className="mb-4">
                     <div className="d-flex flex-sm-row flex-column align-items-sm-center justify-content-between mb-3">
                       <Breadcrumb title={`Member Officer ${index + 1}`} />
                     </div>
@@ -939,9 +794,9 @@ const ProfileSettings = () => {
                           label="Rank"
                           name={`rank-${index}`}
                           options={rank}
-                          value={rank.find((opt: any) => opt.value === officer.rank) || null}
+                          value={rank.find((opt: any) => opt.value === officer.rank) ?? null}
                           onChange={(selected: any) =>
-                            handleChange(index, "rank", selected?.value || "")
+                            handleChange(index, "rank", selected?.value ?? "")
                           }
                           placeholder="Select Rank"
                         />
@@ -968,17 +823,6 @@ const ProfileSettings = () => {
                           }
                         />
                       </div>
-                      {/* <div className="col-sm-6 mb-3">
-                    <FormInput
-                      label="Digital Sign"
-                      name={`digitalSign-${index}`}
-                      placeholder="Enter Digital Sign"
-                      value={officer.digitalSign}
-                      onChange={(e) =>
-                        handleChange(index, "digitalSign", e.target.value)
-                      }
-                    />
-                  </div> */}
                     </div>
                   </div>
                 ))}
@@ -1006,16 +850,16 @@ const ProfileSettings = () => {
 
           {profile?.user?.is_member_added ? (
             <>
-            <div className="d-flex flex-sm-row flex-column align-items-sm-center justify-content-between mb-4">
-              <Breadcrumb title="Staff Officer Register" />
-            </div>
+              <div className="d-flex flex-sm-row flex-column align-items-sm-center justify-content-between mb-4">
+                <Breadcrumb title="Staff Officer Register" />
+              </div>
               <div className="mb-5">
                 <div className="row">
                   <div className="col-sm-6 mb-3">
                     <FormInput
                       label="Registered Member Username"
                       name="memberUsername"
-                      value={profile.user.member_username || ""}
+                      value={profile.user.member_username ?? ""}
                       disabled
                     />
                   </div>
@@ -1064,7 +908,6 @@ const ProfileSettings = () => {
           )}
         </>
       )}
-
     </div>
   );
 };

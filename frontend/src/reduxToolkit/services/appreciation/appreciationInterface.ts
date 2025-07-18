@@ -1,5 +1,5 @@
 export interface AppreciationParameter {
-  id?: number; // Optional ID for existing parameters
+  id?: number;
   name: string;
   count: number;
   marks: number;
@@ -28,7 +28,7 @@ export interface CreateAppreciationResponse {
 export interface UpdateAppreciationRequest {
   id: any;
   isShortlisted?: boolean;
-  appre_fds?: AppreciationFormData; // Make this optional
+  appre_fds?: AppreciationFormData;
   date_init?: string;
   isDraft?: boolean;
 }

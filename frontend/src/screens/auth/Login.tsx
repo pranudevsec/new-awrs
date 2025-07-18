@@ -30,7 +30,6 @@ const roleCredentials: Record<string, { username: string; password: string }> = 
     command_member: { username: "testcommand_member", password: "12345678" },
     admin: { username: "admin", password: "12345678" },
     headquarter: { username: "testheadquarter", password: "12345678" },
-    // cw2_type with username or same password
     cw2_mo: { username: "testcw2_mo", password: "12345678" },
     cw2_ol: { username: "testcw2_ol", password: "12345678" },
     cw2_hr: { username: "testcw2_hr", password: "12345678" },
@@ -47,7 +46,7 @@ const Login = () => {
     const formik = useFormik({
         initialValues: {
             user_role: "unit",
-            cw2_type: "", // new field for cw2 subtype
+            cw2_type: "",
             username: "testuser1",
             password: "12345678",
         },
@@ -88,17 +87,14 @@ const Login = () => {
     });
 
     const handleRoleChange = (selectedOption: any) => {
-        const role = selectedOption?.value || "";
+        const role = selectedOption?.value ?? "";
         formik.setFieldValue("user_role", role);
 
         if (role !== "cw2") {
             formik.setFieldValue("cw2_type", "");
         }
 
-        if (role === "cw2") {
-            formik.setFieldValue("username", "");
-            formik.setFieldValue("password", "");
-        } else if (role in roleCredentials) {
+        if (role in roleCredentials && role !== "cw2") {
             formik.setFieldValue("username", roleCredentials[role].username);
             formik.setFieldValue("password", roleCredentials[role].password);
         } else {
@@ -108,7 +104,7 @@ const Login = () => {
     };
 
     const handleCw2TypeChange = (selectedOption: any) => {
-        const cw2_type = selectedOption?.value || "";
+        const cw2_type = selectedOption?.value ?? "";
         formik.setFieldValue("cw2_type", cw2_type);
 
         const key = `cw2_${cw2_type}`;
@@ -145,7 +141,7 @@ const Login = () => {
                                             label="Role"
                                             name="user_role"
                                             options={roleOptions}
-                                            value={roleOptions.find((opt) => opt.value === formik.values.user_role) || null}
+                                            value={roleOptions.find((opt) => opt.value === formik.values.user_role) ?? null}
                                             onChange={handleRoleChange}
                                             placeholder="Select"
                                             errors={formik.errors.user_role}
@@ -158,7 +154,7 @@ const Login = () => {
                                                 label="CW2 Type"
                                                 name="cw2_type"
                                                 options={cw2TypeOptions}
-                                                value={cw2TypeOptions.find((opt) => opt.value === formik.values.cw2_type) || null}
+                                                value={cw2TypeOptions.find((opt) => opt.value === formik.values.cw2_type) ?? null}
                                                 onChange={handleCw2TypeChange}
                                                 placeholder="Select CW2 Type"
                                                 errors={formik.errors.cw2_type}
@@ -219,7 +215,7 @@ const Login = () => {
                                         )}
                                     </div>
                                     <div className="mb-4 d-flex flex-wrap align-items-center justify-content-between gap-2">
-                                        <label className="ios-checkbox text-nowrap">
+                                        <label className="ios-checkbox text-nowrap" aria-hidden="true">
                                             <input type="checkbox" hidden defaultChecked />
                                             <div className="checkbox-wrapper">
                                                 <div className="checkbox-bg" />
@@ -233,10 +229,10 @@ const Login = () => {
                                     </div>
                                     <button type="submit" className="border-0 w-100 submit-btn" disabled={formik.isSubmitting}>
                                         {formik.isSubmitting ? (
-                                            <span>
-                                                <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
-                                                Signing in...
-                                            </span>
+                                            <>
+                                                <span className="spinner-border spinner-border-sm me-2" aria-hidden="true"></span>
+                                                {' '}Signing in...
+                                            </>
                                         ) : (
                                             "Sign in"
                                         )}

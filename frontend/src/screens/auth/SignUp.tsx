@@ -32,7 +32,7 @@ const SignUp = () => {
         validationSchema: SignUpSchema,
         onSubmit: async (values, { resetForm }) => {
             if (!values.captchaToken) {
-                return; // Captcha not completed
+                return;
             }
             const resultAction = await dispatch(reqToSignUp(values));
             const result = unwrapResult(resultAction);
@@ -45,7 +45,7 @@ const SignUp = () => {
 
     const handleCaptchaChange = (value: string | null) => {
         setCaptchaToken(value);
-        formik.setFieldValue("captchaToken", value); // Update Formik
+        formik.setFieldValue("captchaToken", value);
     };
 
     return (
@@ -72,11 +72,11 @@ const SignUp = () => {
                                             label="Role"
                                             name="user_role"
                                             options={roleOptions}
-                                            value={roleOptions.find((opt) => opt.value === formik.values.user_role) || null}
+                                            value={roleOptions.find((opt) => opt.value === formik.values.user_role) ?? null}
                                             onChange={(selectedOption) =>
                                                 formik.setFieldValue(
                                                     "user_role",
-                                                    selectedOption?.value || ""
+                                                    selectedOption?.value ?? ""
                                                 )
                                             }
                                             placeholder="Select"
@@ -198,10 +198,10 @@ const SignUp = () => {
                                     </div>
                                     <button type="submit" className="border-0 w-100 submit-btn" disabled={formik.isSubmitting}>
                                         {formik.isSubmitting ? (
-                                            <span>
-                                                <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
-                                                Signing up...
-                                            </span>
+                                            <>
+                                                <span className="spinner-border spinner-border-sm me-2" aria-hidden="true"></span>
+                                                {' '}Signing up...
+                                            </>
                                         ) : (
                                             "Sign Up"
                                         )}

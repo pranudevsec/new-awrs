@@ -59,9 +59,9 @@ const AddParameters = () => {
                             label="Award Type"
                             name="award_type"
                             options={awardTypeOptions}
-                            value={awardTypeOptions.find((opt) => opt.value === formik.values.award_type) || null}
+                            value={awardTypeOptions.find((opt) => opt.value === formik.values.award_type) ?? null}
                             placeholder="Select"
-                            onChange={(selectedOption) => formik.setFieldValue("award_type", selectedOption?.value || "")}
+                            onChange={(selectedOption) => formik.setFieldValue("award_type", selectedOption?.value ?? "")}
                             errors={formik.errors.award_type}
                             touched={formik.touched.award_type}
                         />
@@ -71,11 +71,11 @@ const AddParameters = () => {
                             label="Applicability"
                             name="applicability"
                             options={roleOptions2}
-                            value={roleOptions2.find((opt) => opt.value === formik.values.applicability) || null}
+                            value={roleOptions2.find((opt) => opt.value === formik.values.applicability) ?? null}
                             onChange={(selectedOption) =>
                                 formik.setFieldValue(
                                     "applicability",
-                                    selectedOption?.value || ""
+                                    selectedOption?.value ?? ""
                                 )
                             }
                             placeholder="Select"
@@ -173,9 +173,9 @@ const AddParameters = () => {
                         />
                     </div>
                     <div className="col-sm-6 mb-3">
-                        <label className="form-label mb-1">
+                        <div className="form-label mb-1">
                             Negative
-                        </label>
+                        </div>
                         <div className="d-flex align-items-center gap-xxl-4 gap-2 flex-grow-1">
                             <FormRadioButton
                                 id="negative_yes"
@@ -199,9 +199,9 @@ const AddParameters = () => {
                         )}
                     </div>
                     <div className="col-sm-6 mb-3">
-                        <label className="form-label mb-1">
+                        <div className="form-label mb-1">
                             Proof required
-                        </label>
+                        </div>
                         <div className="d-flex align-items-center gap-xxl-4 gap-2 flex-grow-1">
                             <FormRadioButton
                                 id="proof_reqd_yes"
@@ -241,10 +241,10 @@ const AddParameters = () => {
                         <div className="d-flex align-items-center">
                             <button type="submit" className="_btn _btn-lg primary" disabled={formik.isSubmitting}>
                                 {formik.isSubmitting ? (
-                                    <span>
-                                        <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
-                                        Adding...
-                                    </span>
+                                    <>
+                                        <span className="spinner-border spinner-border-sm me-2" aria-hidden="true"></span>
+                                        {' '}Adding...
+                                    </>
                                 ) : (
                                     "Add"
                                 )}

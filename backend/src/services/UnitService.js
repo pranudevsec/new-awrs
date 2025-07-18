@@ -1,12 +1,13 @@
 const dbService = require("../utils/postgres/dbService");
 const ResponseHelper = require("../utils/responseHelper");
-const { randomUUID } = require('crypto');
+const { randomUUID } = require("crypto");
 const bcrypt = require("bcryptjs");
 
 exports.createUnit = async (data) => {
   const client = await dbService.getClient();
   try {
-    const { sos_no, name, adm_channel, tech_channel, bde, div, corps, comd } = data;
+    const { sos_no, name, adm_channel, tech_channel, bde, div, corps, comd } =
+      data;
 
     const result = await client.query(
       `INSERT INTO Unit_tab (sos_no, name, adm_channel, tech_channel, bde, div, corps, comd)
@@ -15,7 +16,11 @@ exports.createUnit = async (data) => {
       [sos_no, name, adm_channel, tech_channel, bde, div, corps, comd]
     );
 
-    return ResponseHelper.success(201, "Unit created successfully", result.rows[0]);
+    return ResponseHelper.success(
+      201,
+      "Unit created successfully",
+      result.rows[0]
+    );
   } finally {
     client.release();
   }
@@ -24,7 +29,9 @@ exports.createUnit = async (data) => {
 exports.getAllUnits = async () => {
   const client = await dbService.getClient();
   try {
-    const result = await client.query("SELECT * FROM Unit_tab ORDER BY unit_id DESC");
+    const result = await client.query(
+      "SELECT * FROM Unit_tab ORDER BY unit_id DESC"
+    );
     return ResponseHelper.success(200, "Fetched all units", result.rows);
   } finally {
     client.release();
@@ -34,7 +41,10 @@ exports.getAllUnits = async () => {
 exports.getUnitById = async (id) => {
   const client = await dbService.getClient();
   try {
-    const result = await client.query("SELECT * FROM Unit_tab WHERE unit_id = $1", [id]);
+    const result = await client.query(
+      "SELECT * FROM Unit_tab WHERE unit_id = $1",
+      [id]
+    );
 
     return result.rows[0]
       ? ResponseHelper.success(200, "Unit found", result.rows[0])
@@ -47,7 +57,16 @@ exports.getUnitById = async (id) => {
 exports.updateUnit = async (id, data) => {
   const client = await dbService.getClient();
   try {
-    const allowedFields = ["sos_no", "name", "adm_channel", "tech_channel", "bde", "div", "corps", "comd"];
+    const allowedFields = [
+      "sos_no",
+      "name",
+      "adm_channel",
+      "tech_channel",
+      "bde",
+      "div",
+      "corps",
+      "comd",
+    ];
     const keys = Object.keys(data).filter((key) => allowedFields.includes(key));
 
     if (keys.length === 0) {
@@ -58,7 +77,9 @@ exports.updateUnit = async (id, data) => {
     const setClause = keys.map((key, idx) => `${key} = $${idx + 1}`).join(", ");
 
     const result = await client.query(
-      `UPDATE Unit_tab SET ${setClause} WHERE unit_id = $${keys.length + 1} RETURNING *`,
+      `UPDATE Unit_tab SET ${setClause} WHERE unit_id = $${
+        keys.length + 1
+      } RETURNING *`,
       [...values, id]
     );
 
@@ -73,7 +94,10 @@ exports.updateUnit = async (id, data) => {
 exports.deleteUnit = async (id) => {
   const client = await dbService.getClient();
   try {
-    const result = await client.query("DELETE FROM Unit_tab WHERE unit_id = $1 RETURNING *", [id]);
+    const result = await client.query(
+      "DELETE FROM Unit_tab WHERE unit_id = $1 RETURNING *",
+      [id]
+    );
 
     return result.rows[0]
       ? ResponseHelper.success(200, "Unit deleted successfully")
@@ -83,256 +107,277 @@ exports.deleteUnit = async (id) => {
   }
 };
 
-exports.createOrUpdateUnitForUser = async (userId, data,user) => {
+exports.createOrUpdateUnitForUser = async (userId, data, user) => {
   const client = await dbService.getClient();
-
   try {
-    await client.query('BEGIN');
+    await client.query("BEGIN");
+
     const { memberUsername, memberPassword } = data;
+
     if (memberUsername && memberPassword) {
-        // Check if username already exists
-        const existingUserRes = await client.query(
-            'SELECT user_id FROM User_tab WHERE username = $1',
-            [memberUsername]
-        );
-        if (existingUserRes.rows.length > 0) {
-            throw new Error("Username already exists");
-        }
-
-        // Hash the password securely
-        const hashedPassword = await bcrypt.hash(memberPassword, 10);
-
-        // Insert the new user
-        const insertUserRes = await client.query(
-            `INSERT INTO User_tab (
-                pers_no, rank, name, user_role,
-                username, password, officer_id, is_member
-            )
-            VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
-            RETURNING user_id`,
-            [
-                user.pers_no,
-                user.rank,
-                user.name,
-                user.user_role,
-                memberUsername,
-                hashedPassword,
-                user.user_id,
-                true
-            ]
-        );
-
-        const newUserId = insertUserRes.rows[0].user_id;
-
-        // Update the current user to mark is_member_added = true
-        await client.query(
-            `UPDATE User_tab SET is_member_added = true WHERE user_id = $1`,
-            [user.user_id]
-        );
-
-        await client.query('COMMIT');
-
-        return ResponseHelper.success(200, "Member user created successfully", { newUserId });
+      const result = await createMemberUser(
+        client,
+        user,
+        memberUsername,
+        memberPassword
+      );
+      await client.query("COMMIT");
+      return ResponseHelper.success(
+        200,
+        "Member user created successfully",
+        result
+      );
     }
 
-    const userRes = await client.query(
-      'SELECT unit_id FROM User_tab WHERE user_id = $1',
-      [userId]
-    );
-
-    if (userRes.rows.length === 0) {
-      throw new Error("User not found");
-    }
-
-    const currentUnitId = userRes.rows[0].unit_id;
+    const currentUnitId = await getCurrentUnitId(client, userId);
     let unitResult;
 
     if (!currentUnitId) {
-      const {
-        sos_no, name, adm_channel, tech_channel, bde, div, corps, comd,
-        unit_type, matrix_unit, location,
-        members = [],
-        awards = []
-    } = data;
-
-      const processedMembers = members.map(member => ({
-        id: member.id || randomUUID(),
-        ...member
-      }));
-      const processedAwards = awards.map(award => ({
-        award_id: award.award_id || randomUUID(),
-        ...award
-    }));
-      const insertUnitQuery = `
-      INSERT INTO Unit_tab (
-          sos_no, name, adm_channel, tech_channel, bde, div, corps, comd,
-          unit_type, matrix_unit, location,
-          members, awards
-      )
-      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
-      RETURNING unit_id
-  `;
-  
-  const insertRes = await client.query(insertUnitQuery, [
-      sos_no, name, adm_channel, tech_channel, bde, div, corps, comd,
-      unit_type, matrix_unit, location,
-      JSON.stringify(processedMembers),
-      JSON.stringify(processedAwards)
-  ]);
-
-      const newUnitId = insertRes.rows[0].unit_id;
-
-      await client.query(
-        'UPDATE User_tab SET unit_id = $1 WHERE user_id = $2',
-        [newUnitId, userId]
-      );
-
-      unitResult = insertRes.rows[0];
-
+      unitResult = await createUnitAndLinkToUser(client, data, userId);
     } else {
-      const allowedFields = [
-        "sos_no", "name", "adm_channel", "tech_channel", "bde", "div", "corps",
-        "comd", "unit_type", "matrix_unit", "location"
-    ];
-
-      const updateFields = [];
-      const values = [];
-      let index = 1;
-
-      for (const field of allowedFields) {
-        if (data[field] !== undefined) {
-          updateFields.push(`${field} = $${index}`);
-          values.push(data[field]);
-          index++;
-        }
-      }
-
-      if (data.members && Array.isArray(data.members)) {
-        const currentMembersRes = await client.query(
-          'SELECT members FROM Unit_tab WHERE unit_id = $1',
-          [currentUnitId]
-        );
-        const existingMembers = currentMembersRes.rows[0].members || [];
-
-        let updatedMembers = [...existingMembers];
-
-        for (const member of data.members) {
-          if (member.member_type === 'presiding_officer') {
-            const existingIndex = updatedMembers.findIndex(m => m.member_type === 'presiding_officer');
-
-            if (existingIndex !== -1) {
-              updatedMembers[existingIndex] = {
-                ...updatedMembers[existingIndex],
-                ...member,
-                id: updatedMembers[existingIndex].id || member.id || randomUUID(),
-              };
-            } else {
-              updatedMembers.push({
-                id: member.id || randomUUID(),
-                ...member
-              });
-            }
-          } else {
-            if (member.id) {
-              const existingIndex = updatedMembers.findIndex(m => m.id === member.id);
-              if (existingIndex !== -1) {
-                updatedMembers[existingIndex] = {
-                  ...updatedMembers[existingIndex],
-                  ...member
-                };
-              } else {
-                updatedMembers.push({
-                  id: member.id,
-                  ...member
-                });
-              }
-            } else {
-              updatedMembers.push({
-                id: randomUUID(),
-                ...member
-              });
-            }
-          }
-        }
-
-        updateFields.push(`members = $${index}`);
-        values.push(JSON.stringify(updatedMembers));
-        index++;
-      }
-      if (data.awards && Array.isArray(data.awards)) {
-        const currentAwardsRes = await client.query(
-            'SELECT awards FROM Unit_tab WHERE unit_id = $1',
-            [currentUnitId]
-        );
-        const existingAwards = currentAwardsRes.rows[0].awards || [];
-    
-        // Create a map of incoming award_ids
-        const incomingAwardIds = new Set(
-            data.awards
-                .filter(a => a.award_id)
-                .map(a => a.award_id)
-        );
-    
-        // Filter out awards in DB that are not present in incoming data (remove them)
-        let updatedAwards = existingAwards.filter(
-            a => a.award_id && incomingAwardIds.has(a.award_id)
-        );
-    
-        for (const award of data.awards) {
-            if (award.award_id) {
-                const existingIndex = updatedAwards.findIndex(a => a.award_id === award.award_id);
-                if (existingIndex !== -1) {
-                    updatedAwards[existingIndex] = {
-                        ...updatedAwards[existingIndex],
-                        ...award
-                    };
-                } else {
-                    // Edge case: award_id provided but not in DB, add it
-                    updatedAwards.push({
-                        award_id: award.award_id,
-                        ...award
-                    });
-                }
-            } else {
-                updatedAwards.push({
-                    award_id: randomUUID(),
-                    ...award
-                });
-            }
-        }
-    
-        updateFields.push(`awards = $${index}`);
-        values.push(JSON.stringify(updatedAwards));
-        index++;
-    }
-    
-    
-      if (updateFields.length === 0) {
-        throw new Error("No valid fields provided for update");
-      }
-
-      updateFields.push(`updated_at = CURRENT_TIMESTAMP`);
-
-      const updateQuery = `
-        UPDATE Unit_tab
-        SET ${updateFields.join(", ")}
-        WHERE unit_id = $${index}
-        RETURNING unit_id
-      `;
-
-      values.push(currentUnitId);
-
-      const updateRes = await client.query(updateQuery, values);
-      unitResult = updateRes.rows[0];
+      unitResult = await updateUnitDetails(client, currentUnitId, data);
     }
 
-    await client.query('COMMIT');
-    return ResponseHelper.success(200, "Unit processed successfully", unitResult);
-
+    await client.query("COMMIT");
+    return ResponseHelper.success(
+      200,
+      "Unit processed successfully",
+      unitResult
+    );
   } catch (error) {
-    await client.query('ROLLBACK');
-    return ResponseHelper.error(500, "Failed to create or update unit", error.message);
+    await client.query("ROLLBACK");
+    return ResponseHelper.error(
+      500,
+      "Failed to create or update unit",
+      error.message
+    );
   } finally {
     client.release();
   }
 };
+
+// START HELPER OF createOrUpdateUnitForUser
+async function createMemberUser(client, user, username, password) {
+  const existingUser = await client.query(
+    "SELECT user_id FROM User_tab WHERE username = $1",
+    [username]
+  );
+  if (existingUser.rows.length > 0) throw new Error("Username already exists");
+
+  const hashedPassword = await bcrypt.hash(password, 10);
+  const res = await client.query(
+    `INSERT INTO User_tab (
+      pers_no, rank, name, user_role, username, password, officer_id, is_member
+    ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING user_id`,
+    [
+      user.pers_no,
+      user.rank,
+      user.name,
+      user.user_role,
+      username,
+      hashedPassword,
+      user.user_id,
+      true,
+    ]
+  );
+
+  await client.query(
+    "UPDATE User_tab SET is_member_added = true WHERE user_id = $1",
+    [user.user_id]
+  );
+
+  return { newUserId: res.rows[0].user_id };
+}
+
+async function getCurrentUnitId(client, userId) {
+  const res = await client.query(
+    "SELECT unit_id FROM User_tab WHERE user_id = $1",
+    [userId]
+  );
+  if (res.rows.length === 0) throw new Error("User not found");
+  return res.rows[0].unit_id;
+}
+
+async function createUnitAndLinkToUser(client, data, userId) {
+  const {
+    sos_no,
+    name,
+    adm_channel,
+    tech_channel,
+    bde,
+    div,
+    corps,
+    comd,
+    unit_type,
+    matrix_unit,
+    location,
+    members = [],
+    awards = [],
+  } = data;
+
+  const processedMembers = members.map((m) => ({
+    id: m.id || randomUUID(),
+    ...m,
+  }));
+  const processedAwards = awards.map((a) => ({
+    award_id: a.award_id || randomUUID(),
+    ...a,
+  }));
+
+  const res = await client.query(
+    `INSERT INTO Unit_tab (
+      sos_no, name, adm_channel, tech_channel, bde, div, corps, comd,
+      unit_type, matrix_unit, location, members, awards
+    ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13) RETURNING unit_id`,
+    [
+      sos_no,
+      name,
+      adm_channel,
+      tech_channel,
+      bde,
+      div,
+      corps,
+      comd,
+      unit_type,
+      matrix_unit,
+      location,
+      JSON.stringify(processedMembers),
+      JSON.stringify(processedAwards),
+    ]
+  );
+
+  const newUnitId = res.rows[0].unit_id;
+  await client.query("UPDATE User_tab SET unit_id = $1 WHERE user_id = $2", [
+    newUnitId,
+    userId,
+  ]);
+
+  return { unit_id: newUnitId };
+}
+
+async function updateUnitDetails(client, unitId, data) {
+  const allowedFields = [
+    "sos_no",
+    "name",
+    "adm_channel",
+    "tech_channel",
+    "bde",
+    "div",
+    "corps",
+    "comd",
+    "unit_type",
+    "matrix_unit",
+    "location",
+  ];
+
+  const updateFields = [];
+  const values = [];
+  let idx = 1;
+
+  allowedFields.forEach((field) => {
+    if (data[field] !== undefined) {
+      updateFields.push(`${field} = $${idx}`);
+      values.push(data[field]);
+      idx++;
+    }
+  });
+
+  if (data.members) {
+    const updatedMembers = await processMembersUpdate(
+      client,
+      unitId,
+      data.members
+    );
+    updateFields.push(`members = $${idx}`);
+    values.push(JSON.stringify(updatedMembers));
+    idx++;
+  }
+
+  if (data.awards) {
+    const updatedAwards = await processAwardsUpdate(
+      client,
+      unitId,
+      data.awards
+    );
+    updateFields.push(`awards = $${idx}`);
+    values.push(JSON.stringify(updatedAwards));
+    idx++;
+  }
+
+  if (updateFields.length === 0)
+    throw new Error("No valid fields provided for update");
+
+  updateFields.push(`updated_at = CURRENT_TIMESTAMP`);
+  values.push(unitId);
+
+  const res = await client.query(
+    `UPDATE Unit_tab SET ${updateFields.join(
+      ", "
+    )} WHERE unit_id = $${idx} RETURNING unit_id`,
+    values
+  );
+
+  return { unit_id: res.rows[0].unit_id };
+}
+
+async function processMembersUpdate(client, unitId, incomingMembers) {
+  const res = await client.query(
+    "SELECT members FROM Unit_tab WHERE unit_id = $1",
+    [unitId]
+  );
+  const existingMembers = res.rows[0]?.members || [];
+  const updatedMembers = [...existingMembers];
+
+  for (const member of incomingMembers) {
+    const memberId = member.id || randomUUID();
+    if (member.member_type === "presiding_officer") {
+      const idx = updatedMembers.findIndex(
+        (m) => m.member_type === "presiding_officer"
+      );
+      if (idx !== -1) {
+        updatedMembers[idx] = {
+          ...updatedMembers[idx],
+          ...member,
+          id: updatedMembers[idx].id || memberId,
+        };
+      } else {
+        updatedMembers.push({ ...member, id: memberId });
+      }
+    } else {
+      const idx = updatedMembers.findIndex((m) => m.id === member.id);
+      if (idx !== -1) {
+        updatedMembers[idx] = { ...updatedMembers[idx], ...member };
+      } else {
+        updatedMembers.push({ ...member, id: memberId });
+      }
+    }
+  }
+  return updatedMembers;
+}
+
+async function processAwardsUpdate(client, unitId, incomingAwards) {
+  const res = await client.query(
+    "SELECT awards FROM Unit_tab WHERE unit_id = $1",
+    [unitId]
+  );
+  const existingAwards = res.rows[0]?.awards || [];
+
+  const incomingAwardIds = new Set(
+    incomingAwards.filter((a) => a.award_id).map((a) => a.award_id)
+  );
+  let updatedAwards = existingAwards.filter(
+    (a) => a.award_id && incomingAwardIds.has(a.award_id)
+  );
+
+  for (const award of incomingAwards) {
+    const awardId = award.award_id || randomUUID();
+    const idx = updatedAwards.findIndex((a) => a.award_id === award.award_id);
+    if (idx !== -1) {
+      updatedAwards[idx] = { ...updatedAwards[idx], ...award };
+    } else {
+      updatedAwards.push({ ...award, award_id: awardId });
+    }
+  }
+  return updatedAwards;
+}
+// END HELPER OF createOrUpdateUnitForUser

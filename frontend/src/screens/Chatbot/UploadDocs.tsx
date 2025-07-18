@@ -25,7 +25,7 @@ export function UploadDocs() {
       if (res.ok) {
         toast.success("File uploaded successfully!");
       } else {
-        toast.error("❌ Upload failed: " + (data.error || "Unknown error"));
+        toast.error("❌ Upload failed: " + (data.error ?? "Unknown error"));
       }
     } catch (err) {
       console.error(err);
@@ -76,10 +76,12 @@ export function UploadDocs() {
 
           {isUploading && (
             <div className="mt-3 d-flex flex-column align-items-center">
-              <div className="spinner-border text-primary" role="status" style={{ width: "2rem", height: "2rem" }}>
+              <div className="spinner-border text-primary" aria-hidden="true" style={{ width: "2rem", height: "2rem" }}>
                 <span className="visually-hidden">Uploading...</span>
               </div>
-              <small className="text-primary mt-2">Uploading file, please wait...</small>
+              <div aria-live="polite">
+                <small className="text-primary mt-2">Uploading file, please wait...</small>
+              </div>
             </div>
           )}
         </div>

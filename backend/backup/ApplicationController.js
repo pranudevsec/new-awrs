@@ -63,7 +63,6 @@ exports.getApplicationsScoreboard = async (req, res) => {
       const { type, status,member ,withdrawRequested,withdraw_status,level} = req.body;
       const id=req.params.id;
 
-
       if (status) {
         if (!['approved', 'rejected', "shortlisted_approved"].includes(status)) {
           return res.status(StatusCodes.BAD_REQUEST).send(
@@ -71,11 +70,9 @@ exports.getApplicationsScoreboard = async (req, res) => {
           );
         }
       }
-
-      const result = await ApplicationService.updateApplicationStatus(id, type,status, req.user,member,withdrawRequested,withdraw_status);
-
+      const result = await ApplicationService.updateApplicationStatus(id, type, status, req.user,member,withdrawRequested,withdraw_status);
       if(member){
-        await SignatureLogService.addSignatureLogs(id,status,member,level);
+        await SignatureLogService.addSignatureLogs(id,status,level,member);
       }
   
       res.status(StatusCodes.OK).send(

@@ -16,7 +16,7 @@ export const getConfig = createAsyncThunk<ConfigResponse>(
         return rejectWithValue(response.data.message);
       }
     } catch (error: any) {
-      toast.error(error.response?.data?.message || "Error fetching config");
+      toast.error(error.response?.data?.message ?? "Error fetching config");
       return rejectWithValue("Fetch failed");
     }
   }
@@ -36,7 +36,7 @@ export const updateConfig = createAsyncThunk<
       return rejectWithValue(response.data.message);
     }
   } catch (error: any) {
-    toast.error(error.response?.data?.message || "Error updating config");
+    toast.error(error.response?.data?.message ?? "Error updating config");
     return rejectWithValue("Update failed");
   }
 });

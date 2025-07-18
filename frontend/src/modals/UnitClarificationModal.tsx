@@ -27,6 +27,7 @@ const UnitClarificationModal: React.FC<ClarificationModalProps> = ({
   isRefreshData
 }) => {
   const dispatch = useAppDispatch();
+
   const [comment, setComment] = useState("");
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -49,7 +50,6 @@ const UnitClarificationModal: React.FC<ClarificationModalProps> = ({
       console.error("Clarification creation failed", err);
     }
   };
-
 
   return (
     <Modal
@@ -79,14 +79,12 @@ const UnitClarificationModal: React.FC<ClarificationModalProps> = ({
                 if (words.length <= 200) {
                   setComment(e.target.value);
                 } else {
-                  // Optionally allow trimming to 200 words:
                   const trimmed = words.slice(0, 200).join(" ");
                   setComment(trimmed);
                 }
               }}
             />
           </div>
-
           <div className="d-flex align-items-center justify-content-end gap-3">
             <button type="submit" className="_btn primary">
               Send Clarification

@@ -36,12 +36,18 @@ exports.createAppre = async (data, user) => {
     const paramList = paramResult.rows;
 
     const findMatchedParam = (frontendName) => {
-      frontendName = (frontendName || "").trim();
-      return paramList.find(p =>
-        [p.name, p.subsubcategory, p.subcategory, p.category]
-          .map(x => (x || "").trim())
-          .includes(frontendName)
-      );
+      if (!frontendName) return undefined;
+      const cleanName = frontendName.trim().toLowerCase();
+    
+      for (const p of paramList) {
+        const fieldsToCheck = [p.name, p.subsubcategory, p.subcategory, p.category];
+        for (const field of fieldsToCheck) {
+          if ((field || "").trim().toLowerCase() === cleanName) {
+            return p;
+          }
+        }
+      }
+      return undefined;
     };
 
     const enrichedParams = parameters.map((p) => {
@@ -198,13 +204,21 @@ exports.updateAppre = async (id, data,user) => {
       const paramList = paramResult.rows;
 
       const findMatchedParam = (frontendName) => {
-        frontendName = (frontendName || "").trim();
-        return paramList.find(p =>
-          [p.name, p.subsubcategory, p.subcategory, p.category]
-            .map(x => (x || "").trim())
-            .includes(frontendName)
-        );
-      };
+        if (!frontendName) return undefined;
+        const cleanedName = frontendName.trim();
+      
+        for (const p of paramList) {
+          if (
+            (p.name && p.name.trim() === cleanedName) ||
+            (p.subsubcategory && p.subsubcategory.trim() === cleanedName) ||
+            (p.subcategory && p.subcategory.trim() === cleanedName) ||
+            (p.category && p.category.trim() === cleanedName)
+          ) {
+            return p;
+          }
+        }
+        return undefined;
+      };      
 
       const enrichedParams = parameters.map((p) => {
         const matchedParam = findMatchedParam(p.name);

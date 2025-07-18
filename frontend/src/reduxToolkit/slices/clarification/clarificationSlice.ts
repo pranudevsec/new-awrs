@@ -56,7 +56,7 @@ const clarificationSlice = createSlice({
       (state, action: PayloadAction<CreateClarificationResponse>) => {
         state.loading = false;
         state.success = action.payload.success;
-        state.data = action.payload.data || null;
+        state.data = action.payload.data ?? null;
       }
     );
     builder.addCase(
@@ -64,11 +64,10 @@ const clarificationSlice = createSlice({
       (state, action: PayloadAction<any>) => {
         state.loading = false;
         state.success = false;
-        state.error = action.payload || "Failed to create clarification";
+        state.error = action.payload ?? "Failed to create clarification";
       }
     );
 
-    // ✅ Get Clarifications for Units
     builder.addCase(getClarifications.pending, (state) => {
       state.loading = true;
     });
@@ -76,7 +75,7 @@ const clarificationSlice = createSlice({
       getClarifications.fulfilled,
       (state, action: PayloadAction<GetClarificationListResponse>) => {
         state.loading = false;
-        state.unitClarifications = action.payload.data || [];
+        state.unitClarifications = action.payload.data ?? [];
         state.meta = action.payload.meta;
       }
     );
@@ -84,11 +83,10 @@ const clarificationSlice = createSlice({
       getClarifications.rejected,
       (state, action: PayloadAction<any>) => {
         state.loading = false;
-        state.error = action.payload || "Failed to fetch clarifications";
+        state.error = action.payload ?? "Failed to fetch clarifications";
       }
     );
 
-    // ✅ Get Clarifications for Subordinates
     builder.addCase(getSubordinateClarifications.pending, (state) => {
       state.loading = true;
     });
@@ -96,7 +94,7 @@ const clarificationSlice = createSlice({
       getSubordinateClarifications.fulfilled,
       (state, action: PayloadAction<GetClarificationListResponse>) => {
         state.loading = false;
-        state.unitClarifications = action.payload.data || [];
+        state.unitClarifications = action.payload.data ?? [];
         state.meta = action.payload.meta;
       }
     );
@@ -105,7 +103,7 @@ const clarificationSlice = createSlice({
       (state, action: PayloadAction<any>) => {
         state.loading = false;
         state.error =
-          action.payload || "Failed to fetch subordinate clarifications";
+          action.payload ?? "Failed to fetch subordinate clarifications";
       }
     );
   },

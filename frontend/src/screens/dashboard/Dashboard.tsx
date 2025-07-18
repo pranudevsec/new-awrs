@@ -16,7 +16,6 @@ const Dashboard = () => {
 
     const { loading, dashboardStats, unitScores } = useAppSelector((state) => state.commandPanel);
 
-    // Fetch dashboard details API
     useEffect(() => {
         dispatch(getDashboardStats());
         dispatch(getDashboardUnitScores());

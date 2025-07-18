@@ -269,16 +269,9 @@ const ApplyCitation = () => {
     const files = input.files;
     if (!files || files.length === 0) return;
 
-    const allowedTypes = ["application/pdf", "image/jpeg", "image/png"];
-    const allowedExtensions = [".pdf", ".jpg", ".jpeg", ".png"];
     const uploadedUrls: string[] = [];
 
     for (const file of files) {
-      const ext = file.name.substring(file.name.lastIndexOf('.')).toLowerCase();
-      if (!allowedTypes.includes(file.type) && !allowedExtensions.includes(ext)) {
-        toast.error(`Incorrect file type: ${file.name}. Only PDF, JPG, PNG allowed.`);
-        continue;
-      }
       if (file.size > 5 * 1024 * 1024) {
         toast.error(`File ${file.name} exceeds 5MB`);
         continue;
@@ -298,6 +291,7 @@ const ApplyCitation = () => {
       localStorage.setItem(DRAFT_FILE_UPLOAD_KEY, JSON.stringify(newUploads));
       toast.success(`Uploaded ${uploadedUrls.length} file(s)`);
     } else {
+      // toast.error("No files uploaded");
       input.value = "";
     }
   };
@@ -821,13 +815,11 @@ const ApplyCitation = () => {
                                     className="form-control"
                                     placeholder="not more than 5 MB"
                                     multiple
-                                    accept=".pdf,.jpg,.jpeg,.png,application/pdf,image/jpeg,image/png"
                                     onChange={(e) => {
                                       const display = getParamDisplay(param);
                                       handleFileChange(e, param.param_id, display.main);
                                     }}
-                                  />
-                                  <span style={{ fontSize: 12, color: 'red' }}>*File not more than 5 MB. Only PDF, JPG, PNG allowed.</span>
+                                  /><span style={{ fontSize: 12, color: 'red' }}>*File not more than 5 MB</span>
                                 </>
                               ) : (
                                 <span>Not required</span>

@@ -21,20 +21,14 @@ export const fetchParameters = createAsyncThunk<
     { awardType, search, matrix_unit, comd, unit_type, page, limit },
     { rejectWithValue }
   ) => {
-    // async ({ awardType, search, page, limit }, { rejectWithValue }) => {
     try {
       const response = await Axios.get(
         `${apiEndPoints.parameter}?awardType=${
-          awardType || ""
-        }&search=${search}&matrix_unit=${matrix_unit || ""}&comd=${
-          comd || ""
-        }&unit_type=${unit_type || ""}&page=${page || 1}&limit=${limit || 10}`
+          awardType ?? ""
+        }&search=${search}&matrix_unit=${matrix_unit ?? ""}&comd=${
+          comd ?? ""
+        }&unit_type=${unit_type ?? ""}&page=${page ?? 1}&limit=${limit ?? 10}`
       );
-      // const response = await Axios.get(
-      //   `${apiEndPoints.parameter}?awardType=${
-      //     awardType || ""
-      //   }&search=${search}&page=${page || 1}&limit=${limit || 10}`
-      // );
       if (response.data.success) {
         return response.data;
       } else {
@@ -42,7 +36,7 @@ export const fetchParameters = createAsyncThunk<
         return rejectWithValue(response.data.message);
       }
     } catch (error: any) {
-      toast.error(error.response?.data?.message || "Error fetching parameters");
+      toast.error(error.response?.data?.message ?? "Error fetching parameters");
       return rejectWithValue("Failed to fetch parameters");
     }
   }
@@ -55,16 +49,16 @@ export const createParameter = createAsyncThunk<
   try {
     const response = await Axios.post(apiEndPoints.parameter, payload);
     if (response.data.success) {
-      toast.success(response.data.message || "Parameter submitted");
+      toast.success(response.data.message ?? "Parameter submitted");
       return response.data;
     } else {
-      toast.error(response.data.message || "Failed to submit parameter");
+      toast.error(response.data.message ?? "Failed to submit parameter");
       return rejectWithValue(response.data.message);
     }
   } catch (error: any) {
-    toast.error(error.response?.data?.message || "Submission error");
+    toast.error(error.response?.data?.message ?? "Submission error");
     return rejectWithValue(
-      error.response?.data?.message || "Failed to submit parameter"
+      error.response?.data?.message ?? "Failed to submit parameter"
     );
   }
 });
@@ -80,23 +74,22 @@ export const updateParameter = createAsyncThunk<
     );
 
     if (response.data.success) {
-      toast.success(response.data.message || "Parameter updated successfully");
+      toast.success(response.data.message ?? "Parameter updated successfully");
       return response.data;
     } else {
-      toast.error(response.data.message || "Failed to update parameter");
+      toast.error(response.data.message ?? "Failed to update parameter");
       return rejectWithValue(response.data.message);
     }
   } catch (error: any) {
     toast.error(
-      error.response?.data?.message || "An error occurred during update"
+      error.response?.data?.message ?? "An error occurred during update"
     );
     return rejectWithValue(
-      error.response?.data?.message || "Failed to update parameter"
+      error.response?.data?.message ?? "Failed to update parameter"
     );
   }
 });
 
-// deleteParameter
 export const deleteParameter = createAsyncThunk<
   ParameterResponse,
   { id: string }
@@ -110,12 +103,12 @@ export const deleteParameter = createAsyncThunk<
       toast.success("Parameter deleted successfully!");
       return response.data;
     } else {
-      toast.error(response.data.message || "Something went wrong");
-      return rejectWithValue(response.data.message || "Something went wrong");
+      toast.error(response.data.message ?? "Something went wrong");
+      return rejectWithValue(response.data.message ?? "Something went wrong");
     }
   } catch (error: any) {
     toast.error(
-      error.response.data.message ||
+      error.response.data.message ??
         "An error occurred while deleting parameter."
     );
     return rejectWithValue("Failed to delete parameter due to an error.");

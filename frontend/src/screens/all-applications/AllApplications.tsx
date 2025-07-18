@@ -17,6 +17,7 @@ const History = () => {
 
   const profile = useAppSelector((state) => state.admin.profile);
   const { units, loading, meta } = useAppSelector((state) => state.application);
+  const role = profile?.user?.user_role?.toLowerCase() ?? "";
 
   // States
   const [awardType, setAwardType] = useState<string | null>(null);
@@ -24,33 +25,28 @@ const History = () => {
   const [debouncedSearch, setDebouncedSearch] = useState<string>("");
   const [page, setPage] = useState<number>(1);
   const [limit, setLimit] = useState<number>(10);
-  const role = profile?.user?.user_role?.toLowerCase() ?? "";
 
   useEffect(() => {
     const handler = setTimeout(() => {
       setDebouncedSearch(searchTerm);
     }, 500);
 
-    return () => {
-      clearTimeout(handler);
-    };
+    return () => { clearTimeout(handler) };
   }, [searchTerm]);
 
   useEffect(() => {
     if (!profile?.user?.user_role) return;
-
     const fetchData = async () => {
       const params = {
-        award_type: awardType || "",
+        award_type: awardType ?? "",
         search: debouncedSearch,
         page,
         limit,
       };
-
       try {
         await dispatch(fetchAllApplications(params)).unwrap();
       } catch (error: any) {
-        const errorMessage = error?.errors || error?.message || "An error occurred.";
+        const errorMessage = error?.errors ?? error?.message ?? "An error occurred.";
 
         if (error?.errors === "Please complete your unit profile before proceeding.") {
           navigate("/profile-settings");
@@ -59,7 +55,6 @@ const History = () => {
           toast.error(errorMessage);
         }
       }
-
     };
 
     fetchData();
@@ -94,9 +89,9 @@ const History = () => {
           <FormSelect
             name="awardType"
             options={awardTypeOptions}
-            value={awardTypeOptions.find((opt) => opt.value === awardType) || null}
+            value={awardTypeOptions.find((opt) => opt.value === awardType) ?? null}
             placeholder="Select Type"
-            onChange={(option) => setAwardType(option?.value || null)}
+            onChange={(option) => setAwardType(option?.value ?? null)}
           />
         </div>
       </div>
@@ -131,7 +126,6 @@ const History = () => {
               </th>
             </tr>
           </thead>
-
           <tbody>
             {loading ? (
               <tr>
@@ -143,78 +137,76 @@ const History = () => {
               </tr>
             ) : (
               units.length > 0 &&
-              units.map((unit: any, idx) => (
-                <tr className="cursor-auto" key={idx}>
-                  <td style={{ width: 150, minWidth: 150, maxWidth: 150 }}>
-                    <p className="fw-4">#{unit.id}</p>
-                  </td>
-                  <td style={{ width: 150, minWidth: 150, maxWidth: 150 }}>
-                    <p className="fw-4">#{unit.unit_id}</p>
-                  </td>
-                  {role === "headquarter" && (
-                    <td style={{ width: 150, minWidth: 150, maxWidth: 150 }}>
-                      <p className="fw-4">{unit?.fds?.command}</p>
-                    </td>
-                  )}
-                  <td style={{ width: 200, minWidth: 200, maxWidth: 200 }}>
-                    <p className="fw-4">
-                      {new Date(unit.date_init).toLocaleDateString()}
-                    </p>
-                  </td>
-                  <td style={{ width: 200, minWidth: 200, maxWidth: 200 }}>
-                    <p className="fw-4">
-                      {unit.fds?.last_date
-                        ? new Date(unit.fds.last_date).toLocaleDateString()
-                        : "-"}
-                    </p>
-                  </td>
-                  <td style={{ width: 150, minWidth: 150, maxWidth: 150 }}>
-                    <p className="fw-4">
-                      {unit.type.charAt(0).toUpperCase() + unit.type.slice(1)}
-                    </p>
-                  </td>
+              units.map((unit: any) => {
 
-                  <td style={{ width: 150, minWidth: 150, maxWidth: 150 }}>
-                    <p
-                      className="fw-4"
-                      style={{
-                        color:
-                          unit?.status_flag === "approved" || unit?.status_flag === "shortlisted_approved" || unit?.status_flag === "in_review"
+                let approverRole = "Unit";
+
+                if (unit?.status_flag === "rejected") {
+                  approverRole = "N/A";
+                } else if (unit?.last_approved_by_role) {
+                  approverRole =
+                    unit.last_approved_by_role.charAt(0).toUpperCase() +
+                    unit.last_approved_by_role.slice(1);
+                }
+
+                return (
+                  <tr className="cursor-auto" key={unit.id}>
+                    <td style={{ width: 150, minWidth: 150, maxWidth: 150 }}>
+                      <p className="fw-4">#{unit.id}</p>
+                    </td>
+                    <td style={{ width: 150, minWidth: 150, maxWidth: 150 }}>
+                      <p className="fw-4">#{unit.unit_id}</p>
+                    </td>
+                    {role === "headquarter" && (
+                      <td style={{ width: 150, minWidth: 150, maxWidth: 150 }}>
+                        <p className="fw-4">{unit?.fds?.command}</p>
+                      </td>
+                    )}
+                    <td style={{ width: 200, minWidth: 200, maxWidth: 200 }}>
+                      <p className="fw-4">
+                        {new Date(unit.date_init).toLocaleDateString()}
+                      </p>
+                    </td>
+                    <td style={{ width: 200, minWidth: 200, maxWidth: 200 }}>
+                      <p className="fw-4">
+                        {unit.fds?.last_date
+                          ? new Date(unit.fds.last_date).toLocaleDateString()
+                          : "-"}
+                      </p>
+                    </td>
+                    <td style={{ width: 150, minWidth: 150, maxWidth: 150 }}>
+                      <p className="fw-4">
+                        {unit.type.charAt(0).toUpperCase() + unit.type.slice(1)}
+                      </p>
+                    </td>
+
+                    <td style={{ width: 150, minWidth: 150, maxWidth: 150 }}>
+                      <p
+                        className="fw-4"
+                        style={{
+                          color: ["approved", "shortlisted_approved", "in_review"].includes(unit?.status_flag)
                             ? "green"
                             : "red",
-                      }}
-                    >
-                      {unit.status_flag === "shortlisted_approved" || unit?.status_flag === "in_review"
-                        ? "Approved"
-                        : unit.status_flag.charAt(0).toUpperCase() + unit.status_flag.slice(1)
-                      }
-                    </p>
-                  </td>
+                        }}
 
-                  {/* <td style={{ width: 200, minWidth: 200, maxWidth: 200 }}>
-                    <div className="status-content approved pending d-flex align-items-center gap-3">
-                      <span></span>
-                      <p className="text-capitalize fw-5">Accepted</p>
-                    </div>
-                  </td> */}
-                  <td style={{ width: 150, minWidth: 150, maxWidth: 150 }}>
-                    <p className="fw-4">
-                      {unit?.status_flag === "rejected"
-                        ? "N/A"
-                        : unit?.last_approved_by_role
-                          ? unit.last_approved_by_role.charAt(0).toUpperCase() + unit.last_approved_by_role.slice(1)
-                          : "Unit"
-                      }
-                    </p>
-                  </td>
-
-
-                </tr>
-              ))
+                      >
+                        {unit.status_flag === "shortlisted_approved" || unit?.status_flag === "in_review"
+                          ? "Approved"
+                          : unit.status_flag.charAt(0).toUpperCase() + unit.status_flag.slice(1)
+                        }
+                      </p>
+                    </td>
+                    <td style={{ width: 150, minWidth: 150, maxWidth: 150 }}>
+                      <p className="fw-4">{approverRole}</p>
+                    </td>
+                  </tr>
+                )
+              })
             )}
           </tbody>
         </table>
       </div>
+
       {/* Empty Data */}
       {!loading && units.length === 0 && <EmptyTable />}
 

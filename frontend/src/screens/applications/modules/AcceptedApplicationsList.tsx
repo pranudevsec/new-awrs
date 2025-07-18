@@ -20,15 +20,16 @@ import {
   getSignedData,
 } from "../../../reduxToolkit/services/application/applicationService";
 
+const hierarchy = ["unit", "brigade", "division", "corps", "command"];
+const allRoles = ["brigade", "division", "corps", "command"];
 
 const AcceptedApplicationsList = () => {
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
 
   const profile = useAppSelector((state) => state.admin.profile);
-  console.log("Profile:", profile);
   const { units, loading, meta } = useAppSelector((state) => state.application);
-  console.log(units)
+  const role = profile?.user?.user_role?.toLowerCase() ?? "";
 
   // States
   const [showSignatureModal, setShowSignatureModal] = useState(false);
@@ -37,17 +38,13 @@ const AcceptedApplicationsList = () => {
   const [debouncedSearch, setDebouncedSearch] = useState<string>("");
   const [page, setPage] = useState<number>(1);
   const [limit, setLimit] = useState<number>(10);
-  const role = profile?.user?.user_role?.toLowerCase() ?? "";
-  const [priorityValues, setPriorityValues] = useState<{
-    [key: string]: {
-      [type: string]: string;
-    };
-  }>({});
-  const hierarchy = ["unit", "brigade", "division", "corps", "command"];
-  const allRoles = ["brigade", "division", "corps", "command"];
-  const lowerRole = hierarchy[hierarchy.indexOf(role) - 1] || null;
+  const [priorityValues, setPriorityValues] = useState<{ [key: string]: { [type: string]: string } }>({});
+  const [graceMarksValues, setGraceMarksValues] = useState<{ [key: string]: { [type: string]: string } }>({});
+
+  const lowerRole = hierarchy[hierarchy.indexOf(role) - 1] ?? null;
   const currentRole = profile?.user?.user_role?.toLowerCase() ?? "";
   const allowedRoles = allRoles.slice(0, allRoles.indexOf(currentRole));
+
   const getLowerRolePriority = (unit: any) => {
     if (!lowerRole || !unit?.fds?.applicationPriority) return "-";
     const priorityEntry = unit?.fds.applicationPriority.find(
@@ -55,10 +52,11 @@ const AcceptedApplicationsList = () => {
     );
     return priorityEntry?.priority ?? "-";
   };
+
   useEffect(() => {
     const initialValues: { [key: string]: { [type: string]: string } } = {};
 
-    units.forEach((unit) => {
+    units.forEach((unit: any) => {
       const found = unit?.fds?.applicationPriority?.find(
         (p: any) => p.role?.toLowerCase() === role
       );
@@ -70,26 +68,23 @@ const AcceptedApplicationsList = () => {
         initialValues[unitId] = {};
       }
 
-      initialValues[unitId][unitType] = found?.priority?.toString() || "";
+      initialValues[unitId][unitType] = found?.priority?.toString() ?? "";
     });
 
     setPriorityValues(initialValues);
   }, [units, role]);
-
 
   useEffect(() => {
     const handler = setTimeout(() => {
       setDebouncedSearch(searchTerm);
     }, 500);
 
-    return () => {
-      clearTimeout(handler);
-    };
+    return () => { clearTimeout(handler) };
   }, [searchTerm]);
 
   const fetchData = () => {
     const params = {
-      award_type: awardType || "",
+      award_type: awardType ?? "",
       search: debouncedSearch,
       page,
       limit,
@@ -106,6 +101,7 @@ const AcceptedApplicationsList = () => {
       dispatch(fetchApplicationUnits(params));
     }
   };
+
   useEffect(() => {
     fetchData();
   }, [awardType, debouncedSearch, profile, page, limit]);
@@ -117,7 +113,7 @@ const AcceptedApplicationsList = () => {
         (acc: number, item: any) => acc + (item?.marks ?? 0),
         0
       ) ?? 0;
-    let totalNegativeMarks= 0;
+    let totalNegativeMarks = 0;
     const totalParameterMarks = parameters.reduce((acc: number, param: any) => {
       const isRejected =
         param?.clarification_details?.clarification_status === "rejected";
@@ -131,15 +127,16 @@ const AcceptedApplicationsList = () => {
         !isNaN(Number(param?.approved_marks));
       const approved = hasValidApproved ? Number(param.approved_marks) : null;
       let original = 0;
-        if(param?.negative){
+      if (param?.negative) {
         totalNegativeMarks += Number(param?.marks ?? 0);
-        } else {
-        original= Number(param?.marks ?? 0);
-        }
-      return acc + (approved !== null ? approved : original);
+      } else {
+        original = Number(param?.marks ?? 0);
+      }
+      return acc + (approved ?? original);
     }, 0);
     return totalParameterMarks + graceMarks - totalNegativeMarks;
   };
+
   const getDiscretionaryMarksByRole = (unit: any, role: string): number => {
     const graceEntry = unit?.fds?.applicationGraceMarks?.find(
       (item: any) => item?.role?.toLowerCase() === role.toLowerCase()
@@ -147,7 +144,6 @@ const AcceptedApplicationsList = () => {
     return graceEntry?.marks ?? 0;
   };
 
-  // Helper function to update priority
   const handlePriorityChange = async (unitDetail: any, value: string) => {
     const priorityPoints = parseInt(value);
 
@@ -157,8 +153,8 @@ const AcceptedApplicationsList = () => {
     }
 
     const body = {
-      type: unitDetail?.type || "citation",
-      application_id: unitDetail?.id || 0,
+      type: unitDetail?.type ?? "citation",
+      application_id: unitDetail?.id ?? 0,
       applicationPriorityPoints: priorityPoints,
       parameters: [],
     };
@@ -168,6 +164,7 @@ const AcceptedApplicationsList = () => {
       fetchData();
       toast.success("Priority updated successfully");
     } catch (error) {
+      console.error("approveMarks error:", error);
       toast.error("Failed to update priority");
     }
   };
@@ -185,7 +182,6 @@ const AcceptedApplicationsList = () => {
       return;
     }
 
-    // Group by type
     const groupedByType = units.reduce(
       (acc: Record<string, number[]>, unit) => {
         if (!acc[unit?.type]) {
@@ -209,7 +205,7 @@ const AcceptedApplicationsList = () => {
         )
       );
       const params = {
-        award_type: awardType || "",
+        award_type: awardType ?? "",
         search: debouncedSearch,
         page,
         limit,
@@ -218,15 +214,10 @@ const AcceptedApplicationsList = () => {
 
       dispatch(fetchSubordinates(params));
     } catch (err) {
+      console.error("error:", err)
       toast.error("One or more approvals failed");
     }
   };
-
-  const [graceMarksValues, setGraceMarksValues] = useState<{
-    [key: string]: {
-      [type: string]: string;
-    };
-  }>({});
 
   useEffect(() => {
     const initialGraceValues: { [key: string]: { [type: string]: string } } = {};
@@ -243,7 +234,7 @@ const AcceptedApplicationsList = () => {
         initialGraceValues[unitId] = {};
       }
 
-      initialGraceValues[unitId][unitType] = found?.marks?.toString() || "";
+      initialGraceValues[unitId][unitType] = found?.marks?.toString() ?? "";
     });
 
     setGraceMarksValues(initialGraceValues);
@@ -257,7 +248,7 @@ const AcceptedApplicationsList = () => {
     setGraceMarksValues((prev) => ({
       ...prev,
       [unitId]: {
-        ...(prev[unitId] || {}),
+        ...(prev[unitId] ?? {}),
         [unitType]: value,
       },
     }));
@@ -265,19 +256,16 @@ const AcceptedApplicationsList = () => {
     if (value === undefined || value === "") return;
 
     const body: any = {
-      type: unitType || "citation",
+      type: unitType ?? "citation",
       application_id: unitId,
       applicationGraceMarks: Number(value),
       role,
     };
 
-    dispatch(approveMarks(body)).unwrap().then(() => {
-      fetchData();
-    });
+    dispatch(approveMarks(body)).unwrap().then(() => { fetchData() });
   };
 
-  const handleAddsignature = async (decision:string,unit:any) => {
-    //validation
+  const handleAddsignature = async (decision: string, unit: any) => {
     const result = await dispatch(
       TokenValidation({ inputPersID: profile?.user?.pers_no ?? "" })
     );
@@ -285,10 +273,8 @@ const AcceptedApplicationsList = () => {
     if (TokenValidation.fulfilled.match(result)) {
       const isValid = result.payload.vaildId;
       if (!isValid) {
-        // toast.error("Token is not valid");
         return;
       }
-      //sign
 
       const SignPayload = {
         data: {
@@ -306,11 +292,11 @@ const AcceptedApplicationsList = () => {
           name: profile?.user?.name,
           ic_number: profile?.user?.pers_no,
           member_type: profile?.user?.user_role,
-          iscdr:true,
+          iscdr: true,
           member_id: profile?.user?.user_id,
           is_signature_added: true,
           sign_digest: response.payload,
-        },  
+        },
         level: profile?.user?.user_role,
       };
       if (decision === "approved") {
@@ -334,24 +320,6 @@ const AcceptedApplicationsList = () => {
       }
     }
   };
-
-  // const handleGraceMarksSave = (
-  //   unitId: string,
-  //   unitType: string,
-  //   value: string
-  // ) => {
-  //   if (value === undefined || value === "") return;
-
-  //   const body: any = {
-  //     type: unitType || "citation",
-  //     application_id: unitId,
-  //     applicationGraceMarks: Number(value),
-  //     role, // pass current role if your backend uses it
-  //   };
-
-  //   dispatch(approveMarks(body)).unwrap();
-  //   fetchData();
-  // };
 
   return (
     <div className="clarification-section" style={{ maxWidth: "80vw" }}>
@@ -381,7 +349,7 @@ const AcceptedApplicationsList = () => {
         <FormSelect
           name="awardType"
           options={awardTypeOptions}
-          value={awardTypeOptions.find((opt) => opt.value === awardType) || null}
+          value={awardTypeOptions.find((opt) => opt.value === awardType) ?? null}
           placeholder="Select Type"
           onChange={(option: OptionType | null) =>
             setAwardType(option ? option.value : null)
@@ -477,22 +445,11 @@ const AcceptedApplicationsList = () => {
           </thead>
 
           <tbody>
-            {
-              units.length > 0 &&
-              units.map((unit: any, idx) => (
+            {units.length > 0 &&
+              units.map((unit: any) => (
                 <tr
-                  key={idx}
+                  key={unit.id}
                   className="cursor-auto"
-                  onClick={() => {
-                    // if (unit.status_flag === "draft") {
-                    //   navigate(`/applications/${unit.type}?id=${unit.id}`);
-                    // } else {
-                    //   navigate(
-                    //     `/applications/list/${unit.id}?award_type=${unit.type}`
-                    //   );
-                    // }
-                  }}
-                //   style={{ cursor: "pointer" }}
                 >
                   <td style={{ width: 150, minWidth: 150, maxWidth: 150 }}>
                     <p className="fw-4">#{unit.id}</p>
@@ -507,22 +464,22 @@ const AcceptedApplicationsList = () => {
                   </td>
 
                   <td style={{ width: 200, minWidth: 200, maxWidth: 200 }}>
-                    <p className="fw-4">{unit.unit_details?.name || "-"}</p>
+                    <p className="fw-4">{unit.unit_details?.name ?? "-"}</p>
                   </td>
                   <td style={{ width: 200, minWidth: 200, maxWidth: 200 }}>
-                    <p className="fw-4">{unit.unit_details?.location || "-"}</p>
+                    <p className="fw-4">{unit.unit_details?.location ?? "-"}</p>
                   </td>
                   <td style={{ width: 150, minWidth: 150, maxWidth: 150 }}>
-                    <p className="fw-4">{unit.unit_details?.bde || "-"}</p>
+                    <p className="fw-4">{unit.unit_details?.bde ?? "-"}</p>
                   </td>
                   <td style={{ width: 150, minWidth: 150, maxWidth: 150 }}>
-                    <p className="fw-4">{unit.unit_details?.div || "-"}</p>
+                    <p className="fw-4">{unit.unit_details?.div ?? "-"}</p>
                   </td>
                   <td style={{ width: 150, minWidth: 150, maxWidth: 150 }}>
-                    <p className="fw-4">{unit.unit_details?.corps || "-"}</p>
+                    <p className="fw-4">{unit.unit_details?.corps ?? "-"}</p>
                   </td>
                   <td style={{ width: 150, minWidth: 150, maxWidth: 150 }}>
-                    <p className="fw-4">{unit.unit_details?.comd || "-"}</p>
+                    <p className="fw-4">{unit.unit_details?.comd ?? "-"}</p>
                   </td>
                   {/* Tenure */}
                   <td style={{ width: 150, minWidth: 150, maxWidth: 150 }}>
@@ -553,9 +510,9 @@ const AcceptedApplicationsList = () => {
                         )
                         ?.reduce(
                           (sum: number, p: { marks: number }) =>
-                            sum + (p.marks || 0),
+                            sum + (p.marks ?? 0),
                           0
-                        ) || "-"}
+                        ) ?? "-"}
                     </p>
                   </td>
 
@@ -574,13 +531,13 @@ const AcceptedApplicationsList = () => {
                         )
                         ?.reduce(
                           (sum: number, p: { marks: number }) =>
-                            sum + (p.marks || 0),
+                            sum + (p.marks ?? 0),
                           0
-                        ) || "-"}
+                        ) ?? "-"}
                     </p>
                   </td>
                   <td style={{ width: 200, minWidth: 200, maxWidth: 200 }}>
-                    <p className="fw-4">{unit?.totalNegativeMarks || "-"}</p>
+                    <p className="fw-4">{unit?.totalNegativeMarks ?? "-"}</p>
                   </td>
                   {allowedRoles.map((role) => (
                     <td
@@ -649,7 +606,7 @@ const AcceptedApplicationsList = () => {
                         setPriorityValues((prev) => ({
                           ...prev,
                           [String(unit.id)]: {
-                            ...(prev[String(unit.id)] || {}),
+                            ...(prev[String(unit.id)] ?? {}),
                             [unit.type]: value,
                           },
                         }));
@@ -695,8 +652,9 @@ const AcceptedApplicationsList = () => {
                                 );
                                 return;
                               }
-                             await handleAddsignature("approved",unit);
+                              await handleAddsignature("approved", unit);
                             } catch (error) {
+                              console.log("error ->", error)
                               toast.error("Error while approving the application.");
                             }
                           }}
@@ -707,7 +665,7 @@ const AcceptedApplicationsList = () => {
                         <button
                           className="_btn danger"
                           onClick={async () => {
-                            await handleAddsignature("rejected",unit);
+                            await handleAddsignature("rejected", unit);
                           }}
                         >
                           Reject
@@ -716,41 +674,15 @@ const AcceptedApplicationsList = () => {
                     )}
                   </td>
 
-
                 </tr>
               ))
             }
           </tbody>
         </table>
       </div>
+
       {/* Empty Data */}
       {!loading && units.length === 0 && <EmptyTable />}
-      {units && units.length > 0 && (
-        <div className="button-groups d-flex flex-wrap gap-2 align-items-center justify-content-end mt-4">
-          {/* <button className="_btn outline">Upload signature</button>
-          <button className="_btn outline">Upload signature</button> */}
-          {/* <button
-            className="_btn success"
-            onClick={() => {
-              const incompleteUnits = units.filter((unit) => {
-                const value = priorityValues[unit.id];
-                return !value || isNaN(Number(value));
-              });
-
-              if (incompleteUnits.length > 0) {
-                toast.error(
-                  "Please enter priority for all applications before approving."
-                );
-                return;
-              }
-
-              setShowSignatureModal(true);
-            }}
-          >
-            Approve
-          </button> */}
-        </div>
-      )}
 
       {/* Pagination */}
       {units.length > 0 && (
@@ -762,6 +694,7 @@ const AcceptedApplicationsList = () => {
           setLimit={setLimit}
         />
       )}
+
       <ReqSignatureApproveModal
         show={showSignatureModal}
         handleClose={() => setShowSignatureModal(false)}

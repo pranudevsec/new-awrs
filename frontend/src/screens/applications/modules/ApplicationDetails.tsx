@@ -1,8 +1,7 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useState, type JSX } from "react";
 import { MdClose } from "react-icons/md";
 import { IoMdCheckmark } from "react-icons/io";
 import { FaCheckCircle } from "react-icons/fa";
-import { SVGICON } from "../../../constants/iconsList";
 import toast from "react-hot-toast";
 import Breadcrumb from "../../../components/ui/breadcrumb/Breadcrumb";
 import Loader from "../../../components/ui/loader/Loader";
@@ -11,6 +10,7 @@ import ReqClarificationModal from "../../../modals/ReqClarificationModal";
 import ReviewCommentModal from "../../../modals/ReviewCommentModal";
 import ViewCreatedClarificationModal from "../../../modals/ViewCreatedClarificationModal";
 import StepProgressBar from "../../../components/ui/stepProgressBar/StepProgressBar";
+import { SVGICON } from "../../../constants/iconsList";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { useAppDispatch, useAppSelector } from "../../../reduxToolkit/hooks";
 import {
@@ -18,14 +18,32 @@ import {
   approveMarks,
   fetchApplicationUnitDetail,
   updateApplication,
+  TokenValidation,
+  getSignedData
 } from "../../../reduxToolkit/services/application/applicationService";
 import { updateClarification } from "../../../reduxToolkit/services/clarification/clarificationService";
 import { baseURL } from "../../../reduxToolkit/helper/axios";
 import { useDebounce } from "../../../hooks/useDebounce";
-import { TokenValidation } from "../../../reduxToolkit/services/application/applicationService";
-import { getSignedData } from "../../../reduxToolkit/services/application/applicationService";
 import { updateCitation } from "../../../reduxToolkit/services/citation/citationService";
 import { updateAppreciation } from "../../../reduxToolkit/services/appreciation/appreciationService";
+
+function areAllClarificationsResolved(unitDetail: any): boolean {
+  const parameters = unitDetail?.fds?.parameters;
+
+  if (!Array.isArray(parameters)) {
+    return true;
+  }
+
+  for (const param of parameters) {
+    if (param.clarification_details && param.last_clarification_status !== "clarified") {
+      return false;
+    }
+  }
+
+  return true;
+}
+
+const hierarchy = ["brigade", "division", "corps", "command", "headquarter"];
 
 const ApplicationDetails = () => {
   const navigate = useNavigate();
@@ -34,77 +52,54 @@ const ApplicationDetails = () => {
   const { application_id } = useParams();
 
   const profile = useAppSelector((state) => state.admin.profile);
-
   const { loading, unitDetail } = useAppSelector((state) => state.application);
-  function areAllClarificationsResolved(unitDetail: any): boolean {
-    if (
-      !unitDetail ||
-      !unitDetail.fds ||
-      !Array.isArray(unitDetail.fds.parameters)
-    ) {
-      return true;
-    }
 
-    for (const param of unitDetail.fds.parameters) {
-      if (param.clarification_details) {
-        if (param.last_clarification_status !== "clarified") {
-          return false;
-        }
-      }
-    }
-
-    return true;
-  }
   const isReadyToSubmit = areAllClarificationsResolved(unitDetail);
 
-  const [remarksError, setRemarksError] = useState<string | null>(null);
-
   const raisedParam = searchParams.get("raised_clarifications");
-
   const isRaisedScreen = raisedParam === "true";
+  let userPriority = "";
+
   // States
-  const [clarificationShow, setClarificationShow] = useState(false);
-  const [clarificationType, setClarificationType] =
-    useState<string>("appreciation");
-  const [clarificationApplicationId, setClarificationApplicationId] =
-    useState<number>(0);
-  const [clarificationParameterName, setClarificationParameterName] =
-    useState<string>("");
-  const [clarificationParameterId, setClarificationParameterId] =
-    useState<string>("");
-  const [clarificationDocForView, setClarificationDocForView] = useState<
-    string | null
-  >(null);
-  const [reviewCommentsData, setReviewCommentsData] = useState<any>(null);
-  const [
-    clarificationClarificationForView,
-    setClarificationClarificationForView,
-  ] = useState<string | null>(null);
-  const [reviewerClarificationForView, setReviewerClarificationForView] =
-    useState<string | null>(null);
-  const [reqClarificationShow, setReqClarificationShow] = useState(false);
-  const [reqViewCreatedClarificationShow, setReqViewCreatedClarificationShow] =
-    useState(false);
-  const [reviewCommentsShow, setReviewCommentsShow] = useState(false);
   const [isRefreshData, setIsRefreshData] = useState(false);
-  const [approvedMarksState, setApprovedMarksState] = useState<
-    Record<string, string>
-  >({});
-  const isUnitRole = ["unit", "cw2"].includes(profile?.user?.user_role || "");
+  const [clarificationShow, setClarificationShow] = useState(false);
+  const [reviewCommentsShow, setReviewCommentsShow] = useState(false);
+  const [reqClarificationShow, setReqClarificationShow] = useState(false);
+  const [reqViewCreatedClarificationShow, setReqViewCreatedClarificationShow] = useState(false);
+  const [clarificationApplicationId, setClarificationApplicationId] = useState<number>(0);
+  const [clarificationType, setClarificationType] = useState<string>("appreciation");
+  const [clarificationParameterName, setClarificationParameterName] = useState<string>("");
+  const [clarificationParameterId, setClarificationParameterId] = useState<string>("");
+  const [clarificationDocForView, setClarificationDocForView] = useState<string | null>(null);
+  const [reviewCommentsData, setReviewCommentsData] = useState<any>(null);
+  const [clarificationClarificationForView, setClarificationClarificationForView] = useState<string | null>(null);
+  const [reviewerClarificationForView, setReviewerClarificationForView] = useState<string | null>(null);
+  const [approvedMarksState, setApprovedMarksState] = useState<Record<string, string>>({});
+  const [remarksError, setRemarksError] = useState<string | null>(null);
+  const [graceMarks, setGraceMarks] = useState("");
+  const [decisions, setDecisions] = useState<{ [memberId: string]: string }>({});
+  const [priority, setPriority] = useState(userPriority);
+  const [commentsState, setCommentsState] = useState<Record<string, string>>({});
+  const [localComment, setLocalComment] = useState(commentsState?.__application__ ?? "");
+  const [unitRemarks, setUnitRemarks] = useState("");
+  const [paramStats, setParamStats] = useState({
+    totalParams: 0,
+    filledParams: 0,
+    marks: 0,
+    approvedMarks: 0,
+    totalMarks: 0,
+    negativeMarks: 0,
+  });
+
+  const isUnitRole = ["unit", "cw2"].includes(profile?.user?.user_role ?? "");
   const isCW2Role = profile?.user?.user_role === "cw2";
   const isHeadquarter = profile?.user?.user_role === "headquarter";
   const roleHierarchy = ["unit", "brigade", "division", "corps", "command"];
   const role = profile?.user?.user_role?.toLowerCase() ?? "";
   const cw2_type = profile?.user?.cw2_type?.toLowerCase() ?? "";
   const lowerRole = roleHierarchy[roleHierarchy.indexOf(role) - 1] ?? null;
-  const award_type = searchParams.get("award_type") || "";
+  const award_type = searchParams.get("award_type") ?? "";
   const numericAppId = Number(application_id);
-  const [graceMarks, setGraceMarks] = useState("");
-  const [decisions, setDecisions] = useState<{ [memberId: string]: string }>(
-    {}
-  );
-  console.log(clarificationParameterId)
-  let userPriority = "";
 
   if (role === "cw2" && Array.isArray(unitDetail?.fds?.applicationPriority)) {
     const foundPriority = unitDetail.fds.applicationPriority.find(
@@ -116,24 +111,14 @@ const ApplicationDetails = () => {
       userPriority = foundPriority.priority ?? "";
     }
   }
-  const [priority, setPriority] = useState(userPriority);
 
   useEffect(() => {
     setPriority(userPriority);
   }, [userPriority]);
-  useEffect(() => {
-    if (award_type && numericAppId)
-      dispatch(fetchApplicationUnitDetail({ award_type, numericAppId }));
-  }, [award_type, numericAppId, isRefreshData]);
 
-  const [paramStats, setParamStats] = useState({
-    totalParams: 0,
-    filledParams: 0,
-    marks: 0,
-    approvedMarks: 0,
-    totalMarks: 0,
-    negativeMarks: 0,
-  });
+  useEffect(() => {
+    if (award_type && numericAppId) dispatch(fetchApplicationUnitDetail({ award_type, numericAppId }));
+  }, [award_type, numericAppId, isRefreshData]);
 
   const calculateParameterStats = (parameters: any[]) => {
     const totalParams = parameters.length;
@@ -143,26 +128,20 @@ const ApplicationDetails = () => {
     ).length;
 
     const marks = parameters.reduce((acc, param) => {
-      const isRejected =
-        param.clarification_details?.clarification_status === "rejected";
-
+      const isRejected = param.clarification_details?.clarification_status === "rejected";
       const isNegative = param.negative === true;
-
       if (isRejected || isNegative) return acc;
-
       return acc + (param.marks ?? 0);
     }, 0);
-    const approvedMarks = parameters.reduce((acc, param) => {
-      const isRejected =
-        param.clarification_details?.clarification_status === "rejected";
 
+    const approvedMarks = parameters.reduce((acc, param) => {
+      const isRejected = param.clarification_details?.clarification_status === "rejected";
       return acc + (isRejected ? 0 : Number(param.approved_marks ?? 0));
     }, 0);
 
     // Calculate negativeMarks
     const negativeMarks = parameters.reduce((acc, param) => {
-      const isRejected =
-        param.clarification_details?.clarification_status === "rejected";
+      const isRejected = param.clarification_details?.clarification_status === "rejected";
 
       if (isRejected) return acc;
 
@@ -174,18 +153,14 @@ const ApplicationDetails = () => {
 
       const approved = hasValidApproved ? Number(param.approved_marks) : null;
       const original = param.marks ?? 0;
-
-      const valueToCheck = approved !== null ? approved : original;
-
+      const valueToCheck = approved ?? original;
       return acc + (param.negative === true ? valueToCheck : 0);
     }, 0);
 
     const totalParameterMarks = parameters.reduce((acc, param) => {
-      const isRejected =
-        param.clarification_details?.clarification_status === "rejected";
+      const isRejected = param.clarification_details?.clarification_status === "rejected";
 
       if (isRejected) return acc;
-
       if (param.negative === true) return acc;
 
       const hasValidApproved =
@@ -197,11 +172,10 @@ const ApplicationDetails = () => {
       const approved = hasValidApproved ? Number(param.approved_marks) : null;
       const original = param.marks ?? 0;
 
-      return acc + (approved !== null ? approved : original);
+      return acc + (approved ?? original);
     }, 0);
 
     let totalMarks = totalParameterMarks + Number(graceMarks ?? 0) - negativeMarks;
-
     return {
       totalParams,
       filledParams,
@@ -212,20 +186,11 @@ const ApplicationDetails = () => {
     };
   };
 
-
   useEffect(() => {
-    const parameters = unitDetail?.fds?.parameters || [];
-
+    const parameters = unitDetail?.fds?.parameters ?? [];
     const stats = calculateParameterStats(parameters);
     setParamStats(stats);
   }, [unitDetail, graceMarks]);
-
-  const [commentsState, setCommentsState] = React.useState<
-    Record<string, string>
-  >({});
-  const [localComment, setLocalComment] = useState(
-    commentsState?.__application__ || ""
-  );
 
   useEffect(() => {
     if (unitDetail?.fds?.parameters && profile) {
@@ -235,7 +200,7 @@ const ApplicationDetails = () => {
       unitDetail.fds.parameters.forEach((param: any) => {
         initialMarks[param.name] = param.approved_marks ?? "";
 
-        const matchingComments = (param.comments || []).filter(
+        const matchingComments = (param.comments ?? []).filter(
           (c: any) =>
             c.commented_by_role === profile?.user?.user_role &&
             c.commented_by_role_type === profile?.user?.cw2_type
@@ -245,7 +210,7 @@ const ApplicationDetails = () => {
           const latest = matchingComments.reduce((a: any, b: any) =>
             new Date(a.commented_at) > new Date(b.commented_at) ? a : b
           );
-          initialComments[param.name] = latest.comment || "";
+          initialComments[param.name] = latest.comment ?? "";
         } else {
           initialComments[param.name] = "";
         }
@@ -260,8 +225,8 @@ const ApplicationDetails = () => {
     if (marks === undefined) return;
 
     const body = {
-      type: unitDetail?.type || "citation",
-      application_id: unitDetail?.id || 0,
+      type: unitDetail?.type ?? "citation",
+      application_id: unitDetail?.id ?? 0,
       parameters: [{ name: paramName, approved_marks: marks }],
     };
 
@@ -275,12 +240,10 @@ const ApplicationDetails = () => {
     }
   };
 
-  // Create debounced version of handleSave
   const debouncedHandleSave = useDebounce(handleSave, 600);
-
   const handleInputChange = (paramName: string, value: string) => {
     setApprovedMarksState((prev) => ({ ...prev, [paramName]: value }));
-    debouncedHandleSave(paramName, value); // this uses the updated handleSave
+    debouncedHandleSave(paramName, value);
   };
 
   useEffect(() => {
@@ -293,34 +256,20 @@ const ApplicationDetails = () => {
     }
   }, [unitDetail, role]);
 
-  // const handleGraceMarksSave = (value: string) => {
-  //   if (value === undefined) return;
 
-  //   const body: any = {
-  //     type: unitDetail?.type || "citation",
-  //     application_id: unitDetail?.id || 0,
-  //     applicationGraceMarks: Number(value),
-  //   };
-
-  //   dispatch(approveMarks(body)).unwrap();
-  // };
-  const [unitRemarks, setUnitRemarks] = useState("");
-
-  // Set remark value when application is loaded or profile changes
   useEffect(() => {
     if (unitDetail?.remarks && Array.isArray(unitDetail?.remarks)) {
       const existing = unitDetail?.remarks.find(
         (r: any) => r.remark_added_by_role?.toLowerCase() === role
       );
       if (existing) {
-        setUnitRemarks(existing.remarks || "");
+        setUnitRemarks(existing.remarks ?? "");
       }
     }
   }, [unitDetail?.remarks, role]);
 
   const handleRemarksChange = async (e: any) => {
     const value = e.target.value;
-
     setUnitRemarks(value);
 
     if (value.length > 200) {
@@ -329,33 +278,24 @@ const ApplicationDetails = () => {
     } else {
       setRemarksError(null);
     }
+
     const body = {
-      type: unitDetail?.type || "citation",
-      application_id: unitDetail?.id || 0,
+      type: unitDetail?.type ?? "citation",
+      application_id: unitDetail?.id ?? 0,
       remark: value,
       parameters: [],
     };
 
     try {
       await dispatch(approveMarks(body)).unwrap();
-      // Optional: Add a toast or success indicator here
     } catch (err) {
       console.error("Failed to update remarks", err);
     }
   };
-  // const debouncedGraceMarksSave = useDebounce(handleGraceMarksSave, 600);
 
-  // const handleGraceMarksChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-  //   const value = e.target.value;
-  //   setGraceMarks(value);
-  //   debouncedGraceMarksSave(value);
-  // };
-
-  const hierarchy = ["brigade", "division", "corps", "command", "headquarter"];
   const currentRoleIndex = hierarchy.indexOf(role?.toLowerCase());
-
-  const lowerRoles = hierarchy.slice(0, currentRoleIndex); // roles below current role
-  const roleMarksMap = unitDetail?.fds?.applicationGraceMarks || [];
+  const lowerRoles = hierarchy.slice(0, currentRoleIndex)
+  const roleMarksMap = unitDetail?.fds?.applicationGraceMarks ?? [];
 
   const displayedMarks = lowerRoles
     .map((r) => {
@@ -370,11 +310,10 @@ const ApplicationDetails = () => {
     if (!comment) return;
 
     const body: any = {
-      type: unitDetail?.type || "citation",
-      application_id: unitDetail?.id || 0,
+      type: unitDetail?.type ?? "citation",
+      application_id: unitDetail?.id ?? 0,
     };
 
-    // If paramName is "__application__", treat it as an application-level comment
     if (paramName === "__application__") {
       body.comment = comment;
     } else {
@@ -386,7 +325,6 @@ const ApplicationDetails = () => {
       .catch(() => { });
   };
 
-  // Helper function to update priority
   const handlePriorityChange = async (value: string) => {
     const priorityPoints = parseInt(value);
 
@@ -396,8 +334,8 @@ const ApplicationDetails = () => {
     }
 
     const body = {
-      type: unitDetail?.type || "citation",
-      application_id: unitDetail?.id || 0,
+      type: unitDetail?.type ?? "citation",
+      application_id: unitDetail?.id ?? 0,
       applicationPriorityPoints: priorityPoints,
       parameters: [],
     };
@@ -406,6 +344,7 @@ const ApplicationDetails = () => {
       await dispatch(approveMarks(body)).unwrap();
       toast.success("Priority updated successfully");
     } catch (error) {
+      console.log("error -> ", error);
       toast.error("Failed to update priority");
     }
   };
@@ -436,21 +375,21 @@ const ApplicationDetails = () => {
     if (param.name != "no") {
       return {
         main: param.name,
-        header: param.category || null,
-        subheader: param.subcategory || null,
-        subsubheader: param.subsubcategory || null,
+        header: param.category ?? null,
+        subheader: param.subcategory ?? null,
+        subsubheader: param.subsubcategory ?? null,
       };
     } else if (param.subsubcategory) {
       return {
         main: param.subsubcategory,
-        header: param.category || null,
-        subheader: param.subcategory || null,
+        header: param.category ?? null,
+        subheader: param.subcategory ?? null,
         subsubheader: null,
       };
     } else if (param.subcategory) {
       return {
         main: param.subcategory,
-        header: param.category || null,
+        header: param.category ?? null,
         subheader: null,
         subsubheader: null,
       };
@@ -465,7 +404,6 @@ const ApplicationDetails = () => {
   };
 
   const handleAddsignature = async (member: any, memberdecision: string) => {
-    //validation
     const newDecisions: { [memberId: string]: string } = {
       ...decisions,
       [member.id]: memberdecision,
@@ -475,16 +413,11 @@ const ApplicationDetails = () => {
     const result = await dispatch(
       TokenValidation({ inputPersID: member.ic_number })
     );
-    const decision = decisions[member.id];
-    console.log(decision);
     if (TokenValidation.fulfilled.match(result)) {
       const isValid = result.payload.vaildId;
       if (!isValid) {
-        // toast.error("Token is not valid");
         return;
       }
-      //sign
-
       const SignPayload = {
         data: {
           application_id,
@@ -519,7 +452,6 @@ const ApplicationDetails = () => {
           }
         });
       } else if (memberdecision === "rejected") {
-        console.log(memberdecision);
         dispatch(
           updateApplication({
             ...updatePayload,
@@ -532,43 +464,197 @@ const ApplicationDetails = () => {
     }
   };
 
-  // Development handleAddsignature
-  // const handleAddsignature = async (member: any, memberdecision: string) => {
-  //   const updatePayload = {
-  //     id: unitDetail?.id,
-  //     type: unitDetail?.type,
-  //     member: {
-  //       name: member.name,
-  //       ic_number: member.ic_number,
-  //       member_type: member.member_type,
-  //       member_id: member.id,
-  //       is_signature_added: true,
-  //       sign_digest: "something while developing",
-  //     },
-  //     level: profile?.user?.user_role,
-  //   };
-  //   if (memberdecision === "accepted") {
-  //     dispatch(updateApplication(updatePayload)).then(() => {
-  //       dispatch(fetchApplicationUnitDetail({ award_type, numericAppId }));
-  //       const allOthersAccepted = profile?.unit?.members
-  //         .filter((m: any) => m.id !== member.id)
-  //         .every((m: any) => decisions[m.id] === "accepted");
-  //       if (allOthersAccepted && memberdecision === "accepted") {
-  //         navigate("/applications/list");
-  //       }
-  //     });
-  //   } else if (memberdecision === "rejected") {
-  //     console.log(memberdecision);
-  //     dispatch(
-  //       updateApplication({
-  //         ...updatePayload,
-  //         status: "rejected",
-  //       })
-  //     ).then(() => {
-  //       navigate("/applications/list");
-  //     });
-  //   }
-  // };
+  const renderHeaderRow = (header: string, index: number) => (
+    <tr key={`header-${header}-${index}`}>
+      <td colSpan={6} style={{ fontWeight: 600, color: "#555", fontSize: 15, background: "#f5f5f5" }}>
+        {header}
+      </td>
+    </tr>
+  );
+
+  const renderUploads = (upload: any) => {
+    let uploads: string[] = [];
+
+    if (Array.isArray(upload)) {
+      uploads = upload;
+    } else if (typeof upload === "string") {
+      uploads = upload.split(",");
+    }
+
+    return uploads.map((filePath: string) => (
+      <span key={filePath} style={{ display: "block" }}>
+        {filePath.trim().split("/").pop()}
+      </span>
+    ));
+  };
+
+  const handleClarify = (id: number) => {
+    dispatch(updateClarification({ id, clarification_status: "clarified" }))
+      .then(() => setIsRefreshData(prev => !prev));
+  };
+
+  const handleReject = (id: number) => {
+    dispatch(updateClarification({ id, clarification_status: "rejected" }))
+      .then(() => setIsRefreshData(prev => !prev));
+  };
+
+  const renderClarificationActions = (param: any) => {
+    const clarificationId = param?.clarification_details?.clarification_id;
+
+    return (
+      <div className="d-flex gap-3">
+        <button
+          className="action-btn bg-transparent d-flex align-items-center justify-content-center"
+          style={{ color: "var(--green-default)" }}
+          onClick={() => handleClarify(clarificationId)}
+        >
+          <IoMdCheckmark />
+        </button>
+        <button
+          className="action-btn bg-transparent d-flex align-items-center justify-content-center"
+          style={{ color: "var(--red-default)" }}
+          onClick={() => handleReject(clarificationId)}
+        >
+          <MdClose />
+        </button>
+      </div>
+    );
+  };
+
+  const renderParameterRow = (param: any, display: any) => {
+    const rows: JSX.Element[] = [];
+
+    const isRejected = param?.clarification_details?.clarification_status === "rejected";
+    const approvedMarksValue = isRejected ? "0" : approvedMarksState[param.name] ?? "";
+    const clarificationDetails = param?.clarification_details;
+    const hasClarification = clarificationDetails?.clarification && clarificationDetails?.clarification_id;
+    const clarificationStatus = clarificationDetails?.clarification_status;
+    const canViewClarification =
+      param?.clarification_id ||
+      (param?.last_clarification_id &&
+        [role, lowerRole].includes(param?.last_clarification_handled_by));
+
+    let clarificationActionContent = null;
+    if (hasClarification) {
+      clarificationActionContent =
+        clarificationStatus === "pending" ? (
+          renderClarificationActions(param)
+        ) : (
+          <p className="fw-5 text-capitalize">{clarificationStatus}</p>
+        );
+    }
+
+    rows.push(
+      <tr key={display.main}>
+        <td style={{ width: 150 }}>
+          <p className="fw-5 mb-0">{display.main}</p>
+        </td>
+
+        <td style={{ width: 100 }}>
+          <p className="fw-5">{param.count}</p>
+        </td>
+
+        <td style={{ width: 100 }}>
+          <p className="fw-5">{param.negative ? `-${param.marks}` : param.marks}</p>
+        </td>
+
+        <td style={{ width: 200 }}>
+          {param.upload && (
+            <a
+              href={`${baseURL}${param.upload}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              style={{ fontSize: 18 }}
+            >
+              <span style={{ fontSize: 14, wordBreak: "break-word" }}>
+                {renderUploads(param.upload)}
+              </span>
+            </a>
+          )}
+        </td>
+
+        {!isUnitRole && !isHeadquarter && (
+          <>
+            <td style={{ width: 200 }}>
+              <input
+                type="text"
+                className="form-control"
+                placeholder="Enter approved marks"
+                autoComplete="off"
+                value={approvedMarksValue}
+                disabled={isRejected}
+                onChange={(e) => handleInputChange(param.name, e.target.value)}
+              />
+            </td>
+
+            {!isRaisedScreen && (
+              <td style={{ width: 120 }}>
+                {canViewClarification ? (
+                  <button
+                    className="action-btn bg-transparent d-inline-flex align-items-center justify-content-center"
+                    onClick={() => {
+                      setReqViewCreatedClarificationShow(true);
+                      setReviewerClarificationForView(
+                        clarificationDetails?.reviewer_comment
+                      );
+                    }}
+                  >
+                    {SVGICON.app.eye}
+                  </button>
+                ) : (
+                  <button
+                    onClick={() => {
+                      setClarificationType(unitDetail?.type ?? "");
+                      setClarificationApplicationId(unitDetail?.id ?? 0);
+                      setClarificationParameterName(param.name);
+                      setClarificationParameterId(param.id);
+                      setClarificationDocForView(
+                        clarificationDetails?.clarification_doc
+                      );
+                      setClarificationClarificationForView(
+                        clarificationDetails?.clarification
+                      );
+                      setClarificationShow(true);
+                    }}
+                    className="fw-5 text-decoration-underline bg-transparent border-0"
+                    style={{ fontSize: 14, color: "#0d6efd" }}
+                  >
+                    Ask Clarification
+                  </button>
+                )}
+              </td>
+            )}
+
+            {isRaisedScreen && (
+              <>
+                <td style={{ width: 200 }}>
+                  {clarificationDetails?.clarification && (
+                    <button
+                      className="action-btn bg-transparent d-inline-flex align-items-center justify-content-center"
+                      onClick={() => {
+                        setReqClarificationShow(true);
+                        setClarificationDocForView(
+                          clarificationDetails?.clarification_doc
+                        );
+                        setClarificationClarificationForView(
+                          clarificationDetails?.clarification
+                        );
+                      }}
+                    >
+                      {SVGICON.app.eye}
+                    </button>
+                  )}
+                </td>
+                <td style={{ width: 150 }}>{clarificationActionContent}</td>
+              </>
+            )}
+          </>
+        )}
+      </tr>
+    );
+
+    return rows;
+  };
 
   // Show loader
   if (loading) return <Loader />;
@@ -592,7 +678,7 @@ const ApplicationDetails = () => {
               className="text-center flex-grow-1 flex-sm-grow-0 flex-basis-100 flex-sm-basis-auto"
               style={{ minWidth: "150px" }}
             >
-              <label className="form-label fw-semibold">Award Type</label>
+              <div className="form-label fw-semibold">Award Type</div>
               <p className="fw-5 mb-0">
                 {unitDetail?.type
                   ? unitDetail.type.charAt(0).toUpperCase() +
@@ -605,9 +691,9 @@ const ApplicationDetails = () => {
               className="text-center flex-grow-1 flex-sm-grow-0 flex-basis-100 flex-sm-basis-auto"
               style={{ minWidth: "150px" }}
             >
-              <label className="form-label fw-semibold">Cycle Period</label>
+              <div className="form-label fw-semibold">Cycle Period</div>
               <p className="fw-5 mb-0">
-                {unitDetail?.fds?.cycle_period || "--"}
+                {unitDetail?.fds?.cycle_period ?? "--"}
               </p>
             </div>
 
@@ -615,24 +701,24 @@ const ApplicationDetails = () => {
               className="text-center flex-grow-1 flex-sm-grow-0 flex-basis-100 flex-sm-basis-auto"
               style={{ minWidth: "150px" }}
             >
-              <label className="form-label fw-semibold">Last Date</label>
-              <p className="fw-5 mb-0">{unitDetail?.fds?.last_date || "--"}</p>
+              <div className="form-label fw-semibold">Last Date</div>
+              <p className="fw-5 mb-0">{unitDetail?.fds?.last_date ?? "--"}</p>
             </div>
 
             <div
               className="text-center flex-grow-1 flex-sm-grow-0 flex-basis-100 flex-sm-basis-auto"
               style={{ minWidth: "150px" }}
             >
-              <label className="form-label fw-semibold">Command</label>
-              <p className="fw-5 mb-0">{unitDetail?.fds?.command || "--"}</p>
+              <div className="form-label fw-semibold">Command</div>
+              <p className="fw-5 mb-0">{unitDetail?.fds?.command ?? "--"}</p>
             </div>
 
             <div
               className="text-center flex-grow-1 flex-sm-grow-0 flex-basis-100 flex-sm-basis-auto"
               style={{ minWidth: "150px" }}
             >
-              <label className="form-label fw-semibold">Unit Name</label>
-              <p className="fw-5 mb-0">{unitDetail?.unit_name || "--"}</p>
+              <div className="form-label fw-semibold">Unit Name</div>
+              <p className="fw-5 mb-0">{unitDetail?.unit_name ?? "--"}</p>
             </div>
           </div>
         </div>
@@ -684,7 +770,6 @@ const ApplicationDetails = () => {
                 <th style={{ width: 100, color: "white" }}>Marks</th>
                 <th style={{ width: 100, color: "white" }}>Document</th>
 
-                {/* {isCW2Role && <th style={{ width: 100 }}>Drop comment</th>} */}
                 {!isUnitRole && !isHeadquarter && (
                   <>
                     <th style={{ width: 200 }}>Approved Marks</th>
@@ -699,10 +784,6 @@ const ApplicationDetails = () => {
                     )}
                   </>
                 )}
-
-                {/* {isHeadquarter && (
-                  <th style={{ width: 150 }}>Review comments</th>
-                )} */}
               </tr>
             </thead>
             <tbody>
@@ -710,299 +791,63 @@ const ApplicationDetails = () => {
                 let prevHeader: string | null = null;
                 let prevSubheader: string | null = null;
                 let prevSubsubheader: string | null = null;
-                const rows: any[] = [];
+                const rows: JSX.Element[] = [];
 
-                unitDetail?.fds?.parameters?.forEach(
-                  (param: any, index: number) => {
-                    const display = getParamDisplay(param);
+                unitDetail?.fds?.parameters?.forEach((param: any, index: number) => {
+                  const display = getParamDisplay(param);
 
-                    const showHeader =
-                      display.header && display.header !== prevHeader;
-                    const showSubheader =
-                      display.subheader && display.subheader !== prevSubheader;
-                    const showSubsubheader =
-                      display.subsubheader && display.subsubheader !== prevSubsubheader;
+                  const showHeader =
+                    display.header && display.header !== prevHeader;
+                  const showSubheader =
+                    display.subheader && display.subheader !== prevSubheader;
+                  const showSubsubheader =
+                    display.subsubheader && display.subsubheader !== prevSubsubheader;
 
-                    if (showHeader) {
-                      rows.push(
-                        <tr key={`header-${display.header}-${index}`}>
-                          <td
-                            colSpan={6}
-                            style={{
-                              fontWeight: 600,
-                              color: "#555",
-                              fontSize: 15,
-                              background: "#f5f5f5",
-                            }}
-                          >
-                            {display.header}
-                          </td>
-                        </tr>
-                      );
-                    }
+                  if (showHeader) {
+                    rows.push(renderHeaderRow(display.header, index));
+                  }
 
-                    if (showSubheader) {
-                      rows.push(
-                        <tr key={`subheader-${display.subheader}-${index}`}>
-                          <td
-                            colSpan={6}
-                            style={{
-                              color: display.header ? "#1976d2" : "#888",
-                              fontSize: 13,
-                              background: "#f8fafc",
-                            }}
-                          >
-                            {display.subheader}
-                          </td>
-                        </tr>
-                      );
-                    }
-
-                    if (showSubsubheader) {
-                      rows.push(
-                        <tr key={`subsubheader-${display.subsubheader}-${index}`}>
-                          <td
-                            colSpan={6}
-                            style={{
-                              color: "#666",
-                              fontSize: 12,
-                              background: "#fafbfc",
-                              fontStyle: "italic",
-                            }}
-                          >
-                            {display.subsubheader}
-                          </td>
-                        </tr>
-                      );
-                    }
-
-                    prevHeader = display.header;
-                    prevSubheader = display.subheader;
-                    prevSubsubheader = display.subsubheader;
-
+                  if (showSubheader) {
                     rows.push(
-                      <tr key={index}>
-                        <td style={{ width: 150 }}>
-                          <p className="fw-5 mb-0">{display.main}</p>
+                      <tr key={`subheader-${display.subheader}-${index}`}>
+                        <td
+                          colSpan={6}
+                          style={{
+                            color: display.header ? "#1976d2" : "#888",
+                            fontSize: 13,
+                            background: "#f8fafc",
+                          }}
+                        >
+                          {display.subheader}
                         </td>
-                        <td style={{ width: 100 }}>
-                          <p className="fw-5">{param.count}</p>
-                        </td>
-                        <td style={{ width: 100 }}>
-                          <p className="fw-5">
-                            {param.negative === true ? `-${param.marks}` : param.marks}
-                          </p>
-                        </td>
-                        <td style={{ width: 200 }}>
-                          {param.upload ? (
-                            <a
-                              href={`${baseURL}${param.upload}`}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              style={{ fontSize: 18 }}
-                            >
-                              <span
-                                style={{
-                                  fontSize: 14,
-                                  wordBreak: "break-word",
-                                }}
-                              >
-                                {Array.isArray(param?.upload)
-                                  ? param.upload.map(
-                                    (filePath: any, idx: any) => (
-                                      <span
-                                        key={idx}
-                                        style={{ display: "block" }}
-                                      >
-                                        {filePath.split("/").pop()}
-                                      </span>
-                                    )
-                                  )
-                                  : param?.upload
-                                    ? param.upload
-                                      .toString()
-                                      .split(",")
-                                      .map((filePath: any, idx: any) => (
-                                        <span
-                                          key={idx}
-                                          style={{ display: "block" }}
-                                        >
-                                          {filePath.trim().split("/").pop()}
-                                        </span>
-                                      ))
-                                    : null}
-                              </span>
-                            </a>
-                          ) : (
-                            ""
-                          )}
-                        </td>
-
-                        {/* Your logic for conditional clarification/approval UI below */}
-                        {!isUnitRole && !isHeadquarter && (
-                          <>
-                            <td style={{ width: 200 }}>
-                              <input
-                                type="text"
-                                className="form-control"
-                                placeholder="Enter approved marks"
-                                autoComplete="off"
-                                value={
-                                  param?.clarification_details
-                                    ?.clarification_status === "rejected"
-                                    ? "0"
-                                    : approvedMarksState[param.name] ?? ""
-                                }
-                                disabled={
-                                  param?.clarification_details
-                                    ?.clarification_status === "rejected"
-                                }
-                                onChange={(e) =>
-                                  handleInputChange(param.name, e.target.value)
-                                }
-                              />
-                            </td>
-                            {!isRaisedScreen && (
-                              <td style={{ width: 120 }}>
-                                {param?.clarification_id ||
-                                  (param?.last_clarification_id &&
-                                    [role, lowerRole].includes(
-                                      param?.last_clarification_handled_by
-                                    )) ? (
-                                  <button
-                                    className="action-btn bg-transparent d-inline-flex align-items-center justify-content-center"
-                                    onClick={() => {
-                                      setReqViewCreatedClarificationShow(true);
-                                      setReviewerClarificationForView(
-                                        param?.clarification_details
-                                          ?.reviewer_comment
-                                      );
-                                    }}
-                                  >
-                                    {SVGICON.app.eye}
-                                  </button>
-                                ) : (
-                                  <button
-                                    onClick={() => {
-                                      setClarificationType(unitDetail?.type);
-                                      setClarificationApplicationId(
-                                        unitDetail?.id
-                                      );
-                                      setClarificationParameterName(param.name);
-                                      setClarificationParameterId(param.id);
-                                      setClarificationDocForView(
-                                        param?.clarification_details
-                                          ?.clarification_doc
-                                      );
-                                      setClarificationClarificationForView(
-                                        param?.clarification_details
-                                          ?.clarification
-                                      );
-                                      setClarificationShow(true);
-                                    }}
-                                    className="fw-5 text-decoration-underline bg-transparent border-0"
-                                    style={{ fontSize: 14, color: "#0d6efd" }}
-                                  >
-                                    Ask Clarification
-                                  </button>
-                                )}
-                              </td>
-                            )}
-
-                            {isRaisedScreen && (
-                              <>
-                                <td style={{ width: 200 }}>
-                                  {param?.clarification_details
-                                    ?.clarification ? (
-                                    <button
-                                      className="action-btn bg-transparent d-inline-flex align-items-center justify-content-center"
-                                      onClick={() => {
-                                        setReqClarificationShow(true);
-                                        setClarificationDocForView(
-                                          param?.clarification_details
-                                            ?.clarification_doc
-                                        );
-                                        setClarificationClarificationForView(
-                                          param?.clarification_details
-                                            ?.clarification
-                                        );
-                                      }}
-                                    >
-                                      {SVGICON.app.eye}
-                                    </button>
-                                  ) : (
-                                    ""
-                                  )}
-                                </td>
-                                <td style={{ width: 150 }}>
-                                  {param?.clarification_details
-                                    ?.clarification &&
-                                    param?.clarification_details
-                                      ?.clarification_id ? (
-                                    param?.clarification_details
-                                      ?.clarification_status === "pending" ? (
-                                      <div className="d-flex gap-3">
-                                        <button
-                                          className="action-btn bg-transparent d-flex align-items-center justify-content-center"
-                                          style={{
-                                            color: "var(--green-default)",
-                                          }}
-                                          onClick={() => {
-                                            dispatch(
-                                              updateClarification({
-                                                id: param?.clarification_details
-                                                  ?.clarification_id,
-                                                clarification_status:
-                                                  "clarified",
-                                              })
-                                            ).then(() => {
-                                              setIsRefreshData((prev) => !prev);
-                                            });
-                                          }}
-                                        >
-                                          <IoMdCheckmark />
-                                        </button>
-                                        <button
-                                          className="action-btn bg-transparent d-flex align-items-center justify-content-center"
-                                          style={{
-                                            color: "var(--red-default)",
-                                          }}
-                                          onClick={() => {
-                                            dispatch(
-                                              updateClarification({
-                                                id: param?.clarification_details
-                                                  ?.clarification_id,
-                                                clarification_status:
-                                                  "rejected",
-                                              })
-                                            ).then(() => {
-                                              setIsRefreshData((prev) => !prev);
-                                            });
-                                          }}
-                                        >
-                                          <MdClose />
-                                        </button>
-                                      </div>
-                                    ) : (
-                                      <p className="fw-5 text-capitalize">
-                                        {
-                                          param?.clarification_details
-                                            ?.clarification_status
-                                        }
-                                      </p>
-                                    )
-                                  ) : (
-                                    ""
-                                  )}
-                                </td>
-                              </>
-                            )}
-                          </>
-                        )}
                       </tr>
                     );
                   }
-                );
+
+                  if (showSubsubheader) {
+                    rows.push(
+                      <tr key={`subsubheader-${display.subsubheader}-${index}`}>
+                        <td
+                          colSpan={6}
+                          style={{
+                            color: "#666",
+                            fontSize: 12,
+                            background: "#fafbfc",
+                            fontStyle: "italic",
+                          }}
+                        >
+                          {display.subsubheader}
+                        </td>
+                      </tr>
+                    );
+                  }
+
+                  prevHeader = display.header;
+                  prevSubheader = display.subheader;
+                  prevSubsubheader = display.subsubheader;
+
+                  rows.push(...renderParameterRow(param, display));
+                });
 
                 return rows;
               })()}
@@ -1010,54 +855,52 @@ const ApplicationDetails = () => {
           </table>
         </div>
         {!isUnitRole && (
-          <>
-            <ul
-              style={{
-                listStyleType: "none",
-                display: "flex",
-                alignItems: "center",
-                gap: "10px",
-                flexWrap: "wrap",
-                padding: 0,
-                marginBottom: "16px",
-              }}
-            >
-              {/* Unit Remark */}
-              {unitDetail?.fds?.unitRemarks && (
+          <ul
+            style={{
+              listStyleType: "none",
+              display: "flex",
+              alignItems: "center",
+              gap: "10px",
+              flexWrap: "wrap",
+              padding: 0,
+              marginBottom: "16px",
+            }}
+          >
+            {/* Unit Remark */}
+            {unitDetail?.fds?.unitRemarks && (
+              <li
+                style={{
+                  padding: "8px 12px",
+                  backgroundColor: "#e8f0fe",
+                  borderRadius: "6px",
+                  boxShadow: "0 1px 2px rgba(0,0,0,0.05)",
+                  fontSize: "14px",
+                  color: "#333",
+                }}
+              >
+                <strong>Unit:</strong> {unitDetail.fds.unitRemarks}
+              </li>
+            )}
+
+            {/* Other Remarks */}
+            {Array.isArray(unitDetail?.remarks) &&
+              unitDetail.remarks.map((item: any) => (
                 <li
+                  key={item?.remarks}
                   style={{
                     padding: "8px 12px",
-                    backgroundColor: "#e8f0fe",
+                    backgroundColor: "#f9f9f9",
                     borderRadius: "6px",
                     boxShadow: "0 1px 2px rgba(0,0,0,0.05)",
                     fontSize: "14px",
                     color: "#333",
                   }}
                 >
-                  <strong>Unit:</strong> {unitDetail.fds.unitRemarks}
+                  <strong>{item?.remark_added_by_role}:</strong>{" "}
+                  {item?.remarks}
                 </li>
-              )}
-
-              {/* Other Remarks */}
-              {Array.isArray(unitDetail?.remarks) &&
-                unitDetail.remarks.map((item: any, idx: number) => (
-                  <li
-                    key={idx}
-                    style={{
-                      padding: "8px 12px",
-                      backgroundColor: "#f9f9f9",
-                      borderRadius: "6px",
-                      boxShadow: "0 1px 2px rgba(0,0,0,0.05)",
-                      fontSize: "14px",
-                      color: "#333",
-                    }}
-                  >
-                    <strong>{item?.remark_added_by_role}:</strong>{" "}
-                    {item?.remarks}
-                  </li>
-                ))}
-            </ul>
-          </>
+              ))}
+          </ul>
         )}
 
         {!isUnitRole && (
@@ -1098,12 +941,12 @@ const ApplicationDetails = () => {
             {/* Grace Marks Field */}
             {!isHeadquarter && (
               <div className="w-100 mb-4">
-                <label
+                <div
                   className="fw-medium text-muted mb-2"
                   style={{ whiteSpace: "nowrap" }}
                 >
                   Enter Your Remarks:
-                </label>
+                </div>
                 <textarea
                   className="form-control"
                   placeholder="Enter remarks (max 200 characters)"
@@ -1125,12 +968,12 @@ const ApplicationDetails = () => {
               Array.isArray(profile.unit.members) &&
               profile.unit.members.length > 0 && (
                 <div className="table-responsive mb-3">
-                  <label
+                  <div
                     className="fw-medium text-muted mb-2"
                     style={{ whiteSpace: "nowrap" }}
                   >
                     Submit Signatures:
-                  </label>
+                  </div>
                   <table className="table-style-1 w-100">
                     <thead className="table-light">
                       <tr>
@@ -1142,19 +985,17 @@ const ApplicationDetails = () => {
                     </thead>
                     <tbody>
                       {[
-                        // Always show all presiding officers first
                         ...profile.unit.members.filter(
                           (m) => m.member_type === "presiding_officer"
                         ),
-                        // Then show member officers, sorted by member_order
                         ...profile.unit.members
                           .filter((m) => m.member_type === "member_officer")
                           .sort(
                             (a, b) =>
-                              Number(a.member_order || 0) - Number(b.member_order || 0)
+                              Number(a.member_order ?? 0) - Number(b.member_order ?? 0)
                           ),
                       ].map((member) => {
-                        const acceptedMembers = unitDetail?.fds?.accepted_members || [];
+                        const acceptedMembers = unitDetail?.fds?.accepted_members ?? [];
                         const foundMember = acceptedMembers.find(
                           (m: any) => m.member_id === member.id
                         );
@@ -1167,8 +1008,8 @@ const ApplicationDetails = () => {
                                 ? "Presiding Officer"
                                 : "Member Officer"}
                             </td>
-                            <td>{member.name || "-"}</td>
-                            <td>{member.rank || "-"}</td>
+                            <td>{member.name ?? "-"}</td>
+                            <td>{member.rank ?? "-"}</td>
                             <td>
                               <div className="d-flex flex-sm-row flex-column gap-sm-3 gap-1 align-items-center">
                                 {member.member_type === "presiding_officer" &&
@@ -1226,80 +1067,23 @@ const ApplicationDetails = () => {
                 </div>
               )}
             <div className="d-flex flex-sm-row flex-column gap-sm-3 gap-1 justify-content-end">
-              {/* Approved by roles below */}
               {displayedMarks.length > 0 && (
                 <div className="text-muted small me-auto align-self-center">
                   {displayedMarks.join(" | ")}
                 </div>
               )}
 
-              {!isHeadquarter && (
-                <>
-                  {/* <div className="d-flex align-items-center gap-2">
-                    <label
-                      className="fw-medium text-muted mb-0"
-                      style={{ whiteSpace: "nowrap" }}
-                    >
-                      Discretionary Points:
-                    </label>
-                    <input
-                      type="number"
-                      className="form-control"
-                      placeholder="Enter discretionary points"
-                      style={{ maxWidth: "200", minWidth: 200 }}
-                      value={graceMarks}
-                      onChange={handleGraceMarksChange}
-                    />
-                  </div> */}
-                  {/* <button
-                    type="button"
-                    className="_btn success"
-                    onClick={() => {
-                      dispatch(
-                        updateApplication({
-                          id: unitDetail?.id,
-                          type: unitDetail?.type,
-                          status: "shortlisted_approved",
-                        })
-                      ).then(() => {
-                        navigate("/applications/list");
-                      });
-                    }}
-                  >
-                    Accept
-                  </button>
-                  <button
-                    type="button"
-                    className="_btn danger"
-                    onClick={() => {
-                      dispatch(
-                        updateApplication({
-                          id: unitDetail?.id,
-                          type: unitDetail?.type,
-                          status: "rejected",
-                        })
-                      ).then(() => {
-                        navigate("/applications/list");
-                      });
-                    }}
-                  >
-                    Reject
-                  </button> */}
-                </>
-              )}
               {isHeadquarter && (
-                <>
-                  <button
-                    type="button"
-                    className="_btn success"
-                    onClick={() => {
-                      setReviewCommentsShow(true);
-                      setReviewCommentsData(unitDetail?.fds?.comments);
-                    }}
-                  >
-                    Review Comments
-                  </button>
-                </>
+                <button
+                  type="button"
+                  className="_btn success"
+                  onClick={() => {
+                    setReviewCommentsShow(true);
+                    setReviewCommentsData(unitDetail?.fds?.comments);
+                  }}
+                >
+                  Review Comments
+                </button>
               )}
             </div>
           </div>
@@ -1318,7 +1102,6 @@ const ApplicationDetails = () => {
                 <tbody>
                   {["HR", "DV", "MP"].map((category) => {
                     let isAlreadySent: any = false;
-                    console.log(unitDetail);
                     if (category === "HR") {
                       isAlreadySent = unitDetail?.is_hr_review;
                     } else if (category === "DV") {
@@ -1412,11 +1195,12 @@ const ApplicationDetails = () => {
               <>
                 {(cw2_type === "mo" || cw2_type === "ol") && (
                   <div className="mb-2">
-                    <label className="form-label mb-1">Priority:</label>
+                    <label htmlFor="priority" className="form-label mb-1">Priority:</label>
                     <input
                       type="text"
                       className="form-control"
                       name="priority"
+                      id="priority"
                       value={priority}
                       onChange={(e) => {
                         const value = e.target.value;
@@ -1433,7 +1217,7 @@ const ApplicationDetails = () => {
                     handleCommentChange("__application__", localComment);
                   }}
                 >
-                  <label className="form-label mb-1">Drop Comment:</label>
+                  <div className="form-label mb-1">Drop Comment:</div>
                   <textarea
                     className="form-control"
                     placeholder="Enter comment"
@@ -1455,12 +1239,12 @@ const ApplicationDetails = () => {
               Array.isArray(profile.unit.members) &&
               profile.unit.members.length > 0 && (
                 <div className="table-responsive mb-3">
-                  <label
+                  <div
                     className="fw-medium text-muted mb-2"
                     style={{ whiteSpace: "nowrap" }}
                   >
                     Submit Signatures:
-                  </label>
+                  </div>
                   <table className="table-style-1 w-100">
                     <thead className="table-light">
                       <tr>
@@ -1479,11 +1263,11 @@ const ApplicationDetails = () => {
                           .filter((m) => m.member_type === "member_officer")
                           .sort(
                             (a, b) =>
-                              Number(a.member_order || 0) - Number(b.member_order || 0)
+                              Number(a.member_order ?? 0) - Number(b.member_order ?? 0)
                           )
                       ].map((member) => {
                         const acceptedMembers =
-                          unitDetail?.fds?.accepted_members || [];
+                          unitDetail?.fds?.accepted_members ?? [];
                         const foundMember = acceptedMembers.find(
                           (m: any) => m.member_id === member.id
                         );
@@ -1497,8 +1281,8 @@ const ApplicationDetails = () => {
                                 ? "Presiding Officer"
                                 : "Member Officer"}
                             </td>
-                            <td>{member.name || "-"}</td>
-                            <td>{member.rank || "-"}</td>
+                            <td>{member.name ?? "-"}</td>
+                            <td>{member.rank ?? "-"}</td>
                             <td>
                               <div className="d-flex flex-sm-row flex-column gap-sm-3 gap-1 align-items-center">
                                 {member.member_type === "presiding_officer" &&
@@ -1559,62 +1343,6 @@ const ApplicationDetails = () => {
                   </table>
                 </div>
               )}
-            {/* {isCW2Role &&
-              ((cw2_type === "mo" && !unitDetail?.is_mo_approved) ||
-                (cw2_type === "ol" && !unitDetail?.is_ol_approved)) && (
-                <div className="d-flex flex-sm-row flex-column gap-sm-3 gap-1 justify-content-end mt-2">
-                  <button
-                    type="button"
-                    className="_btn success"
-                    onClick={() => {
-                      const payload: {
-                        id: number | undefined;
-                        is_mo_approved?: boolean;
-                        is_ol_approved?: boolean;
-                        mo_approved_at?: string;
-                        ol_approved_at?: string;
-                      } = {
-                        id: unitDetail?.id,
-                      };
-
-                      if (cw2_type === "mo") {
-                        payload.is_mo_approved = true;
-                        payload.mo_approved_at = new Date().toISOString(); // send current date
-                      } else if (cw2_type === "ol") {
-                        payload.is_ol_approved = true;
-                        payload.ol_approved_at = new Date().toISOString(); // send current date
-                      }
-
-                      if (unitDetail?.type === "citation") {
-                        dispatch(updateCitation(payload));
-                      } else if (unitDetail?.type === "appreciation") {
-                        dispatch(updateAppreciation(payload));
-                      }
-
-                      navigate("/applications/list");
-                    }}
-                  >
-                    Accept
-                  </button>
-                  <button
-                    type="button"
-                    className="_btn danger"
-                    onClick={() => {
-                      dispatch(
-                        updateApplication({
-                          id: unitDetail?.id,
-                          type: unitDetail?.type,
-                          status: "rejected",
-                        })
-                      ).then(() => {
-                        navigate("/applications/list");
-                      });
-                    }}
-                  >
-                    Reject
-                  </button>
-                </div>
-              )} */}
           </div>
         )}
       </div>

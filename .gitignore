@@ -24,3 +24,6 @@ token_storage
 *.sln
 *.sw?
 uploads
+
+sonar-project.properties
+.scannerwork

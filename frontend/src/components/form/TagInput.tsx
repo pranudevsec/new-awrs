@@ -50,7 +50,7 @@ const TagInput: FC<TagInputProps> = ({
           } ${error ? "is-invalid" : ""}`}
       >
         {value.map((tag, index) => (
-          <span className="tag-item" key={index}>
+          <span className="tag-item" key={tag}>
             {tag}
             {!disabled && (
               <button type="button" className="tag-remove-btn" onClick={() => removeTag(index)}>

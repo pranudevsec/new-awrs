@@ -22,7 +22,7 @@ const DeleteModal: React.FC<DeleteModalProps> = ({
                     <img src="/media/icons/warning.png" alt="Warning" className="img-fluid mx-auto" />
                 </div>
                 <div className="text my-4">
-                    <h3 className="font-lexend fw-6 mb-2">Delete {titleName || name}</h3>
+                    <h3 className="font-lexend fw-6 mb-2">Delete {titleName ?? name}</h3>
                     <p>
                         Are you sure you want to delete this {name.toLowerCase()}? You will not be able to
                         recover the deleted record!

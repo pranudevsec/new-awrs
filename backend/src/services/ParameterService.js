@@ -53,7 +53,6 @@ exports.getAllParameters = async (query) => {
   const client = await dbService.getClient();
   try {
     const { awardType, search,matrix_unit,comd,unit_type, page = 1, limit = 10 } = query;
-    console.log( matrix_unit);
     let award_type = awardType;
     const pageInt = parseInt(page);
     const limitInt = parseInt(limit);

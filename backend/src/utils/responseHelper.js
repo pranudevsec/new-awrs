@@ -2,7 +2,7 @@
  * File Name: responseHelper.js
  */
 class ResponseHelper {
-  static success(statusCode = 200, message = "", data, meta) {
+  static success(statusCode = 200, message = "", data = undefined, meta = undefined) {
     const filteredData = this.filterFields(data, this.excludeFields);
 
     return {
@@ -14,7 +14,7 @@ class ResponseHelper {
     };
   }
 
-  static error(statusCode = 500, message = "An error occurred", errors) {
+  static error(statusCode = 500, message = "An error occurred", errors = undefined) {
     return {
       statusCode,
       message,
@@ -29,10 +29,8 @@ class ResponseHelper {
     }
 
     if (Array.isArray(data)) {
-      // If data is an array, apply filtering to each object in the array
       return data.map((item) => this.filterObject(item, excludeFields));
     } else if (typeof data === "object") {
-      // If data is an object, apply filtering to the object
       return this.filterObject(
         data && data._doc ? data._doc : data,
         excludeFields

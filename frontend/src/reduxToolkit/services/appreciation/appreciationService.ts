@@ -21,18 +21,17 @@ export const createAppreciation = createAsyncThunk<
 
       return response.data;
     } else {
-      toast.error(response.data.message || "Failed to submit appreciation");
+      toast.error(response.data.message ?? "Failed to submit appreciation");
       return rejectWithValue(response.data.message);
     }
   } catch (error: any) {
-    toast.error(error.response?.data?.message || "Submission error");
+    toast.error(error.response?.data?.message ?? "Submission error");
     return rejectWithValue(
-      error.response?.data?.message || "Failed to submit appreciation"
+      error.response?.data?.message ?? "Failed to submit appreciation"
     );
   }
 });
 
-// Fetch appreciation by ID
 export const fetchAppreciationById = createAsyncThunk<
   CreateAppreciationResponse,
   number
@@ -46,12 +45,11 @@ export const fetchAppreciationById = createAsyncThunk<
       return rejectWithValue(response.data.message);
     }
   } catch (error: any) {
-    toast.error(error.response?.data?.message || "Error fetching appreciation");
+    toast.error(error.response?.data?.message ?? "Error fetching appreciation");
     return rejectWithValue("Failed to fetch appreciation");
   }
 });
 
-// Update appreciation by ID
 export const updateAppreciation = createAsyncThunk<
   UpdateAppreciationResponse,
   UpdateAppreciationRequest
@@ -64,19 +62,17 @@ export const updateAppreciation = createAsyncThunk<
     );
 
     if (response.data.success) {
-      // toast.success("Appreciation updated successfully!");
       return response.data;
     } else {
       toast.error("Failed to update appreciation");
       return rejectWithValue(response.data.message);
     }
   } catch (error: any) {
-    toast.error(error.response?.data?.message || "Error updating appreciation");
+    toast.error(error.response?.data?.message ?? "Error updating appreciation");
     return rejectWithValue("Failed to update appreciation");
   }
 });
 
-// Delete appreciation by ID
 export const deleteAppreciation = createAsyncThunk<
   UpdateAppreciationResponse,
   number,
@@ -92,7 +88,7 @@ export const deleteAppreciation = createAsyncThunk<
       return rejectWithValue(response.data.message);
     }
   } catch (error: any) {
-    toast.error(error.response?.data?.message || "Error deleting appreciation");
+    toast.error(error.response?.data?.message ?? "Error deleting appreciation");
     return rejectWithValue("Failed to delete appreciation");
   }
 });

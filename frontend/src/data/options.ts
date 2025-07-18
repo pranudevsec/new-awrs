@@ -1,4 +1,3 @@
-
 export const awardTypeOptions: OptionType[] = [
   {value:"All", label:"All"},
   { value: "citation", label: "Citation" },
@@ -17,8 +16,7 @@ export const unitOptions: OptionType[] = [
   { value: "unit7", label: "Unit 7" },
   { value: "unit8", label: "Unit 8" },
   { value: "unit9", label: "Unit 9" },
-  { value: "unit10", label: "Unit 10" }
-
+  { value: "unit10", label: "Unit 10" },
 ];
 
 export const brigadeOptions: OptionType[] = [
@@ -35,7 +33,6 @@ export const brigadeOptions: OptionType[] = [
   { value: "brigade9", label: "Brigade 9" },
   { value: "brigade10", label: "Brigade 10" },
 ];
-
 
 export const divisionOptions: OptionType[] = [
   { value: "n/a", label: "N/A" },
@@ -114,7 +111,7 @@ export const hierarchicalStructure = [
   ["training", "corps5", "divison5", "brigade5", "unit5"],
   ["southwestern", "corps6", "divison6", "brigade6", "unit6"],
   ["northern", "corps7", "divison7", "brigade7", "unit7"],
-  ["western", "corps8", "divison8", "brigade8", "unit8"], 
+  ["western", "corps8", "divison8", "brigade8", "unit8"],
   ["central", "corps9", "divison9", "brigade9", "unit9"],
   ["eastern", "corps10", "divison10", "brigade10", "unit10"],
   ["southern", "corps11", "divison11", "brigade11", "unit11"],
@@ -131,7 +128,6 @@ export const hierarchicalStructure = [
   ["western", "corps22", "divison22", "brigade22", "unit22"],
   ["central", "corps23", "divison23", "brigade23", "unit23"],
   ["eastern", "corps24", "divison24", "brigade24", "unit24"],
-  
 ];
 
 export const hierarchicalStructure2 = {
@@ -292,17 +288,6 @@ export const hierarchicalStructure2 = {
   },
 };
 
-// export const roleOptions: OptionType[] = [
-//   { value: "unit", label: "Unit" },
-//   { value: "brigade", label: "Brigade" },
-//   { value: "division", label: "Division" },
-//   { value: "corps", label: "Corps" },
-//   { value: "command", label: "Command" },
-//   { value: "headquarter", label: "Headquarter" },
-//   { value: "cw2", label: "CW2" },
-//   { value: "admin", label: "Admin" },
-
-// ];
 export const roleOptions = [
   { label: "Unit", value: "unit" },
   { label: "Special Unit", value: "special_unit" },
@@ -322,6 +307,7 @@ export const roleOptions = [
   { label: "MP", value: "cw2_mp" },
   { label: "Admin", value: "admin" },
 ];
+
 export const roleOptions2: OptionType[] = [
   { value: "all", label: "All" },
   { value: "unit", label: "Unit" },
@@ -375,4 +361,11 @@ export const rank = [
   { label: "Maj", value: "Maj" },
   { label: "Capt", value: "Capt" },
   { label: "Lt", value: "Lt" },
-]
+];
+
+export const cyclePeriodOptions: OptionType[] = [
+  { value: "2024 - H1", label: "2024 - H1" },
+  { value: "2024 - H2", label: "2024 - H2" },
+  { value: "2025 - H1", label: "2025 - H1" },
+  { value: "2025 - H2", label: "2025 - H2" },
+];
