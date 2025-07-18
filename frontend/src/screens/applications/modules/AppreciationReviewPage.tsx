@@ -7,13 +7,11 @@ import Breadcrumb from "../../../components/ui/breadcrumb/Breadcrumb";
 import EmptyTable from "../../../components/ui/empty-table/EmptyTable";
 import Loader from "../../../components/ui/loader/Loader";
 import FormInput from "../../../components/form/FormInput";
-import FormSelect from "../../../components/form/FormSelect";
 import { useAppDispatch, useAppSelector } from "../../../reduxToolkit/hooks";
 import { getConfig } from "../../../reduxToolkit/services/config/configService";
 import { fetchParameters } from "../../../reduxToolkit/services/parameter/parameterService";
 import { resetCitationState } from "../../../reduxToolkit/slices/citation/citationSlice";
 import type { Parameter } from "../../../reduxToolkit/services/parameter/parameterInterface";
-import { awardTypeOptions } from "../../../data/options";
 import { createAppreciation } from "../../../reduxToolkit/services/appreciation/appreciationService";
 import Axios, { baseURL } from "../../../reduxToolkit/helper/axios";
 
@@ -309,8 +307,6 @@ const AppreciationReviewPage = () => {
 
     totalMarks = totalMarks - negativeMarks;
 
-    const totalParams = parameters.length;
-
     const renderParamRows = (params: any[]) => {
         let prevHeader: string | null = null;
         let prevSubheader: string | null = null;
@@ -429,10 +425,10 @@ const AppreciationReviewPage = () => {
                         <div className="row">
                             <div className="col-lg-3 col-sm-4 mb-sm-0 mb-2">
                                 <FormInput
-                                label="Award Type"
-                                name="awardType"
-                                value="Appreciation"
-                                readOnly
+                                    label="Award Type"
+                                    name="awardType"
+                                    value="Appreciation"
+                                    readOnly
                                 />
                             </div>
                             <div className="col-lg-3 col-sm-4 mb-sm-0 mb-2">
@@ -525,10 +521,10 @@ const AppreciationReviewPage = () => {
                                 <table className="table-style-1 w-100" >
                                     <thead>
                                         <tr style={{ backgroundColor: "#007bff" }}>
-                                            <th style={{ width: 300, minWidth: 300, maxWidth: 300 ,color: "white" }}>Parameter</th>
-                                            <th style={{ width: 200, minWidth: 200, maxWidth: 200 ,color: "white" }}>Count</th>
-                                            <th style={{ width: 200, minWidth: 200, maxWidth: 200 ,color: "white" }}>Marks</th>
-                                            <th style={{ width: 200, minWidth: 200, maxWidth: 200 ,color: "white" }}>Upload</th>
+                                            <th style={{ width: 300, minWidth: 300, maxWidth: 300, color: "white" }}>Parameter</th>
+                                            <th style={{ width: 200, minWidth: 200, maxWidth: 200, color: "white" }}>Count</th>
+                                            <th style={{ width: 200, minWidth: 200, maxWidth: 200, color: "white" }}>Marks</th>
+                                            <th style={{ width: 200, minWidth: 200, maxWidth: 200, color: "white" }}>Upload</th>
                                         </tr>
                                     </thead>
                                     <tbody>{renderParamRows(params)}</tbody>

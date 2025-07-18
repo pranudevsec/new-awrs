@@ -7,14 +7,12 @@ import Breadcrumb from "../../../components/ui/breadcrumb/Breadcrumb";
 import EmptyTable from "../../../components/ui/empty-table/EmptyTable";
 import Loader from "../../../components/ui/loader/Loader";
 import FormInput from "../../../components/form/FormInput";
-import FormSelect from "../../../components/form/FormSelect";
 import { useAppDispatch, useAppSelector } from "../../../reduxToolkit/hooks";
 import { getConfig } from "../../../reduxToolkit/services/config/configService";
 import { fetchParameters } from "../../../reduxToolkit/services/parameter/parameterService";
 import { resetCitationState } from "../../../reduxToolkit/slices/citation/citationSlice";
 import { createCitation } from "../../../reduxToolkit/services/citation/citationService";
 import type { Parameter } from "../../../reduxToolkit/services/parameter/parameterInterface";
-import { awardTypeOptions } from "../../../data/options";
 import Axios, { baseURL } from "../../../reduxToolkit/helper/axios";
 
 const DRAFT_STORAGE_KEY = "applyCitationDraft";
@@ -317,9 +315,6 @@ const CitationReviewPage = () => {
   }
 
   totalMarks = totalMarks - negativeMarks;
-
-  // Total Parameters
-  const totalParams = parameters.length;
 
   const renderParamRows = ({
     params,

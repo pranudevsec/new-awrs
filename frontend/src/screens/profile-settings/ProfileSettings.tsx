@@ -331,10 +331,6 @@ const ProfileSettings = () => {
     }));
   };
 
-  const handleRemoveAward = (indexToRemove: number) => {
-    setAwards((prevAwards) => prevAwards.filter((_, i) => i !== indexToRemove));
-  };
-
   const buildUnitPayload = (
     members?: UpdateUnitProfileRequest["members"]
   ): UpdateUnitProfileRequest => ({
