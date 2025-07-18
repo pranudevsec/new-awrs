@@ -17,6 +17,7 @@ import { createAppreciation, deleteAppreciation, fetchAppreciationById, updateAp
 import type { Parameter } from "../../../reduxToolkit/services/parameter/parameterInterface";
 import Axios, { baseURL } from "../../../reduxToolkit/helper/axios";
 import { resetAppreciationState } from "../../../reduxToolkit/slices/appreciation/appreciationSlice";
+import { checkUnitProfileFields } from "../../../reduxToolkit/services/utils/utilities";
 
 const DRAFT_STORAGE_KEY = "applyAppreciationDraft";
 const DRAFT_FILE_UPLOAD_KEY = "applyAppreciationUploadedDocsDraft";
@@ -384,6 +385,10 @@ const ApplyAppreciation = () => {
   useEffect(() => {
     const fetchAllData = async () => {
       try {
+        if (!checkUnitProfileFields(profile)) {
+          navigate("/profile-settings");
+          return;
+        }
         const [configRes, paramsRes] = await Promise.all([
           dispatch(getConfig()).unwrap(),
           dispatch(fetchParameters({ awardType: "appreciation", search: "", comd: profile?.unit?.comd ?? undefined, page: 1, limit: 500 })).unwrap(),
@@ -523,13 +528,11 @@ const ApplyAppreciation = () => {
           <div className="table-filter-area mb-4">
             <div className="row">
               <div className="col-lg-3 col-sm-4 mb-sm-0 mb-2">
-                <FormSelect
+                <FormInput
                   label="Award Type"
                   name="awardType"
-                  options={awardTypeOptions}
-                  value={awardTypeOptions.find((opt) => opt.value === "appreciation") || null}
-                  placeholder="Select"
-                  isDisabled
+                  value="Appreciation"
+                  readOnly
                 />
               </div>
               <div className="col-lg-3 col-sm-4 mb-sm-0 mb-2">
@@ -562,16 +565,16 @@ const ApplyAppreciation = () => {
               </div>
             </div>
           </div>
-          {profile?.unit?.awards?.length > 0 && (
+          {/* {profile?.unit?.awards?.length > 0 && (
             <div className="mt-4 mb-2">
               <h5 className="mb-3">Awards</h5>
               <div className="table-responsive">
                 <table className="table-style-2 w-100">
                   <thead>
-                    <tr>
-                      <th style={{ width: 150, minWidth: 150, maxWidth: 150 }}>Type</th>
-                      <th style={{ width: 200, minWidth: 200, maxWidth: 200 }}>Year</th>
-                      <th style={{ width: 300, minWidth: 300, maxWidth: 300 }}>Title</th>
+                    <tr style={{ backgroundColor: "#007bff" }}>
+                      <th style={{ width: 150, minWidth: 150, maxWidth: 150, color: "white" }}>Type</th>
+                      <th style={{ width: 200, minWidth: 200, maxWidth: 200, color: "white" }}>Year</th>
+                      <th style={{ width: 300, minWidth: 300, maxWidth: 300, color: "white" }}>Title</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -593,7 +596,7 @@ const ApplyAppreciation = () => {
                 </table>
               </div>
             </div>
-          )}
+          )} */}
 
           <div className="position-sticky top-0 bg-white pb-3 mb-3" style={{ zIndex: 10, borderBottom: '1px solid #dee2e6' }}>
             <Tabs
@@ -639,11 +642,11 @@ const ApplyAppreciation = () => {
                 </h5>
                 <table className="table-style-1 w-100">
                   <thead>
-                    <tr>
-                      <th style={{ width: 250, minWidth: 250, maxWidth: 250 }}>Parameter</th>
-                      <th style={{ width: 300, minWidth: 300, maxWidth: 300 }}>Count</th>
-                      <th style={{ width: 300, minWidth: 300, maxWidth: 300 }}>Marks</th>
-                      <th style={{ width: 300, minWidth: 300, maxWidth: 300 }}>Upload</th>
+                    <tr style={{ backgroundColor: "#007bff" }}>
+                      <th style={{ width: 250, minWidth: 250, maxWidth: 250, color: "white" }}>Parameter</th>
+                      <th style={{ width: 300, minWidth: 300, maxWidth: 300, color: "white" }}>Count</th>
+                      <th style={{ width: 300, minWidth: 300, maxWidth: 300, color: "white" }}>Marks</th>
+                      <th style={{ width: 300, minWidth: 300, maxWidth: 300, color: "white" }}>Upload</th>
                     </tr>
                   </thead>
                   <tbody>

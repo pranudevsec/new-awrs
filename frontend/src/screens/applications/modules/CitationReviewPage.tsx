@@ -364,16 +364,11 @@ const CitationReviewPage = () => {
           <div className="table-filter-area mb-4">
             <div className="row">
               <div className="col-lg-3 col-sm-4 mb-sm-0 mb-2">
-                <FormSelect
+                <FormInput
                   label="Award Type"
                   name="awardType"
-                  options={awardTypeOptions}
-                  value={
-                    awardTypeOptions.find((opt) => opt.value === "citation") ||
-                    null
-                  }
-                  placeholder="Select"
-                  isDisabled
+                  value="Citation"
+                  readOnly
                 />
               </div>
               <div className="col-lg-3 col-sm-4 mb-sm-0 mb-2">

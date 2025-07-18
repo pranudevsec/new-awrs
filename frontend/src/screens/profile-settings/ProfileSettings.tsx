@@ -338,7 +338,7 @@ const ProfileSettings = () => {
 
   const currentYear = new Date().getFullYear();
   const yearOptions = Array.from(
-    { length: 50 },
+    { length: 79 },
     (_, i) => `${currentYear - i}`
   );
 
@@ -408,11 +408,11 @@ const ProfileSettings = () => {
 
               if (field === "unit") {
                 const roleLabel = roleMap[userRole] || "Unit";
-                return `My ${roleLabel}`;
+                return `${roleLabel} Name`;
               }
 
               if (field === "unit_type") {
-                return "Arms / Services";
+                return "Arm / Service";
               }
 
               if (field === "matrix_unit") {
@@ -535,23 +535,27 @@ const ProfileSettings = () => {
                               setAwards(updated);
                             }}
                           >
-                            <option value="GOC-in-C">GOC-in-C</option>
-                            <option value="COAS">COAS</option>
                             <option value="CDS">CDS</option>
+                            <option value="COAS">COAS</option>
+                            <option value="GOC-in-C">GOC-in-C</option>
                           </select>
                         </td>
                         <td>
-                          <input
-                            type="text"
-                            className="form-control"
+                          <select
+                            className="form-select"
                             value={award.award_title}
                             onChange={(e) => {
                               const updated = [...awards];
-                              updated[idx].award_title = e.target.value;
+                              updated[idx].award_title = e.target.value as
+                                | "citation"
+                                | "appreciation";
                               setAwards(updated);
                             }}
-                            placeholder="Enter award title"
-                          />
+                          >
+                            <option value="">Select Award Title</option>
+                            <option value="citation">Citation</option>
+                            <option value="appreciation">Appreciation</option>
+                          </select>
                         </td>
                         <td>
                           <select
@@ -820,6 +824,7 @@ const ProfileSettings = () => {
                       onChange={(e) =>
                         handlePresidingChange("icNumber", e.target.value)
                       }
+                      type="password"
                     />
                   </div>
                   <div className="col-sm-6 mb-3">
@@ -926,6 +931,7 @@ const ProfileSettings = () => {
                           onChange={(e) =>
                             handleChange(index, "icNumber", e.target.value)
                           }
+                          type="password"
                         />
                       </div>
                       <div className="col-sm-6 mb-3">

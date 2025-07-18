@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import axios from 'axios';
+import dgis from '../../assets/dgislogo.png';
 
 export function Chatbot() {
   const [chatOpen, setChatOpen] = useState(false);
@@ -40,12 +41,12 @@ export function Chatbot() {
     <>
       {chatOpen && (
           <div
-            className="position-fixed m-4 border rounded shadow bg-white"
+            className="position-fixed m-5 border rounded shadow bg-white"
             style={{
               width: '360px',
               maxHeight: '500px',
               height: 'auto',
-              zIndex: 1055,
+              zIndex: 1050,
               left: '200px',
               bottom: '50px'
             }}
@@ -67,7 +68,7 @@ export function Chatbot() {
                 key={idx}
                 className={`mb-2 p-2 rounded ${msg.from === 'user'
                   ? 'text-white text-end ms-auto'
-                  : 'bg-secondary text-start me-auto'
+                  : 'text-white bg-secondary text-start me-auto'
                   }`}
                 style={{ maxWidth: '80%' , backgroundColor: 'var(--blue-primary-clr)' }}
               >
@@ -81,7 +82,7 @@ export function Chatbot() {
           <div className="border-top p-2 d-flex align-items-center gap-2">
             <input
               type="text"
-              className="form-control form-control-sm"
+              className="form-control form-control-sm "
               placeholder="Type your message..."
               value={input}
               onChange={(e) => setInput(e.target.value)}
@@ -109,11 +110,14 @@ export function Chatbot() {
 
       {/* Floating Button */}
       <button
-        className="btn text-white  position-fixed bottom-0  m-4 rounded-pill shadow"
+        className="btn text-white  position-fixed bottom-0  m-5 rounded-pill shadow"
         onClick={() => setChatOpen(!chatOpen)}
-        style={{ zIndex: 1050, backgroundColor: 'var(--blue-primary-clr)'  }}
+        style={{ zIndex: 1050, backgroundColor: 'var(--blue-primary-clr)',left : '1.5rem' }}
       >
-        💬 Ask Me
+        <span className="d-flex align-items-center">
+          <img src={dgis} alt="DGIS Logo" style={{ width: '24px', height: '24px', marginRight: '8px' }} />
+          DGIS Assist
+        </span>
       </button>
     </>
   );

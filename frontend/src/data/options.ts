@@ -1,6 +1,6 @@
-import { Label } from "recharts";
 
 export const awardTypeOptions: OptionType[] = [
+  {value:"All", label:"All"},
   { value: "citation", label: "Citation" },
   { value: "appreciation", label: "Appreciation" },
 ];
@@ -96,13 +96,13 @@ export const corpsOptions: OptionType[] = [
 ];
 
 export const commandOptions: OptionType[] = [
-  { value: "Northern Command", label: "Northern Command" },
+  { value: "Southern Command", label: "Southern Command" },
+  { value: "Eastern Command", label: "Eastern Command" },
   { value: "Western Command", label: "Western Command" },
   { value: "Central Command", label: "Central Command" },
-  { value: "Eastern Command", label: "Eastern Command" },
-  { value: "Southern Command", label: "Southern Command" },
-  { value: "South Western Command", label: "South Western Command" },
-  { value: "Training Command", label: "Training Command" },
+  { value: "Northern Command", label: "Northern Command" },
+  { value: "Artrac Command", label: "Artrac Command" },
+  { value: "South Western Command", label: "South Western Command" }
 ];
 
 export const hierarchicalStructure = [
@@ -336,8 +336,8 @@ export const unitTypeOptions = [
   { label: "SF", value: "SF" },
   { label: "ARTY", value: "ARTY" },
   { label: "INFANTRY", value: "INFANTRY" },
-  { label: "ARMD", value: "ARMD" },
-  { label: "MECH INF", value: "MECH INF" },
+  { label: "ARMD", value: "ARMD/MECH INF" },
+  { label: "MECH INF", value: "ARMD/MECH INF" },
   { label: "SATA", value: "SATA" },
   { label: "ENGRS", value: "ENGRS" },
   { label: "SIGS", value: "SIGS" },

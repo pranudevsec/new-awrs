@@ -129,13 +129,12 @@ const SidebarMenu = () => {
                   <span className="nav-icon me-2 d-inline-flex align-items-center justify-content-center">
                     {item.icon}
                   </span>
-                  <span className="text-truncate">{item.label}</span>
+                  <span className="text-truncate" style={{fontSize: '16px'}}>{item.label}</span>
                 </div>
               </NavLink>
             ))}
           </div>
         </div>
-        <Chatbot/>
       </div>
     </aside>
   );

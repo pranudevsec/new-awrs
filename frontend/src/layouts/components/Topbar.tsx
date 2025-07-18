@@ -6,7 +6,7 @@ const Topbar = () => {
   const navigate = useNavigate();
 
   return (
-    <div className="top-bar-content w-100 text-white py-3 px-4 shadow" style={{ backgroundColor: '#780000' }}>
+    <div className="top-bar-content w-100 text-white py-3 px-4 shadow" style={{ background: 'linear-gradient(to right, #850b0bff 30%, #0085fe)'}}>
       <div className="d-flex align-items-center justify-content-between h-100">
         <img
           src={logo}
@@ -26,7 +26,7 @@ const Topbar = () => {
             fontSize: '44px',
           }}
         >
-          Indian Army e-Citation Application
+          Indian Army :  Unit e-Citation Application
         </h1>
 
         <img

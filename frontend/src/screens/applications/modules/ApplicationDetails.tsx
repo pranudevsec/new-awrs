@@ -642,14 +642,14 @@ const ApplicationDetails = () => {
             <div className="table-responsive">
               <table className="table-style-2 w-100">
                 <thead>
-                  <tr>
-                    <th style={{ width: 150, minWidth: 150, maxWidth: 150 }}>
+                  <tr style={{ background: "#007bff" }}>
+                    <th style={{ width: 150, minWidth: 150, maxWidth: 150, color: "white" }}>
                       Type
                     </th>
-                    <th style={{ width: 200, minWidth: 200, maxWidth: 200 }}>
+                    <th style={{ width: 200, minWidth: 200, maxWidth: 200, color: "white" }}>
                       Year
                     </th>
-                    <th style={{ width: 300, minWidth: 300, maxWidth: 300 }}>
+                    <th style={{ width: 300, minWidth: 300, maxWidth: 300, color: "white" }}>
                       Title
                     </th>
                   </tr>
@@ -678,11 +678,11 @@ const ApplicationDetails = () => {
         <div className="table-responsive mt-4">
           <table className="table-style-1 w-100">
             <thead>
-              <tr>
-                <th style={{ width: 150 }}>Parameter</th>
-                <th style={{ width: 100 }}>Count</th>
-                <th style={{ width: 100 }}>Marks</th>
-                <th style={{ width: 100 }}>Document</th>
+              <tr style={{ background: "#007bff" }}>
+                <th style={{ width: 150, color: "white" }}>Parameter</th>
+                <th style={{ width: 100, color: "white" }}>Count</th>
+                <th style={{ width: 100, color: "white" }}>Marks</th>
+                <th style={{ width: 100, color: "white" }}>Document</th>
 
                 {/* {isCW2Role && <th style={{ width: 100 }}>Drop comment</th>} */}
                 {!isUnitRole && !isHeadquarter && (

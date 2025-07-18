@@ -379,13 +379,11 @@ const AppreciationReviewPage = () => {
                     <div className="table-filter-area mb-4">
                         <div className="row">
                             <div className="col-lg-3 col-sm-4 mb-sm-0 mb-2">
-                                <FormSelect
-                                    label="Award Type"
-                                    name="awardType"
-                                    options={awardTypeOptions}
-                                    value={awardTypeOptions.find((opt) => opt.value === "appreciation") || null}
-                                    placeholder="Select"
-                                    isDisabled
+                                <FormInput
+                                label="Award Type"
+                                name="awardType"
+                                value="Appreciation"
+                                readOnly
                                 />
                             </div>
                             <div className="col-lg-3 col-sm-4 mb-sm-0 mb-2">

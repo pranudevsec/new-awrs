@@ -17,6 +17,8 @@ import { resetCitationState } from "../../../reduxToolkit/slices/citation/citati
 import { createCitation, deleteCitation, fetchCitationById, updateCitation } from "../../../reduxToolkit/services/citation/citationService";
 import type { Parameter } from "../../../reduxToolkit/services/parameter/parameterInterface";
 import Axios, { baseURL } from "../../../reduxToolkit/helper/axios";
+import { checkUnitProfileFields } from "../../../reduxToolkit/services/utils/utilities";
+
 
 const DRAFT_STORAGE_KEY = "applyCitationDraft";
 const DRAFT_FILE_UPLOAD_KEY = "applyCitationuploadedDocsDraft";
@@ -41,6 +43,7 @@ const ApplyCitation = () => {
     localStorage.removeItem("applyCitationuploadedDocsDraft");
   }, []);
   const { profile } = useAppSelector((state) => state.admin);
+  console.log(profile);
   const { loading } = useAppSelector((state) => state.parameter);
 
   const initializedRef = useRef(false);
@@ -266,9 +269,16 @@ const ApplyCitation = () => {
     const files = input.files;
     if (!files || files.length === 0) return;
 
+    const allowedTypes = ["application/pdf", "image/jpeg", "image/png"];
+    const allowedExtensions = [".pdf", ".jpg", ".jpeg", ".png"];
     const uploadedUrls: string[] = [];
 
     for (const file of files) {
+      const ext = file.name.substring(file.name.lastIndexOf('.')).toLowerCase();
+      if (!allowedTypes.includes(file.type) && !allowedExtensions.includes(ext)) {
+        toast.error(`Incorrect file type: ${file.name}. Only PDF, JPG, PNG allowed.`);
+        continue;
+      }
       if (file.size > 5 * 1024 * 1024) {
         toast.error(`File ${file.name} exceeds 5MB`);
         continue;
@@ -288,7 +298,6 @@ const ApplyCitation = () => {
       localStorage.setItem(DRAFT_FILE_UPLOAD_KEY, JSON.stringify(newUploads));
       toast.success(`Uploaded ${uploadedUrls.length} file(s)`);
     } else {
-      // toast.error("No files uploaded");
       input.value = "";
     }
   };
@@ -386,6 +395,11 @@ const ApplyCitation = () => {
   useEffect(() => {
     const fetchAllData = async () => {
       try {
+        if(checkUnitProfileFields(profile) === false) {
+          toast.error("Please complete your profile details before applying for a citation.");
+          navigate("/profile-settings");
+          return; // Stop fetching data if profile is incomplete
+        }
         const [configRes, paramsRes] = await Promise.all([
           dispatch(getConfig()).unwrap(),
           dispatch(fetchParameters({
@@ -544,13 +558,11 @@ const ApplyCitation = () => {
           <div className="table-filter-area mb-4">
             <div className="row">
               <div className="col-lg-3 col-sm-4 mb-sm-0 mb-2">
-                <FormSelect
+                <FormInput
                   label="Award Type"
                   name="awardType"
-                  options={awardTypeOptions}
-                  value={awardTypeOptions.find((opt) => opt.value === "citation") || null}
-                  placeholder="Select"
-                  isDisabled
+                  value="Citation"
+                  readOnly
                 />
               </div>
               <div className="col-lg-3 col-sm-4 mb-sm-0 mb-2">
@@ -562,7 +574,7 @@ const ApplyCitation = () => {
                   readOnly
                 />
               </div>
-              <div className="col-lg-3 col-sm-4">
+              {/* <div className="col-lg-3 col-sm-4">
                 <FormInput
                   label="Last Date"
                   name="lastDate"
@@ -571,7 +583,7 @@ const ApplyCitation = () => {
                   onChange={formik.handleChange}
                   readOnly
                 />
-              </div>
+              </div> */}
               <div className="col-lg-3 col-sm-4">
                 <FormInput
                   label="Command"
@@ -584,16 +596,16 @@ const ApplyCitation = () => {
             </div>
           </div>
 
-          {profile?.unit?.awards?.length > 0 && (
+          {/* {profile?.unit?.awards?.length > 0 && (
             <div className="mt-4 mb-2">
-              <h5 className="mb-3">Awards</h5>
+              <h5 className="mb-3">Awards Received</h5>
               <div className="table-responsive">
                 <table className="table-style-2 w-100">
                   <thead>
-                    <tr>
-                      <th style={{ width: 150, minWidth: 150, maxWidth: 150 }}>Type</th>
-                      <th style={{ width: 200, minWidth: 200, maxWidth: 200 }}>Year</th>
-                      <th style={{ width: 300, minWidth: 300, maxWidth: 300 }}>Title</th>
+                    <tr style={{ backgroundColor: "#007bff" }}>
+                      <th style={{ width: 150, minWidth: 150, maxWidth: 150, color: "white" }}>Type</th>
+                      <th style={{ width: 200, minWidth: 200, maxWidth: 200, color: "white" }}>Year</th>
+                      <th style={{ width: 300, minWidth: 300, maxWidth: 300, color: "white" }}>Title</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -615,14 +627,14 @@ const ApplyCitation = () => {
                 </table>
               </div>
             </div>
-          )}
+          )} */}
 
           <div className="position-sticky top-0 bg-white pb-3 mb-3" style={{ zIndex: 10, borderBottom: '1px solid #dee2e6' }}>
             <Tabs
               activeKey={activeTab}
               onSelect={handleTabSelect}
               id="category-tabs"
-              className="custom-tabs d-flex gap-2 flex-nowrap overflow-x-auto text-nowrap scrollbar-hidden"
+              className="custom-tabs d-flex gap-2 flex-nowrap overflow-x-auto text-nowrap "
             >
               {Object.keys(groupedParams).map((category) => (
                 <Tab
@@ -630,26 +642,23 @@ const ApplyCitation = () => {
                   title={
                     <span
                       className="form-label mb-1"
-                      style={{
-                        // color: activeTab === category ? "#fff" : "#2563eb",
-                        // background: activeTab === category ? "linear-gradient(90deg, #3b82f6 60%, #2563eb 100%)" : "#e0e7ff",
-                        // borderRadius: 20,
-                        // padding: "0.5rem 1.8rem",
-                        // fontWeight: 600,
-                        // fontSize: 16,
-                        // boxShadow: activeTab === category ? "0 2px 8px rgba(59,130,246,0.15)" : "none",
-                        // border: activeTab === category ? "2px solid #2563eb" : "2px solid transparent",
-                        // letterSpacing: 1,
-                        // cursor: "pointer",
-                        // transition: "all 0.2s",
-                        // outline: activeTab === category ? "2px solid #93c5fd" : "none",
-                        // filter: activeTab === category ? "brightness(1.05)" : "none",
-                        // textDecoration: "none",
-                        // display: "inline-block",
-                        // marginRight: "0.5rem",
-                        // minWidth: 120,
-                        // textAlign: "center",
-                      }}
+                      // style={{
+                      //   color: activeTab === category ? "#fff" : "#2563eb",
+                      //   background: activeTab === category ? "linear-gradient(90deg, #3b82f6 60%, #2563eb 100%)" : "#e0e7ff",
+                      //   borderRadius: 20,
+                      //   padding: "0.5rem 1.8rem",
+                      //   fontWeight: 600,
+                      //   fontSize: 16,
+                      //   letterSpacing: 1,
+                      //   cursor: "pointer",
+                      //   transition: "all 0.2s",
+                      //   filter: activeTab === category ? "brightness(1.05)" : "none",
+                      //   textDecoration: "none",
+                      //   display: "inline-block",
+                      //   marginRight: "0.5rem",
+                      //   minWidth: 120,
+                      //   textAlign: "center",
+                      // }}
                     >
                       {category.toUpperCase()}
                     </span>
@@ -688,11 +697,11 @@ const ApplyCitation = () => {
                 </h5>
                 <table className="table-style-1 w-100">
                   <thead>
-                    <tr>
-                      <th style={{ width: 250, minWidth: 250, maxWidth: 250, fontSize: "17" }}>Parameter</th>
-                      <th style={{ width: 300, minWidth: 300, maxWidth: 300, fontSize: "17" }}>Count</th>
-                      <th style={{ width: 300, minWidth: 300, maxWidth: 300, fontSize: "17" }}>Marks</th>
-                      <th style={{ width: 300, minWidth: 300, maxWidth: 300, fontSize: "17" }}>Upload</th>
+                    <tr style={{ backgroundColor: "#007bff" }}>
+                      <th style={{ width: 250, minWidth: 250, maxWidth: 250, fontSize: "17" ,color:"white"}}>Parameter</th>
+                      <th style={{ width: 300, minWidth: 300, maxWidth: 300, fontSize: "17" ,color:"white"}}>Count</th>
+                      <th style={{ width: 300, minWidth: 300, maxWidth: 300, fontSize: "17" ,color:"white"}}>Marks</th>
+                      <th style={{ width: 300, minWidth: 300, maxWidth: 300, fontSize: "17" ,color:"white"}}>Upload</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -812,11 +821,13 @@ const ApplyCitation = () => {
                                     className="form-control"
                                     placeholder="not more than 5 MB"
                                     multiple
+                                    accept=".pdf,.jpg,.jpeg,.png,application/pdf,image/jpeg,image/png"
                                     onChange={(e) => {
                                       const display = getParamDisplay(param);
                                       handleFileChange(e, param.param_id, display.main);
                                     }}
-                                  /><span style={{ fontSize: 12, color: 'red' }}>*File not more than 5 MB</span>
+                                  />
+                                  <span style={{ fontSize: 12, color: 'red' }}>*File not more than 5 MB. Only PDF, JPG, PNG allowed.</span>
                                 </>
                               ) : (
                                 <span>Not required</span>

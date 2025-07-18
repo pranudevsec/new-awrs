@@ -47,15 +47,16 @@ const Header = () => {
     return (
         <>
             <header className="main-header position-sticky top-0">
-                <div className="d-flex align-items-center justify-content-xl-end justify-content-between gap-2">
+                <div className="d-flex align-items-center justify-content-xl-end justify-content-between ">
                     <button className="d-xl-none d-inline-flex align-items-center justify-content-center bg-transparent border-0 text-white"
                         onClick={() => setMobileMenu(true)}>
                         {SVGICON.header.togglemenu}
                     </button>
-                    <div className="d-flex align-items-center gap-sm-4 gap-3 "   style={{
-                        backgroundColor: '#780000',
+                    <div className="d-flex align-items-center gap-sm-4 gap-3"   style={{
+                        // backgroundColor: '#3760adff',
                         // border: '2px solid #004080', 
-                        borderRadius: '12px',            
+                        background: '#c1121f',
+                        // borderRadius: '12px',            
                         padding: '2px 12px',           
                         color: 'white',                      
                     }}>

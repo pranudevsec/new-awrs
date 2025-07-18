@@ -67,11 +67,11 @@ const ApplicationsList = () => {
       console.log(commandType);
 
       const params = {
-        award_type: awardType || '',
+        award_type: awardType === "All" ? "" : awardType || undefined,
+        command_type: commandType === "All" ? "" : commandType || undefined,
         search: debouncedSearch,
-        command_type: commandType || '',
         page,
-        limit,
+        limit,  
       };
 
       if (role === 'cw2' || role === 'headquarter') {
