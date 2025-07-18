@@ -6,9 +6,10 @@ const indexing = require('../indexing/indexingData');
 const promptTemplate = ChatPromptTemplate.fromTemplate(`
 You are a helpful assistant. Give direct, concise, and short answers.
 
-If the provided context contains relevant information, use it to answer in maximum 2-3 sentences.
-If the context doesn't contain sufficient information, say "No specific information found. Based on general knowledge:" and give a brief 1-2 sentence answer.
-Don't references in answer.
+If the provided context contains relevant information, answer in maximum 2-3 sentences using only the context.
+If the context does not contain sufficient information, answer briefly (1-2 sentences) based on general knowledge, without mentioning the lack of specific information or context.
+
+Do not include references in your answer.
 
 Context: {context}
 

@@ -204,29 +204,7 @@ const AppreciationReviewPage = () => {
                     toast.error("Maximum 500 characters allowed in Unit Remarks");
                     return;
                 }
-                const requiredFields = profile?.user?.is_special_unit
-                    ? [
-                        { key: "comd", name: "Command" },
-                        { key: "name", name: "Unit Name" },
-                    ]
-                    : [
-                        { key: "bde", name: "Brigade" },
-                        { key: "div", name: "Division" },
-                        { key: "corps", name: "Corps" },
-                        { key: "comd", name: "Command" },
-                        { key: "name", name: "Unit Name" },
-                    ];
 
-                const missingFields = requiredFields.filter(
-                    (field) => !profile?.unit?.[field.key]
-                );
-
-                if (missingFields.length > 0) {
-                    const missingNames = missingFields.map((f) => f.name).join(", ");
-                    toast.error(`Please fill the following unit fields: ${missingNames}`);
-                    navigate("/profile-settings");
-                    return;
-                }
                 const formattedParameters = parameters
                     .map((param: any) => {
                         const display = getParamDisplay(param);
@@ -450,13 +428,11 @@ const AppreciationReviewPage = () => {
                     <div className="table-filter-area mb-4">
                         <div className="row">
                             <div className="col-lg-3 col-sm-4 mb-sm-0 mb-2">
-                                <FormSelect
-                                    label="Award Type"
-                                    name="awardType"
-                                    options={awardTypeOptions}
-                                    value={awardTypeOptions.find((opt) => opt.value === "appreciation") ?? null}
-                                    placeholder="Select"
-                                    isDisabled
+                                <FormInput
+                                label="Award Type"
+                                name="awardType"
+                                value="Appreciation"
+                                readOnly
                                 />
                             </div>
                             <div className="col-lg-3 col-sm-4 mb-sm-0 mb-2">
@@ -489,7 +465,7 @@ const AppreciationReviewPage = () => {
                             </div>
                         </div>
                     </div>
-                    {profile?.unit?.awards?.length > 0 && (
+                    {/* {profile?.unit?.awards?.length > 0 && (
                         <div className="mt-4 mb-2">
                             <h5 className="mb-3">Awards</h5>
                             <div className="table-responsive">
@@ -520,7 +496,7 @@ const AppreciationReviewPage = () => {
                                 </table>
                             </div>
                         </div>
-                    )}
+                    )} */}
 
                     <div
                         ref={scrollContainerRef}
@@ -546,13 +522,13 @@ const AppreciationReviewPage = () => {
                                 >
                                     {category.charAt(0).toUpperCase() + category.slice(1)}
                                 </h5>
-                                <table className="table-style-1 w-100">
+                                <table className="table-style-1 w-100" >
                                     <thead>
-                                        <tr>
-                                            <th style={{ width: 300, minWidth: 300, maxWidth: 300 }}>Parameter</th>
-                                            <th style={{ width: 200, minWidth: 200, maxWidth: 200 }}>Count</th>
-                                            <th style={{ width: 200, minWidth: 200, maxWidth: 200 }}>Marks</th>
-                                            <th style={{ width: 200, minWidth: 200, maxWidth: 200 }}>Upload</th>
+                                        <tr style={{ backgroundColor: "#007bff" }}>
+                                            <th style={{ width: 300, minWidth: 300, maxWidth: 300 ,color: "white" }}>Parameter</th>
+                                            <th style={{ width: 200, minWidth: 200, maxWidth: 200 ,color: "white" }}>Count</th>
+                                            <th style={{ width: 200, minWidth: 200, maxWidth: 200 ,color: "white" }}>Marks</th>
+                                            <th style={{ width: 200, minWidth: 200, maxWidth: 200 ,color: "white" }}>Upload</th>
                                         </tr>
                                     </thead>
                                     <tbody>{renderParamRows(params)}</tbody>
@@ -575,10 +551,10 @@ const AppreciationReviewPage = () => {
                     </div>
                     <div className="submit-button-wrapper">
                         <div className="row text-center text-sm-start mb-3">
-                            <div className="col-6 col-sm-3">
+                            {/* <div className="col-6 col-sm-3">
                                 <span className="fw-medium text-muted">Total Params:</span>
                                 <div className="fw-bold">{totalParams}</div>
-                            </div>
+                            </div> */}
                             <div className="col-6 col-sm-3">
                                 <span className="fw-medium text-muted">Filled Params:</span>
                                 <div className="fw-bold">{filledFields}</div>

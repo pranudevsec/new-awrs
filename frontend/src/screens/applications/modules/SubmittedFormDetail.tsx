@@ -667,53 +667,36 @@ const SubmittedFormDetail = () => {
                     </div>
                 </div>
             </div>
-            {unitDetail?.fds?.awards?.length > 0 && (
-                <div className="mt-4">
-                    <h5 className="mb-3">Awards</h5>
-                    <div className="table-responsive">
-                        <table className="table-style-2 w-100">
-                            <thead>
-                                <tr>
-                                    <th style={{ width: 150, minWidth: 150, maxWidth: 150 }}>
-                                        Type
-                                    </th>
-                                    <th style={{ width: 200, minWidth: 200, maxWidth: 200 }}>
-                                        Year
-                                    </th>
-                                    <th style={{ width: 300, minWidth: 300, maxWidth: 300 }}>
-                                        Title
-                                    </th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {unitDetail?.fds?.awards?.map((award: any) => (
-                                    <tr key={award.award_id} className="cursor-auto">
-                                        <td style={{ width: 150, minWidth: 150, maxWidth: 150 }}>
-                                            <p className="fw-4 text-capitalize">
-                                                {award.award_type}
-                                            </p>
-                                        </td>
-                                        <td style={{ width: 200, minWidth: 200, maxWidth: 200 }}>
-                                            <p className="fw-4">{award.award_year}</p>
-                                        </td>
-                                        <td style={{ width: 300, minWidth: 300, maxWidth: 300 }}>
-                                            <p className="fw-4">{award.award_title}</p>
-                                        </td>
+                {/* {unitDetail?.fds?.awards?.length > 0 && (
+                    <div className="mt-4">
+                        <h5 className="mb-3">Awards</h5>
+                        <div className="table-responsive">
+                            <table className="table-style-2 w-100">
+                                <thead>
+                                    <tr style={{ backgroundColor: "#007bff" }}>
+                                        <th style={{ width: 150, minWidth: 150, maxWidth: 150, color: "white" }}>
+                                            Type
+                                        </th>
+                                        <th style={{ width: 200, minWidth: 200, maxWidth: 200, color: "white" }}>
+                                            Year
+                                        </th>
+                                        <th style={{ width: 300, minWidth: 300, maxWidth: 300, color: "white" }}>
+                                            Title
+                                        </th>
                                     </tr>
                                 ))}
                             </tbody>
                         </table>
                     </div>
-                </div>
-            )}
-            <div className="table-responsive mt-4">
-                <table className="table-style-1 w-100">
-                    <thead>
-                        <tr>
-                            <th style={{ width: 150 }}>Parameter</th>
-                            <th style={{ width: 100 }}>Count</th>
-                            <th style={{ width: 100 }}>Marks</th>
-                            <th style={{ width: 100 }}>Document</th>
+                )} */}
+                <div className="table-responsive mt-4">
+                    <table className="table-style-1 w-100">
+                        <thead>
+                            <tr style={{ backgroundColor: "#007bff" }}>
+                                <th style={{ width: 150, color: "white" }}>Parameter</th>
+                                <th style={{ width: 100, color: "white" }}>Count</th>
+                                <th style={{ width: 100, color: "white" }}>Marks</th>
+                                <th style={{ width: 100, color: "white" }}>Document</th>
 
                             {!isUnitRole && !isHeadquarter && (
                                 <>

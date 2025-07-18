@@ -141,11 +141,20 @@ const CommandPanelDetail = () => {
         <div className="table-responsive">
           <table className="table-style-1 w-100">
             <thead>
-              <tr>
-                <th style={{ width: 150 }}>Parameter</th>
-                <th style={{ width: 100 }}>Count</th>
-                <th style={{ width: 100 }}>Marks</th>
-                <th style={{ width: 200 }}>Document</th>
+              <tr style={{ background: "#007bff" }}>
+                <th style={{ width: 150, color: "white" }}>Parameter</th>
+                <th style={{ width: 100, color: "white" }}>Count</th>
+                <th style={{ width: 100, color: "white" }}>Marks</th>
+                <th style={{ width: 200, color: "white" }}>Document</th>
+
+                {/* {!isUnitRole && (
+                  <>
+                        <th style={{ width: 200 }}>Approved Marks</th>
+                    <th style={{ width: 150 }}>Add Clarification</th>
+                    <th style={{ width: 200 }}>Requested Clarification</th>
+                    <th style={{ width: 150 }}>Action</th>
+                  </>
+                )} */}
               </tr>
             </thead>
             <tbody>

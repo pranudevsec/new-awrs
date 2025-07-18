@@ -4,31 +4,48 @@ import SidebarMenu from './components/SidebarMenu';
 import Header from './components/Header';
 import Topbar from './components/Topbar';
 import Footer from './components/Footer';
+import { Chatbot } from '../screens/Chatbot/Chatbot';
 
 const AuthLayout = ({ children }: { children: React.ReactNode }) => {
     const token = !!useAppSelector((state) => state.admin).admin?.token;
 
     if (!token) return <Navigate to="/authentication/sign-in" />;
-
     return (
-        <>
+        <div className="d-flex flex-column vh-100">
+            {/* Topbar */}
             <Topbar />
-            <main className='d-flex vh-100'>
-                {/* Sidebar menu */}
-                <SidebarMenu />
-                {/* Sidebar menu */}
-                <div className='main-layout d-flex flex-column position-relative overflow-hidden'>
+
+            <div className="d-flex flex-grow-1" style={{ flex: 1, minHeight: 0 }}>
+                {/* Sidebar */}
+                <div style={{
+                    width: 300,
+                    minWidth: 300,
+                    height: "100%",
+                    background: "#fff",
+                    display: "flex",
+                    flexDirection: "column"
+                }}>
+                    <SidebarMenu />
+                </div>
+
+                {/* Main content column */}
+                <div className="d-flex flex-column flex-grow-1" style={{ position: "relative", overflow: "hidden" }}>
                     {/* Header */}
                     <Header />
-                    {/* /Header */}
-                    <div className="scroll-style-110 overflow-auto">
+
+                    {/* Page content */}
+                    <div className="flex-grow-1 " style={{ paddingLeft: "1rem", paddingTop: "1rem",overflowX: "hidden",paddingRight: "1rem" }}>
                         {children}
                     </div>
                 </div>
-            </main>
+            </div>
+            {/* Footer */}
             <Footer />
-        </>
+
+            {/* Chatbot floating window */}
+            <Chatbot />
+        </div>
     );
-}
+};
 
 export default AuthLayout;

@@ -51,7 +51,7 @@ const ProfileSettings = () => {
   const role = profile?.user?.user_role?.toLowerCase() ?? "";
 
   const currentYear = new Date().getFullYear();
-  const yearOptions = Array.from({ length: 50 }, (_, i) => `${currentYear - i}`);
+  const yearOptions = Array.from({ length: 79 }, (_, i) => `${currentYear - i}`);
 
   // States
   const [firstLoad, setFirstLoad] = useState(true);
@@ -393,12 +393,12 @@ const ProfileSettings = () => {
               };
 
               if (field === "unit") {
-                const roleLabel = roleMap[userRole] ?? "Unit";
-                return `My ${roleLabel}`;
+                const roleLabel = roleMap[userRole] || "Unit";
+                return `${roleLabel} Name`;
               }
 
               if (field === "unit_type") {
-                return "Arms / Services";
+                return "Arm / Service";
               }
 
               if (field === "matrix_unit") {
@@ -491,100 +491,114 @@ const ProfileSettings = () => {
             );
           })}
           {role === "unit" && (
-            <div className="col-12 mb-3">
-              <div className="form-label fw-6">Awards Received</div>
-              <table className="table table-bordered">
-                <thead>
-                  {awards.length !== 0 && (
-                    <tr>
-                    </tr>
-                  )}
-                </thead>
-                <tbody>
-                  {awards.map((award, idx) => (
-                    <tr key={award.award_id ?? idx}>
-                      <td>
-                        <select
-                          className="form-select"
-                          value={award.award_type}
-                          onChange={(e) => {
-                            const updated = [...awards];
-                            updated[idx].award_type = e.target.value as
-                              | "GOC-in-C"
-                              | "COAS"
-                              | "CDS";
-                            setAwards(updated);
-                          }}
-                        >
-                          <option value="GOC-in-C">GOC-in-C</option>
-                          <option value="COAS">COAS</option>
-                          <option value="CDS">CDS</option>
-                        </select>
-                      </td>
-                      <td>
-                        <input
-                          type="text"
-                          className="form-control"
-                          value={award.award_title}
-                          onChange={(e) => {
-                            const updated = [...awards];
-                            updated[idx].award_title = e.target.value;
-                            setAwards(updated);
-                          }}
-                          placeholder="Enter award title"
-                        />
-                      </td>
-                      <td>
-                        <select
-                          className="form-select"
-                          value={award.award_year}
-                          onChange={(e) => {
-                            const updated = [...awards];
-                            updated[idx].award_year = e.target.value;
-                            setAwards(updated);
-                          }}
-                        >
-                          <option value="">Select Year</option>
-                          {yearOptions.map((year) => (
-                            <option key={year} value={year}>
-                              {year}
-                            </option>
-                          ))}
-                        </select>
-                      </td>
-                      <td>
-                        <button
-                          type="button"
-                          className="_btn danger btn-sm"
-                          onClick={() => handleRemoveAward(idx)}
-                        >
-                          Remove
-                        </button>
-                      </td>
-                    </tr>
-                  ))}
-                  {awards.length === 0 && (
-                    <tr>
-                      <td colSpan={4} className="text-center text-muted">
-                        No awards added
-                      </td>
-                    </tr>
-                  )}
-                </tbody>
-              </table>
-              <button
-                type="button"
-                className="_btn success btn-sm"
-                onClick={() => {
-                  setAwards((prev) => [
-                    ...prev,
-                    { award_type: "GOC-in-C", award_title: "", award_year: "" },
-                  ]);
-                }}
-              >
-                Add Award
-              </button>
-            </div>
+            <>
+              <div className="col-12 mb-3">
+                <label className="form-label fw-6">Awards Received</label>
+                <table className="table table-bordered">
+                  <thead>
+                    {awards.length !== 0 && (
+                      <tr>
+                        {/* <th>Type</th>
+                      <th>Brigade</th>
+                      <th>Year</th>
+                      <th>Action</th> */}
+                      </tr>
+                    )}
+                  </thead>
+                  <tbody>
+                    {awards.map((award, idx) => (
+                      <tr key={award.award_id ?? idx}>
+                        <td>
+                          <select
+                            className="form-select"
+                            value={award.award_type}
+                            onChange={(e) => {
+                              const updated = [...awards];
+                              updated[idx].award_type = e.target.value as
+                                | "GOC-in-C"
+                                | "COAS"
+                                | "CDS";
+                              setAwards(updated);
+                            }}
+                          >
+                            <option value="CDS">CDS</option>
+                            <option value="COAS">COAS</option>
+                            <option value="GOC-in-C">GOC-in-C</option>
+                          </select>
+                        </td>
+                        <td>
+                          <select
+                            className="form-select"
+                            value={award.award_title}
+                            onChange={(e) => {
+                              const updated = [...awards];
+                              updated[idx].award_title = e.target.value as
+                                | "citation"
+                                | "appreciation";
+                              setAwards(updated);
+                            }}
+                          >
+                            <option value="">Select Award Title</option>
+                            <option value="citation">Citation</option>
+                            <option value="appreciation">Appreciation</option>
+                          </select>
+                        </td>
+                        <td>
+                          <select
+                            className="form-select"
+                            value={award.award_year}
+                            onChange={(e) => {
+                              const updated = [...awards];
+                              updated[idx].award_year = e.target.value;
+                              setAwards(updated);
+                            }}
+                          >
+                            <option value="">Select Year</option>
+                            {yearOptions.map((year) => (
+                              <option key={year} value={year}>
+                                {year}
+                              </option>
+                            ))}
+                          </select>
+                        </td>
+                        <td>
+                          <button
+                            type="button"
+                            className="_btn danger btn-sm"
+                            onClick={() => {
+                              setAwards((prev) =>
+                                prev.filter((_, i) => i !== idx)
+                              );
+                            }}
+                          >
+                            Remove
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                    {awards.length === 0 && (
+                      <tr>
+                        <td colSpan={4} className="text-center text-muted">
+                          No awards added
+                        </td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+                <button
+                  type="button"
+                  className="_btn success btn-sm"
+                  onClick={() => {
+                    setAwards((prev) => [
+                      ...prev,
+                      { award_type: "GOC-in-C", award_title: "", award_year: "" },
+                    ]);
+                  }}
+                >
+                  Add Award
+                </button>
+              </div>
+            </>
           )}
           {!isDisabled && role !== "cw2" && (
             <div className="col-12 mt-2">
@@ -674,6 +688,7 @@ const ProfileSettings = () => {
                       onChange={(e) =>
                         handlePresidingChange("icNumber", e.target.value)
                       }
+                      type="password"
                     />
                   </div>
                   <div className="col-sm-6 mb-3">
@@ -771,6 +786,7 @@ const ProfileSettings = () => {
                           onChange={(e) =>
                             handleChange(index, "icNumber", e.target.value)
                           }
+                          type="password"
                         />
                       </div>
                       <div className="col-sm-6 mb-3">

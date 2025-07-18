@@ -156,7 +156,8 @@ exports.updateCitation = async (id, data,user) => {
       "ol_approved_at",
       "is_hr_review",
       "is_dv_review",
-      "is_mp_review"
+      "is_mp_review",
+      "citation_fds",
     ];
     const keys = Object.keys(data).filter((key) => allowedFields.includes(key));
 
@@ -176,9 +177,10 @@ exports.updateCitation = async (id, data,user) => {
 
     if (keys.includes("citation_fds")) {
       const { award_type, parameters } = data.citation_fds;
+      console.log(parameters)
 
       const paramResult = await client.query(
-        `SELECT name,subsubcategory, subcategory, category, per_unit_mark, max_marks
+        `SELECT param_id,name,subsubcategory, subcategory, category, per_unit_mark, max_marks
          FROM Parameter_Master
          WHERE award_type = $1`,
         [award_type]
