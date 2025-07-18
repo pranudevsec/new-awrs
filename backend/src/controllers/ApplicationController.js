@@ -60,12 +60,15 @@ exports.getApplicationsScoreboard = async (req, res) => {
   
   exports.updateApplicationStatus = async (req, res) => {
     try {
-      const { type, status,member ,withdrawRequested,withdraw_status,level} = req.body;
+      console.log("Updating application status");
+      const { type, status,member,withdrawRequested,withdraw_status,level} = req.body;
       const id=req.params.id;
+      console.log(member);
 
 
       if (status) {
         if (!['approved', 'rejected', "shortlisted_approved"].includes(status)) {
+          console.log("Invalid status value:", status);
           return res.status(StatusCodes.BAD_REQUEST).send(
             ResponseHelper.error(StatusCodes.BAD_REQUEST, "Invalid status value")
           );
@@ -75,6 +78,7 @@ exports.getApplicationsScoreboard = async (req, res) => {
       const result = await ApplicationService.updateApplicationStatus(id, type,status, req.user,member,withdrawRequested,withdraw_status);
 
       if(member){
+        console.log("here");
         await SignatureLogService.addSignatureLogs(id,status,member,level);
       }
   

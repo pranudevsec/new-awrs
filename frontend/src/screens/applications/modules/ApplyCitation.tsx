@@ -43,7 +43,7 @@ const ApplyCitation = () => {
     localStorage.removeItem("applyCitationuploadedDocsDraft");
   }, []);
   const { profile } = useAppSelector((state) => state.admin);
-  console.log(profile);
+
   const { loading } = useAppSelector((state) => state.parameter);
 
   const initializedRef = useRef(false);
@@ -72,7 +72,6 @@ const ApplyCitation = () => {
 
   // console.log("groupedParams -> ", groupedParams);
   // console.log("parameters -> ", parameters);
-
 
   useEffect(() => {
     if (id) {
@@ -113,29 +112,30 @@ const ApplyCitation = () => {
   // Populate from API data
   useEffect(() => {
     if (draftData?.citation_fds?.parameters && parameters?.length > 0) {
-      const newCounts: Record<string, string> = {};
-      const newMarks: Record<string, number> = {};
+      const newCounts: Record<number, string> = {};
+      const newMarks: Record<number, number> = {};
       const newUploads: Record<number, string[]> = {};
 
-      const nameToIdMap = parameters.reduce((acc: Record<string, string>, param: any) => {
-        acc[param.name.trim()] = String(param.param_id);
+      // Map by param.id (from API) to param.param_id (from parameters)
+      const idToParamIdMap = parameters.reduce((acc: Record<string, number>, param: any) => {
+        acc[String(param.id ?? param.param_id)] = param.param_id;
         return acc;
       }, {});
 
       draftData.citation_fds.parameters.forEach((param: any) => {
-        const paramId = nameToIdMap[param.name.trim()];
-        if (paramId) {
-          newCounts[paramId] = String(param.count);
-          newMarks[paramId] = param.marks;
+        const paramId = idToParamIdMap[String(param.id)];
+        if (paramId !== undefined) {
+          newCounts[paramId] = String(param.count ?? "");
+          newMarks[paramId] = param.marks ?? 0;
 
           if (param.upload) {
             if (Array.isArray(param.upload)) {
-              newUploads[Number(paramId)] = param.upload;
+              newUploads[paramId] = param.upload;
             } else if (typeof param.upload === "string") {
               if (param.upload.includes(",")) {
-                newUploads[Number(paramId)] = param.upload.split(",").map((u: any) => u.trim());
+                newUploads[paramId] = param.upload.split(",").map((u: any) => u.trim());
               } else {
-                newUploads[Number(paramId)] = [param.upload.trim()];
+                newUploads[paramId] = [param.upload.trim()];
               }
             }
           }
@@ -145,11 +145,20 @@ const ApplyCitation = () => {
       setCounts(newCounts);
       setMarks(newMarks);
       setUploadedFiles(newUploads);
+
+      // Set unit remarks if present
+      if (typeof draftData.citation_fds.unitRemarks === "string") {
+        setUnitRemarks(draftData.citation_fds.unitRemarks);
+      }
     }
   }, [draftData, parameters]);
 
   useEffect(() => {
-    if (id && draftData?.citation_fds?.parameters) {
+    if (
+      id &&
+      draftData?.citation_fds?.parameters &&
+      Object.keys(uploadedFiles).length === 0 // Only set if not already set
+    ) {
       const uploads: Record<number, string[]> = {};
       draftData.citation_fds.parameters.forEach((param: any, index: number) => {
         if (param.upload) {
@@ -269,9 +278,16 @@ const ApplyCitation = () => {
     const files = input.files;
     if (!files || files.length === 0) return;
 
+    const allowedTypes = ["application/pdf", "image/jpeg", "image/png"];
+    const allowedExtensions = [".pdf", ".jpg", ".jpeg", ".png"];
     const uploadedUrls: string[] = [];
 
     for (const file of files) {
+      const ext = file.name.substring(file.name.lastIndexOf('.')).toLowerCase();
+      if (!allowedTypes.includes(file.type) && !allowedExtensions.includes(ext)) {
+        toast.error(`Incorrect file type: ${file.name}. Only PDF, JPG, PNG allowed.`);
+        continue;
+      }
       if (file.size > 5 * 1024 * 1024) {
         toast.error(`File ${file.name} exceeds 5MB`);
         continue;
@@ -291,7 +307,6 @@ const ApplyCitation = () => {
       localStorage.setItem(DRAFT_FILE_UPLOAD_KEY, JSON.stringify(newUploads));
       toast.success(`Uploaded ${uploadedUrls.length} file(s)`);
     } else {
-      // toast.error("No files uploaded");
       input.value = "";
     }
   };
@@ -329,18 +344,17 @@ const ApplyCitation = () => {
             const display = getParamDisplay(param);
             const count = Number(counts[param.param_id] ?? 0);
             const calculatedMarks = marks[param.param_id] ?? 0;
-            const uploadPaths = uploadedFiles[param.param_id] || [];
-
+            const uploadPaths = uploadedFiles[param.param_id] ?? [];
             return {
+              id: param.param_id,
               name: display.main,
-              subcategory: display.header,
-              subsubcategory: display.subheader,
               count,
               marks: calculatedMarks,
               upload: uploadPaths,
+              negative: param.negative,
             };
           })
-          .filter((param) => param.count > 0 || param.marks > 0);
+          .filter((param) => param.count > 0 || param.marks != 0);
 
         const payload = {
           date_init: new Date().toISOString().split("T")[0],
@@ -350,14 +364,18 @@ const ApplyCitation = () => {
             last_date: values.lastDate,
             command: values.command,
             parameters: formattedParameters,
+            unitRemarks: unitRemarks,
+            awards: profile?.unit?.awards,
           },
           isDraft: isDraftRef.current,
         };
+        console.log(payload);
 
         let resultAction;
         if (id) {
           // Update if `id` exists
           resultAction = await dispatch(updateCitation({ id: Number(id), ...payload }));
+          console.log("resultAction -> ", resultAction);
         } else {
           // Otherwise, create new
           resultAction = await dispatch(createCitation(payload));
@@ -392,7 +410,7 @@ const ApplyCitation = () => {
         if(checkUnitProfileFields(profile) === false) {
           toast.error("Please complete your profile details before applying for a citation.");
           navigate("/profile-settings");
-          return; // Stop fetching data if profile is incomplete
+          return; 
         }
         const [configRes, paramsRes] = await Promise.all([
           dispatch(getConfig()).unwrap(),
@@ -815,11 +833,13 @@ const ApplyCitation = () => {
                                     className="form-control"
                                     placeholder="not more than 5 MB"
                                     multiple
+                                    accept=".pdf,.jpg,.jpeg,.png,application/pdf,image/jpeg,image/png"
                                     onChange={(e) => {
                                       const display = getParamDisplay(param);
                                       handleFileChange(e, param.param_id, display.main);
                                     }}
-                                  /><span style={{ fontSize: 12, color: 'red' }}>*File not more than 5 MB</span>
+                                  />
+                                  <span style={{ fontSize: 12, color: 'red' }}>*File not more than 5 MB. Only PDF, JPG, PNG allowed.</span>
                                 </>
                               ) : (
                                 <span>Not required</span>

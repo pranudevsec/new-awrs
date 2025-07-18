@@ -440,6 +440,7 @@ const ApplicationDetails = () => {
         },
         level: profile?.user?.user_role,
       };
+      console.log(updatePayload);
       if (memberdecision === "accepted") {
         dispatch(updateApplication(updatePayload)).then(() => {
           dispatch(fetchApplicationUnitDetail({ award_type, numericAppId }));

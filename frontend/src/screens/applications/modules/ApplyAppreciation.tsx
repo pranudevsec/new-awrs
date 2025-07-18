@@ -388,20 +388,21 @@ const ApplyAppreciation = () => {
     },
     onSubmit: async (values) => {
       try {
-        const formattedParameters = parameters.map((param: any) => {
-          const display = getParamDisplay(param);
-          const count = Number(counts[param.param_id] ?? 0);
-          const calculatedMarks = marks[param.param_id] ?? 0;
-          const uploadPaths = uploadedFiles[param.param_id] ?? [];
-
-          return {
-            name: display.main,
-            count,
-            marks: calculatedMarks,
-            upload: uploadPaths,
-          };
-        })
-          .filter((param) => param.count > 0 || param.marks > 0);
+        const formattedParameters = parameters
+          .map((param: any) => {
+            const display = getParamDisplay(param);
+            const count = Number(counts[param.param_id] ?? 0);
+            const calculatedMarks = marks[param.param_id] ?? 0;
+            const uploadPaths = uploadedFiles[param.param_id] ?? [];
+            return {
+              id: param.param_id,
+              name: display.main,
+              count,
+              marks: calculatedMarks,
+              upload: uploadPaths,
+            };
+          })
+          .filter((param) => param.count > 0 && param.upload.length > 0 && param.marks > 0);
 
         const payload = {
           date_init: new Date().toISOString().split("T")[0],
@@ -411,8 +412,8 @@ const ApplyAppreciation = () => {
             last_date: values.lastDate,
             command: values.command,
             parameters: formattedParameters,
+            unitRemarks: unitRemarks
           },
-          isDraft: isDraftRef.current,
         };
 
         let resultAction;

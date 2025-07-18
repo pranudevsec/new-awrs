@@ -49,7 +49,7 @@ const Applications = () => {
                         <img src="/media/icons/thumb.png" alt="Thumb" width={80} />
                       </div>
                       <h5 className="fw-6 mt-2 mb-0">Appreciation</h5>
-                      <span className="text-muted small mt-1">Apply for appreciaption awards</span>
+                      <span className="text-muted small mt-1">Apply for appreciation awards</span>
                     </div>
                   </Link>
                 </div>
@@ -57,10 +57,11 @@ const Applications = () => {
               {/* Space between columns */}
               <div style={{ width: 100 }}></div>
               {/* Requirements column */}
-              <div className="d-flex align-items-center justify-content-center" style={{ width: 350, minWidth: 300, height: 450, transition: "box-shadow 0.3s ease, transform 0.3s ease",  backgroundColor: "",
-  border: "1px solid var(--gray-200) !important",
-  borderRadius: "8px" }}>
-                <div className="border-0 p-4 bg-light shadow-sm w-100 h-100 d-flex flex-column justify-content-center align-items-center">
+              <div className="d-flex align-items-center justify-content-center" style={{ width: 350, minWidth: 300, height: 450, transition: "box-shadow 0.3s ease, transform 0.3s ease",
+                border: "1px solid var(--gray-200) !important",
+                borderRadius: "8px",
+              }}>
+                <div className="border-0 p-4 bg-light shadow-sm w-100 h-100 d-flex flex-column justify-content-center align-items-center" >
                   <h6 className="fw-bold mb-3 text-primary text-center">Requirements for Citation & Appreciation</h6>
                   <ul className="mb-0" style={{ fontSize: "15px", color: "#333", textAlign: "left", width: "100%" }}>
                     <li>• Fill all mandatory fields.</li>

@@ -51,7 +51,7 @@ const ProfileSettings = () => {
   const role = profile?.user?.user_role?.toLowerCase() ?? "";
 
   const currentYear = new Date().getFullYear();
-  const yearOptions = Array.from({ length: 50 }, (_, i) => `${currentYear - i}`);
+  const yearOptions = Array.from({ length: 79 }, (_, i) => `${currentYear - i}`);
 
   // States
   const [firstLoad, setFirstLoad] = useState(true);

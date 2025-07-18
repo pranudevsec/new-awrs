@@ -958,6 +958,74 @@ function sortApplications(allApps, role, isShortlisted) {
 
 // END HELPER OF getApplicationsScoreboard
 
+// exports.updateApplicationStatus = async (
+//   id,
+//   type,
+//   status,
+//   user,
+//   member = null,
+//   withdrawRequested = false,
+//   withdraw_status = null
+// ) => {
+//   const client = await dbService.getClient();
+
+//   try {
+//     const config = getTypeConfig(type);
+
+//     if (withdrawRequested) {
+//       return await handleWithdrawRequest(client, config, id, user);
+//     }
+
+//     if (["approved", "rejected"].includes(withdraw_status)) {
+//       return await handleWithdrawApproval(client, config, id, withdraw_status, user);
+//     }
+
+//     let { isStatusValid, statusLower } = validateStatus(status);
+
+//     let updatedFds = null;
+//     let isMemberStatusUpdate = false;
+
+//     if (statusLower === "approved" || member) {
+//       console.log(member)
+//       const fds = await fetchFds(client, config, id);
+//       let updatedFdsResult = fds;
+
+//       if (statusLower === "approved") {
+//         updatedFdsResult = clarifyParameters(fds, user);
+//       }
+
+//       if (member && !member?.iscdr) {
+//         const profile = await AuthService.getProfile(user);
+//         const unit = profile?.data?.unit;
+//         updatedFdsResult = await mergeMemberSignature(updatedFdsResult, member);
+
+//         if (await handleCw2ApprovalCheck(updatedFdsResult, unit, user, config, id, client)) {
+//           statusLower = "shortlisted_approved";
+//           isMemberStatusUpdate = true;
+//         }
+//       }
+
+//       updatedFds = updatedFdsResult;
+//       await updateFds(client, config, id, updatedFds);
+//     }
+
+//     return await updateStatusFlag(
+//       client,
+//       config,
+//       id,
+//       statusLower,
+//       user,
+//       isStatusValid,
+//       isMemberStatusUpdate
+//     );
+//   } catch (err) {
+//     console.error("Error updating status:", err);
+//     throw new Error(err.message);
+//   } finally {
+//     client.release();
+//   }
+// };
+
 exports.updateApplicationStatus = async (
   id,
   type,
@@ -970,53 +1038,356 @@ exports.updateApplicationStatus = async (
   const client = await dbService.getClient();
 
   try {
-    const config = getTypeConfig(type);
+    const iscdr = member?.iscdr ?? false;
 
+
+    const validTypes = {
+      citation: {
+        table: "Citation_tab",
+        column: "citation_id",
+        fdsColumn: "citation_fds",
+      },
+      appreciation: {
+        table: "Appre_tab",
+        column: "appreciation_id",
+        fdsColumn: "appre_fds",
+      },
+    };
+
+    const config = validTypes[type];
+    if (!config) throw new Error("Invalid application type");
+    // If withdraw requested, handle it
     if (withdrawRequested) {
-      return await handleWithdrawRequest(client, config, id, user);
+      const now = new Date();
+      const withdrawQuery = `
+      UPDATE ${config.table}
+      SET
+          is_withdraw_requested = TRUE,
+          withdraw_requested_by = $1,
+          withdraw_requested_at = $2,
+          withdraw_status = 'pending',
+          withdraw_requested_by_user_id = $3
+      WHERE ${config.column} = $4
+      RETURNING *;
+  `;
+      const withdrawValues = [user.user_role, now, user.user_id, id];
+      const withdrawResult = await client.query(withdrawQuery, withdrawValues);
+      if (withdrawResult.rowCount === 0)
+        throw new Error("Application not found or withdraw update failed");
+
+      return withdrawResult.rows[0];
     }
+    if (withdraw_status === "approved" || withdraw_status === "rejected") {
+      const checkWithdrawQuery = `
+        SELECT is_withdraw_requested FROM ${config.table}
+        WHERE ${config.column} = $1
+      `;
+      const checkResult = await client.query(checkWithdrawQuery, [id]);
 
-    if (["approved", "rejected"].includes(withdraw_status)) {
-      return await handleWithdrawApproval(client, config, id, withdraw_status, user);
-    }
-
-    let { isStatusValid, statusLower } = validateStatus(status);
-
-    let updatedFds = null;
-    let isMemberStatusUpdate = false;
-
-    if (statusLower === "approved" || member) {
-      const fds = await fetchFds(client, config, id);
-      let updatedFdsResult = fds;
-
-      if (statusLower === "approved") {
-        updatedFdsResult = clarifyParameters(fds, user);
+      if (checkResult.rowCount === 0) {
+        throw new Error("Application not found for withdraw status update");
       }
 
-      if (member && !member?.iscdr) {
-        const profile = await AuthService.getProfile(user);
-        const unit = profile?.data?.unit;
-        updatedFdsResult = await mergeMemberSignature(updatedFdsResult, member);
+      const { is_withdraw_requested } = checkResult.rows[0];
 
-        if (await handleCw2ApprovalCheck(updatedFdsResult, unit, user, config, id, client)) {
-          statusLower = "shortlisted_approved";
-          isMemberStatusUpdate = true;
+      if (is_withdraw_requested) {
+        const now = new Date();
+
+        let updateWithdrawStatusQuery;
+        let updateValues;
+
+        if (withdraw_status === "approved") {
+          updateWithdrawStatusQuery = `
+            UPDATE ${config.table}
+            SET
+              withdraw_status = $1,
+              withdraw_approved_by_role = $2,
+              withdraw_approved_by_user_id = $3,
+              withdraw_approved_at = $4,
+              status_flag = 'withdrawed'
+            WHERE ${config.column} = $5
+            RETURNING *;
+          `;
+          updateValues = [
+            withdraw_status,
+            user.user_role,
+            user.user_id,
+            now,
+            id,
+          ];
+        } else {
+          updateWithdrawStatusQuery = `
+            UPDATE ${config.table}
+            SET
+              withdraw_status = $1,
+              withdraw_approved_by_role = $2,
+              withdraw_approved_by_user_id = $3,
+              withdraw_approved_at = $4
+            WHERE ${config.column} = $5
+            RETURNING *;
+          `;
+          updateValues = [
+            withdraw_status,
+            user.user_role,
+            user.user_id,
+            now,
+            id,
+          ];
+        }
+
+        const updateResult = await client.query(
+          updateWithdrawStatusQuery,
+          updateValues
+        );
+
+        if (updateResult.rowCount === 0) {
+          throw new Error("Failed to update withdraw status");
+        }
+
+        return updateResult.rows[0];
+      } else {
+        throw new Error("No withdraw request found on this application.");
+      }
+    }
+
+    const allowedStatuses = [
+      "in_review",
+      "in_clarification",
+      "approved",
+      "rejected",
+      "shortlisted_approved",
+    ];
+    let statusLower = status ? status.toLowerCase() : null;
+
+    const isStatusValid = statusLower && allowedStatuses.includes(statusLower);
+    let isMemberStatusUpdate = false;
+    let updatedFds = null;
+    // If status is "approved" or member is provided, fetch FDS
+    if (statusLower === "approved" || member) {
+      const fetchRes = await client.query(
+        `SELECT ${config.fdsColumn} FROM ${config.table} WHERE ${config.column} = $1`,
+        [id]
+      );
+      if (fetchRes.rowCount === 0) throw new Error("Application not found");
+
+      const fds = fetchRes.rows[0][config.fdsColumn];
+      // Handle FDS parameter clarifications if approved
+      if (
+        statusLower === "approved" &&
+        fds?.parameters &&
+        Array.isArray(fds.parameters)
+      ) {
+        const updatedParameters = fds.parameters.map((param) => {
+          if (param.clarification_id) {
+            const { clarification_id, ...rest } = param;
+            return {
+              ...rest,
+              last_clarification_handled_by: user.user_role,
+              last_clarification_status: "clarified",
+              last_clarification_id: clarification_id,
+            };
+          }
+          return param;
+        });
+        fds.parameters = updatedParameters;
+      }
+
+      const profile = await AuthService.getProfile(user);
+      const unit = profile?.data?.unit;
+
+      if (member && !iscdr) {
+
+        if (!fds.accepted_members || !Array.isArray(fds.accepted_members)) {
+          fds.accepted_members = [];
+        }
+
+        const existingIndex = fds.accepted_members.findIndex(
+          (m) => m.member_id === member.member_id
+        );
+
+        if (existingIndex !== -1) {
+          fds.accepted_members[existingIndex] = {
+            ...fds.accepted_members[existingIndex],
+            ...member,
+            is_signature_added:
+              member.is_signature_added ??
+              fds.accepted_members[existingIndex].is_signature_added ??
+              false,
+          };
+        } else {
+          fds.accepted_members.push({
+            ...member,
+            is_signature_added: member.is_signature_added ?? false,
+          });
+        }
+
+        if (unit?.members?.length && fds.accepted_members?.length) {
+          const acceptedMap = new Map(
+            fds.accepted_members.map((m) => [m.member_id, m])
+          );
+
+          const allSigned = unit.members.every((unitMember) => {
+            const accepted = acceptedMap.get(unitMember.id);
+            return accepted?.is_signature_added === true;
+          });
+
+          if (allSigned) {
+         
+            if (user.user_role === "cw2") {
+                 const now = new Date().toISOString();
+              let approvedAt= new Date().toISOString();
+              if (user.cw2_type === "mo") {
+                  const  query = `
+                UPDATE ${config.table}
+                SET
+                  is_mo_approved = $2,
+                  mo_approved_at = $3,
+                  last_approved_at = $4
+                WHERE ${config.column} = $1
+                RETURNING *;
+              `;
+           
+              const values = [
+                id,                // $1 (WHERE condition)
+                true,    // $2
+                approvedAt,    // $3
+                now                // $4
+              ];
+              await client.query(query, values);
+
+              } else if (user.cw2_type === "ol") {
+                  const  query = `
+                UPDATE ${config.table}
+                SET
+                  is_ol_approved = $2,
+                  ol_approved_at = $3,
+                  last_approved_at = $4
+                WHERE ${config.column} = $1
+                RETURNING *;
+              `;
+           
+              const values = [
+                id,                // $1 (WHERE condition)
+                true,    // $2
+                approvedAt,    // $3
+                now                // $4
+              ];
+              await client.query(query, values);
+ 
+              }
+         
+              const  updateRoleQuery = `
+                UPDATE ${config.table}
+                SET
+                  last_approved_by_role = $2
+                WHERE is_mo_approved= $3 AND is_ol_approved= $4 AND ${config.column} = $1
+                RETURNING *;`;
+           
+              const updateRoleValues = [
+                id,                // $1 (WHERE condition)
+                user.user_role,    // $2
+                true, // $3
+                true // $4
+              ];
+
+              await client.query(updateRoleQuery, updateRoleValues);
+            }else {
+                if (status !== "rejected") {
+                    statusLower = "shortlisted_approved";
+                }
+                isMemberStatusUpdate = true;
+            }
+        } else {
+            console.log("ℹ️ Not all members signed yet. status_flag unchanged.");
+        }
+       
         }
       }
 
-      updatedFds = updatedFdsResult;
-      await updateFds(client, config, id, updatedFds);
-    }
+      updatedFds = fds;
 
-    return await updateStatusFlag(
-      client,
-      config,
-      id,
-      statusLower,
-      user,
-      isStatusValid,
-      isMemberStatusUpdate
-    );
+      await client.query(
+        `UPDATE ${config.table}
+         SET ${config.fdsColumn} = $1
+         WHERE ${config.column} = $2`,
+        [updatedFds, id]
+      );
+    }
+    // If status is valid, proceed with updating status_flag
+    if (isStatusValid || isMemberStatusUpdate) {
+      let query, values;
+      const now = new Date();
+
+      if (statusLower === "approved") {
+        query = `
+          UPDATE ${config.table}
+          SET
+            status_flag = $1,
+            last_approved_by_role = $3,
+            last_approved_at = $4
+          WHERE ${config.column} = $2
+          RETURNING *;
+        `;
+        values = [statusLower, id, user.user_role, now];
+      } else if (statusLower === "shortlisted_approved") {
+        query = `
+          UPDATE ${config.table}
+          SET
+            status_flag = $1,
+            last_shortlisted_approved_role = $3
+          WHERE ${config.column} = $2
+          RETURNING *;
+        `;
+        values = [statusLower, id, user.user_role];
+      } else if (statusLower === "rejected") {
+        query = `
+          UPDATE ${config.table}
+          SET
+            status_flag = $1,
+            last_rejected_by_role = $3,
+            last_rejected_at = $4
+          WHERE ${config.column} = $2
+          RETURNING *;
+        `;
+        values = [statusLower, id, user.user_role, now];
+      } else {
+        if (statusLower) {
+          // Update if statusLower is provided
+          query = `
+              UPDATE ${config.table}
+              SET status_flag = $1
+              WHERE ${config.column} = $2
+              RETURNING *;
+          `;
+          values = [statusLower, id];
+        } else {
+          // Just get if statusLower is not provided
+          query = `
+              SELECT *
+              FROM ${config.table}
+              WHERE ${config.column} = $1;
+          `;
+          values = [id];
+        }
+      }
+
+      const result = await client.query(query, values);
+      if (result.rowCount === 0)
+        throw new Error("Application not found or update failed");
+
+      return result.rows[0];
+    } else if (member) {
+      // If only member is updated without status change, fetch the current row for consistency
+      const result = await client.query(
+        `SELECT * FROM ${config.table} WHERE ${config.column} = $1`,
+        [id]
+      );
+      if (result.rowCount === 0) throw new Error("Application not found");
+
+      return result.rows[0];
+    } else {
+      throw new Error("Invalid status value and no member provided");
+    }
   } catch (err) {
     console.error("Error updating status:", err);
     throw new Error(err.message);
@@ -1024,6 +1395,7 @@ exports.updateApplicationStatus = async (
     client.release();
   }
 };
+
 
 // START HELPER OF updateApplicationStatus
 function getTypeConfig(type) {
@@ -1194,6 +1566,7 @@ async function handleCw2ApprovalCheck(fds, unit, user, config, id, client) {
 }
 
 async function updateStatusFlag(client, config, id, statusLower, user, isStatusValid, isMemberStatusUpdate) {
+  console.log(isStatusValid, isMemberStatusUpdate, statusLower);
   if (!isStatusValid && !isMemberStatusUpdate) throw new Error("Invalid status value and no member provided");
 
   let query, values;
