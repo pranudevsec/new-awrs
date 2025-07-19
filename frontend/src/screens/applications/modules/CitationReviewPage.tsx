@@ -215,7 +215,7 @@ const CitationReviewPage = () => {
               id: param.param_id,
               name: display.main,
               count,
-              marks: Number(calculatedMarks.toFixed(3)),
+              marks: Number((calculatedMarks).toFixed(3)),
               upload: uploadPaths,
               negative: param.negative,
             };
@@ -364,7 +364,7 @@ const CitationReviewPage = () => {
       let displayMark: string | number = "--";
 
       if (markValue !== undefined) {
-        displayMark = param.negative ? `-${markValue}` : markValue;
+        displayMark = param.negative ? `-${Number(markValue).toFixed(3)}` : Number(markValue).toFixed(3);
       }
 
       rows.push(

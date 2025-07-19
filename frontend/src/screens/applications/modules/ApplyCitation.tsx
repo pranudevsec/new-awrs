@@ -772,13 +772,13 @@ const ApplyCitation = () => {
                                   type="number"
                                   className="form-control"
                                   placeholder="Marks"
-                                  value={Number(marks[param.param_id] ?? 0).toFixed(2) }
+                                  value={Number(marks[param.param_id] ?? 0).toFixed(3) }
                                   readOnly
                                 />
                                 <div className="tooltip-icon">
                                   <i className="info-circle">i</i>
                                   <span className="tooltip-text">
-                                    {`1 unit = ${param.per_unit_mark} marks, max ${param.max_marks} marks`}
+                                    {`1 count = ${(param.per_unit_mark)} marks, description: ${param.description}`}
                                   </span>
                                 </div>
                               </div>

@@ -8,11 +8,11 @@ import Loader from "../../components/ui/loader/Loader";
 import { getHomeCountStats } from "../../reduxToolkit/services/command-panel/commandPanelService";
 import { fetchApplicationHistory, fetchSubordinates } from "../../reduxToolkit/services/application/applicationService";
 
-const LEVEL_TITLES: Record<string, string> = {
-  brigade: "Brigade Dashboard",
-  division: "Division Dashboard",
-  corps: "Corps Dashboard",
-};
+// const LEVEL_TITLES: Record<string, string> = {
+//   brigade: "Brigade Dashboard",
+//   division: "Division Dashboard",
+//   corps: "Corps Dashboard",
+// };
 
 const UnitDashboard = ({ level }: { level: "brigade" | "division" | "corps" }) => {
   const dispatch = useAppDispatch();
@@ -22,6 +22,7 @@ const UnitDashboard = ({ level }: { level: "brigade" | "division" | "corps" }) =
   // Get data from redux
   const homeCounts = useAppSelector(state => state.commandPanel.homeCounts);
   const loading = useAppSelector(state => state.application.loading);
+  const profile = useAppSelector(state => state.admin.profile);
 
   // Fetch data on mount
   useEffect(() => {
@@ -43,9 +44,12 @@ const UnitDashboard = ({ level }: { level: "brigade" | "division" | "corps" }) =
   const approved = historyUnits.filter((u: any) =>
     (u.status_flag || '').toLowerCase() === "approved"
   ).length;
-  const rejected = historyUnits.filter((u: any) =>
-    (u.status_flag || '').toLowerCase() === "rejected"
-  ).length;
+  const rejected = historyUnits.filter((u: any) => {
+    const status = (u.status_flag || '').toLowerCase();
+    const rejectedBy = u.last_rejected_by_role || '';
+    const userRole = profile?.user?.user_role || '';
+    return status === "rejected" && rejectedBy.toLowerCase() === userRole.toLowerCase();
+  }).length;
 
   // Compose dashboardStats object for components
   const dashboardStats = {
@@ -97,11 +101,12 @@ const UnitDashboard = ({ level }: { level: "brigade" | "division" | "corps" }) =
       param?.approved_marks !== undefined && param?.approved_marks !== null && param?.approved_marks !== ""
     ).length;
     return {
-      name: unit.name || unit.unit_name || `Application#${unit.id}`,
+      name: `Unit#${unit.unit_id}`,
       totalMarks: getTotalMarks(unit),
       totalNegativeMarks,
       numParametersFilled,
     };
+    console.log(unit);
   });
 
   // Calculate dynamic y-axis domains for each metric
@@ -121,7 +126,7 @@ const UnitDashboard = ({ level }: { level: "brigade" | "division" | "corps" }) =
   return (
     <div className="dashboard-section">
       <div className="d-flex flex-sm-row flex-column align-items-sm-center justify-content-between mb-4">
-        <Breadcrumb title={LEVEL_TITLES[level] || "Dashboard"} />
+        <Breadcrumb title={"Dashboard"} />
       </div>
       <AssetsDetail dashboardStats={dashboardStats} />
       <div className="row mb-4 row-gap-4">

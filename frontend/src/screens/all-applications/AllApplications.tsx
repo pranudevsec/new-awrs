@@ -6,7 +6,7 @@ import FormSelect from "../../components/form/FormSelect";
 import EmptyTable from "../../components/ui/empty-table/EmptyTable";
 import Loader from "../../components/ui/loader/Loader";
 import Pagination from "../../components/ui/pagination/Pagination";
-import { awardTypeOptions } from "../../data/options";
+import { awardTypeOptions, commandOptions } from "../../data/options";
 import { SVGICON } from "../../constants/iconsList";
 import { useAppDispatch, useAppSelector } from "../../reduxToolkit/hooks";
 import { fetchAllApplications } from "../../reduxToolkit/services/application/applicationService";
@@ -21,6 +21,8 @@ const History = () => {
 
   // States
   const [awardType, setAwardType] = useState<string | null>(null);
+  const [commandType, setCommandType] = useState<string | null>(null);
+  // console.log(commandType);
   const [searchTerm, setSearchTerm] = useState<string>("");
   const [debouncedSearch, setDebouncedSearch] = useState<string>("");
   const [page, setPage] = useState<number>(1);
@@ -39,6 +41,7 @@ const History = () => {
     const fetchData = async () => {
       const params = {
         award_type: awardType ?? "",
+        command_type: commandType ?? "",
         search: debouncedSearch,
         page,
         limit,
@@ -58,7 +61,7 @@ const History = () => {
     };
 
     fetchData();
-  }, [awardType, debouncedSearch, profile, page, limit]);
+  }, [awardType, commandType, debouncedSearch, profile, page, limit]);
 
   return (
     <div className="clarification-section">
@@ -86,13 +89,24 @@ const History = () => {
           />
         </div>
         <div className="d-flex gap-2">
-          <FormSelect
-            name="awardType"
-            options={awardTypeOptions}
-            value={awardTypeOptions.find((opt) => opt.value === awardType) ?? null}
-            placeholder="Select Type"
-            onChange={(option) => setAwardType(option?.value ?? null)}
-          />
+          <div className="d-flex gap-2">
+            <FormSelect
+              name="awardType"
+              options={awardTypeOptions}
+              value={awardTypeOptions.find((opt) => opt.value === awardType) ?? null}
+              placeholder="Select Award Type"
+              onChange={(option) => setAwardType(option?.value ?? null)}
+            />
+          </div>
+          <div className="d-flex gap-2">
+            <FormSelect
+              name="commandType"
+              options={commandOptions}
+              value={commandOptions.find((opt) => opt.value === commandType) ?? null}
+              placeholder="Select Command Type"
+              onChange={(option) => setCommandType(option?.value ?? null)}
+            />
+          </div>
         </div>
       </div>
 
@@ -140,13 +154,12 @@ const History = () => {
               units.map((unit: any) => {
 
                 let approverRole = "Unit";
-
-                if (unit?.status_flag === "rejected") {
-                  approverRole = "N/A";
+                if (unit?.status_flag === "rejected" && unit?.last_rejected_by_role) {
+                  approverRole = unit.last_rejected_by_role.charAt(0).toUpperCase() + unit.last_rejected_by_role.slice(1);
+                } else if (unit?.status_flag === "shortlisted_approved" && unit?.last_shortlisted_approved_role) {
+                  approverRole = unit.last_shortlisted_approved_role.charAt(0).toUpperCase() + unit.last_shortlisted_approved_role.slice(1);
                 } else if (unit?.last_approved_by_role) {
-                  approverRole =
-                    unit.last_approved_by_role.charAt(0).toUpperCase() +
-                    unit.last_approved_by_role.slice(1);
+                  approverRole = unit.last_approved_by_role.charAt(0).toUpperCase() + unit.last_approved_by_role.slice(1);
                 }
 
                 return (
