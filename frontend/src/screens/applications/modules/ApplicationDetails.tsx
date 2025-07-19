@@ -863,8 +863,8 @@ const ApplicationDetails = () => {
                     )}
                     {isRaisedScreen && (
                       <>
-                        <th style={{ width: 200 }}>Requested Clarification</th>
-                        <th style={{ width: 150 }}>Action</th>{" "}
+                        <th style={{ width: 200,color: "white"  }}>Requested Clarification</th>
+                        <th style={{ width: 150,color: "white"  }}>Action</th>{" "}
                       </>
                     )}
                   </>

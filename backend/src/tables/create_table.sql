@@ -4,7 +4,7 @@ DROP TABLE IF EXISTS User_tab;
 -- Create the User_tab table
 CREATE TABLE User_tab (
         user_id SERIAL PRIMARY KEY,
-        pers_no CHAR(8) NOT NULL,
+        pers_no VARCHAR NOT NULL,
         rank CHAR(8) NOT NULL,
         name VARCHAR NOT NULL,
         user_role VARCHAR NOT NULL,

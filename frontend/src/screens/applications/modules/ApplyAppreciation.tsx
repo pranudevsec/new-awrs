@@ -97,10 +97,10 @@ const ApplyAppreciation = () => {
   const { profile } = useAppSelector((state) => state.admin);
   const { loading } = useAppSelector((state) => state.parameter);
 
-  useEffect(() => {
-    localStorage.removeItem("applyAppreciationDraft");
-    localStorage.removeItem("applyAppreciationUploadedDocsDraft");
-  }, []);
+  // useEffect(() => {
+  //   localStorage.removeItem("applyAppreciationDraft");
+  //   localStorage.removeItem("applyAppreciationUploadedDocsDraft");
+  // }, []);
 
   // States
   const [parameters, setParameters] = useState<Parameter[]>([]);
@@ -169,7 +169,7 @@ const ApplyAppreciation = () => {
   }, [unitRemarks]);
 
   useEffect(() => {
-    if (draftData?.appre_fds?.parameters && parameters?.length > 0) {
+    if (id && draftData?.appre_fds?.parameters && parameters?.length > 0) {
       const newCounts: Record<string, string> = {};
       const newMarks: Record<string, number> = {};
       const newUploads: Record<number, string[]> = {};
@@ -412,6 +412,7 @@ const ApplyAppreciation = () => {
             parameters: formattedParameters,
             unitRemarks: unitRemarks
           },
+          isDraft: isDraftRef.current,
         };
 
         let resultAction;
@@ -518,14 +519,14 @@ const ApplyAppreciation = () => {
   };
 
   const handlePreviewClick = () => {
-    const uploadedDocs = JSON.parse(localStorage.getItem(DRAFT_FILE_UPLOAD_KEY) ?? "{}");
+    // const uploadedDocs = JSON.parse(localStorage.getItem(DRAFT_FILE_UPLOAD_KEY) ?? "{}");
 
 
     const missingUploads = parameters.filter((param: any) => {
       const count = Number(counts[param.param_id] ?? 0);
       const mark = Number(marks[param.param_id] ?? 0);
       const requiresUpload = param.proof_reqd && (count > 0 || mark > 0);
-      const fileUploaded = uploadedDocs[param.param_id];
+      const fileUploaded = uploadedFiles[param.param_id];
 
       return requiresUpload && !fileUploaded;
     });
@@ -539,6 +540,9 @@ const ApplyAppreciation = () => {
       toast.error("Maximum 500 characters allowed in Unit Remarks");
       return;
     }
+    localStorage.setItem("applyAppreciationUnitRemarks", unitRemarks);
+    localStorage.setItem(DRAFT_STORAGE_KEY, JSON.stringify({ counts, marks }));
+    localStorage.setItem(DRAFT_FILE_UPLOAD_KEY, JSON.stringify(uploadedFiles));
 
     navigate('/applications/appreciation-review');
   };

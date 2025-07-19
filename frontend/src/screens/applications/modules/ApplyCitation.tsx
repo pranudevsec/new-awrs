@@ -36,10 +36,10 @@ const ApplyCitation = () => {
   const dispatch = useAppDispatch();
   const isDraftRef = useRef(false);
   const { draftData } = useAppSelector((state) => state.citation);
-  useEffect(() => {
-    localStorage.removeItem("applyCitationDraft");
-    localStorage.removeItem("applyCitationuploadedDocsDraft");
-  }, []);
+  // useEffect(() => {
+  //   localStorage.removeItem("applyCitationDraft");
+  //   localStorage.removeItem("applyCitationuploadedDocsDraft");
+  // }, []);
   const { profile } = useAppSelector((state) => state.admin);
 
   const { loading } = useAppSelector((state) => state.parameter);
@@ -109,7 +109,7 @@ const ApplyCitation = () => {
 
   // Populate from API data
   useEffect(() => {
-    if (draftData?.citation_fds?.parameters && parameters?.length > 0) {
+    if (id && draftData?.citation_fds?.parameters && parameters?.length > 0) {
       const newCounts: Record<number, string> = {};
       const newMarks: Record<number, number> = {};
       const newUploads: Record<number, string[]> = {};
@@ -367,13 +367,11 @@ const ApplyCitation = () => {
           },
           isDraft: isDraftRef.current,
         };
-        console.log(payload);
 
         let resultAction;
         if (id) {
           // Update if `id` exists
           resultAction = await dispatch(updateCitation({ id: Number(id), ...payload }));
-          console.log("resultAction -> ", resultAction);
         } else {
           // Otherwise, create new
           resultAction = await dispatch(createCitation(payload));
@@ -464,7 +462,7 @@ const ApplyCitation = () => {
   };
 
   const handlePreviewClick = () => {
-    const uploadedDocs = JSON.parse(localStorage.getItem(DRAFT_FILE_UPLOAD_KEY) || "{}");
+    // const uploadedDocs = JSON.parse(localStorage.getItem(DRAFT_FILE_UPLOAD_KEY) || "{}");
     const hasAtLeastOneCount = parameters.some(
       (param: any) => Number(counts[param.param_id] ?? 0) > 0
     );
@@ -477,7 +475,7 @@ const ApplyCitation = () => {
       const count = Number(counts[param.param_id] ?? 0);
       const mark = Number(marks[param.param_id] ?? 0);
       const requiresUpload = param.proof_reqd && (count > 0 || mark > 0);
-      const fileUploaded = uploadedDocs[param.param_id];
+      const fileUploaded = uploadedFiles[param.param_id];
 
       return requiresUpload && !fileUploaded;
     });
@@ -491,6 +489,9 @@ const ApplyCitation = () => {
       toast.error("Maximum 500 characters allowed in Unit Remarks");
       return;
     }
+    localStorage.setItem("applyCitationUnitRemarks", unitRemarks);
+    localStorage.setItem(DRAFT_FILE_UPLOAD_KEY, JSON.stringify(uploadedFiles));
+    localStorage.setItem(DRAFT_STORAGE_KEY, JSON.stringify({ counts, marks }));
 
     // If all good, navigate
     navigate('/applications/citation-review');
