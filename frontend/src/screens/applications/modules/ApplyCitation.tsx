@@ -444,8 +444,10 @@ const ApplyCitation = () => {
   }, []);
 
   useEffect(() => {
-    const draft = { counts, marks };
-    localStorage.setItem(DRAFT_STORAGE_KEY, JSON.stringify(draft));
+    if(!id){
+        const draft = { counts, marks };
+        localStorage.setItem(DRAFT_STORAGE_KEY, JSON.stringify(draft));
+    }
   }, [counts, marks]);
 
   const handleCountChange = (paramId: number, value: string) => {
