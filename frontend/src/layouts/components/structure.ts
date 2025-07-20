@@ -66,4 +66,9 @@ export const sidebarStructure = [
     icon: SVGICON.sidebar.dashboard,
     to: "/corps-dashboard",
   },
+  {
+    label: "Command Dashboard",
+    icon: SVGICON.sidebar.dashboard,
+    to: "/command-dashboard",
+  },
 ];

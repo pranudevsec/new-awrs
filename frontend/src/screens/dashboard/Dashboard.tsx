@@ -8,11 +8,14 @@ import TopCandidates from "./components/TopCandidates"
 import TopWinnersList from "./components/TopWinnersList"
 import UnitScoreChart from "./components/UnitScoreChart"
 import Loader from "../../components/ui/loader/Loader"
+import FormSelect from "../../components/form/FormSelect"
+import { awardTypeOptions } from "../../data/options"
 
 const Dashboard = () => {
     const dispatch = useAppDispatch();
 
     const [reportCount, setReportCount] = useState(5);
+    const [awardTypeFilter, setAwardTypeFilter] = useState<string>("All");
 
     const { loading, dashboardStats, unitScores } = useAppSelector((state) => state.commandPanel);
 
@@ -22,8 +25,14 @@ const Dashboard = () => {
     }, []);
 
     useEffect(() => {
-        dispatch(getScoreBoards({ award_type: "", search: "", limit: reportCount, page: 1 }));
-    }, [reportCount])
+        const params = {
+            award_type: awardTypeFilter !== "All" ? awardTypeFilter : "",
+            search: "",
+            limit: reportCount,
+            page: 1
+        };
+        dispatch(getScoreBoards(params));
+    }, [reportCount, awardTypeFilter])
 
     // Show loader
     if (loading) return <Loader />
@@ -32,6 +41,18 @@ const Dashboard = () => {
         <div className="dashboard-section">
             <div className="d-flex flex-sm-row flex-column align-items-sm-center justify-content-between mb-4">
                 <Breadcrumb title="Dashboard" />
+            </div>
+            <div className="row mb-4">
+                <div className="col-lg-4 col-md-6 col-12 mb-3">
+                    <FormSelect
+                        label="Award Type Filter"
+                        name="awardTypeFilter"
+                        options={awardTypeOptions}
+                        value={awardTypeOptions.find((opt) => opt.value === awardTypeFilter) ?? null}
+                        onChange={(selectedOption) => setAwardTypeFilter(selectedOption?.value ?? "All")}
+                        placeholder="Select Award Type"
+                    />
+                </div>
             </div>
             <AssetsDetail dashboardStats={dashboardStats} />
             <div className="row mb-4 row-gap-4">

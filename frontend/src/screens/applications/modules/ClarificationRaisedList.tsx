@@ -27,7 +27,12 @@ const ClarificationRaisedList = () => {
     if (!profile?.user?.user_role) return;
 
     const fetchData = () => {
-      const params = { award_type: awardType ?? '', search, page, limit };
+      const params = {
+        ...(awardType && awardType !== "All" ? { award_type: awardType } : {}),
+        search,
+        page,
+        limit
+      };
       if (profile.user.user_role !== 'unit') {
         dispatch(fetchSubordinates(params));
       } else {

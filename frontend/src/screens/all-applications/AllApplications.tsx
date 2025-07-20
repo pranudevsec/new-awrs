@@ -40,8 +40,8 @@ const History = () => {
     if (!profile?.user?.user_role) return;
     const fetchData = async () => {
       const params = {
-        award_type: awardType ?? "",
-        command_type: commandType ?? "",
+        ...(awardType && awardType !== "All" ? { award_type: awardType } : {}),
+        command_type: commandType === "All" ? undefined : commandType || undefined,
         search: debouncedSearch,
         page,
         limit,
@@ -99,13 +99,15 @@ const History = () => {
             />
           </div>
           <div className="d-flex gap-2">
-            <FormSelect
-              name="commandType"
-              options={commandOptions}
-              value={commandOptions.find((opt) => opt.value === commandType) ?? null}
-              placeholder="Select Command Type"
-              onChange={(option) => setCommandType(option?.value ?? null)}
-            />
+            {profile?.user?.user_role === "headquarter" &&
+              <FormSelect
+                name="commandType"
+                options={commandOptions}
+                value={commandOptions.find((opt) => opt.value === commandType) ?? null}
+                placeholder="Select Command Type"
+                onChange={(option) => setCommandType(option?.value ?? null)}
+              />
+            }
           </div>
         </div>
       </div>

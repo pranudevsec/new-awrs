@@ -77,6 +77,12 @@ const Login = () => {
                         navigate("/admin-settings");
                     } else if (payload.user_role === "command") {
                         navigate("/dashboard");
+                    } else if (payload.user_role === "brigade") {
+                        navigate("/brigade-dashboard");
+                    } else if (payload.user_role === "division") {
+                        navigate("/division-dashboard");
+                    } else if (payload.user_role === "corps") {
+                        navigate("/corps-dashboard");
                     } else {
                         navigate("/");
                     }

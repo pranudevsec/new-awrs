@@ -3,6 +3,7 @@ import { Navigate } from "react-router-dom";
 
 import Login from "../screens/auth/Login";
 import SignUp from "../screens/auth/SignUp";
+import { useAppSelector } from "../reduxToolkit/hooks";
 
 const Applications = lazy(() => import("../screens/applications/Applications"));
 const AcceptedApplicationsList = lazy(() => import("../screens/applications/modules/AcceptedApplicationsList"));
@@ -39,6 +40,7 @@ const Dashboard = lazy(() => import("../screens/dashboard/Dashboard"));
 const BrigadeDashboard = lazy(() => import("../screens/dashboard/BrigadeDashboard"));
 const DivisionDashboard = lazy(() => import("../screens/dashboard/DivisionDashboard"));
 const CorpsDashboard = lazy(() => import("../screens/dashboard/CorpsDashboard"));
+const CommandDashboard = lazy(() => import("../screens/dashboard/CommandDashboard"));
 
 const History = lazy(() => import("../screens/history/History"));
 const AllApplications = lazy(() => import("../screens/all-applications/AllApplications"));
@@ -54,9 +56,20 @@ export const publicRoutes: RouteConfig[] = [
   { path: "/authentication/sign-up", element: <SignUp /> },
 ];
 
+// Custom default route element for role-based redirect
+function RoleBasedDefaultRedirect() {
+  const profile = useAppSelector((state) => state.admin.profile);
+  const userRole = profile?.user?.user_role;
+  if (userRole === "brigade") return <Navigate to="/brigade-dashboard" replace />;
+  if (userRole === "division") return <Navigate to="/division-dashboard" replace />;
+  if (userRole === "corps") return <Navigate to="/corps-dashboard" replace />;
+  if (userRole === "command") return <Navigate to="/dashboard" replace />;
+  return <Navigate to="/applications" replace />;
+}
+
 export const authProtectedRoutes: RouteConfig[] = [
   // Applications
-  { path: "/", element: <Navigate to="/applications" replace /> },
+  { path: "/", element: <RoleBasedDefaultRedirect /> },
   { path: "/applications", element: <Applications /> },
   { path: "/applications/citation", element: <ApplyCitation /> },
   { path: "/applications/citation-review", element: <CitationReviewPage /> },
@@ -101,6 +114,7 @@ export const authProtectedRoutes: RouteConfig[] = [
   { path: "/brigade-dashboard", element: <BrigadeDashboard /> },
   { path: "/division-dashboard", element: <DivisionDashboard /> },
   { path: "/corps-dashboard", element: <CorpsDashboard /> },
+  { path: "/command-dashboard", element: <CommandDashboard /> },
 
   // History
   { path: "/history", element: <History /> },

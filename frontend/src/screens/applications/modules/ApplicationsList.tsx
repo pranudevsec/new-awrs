@@ -44,8 +44,8 @@ const ApplicationsList = () => {
     const fetchData = async () => {
       const role = profile.user.user_role;
       const params = {
-        award_type: awardType === "All" ? "" : awardType || undefined,
-        command_type: commandType === "All" ? "" : commandType || undefined,
+        ...(awardType && awardType !== "All" ? { award_type: awardType } : {}),
+        command_type: commandType === "All" ? undefined : commandType || undefined,
         search: debouncedSearch,
         page,
         limit,  

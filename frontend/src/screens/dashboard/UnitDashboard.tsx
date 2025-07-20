@@ -5,8 +5,12 @@ import ApplicationStatus from "./components/ApplicationStatus";
 import AssetsDetail from "./components/AssetsDetail";
 import UnitScoreChart from "./components/UnitScoreChart";
 import Loader from "../../components/ui/loader/Loader";
+import FormSelect from "../../components/form/FormSelect";
 import { getHomeCountStats } from "../../reduxToolkit/services/command-panel/commandPanelService";
 import { fetchApplicationHistory, fetchSubordinates } from "../../reduxToolkit/services/application/applicationService";
+import { awardTypeOptions } from "../../data/options";
+import * as XLSX from 'xlsx';
+import { saveAs } from 'file-saver';
 
 // const LEVEL_TITLES: Record<string, string> = {
 //   brigade: "Brigade Dashboard",
@@ -14,10 +18,12 @@ import { fetchApplicationHistory, fetchSubordinates } from "../../reduxToolkit/s
 //   corps: "Corps Dashboard",
 // };
 
-const UnitDashboard = ({ level }: { level: "brigade" | "division" | "corps" }) => {
+const UnitDashboard = ({ level }: { level: "brigade" | "division" | "corps" | "command"}) => {
   const dispatch = useAppDispatch();
   const [pendingUnits, setPendingUnits] = useState<any[]>([]);
   const [historyUnits, setHistoryUnits] = useState<any[]>([]);
+  const [acceptedApplicationsCount, setAcceptedApplicationsCount] = useState<number>(0);
+  const [awardTypeFilter, setAwardTypeFilter] = useState<string>("All");
 
   // Get data from redux
   const homeCounts = useAppSelector(state => state.commandPanel.homeCounts);
@@ -27,20 +33,39 @@ const UnitDashboard = ({ level }: { level: "brigade" | "division" | "corps" }) =
   // Fetch data on mount
   useEffect(() => {
     dispatch(getHomeCountStats());
-    dispatch(fetchSubordinates({ isGetNotClarifications: true })).then((action: any) => {
+    const params = {
+      isGetNotClarifications: true,
+      ...(awardTypeFilter !== "All" ? { award_type: awardTypeFilter } : {})
+    };
+    dispatch(fetchSubordinates(params)).then((action: any) => {
       if (action.payload && action.payload.data) {
         setPendingUnits(action.payload.data);
       }
     });
-    dispatch(fetchApplicationHistory()).then((action: any) => {
+    const historyParams = {
+      ...(awardTypeFilter !== "All" ? { award_type: awardTypeFilter } : {})
+    };
+    dispatch(fetchApplicationHistory(historyParams)).then((action: any) => {
       if (action.payload && action.payload.data) {
         setHistoryUnits(action.payload.data);
       }
     });
-  }, [dispatch, level]);
+    // Fetch accepted applications count
+    const acceptedParams = {
+      isShortlisted: true,
+      limit: 1000,
+      ...(awardTypeFilter !== "All" ? { award_type: awardTypeFilter } : {})
+    };
+    dispatch(fetchSubordinates(acceptedParams)).then((action: any) => {
+      if (action.payload && action.payload.data) {
+        setAcceptedApplicationsCount(action.payload.data.length);
+      }
+    });
+  }, [dispatch, level, awardTypeFilter]);
 
   // Calculate stats from history
-  const pending = homeCounts?.applicationsToReview || 0;
+  // Calculate pending from filtered data instead of unfiltered Redux state
+  const pending = pendingUnits.length;
   const approved = historyUnits.filter((u: any) =>
     (u.status_flag || '').toLowerCase() === "approved"
   ).length;
@@ -56,7 +81,8 @@ const UnitDashboard = ({ level }: { level: "brigade" | "division" | "corps" }) =
     totalPendingApplications: pending,
     approved,
     rejected,
-    clarificationRaised: 0 // Set this if you have a source for it
+    acceptedApplications: acceptedApplicationsCount,
+    clarificationRaised: 0 // Add missing property to fix linter error
   };
 
   // Helper to calculate total marks for a unit (from AcceptedApplicationsList)
@@ -121,12 +147,55 @@ const UnitDashboard = ({ level }: { level: "brigade" | "division" | "corps" }) =
   const totalMarksDomain = getDynamicDomain(unitMetrics.map(u => u.totalMarks));
   const totalNegativeMarksDomain = getDynamicDomain(unitMetrics.map(u => u.totalNegativeMarks));
 
+  // Export to Excel handler
+  const handleExportExcel = () => {
+    const excelData = pendingUnits.map((unit: any) => {
+      const parameters = unit?.fds?.parameters ?? [];
+      const totalNegativeMarks = parameters
+        .filter((param: any) => param?.negative)
+        .reduce((acc: number, param: any) => acc + Number(param?.marks ?? 0), 0);
+      return {
+        'Application Id': unit.id,
+        'Unit ID': unit.unit_id,
+        'Arm/Service': unit.fds.unit_type || '',
+        'Total Marks': getTotalMarks(unit),
+        'Total Negative Marks': totalNegativeMarks,
+        'Application Type': unit.type ? unit.type.charAt(0).toUpperCase() + unit.type.slice(1) : '-',
+      };
+    });
+    const worksheet = XLSX.utils.json_to_sheet(excelData);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, 'Applications');
+    const excelBuffer = XLSX.write(workbook, { bookType: 'xlsx', type: 'array' });
+    const data = new Blob([excelBuffer], { type: 'application/octet-stream' });
+    saveAs(data, 'Pending_Applications.xlsx');
+  };
+
   if (loading) return <Loader />;
 
   return (
     <div className="dashboard-section">
       <div className="d-flex flex-sm-row flex-column align-items-sm-center justify-content-between mb-4">
         <Breadcrumb title={"Dashboard"} />
+      </div>
+      <div className="row mb-4">
+        <div className="col-lg-6 col-md-6 col-12 mb-3">
+          <FormSelect
+            label="Award Type Filter"
+            name="awardTypeFilter"
+            options={awardTypeOptions}
+            value={awardTypeOptions.find((opt) => opt.value === awardTypeFilter) ?? null}
+            onChange={(selectedOption) => setAwardTypeFilter(selectedOption?.value ?? "All")}
+            placeholder="Select Award Type"
+          />
+        </div>
+        {pendingUnits.length > 0 && (
+          <div className="col-lg-6 col-md-6 col-12 mb-3 d-flex align-items-end justify-content-end">
+            <button className="_btn _btn-lg primary" onClick={handleExportExcel}>
+              Export to Excel
+            </button>
+          </div>
+        )}
       </div>
       <AssetsDetail dashboardStats={dashboardStats} />
       <div className="row mb-4 row-gap-4">
