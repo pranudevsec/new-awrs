@@ -392,3 +392,11 @@ export const getParamDisplay = (param: any) => {
     subsubheader: null,
   };
 };
+
+export const DisclaimerText = {
+  "unit": `I hereby confirm that the information provided in my profile is accurate, up-to-date, and original. 
+  I understand that it is my responsibility to ensure the correctness of the information, and I accept 
+  any consequences arising from providing false or outdated details.`,
+  "All": `I hereby declare that I have thoroughly reviewed the application and supporting materials to the best of my knowledge and ability. 
+  My recommendation/decision is based solely on the information presented.`,
+};

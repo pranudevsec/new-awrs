@@ -75,6 +75,10 @@ const ProfileSettings = () => {
     appointment: "",
     // digitalSign: "",
   }]);
+  const [isDeclarationChecked, setIsDeclarationChecked] = useState(false);
+  const handleCheckboxChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setIsDeclarationChecked(e.target.checked);
+  };
 
   useEffect(() => {
     if (profile?.unit?.awards && Array.isArray(profile.unit.awards)) {
@@ -254,6 +258,10 @@ const ProfileSettings = () => {
     enableReinitialize: true,
     onSubmit: async (values: any, { resetForm }) => {
       try {
+        if(!isDeclarationChecked){
+          toast.error("Please agree to the declaration before submitting.");
+          return;
+        }
         const role = profile?.user?.user_role ?? "";
         const visibleFields = getVisibleFields(role);
 
@@ -612,6 +620,22 @@ const ProfileSettings = () => {
                 </button>
               </div>
             </>
+          )}
+          {!isMember &&(
+            <div className="col-12 mt-3">
+            <div className="form-check">
+              <input
+                type="checkbox"
+                className="form-check-input"
+                id="declarationCheckbox"
+                checked={isDeclarationChecked}
+                onChange={handleCheckboxChange}
+              />
+              <label className="form-check-label" htmlFor="declarationCheckbox">
+                I agree and declare that the information filled by me is accurate and up-to-date.
+              </label>
+            </div>
+          </div>
           )}
           {!isDisabled && role !== "cw2" && (
             <div className="col-12 mt-2">

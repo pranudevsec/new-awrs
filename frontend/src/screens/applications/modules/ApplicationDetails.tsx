@@ -30,6 +30,8 @@ import { updateCitation } from "../../../reduxToolkit/services/citation/citation
 import { updateAppreciation } from "../../../reduxToolkit/services/appreciation/appreciationService";
 import * as XLSX from "xlsx";
 import { saveAs } from "file-saver";
+import DisclaimerModal from "../../../modals/DisclaimerModal";
+import { DisclaimerText } from "../../../data/options";
 
 function areAllClarificationsResolved(unitDetail: any): boolean {
   const parameters = unitDetail?.fds?.parameters;
@@ -86,6 +88,11 @@ const ApplicationDetails = () => {
   const [commentsState, setCommentsState] = useState<Record<string, string>>({});
   const [localComment, setLocalComment] = useState(commentsState?.__application__ ?? "");
   const [unitRemarks, setUnitRemarks] = useState("");
+  const [showDisclaimerModal, setShowDisclaimerModal] = useState(false);
+  const [pendingDecision, setPendingDecision] = useState<{
+    member: any;
+    decision: string;
+  } | null>(null); // State to store the pending decision
   const [paramStats, setParamStats] = useState({
     totalParams: 0,
     filledParams: 0,
@@ -505,6 +512,28 @@ const ApplicationDetails = () => {
         navigate("/applications/list");
       });
     }
+  };
+  const handleConfirmDecision = async () => {
+    if (pendingDecision) {
+      const { member, decision } = pendingDecision;
+
+      try {
+        await handleAddsignature(member, decision);
+      } catch (error) {
+        console.error("Error processing decision:", error);
+      }
+    } else {
+      toast.error("No decision to process.");
+    }
+
+    setShowDisclaimerModal(false);
+    setPendingDecision(null);
+  };
+
+  const handleDecisionClick = (member: any, decision: string) => {
+    // Store the decision details and show the disclaimer modal
+    setPendingDecision({ member, decision });
+    setShowDisclaimerModal(true);
   };
 
   const renderHeaderRow = (header: string, index: number) => (
@@ -1105,7 +1134,7 @@ const ApplicationDetails = () => {
                                           type="button"
                                           className="_btn success w-sm-auto"
                                           onClick={() =>
-                                            handleAddsignature(member, "accepted")
+                                            handleDecisionClick(member, "accepted")
                                           }
                                         >
                                           Accept
@@ -1115,7 +1144,7 @@ const ApplicationDetails = () => {
                                         type="button"
                                         className="_btn danger w-sm-auto"
                                         onClick={() =>
-                                          handleAddsignature(member, "rejected")
+                                          handleDecisionClick(member, "rejected")
                                         }
                                       >
                                         Decline
@@ -1129,7 +1158,7 @@ const ApplicationDetails = () => {
                                       type="button"
                                       className="_btn success text-nowrap w-sm-auto"
                                       onClick={() =>
-                                        handleAddsignature(member, "accepted")
+                                        handleDecisionClick(member, "accepted")
                                       }
                                     >
                                       Add Signature
@@ -1379,10 +1408,7 @@ const ApplicationDetails = () => {
                                           type="button"
                                           className="_btn success w-sm-auto"
                                           onClick={() =>
-                                            handleAddsignature(
-                                              member,
-                                              "accepted"
-                                            )
+                                            handleDecisionClick(member, "accepted")
                                           }
                                         >
                                           Accept
@@ -1392,7 +1418,7 @@ const ApplicationDetails = () => {
                                         type="button"
                                         className="_btn danger w-sm-auto"
                                         onClick={() =>
-                                          handleAddsignature(member, "rejected")
+                                          handleDecisionClick(member, "rejected")
                                         }
                                       >
                                         Decline
@@ -1406,7 +1432,7 @@ const ApplicationDetails = () => {
                                       type="button"
                                       className="_btn success text-nowrap w-sm-auto"
                                       onClick={() =>
-                                        handleAddsignature(member, "accepted")
+                                        handleDecisionClick(member, "accepted")
                                       }
                                     >
                                       Add Signature
@@ -1456,6 +1482,12 @@ const ApplicationDetails = () => {
         show={reviewCommentsShow}
         handleClose={() => setReviewCommentsShow(false)}
         reviewCommentsData={reviewCommentsData}
+      />
+        <DisclaimerModal
+        show={showDisclaimerModal}
+        onClose={() => setShowDisclaimerModal(false)}
+        onConfirm={handleConfirmDecision}
+        message={DisclaimerText["All"]}
       />
     </>
   );
