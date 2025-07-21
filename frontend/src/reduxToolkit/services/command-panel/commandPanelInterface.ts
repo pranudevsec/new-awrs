@@ -48,6 +48,7 @@ export interface DashboardStats {
   clarificationRaised: number;
   approved: number;
   rejected: number;
+  acceptedApplications: number;
 }
 
 export interface DashboardResponse {

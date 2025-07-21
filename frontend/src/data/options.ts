@@ -322,8 +322,8 @@ export const unitTypeOptions = [
   { label: "SF", value: "SF" },
   { label: "ARTY", value: "ARTY" },
   { label: "INFANTRY", value: "INFANTRY" },
-  { label: "ARMD", value: "ARMD/MECH INF" },
-  { label: "MECH INF", value: "ARMD/MECH INF" },
+  { label: "ARMD/MECH INF", value: "ARMD/MECH INF" },
+  { label: "MECH INF", value: "MECH INF" },
   { label: "SATA", value: "SATA" },
   { label: "ENGRS", value: "ENGRS" },
   { label: "SIGS", value: "SIGS" },
@@ -369,3 +369,34 @@ export const cyclePeriodOptions: OptionType[] = [
   { value: "2025 - H1", label: "2025 - H1" },
   { value: "2025 - H2", label: "2025 - H2" },
 ];
+
+export const getParamDisplay = (param: any) => {
+  const { name, category, subcategory, subsubcategory } = param;
+
+  if (name !== "no") {
+    return {
+      main: name,
+      header: category || null,
+      subheader: subcategory || null,
+      subsubheader: subsubcategory || null,
+    };
+  }
+
+  const main =
+    subsubcategory || subcategory || category || null;
+
+  return {
+    main,
+    header: subsubcategory ? category || null : null,
+    subheader: subsubcategory ? subcategory || null : null,
+    subsubheader: null,
+  };
+};
+
+export const DisclaimerText = {
+  "unit": `I hereby confirm that the information provided in my profile is accurate, up-to-date, and original. 
+  I understand that it is my responsibility to ensure the correctness of the information, and I accept 
+  any consequences arising from providing false or outdated details.`,
+  "All": `I hereby declare that I have thoroughly reviewed the application and supporting materials to the best of my knowledge and ability. 
+  My recommendation/decision is based solely on the information presented.`,
+};

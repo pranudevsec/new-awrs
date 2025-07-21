@@ -10,6 +10,7 @@ import appreciationReducer from './slices/appreciation/appreciationSlice';
 import applicationReducer from './slices/application/applicationSlice';
 import clarificationReducer from './slices/clarification/clarificationSlice';
 import commandPanelReducer from './slices/command-panel/commandPanelSlice';
+import brigadeReducer from './slices/command-panel/BrigadeSlice';
 
 const getConfig = (key: string, whitelist: string[]) => {
     return {
@@ -27,7 +28,8 @@ const reducer = combineReducers({
     appreciation: appreciationReducer,
     application: applicationReducer,
     clarification: clarificationReducer,
-    commandPanel: commandPanelReducer
+    commandPanel: commandPanelReducer,
+    brigade: brigadeReducer
 });
 
 export const store = configureStore({

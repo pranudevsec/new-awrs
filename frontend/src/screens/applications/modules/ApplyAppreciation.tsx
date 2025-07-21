@@ -97,10 +97,10 @@ const ApplyAppreciation = () => {
   const { profile } = useAppSelector((state) => state.admin);
   const { loading } = useAppSelector((state) => state.parameter);
 
-  useEffect(() => {
-    localStorage.removeItem("applyAppreciationDraft");
-    localStorage.removeItem("applyAppreciationUploadedDocsDraft");
-  }, []);
+  // useEffect(() => {
+  //   localStorage.removeItem("applyAppreciationDraft");
+  //   localStorage.removeItem("applyAppreciationUploadedDocsDraft");
+  // }, []);
 
   // States
   const [parameters, setParameters] = useState<Parameter[]>([]);
@@ -169,7 +169,7 @@ const ApplyAppreciation = () => {
   }, [unitRemarks]);
 
   useEffect(() => {
-    if (draftData?.appre_fds?.parameters && parameters?.length > 0) {
+    if (id && draftData?.appre_fds?.parameters && parameters?.length > 0) {
       const newCounts: Record<string, string> = {};
       const newMarks: Record<string, number> = {};
       const newUploads: Record<number, string[]> = {};
@@ -412,6 +412,7 @@ const ApplyAppreciation = () => {
             parameters: formattedParameters,
             unitRemarks: unitRemarks
           },
+          isDraft: isDraftRef.current,
         };
 
         let resultAction;
@@ -475,8 +476,10 @@ const ApplyAppreciation = () => {
   }, []);
 
   useEffect(() => {
-    const draft = { counts, marks };
-    localStorage.setItem(DRAFT_STORAGE_KEY, JSON.stringify(draft));
+    if(!id){
+        const draft = { counts, marks };
+        localStorage.setItem(DRAFT_STORAGE_KEY, JSON.stringify(draft));
+    }
   }, [counts, marks]);
 
   const handleCountChange = (paramId: number, value: string) => {
@@ -518,14 +521,14 @@ const ApplyAppreciation = () => {
   };
 
   const handlePreviewClick = () => {
-    const uploadedDocs = JSON.parse(localStorage.getItem(DRAFT_FILE_UPLOAD_KEY) ?? "{}");
+    // const uploadedDocs = JSON.parse(localStorage.getItem(DRAFT_FILE_UPLOAD_KEY) ?? "{}");
 
 
     const missingUploads = parameters.filter((param: any) => {
       const count = Number(counts[param.param_id] ?? 0);
       const mark = Number(marks[param.param_id] ?? 0);
       const requiresUpload = param.proof_reqd && (count > 0 || mark > 0);
-      const fileUploaded = uploadedDocs[param.param_id];
+      const fileUploaded = uploadedFiles[param.param_id];
 
       return requiresUpload && !fileUploaded;
     });
@@ -539,6 +542,9 @@ const ApplyAppreciation = () => {
       toast.error("Maximum 500 characters allowed in Unit Remarks");
       return;
     }
+    localStorage.setItem("applyAppreciationUnitRemarks", unitRemarks);
+    localStorage.setItem(DRAFT_STORAGE_KEY, JSON.stringify({ counts, marks }));
+    localStorage.setItem(DRAFT_FILE_UPLOAD_KEY, JSON.stringify(uploadedFiles));
 
     navigate('/applications/appreciation-review');
   };
@@ -640,13 +646,13 @@ const ApplyAppreciation = () => {
                 type="number"
                 className="form-control"
                 placeholder="Marks"
-                value={markInputValue}
+                value={markInputValue.toFixed(3)}
                 readOnly
               />
               <div className="tooltip-icon">
                 <i className="info-circle">i</i>
                 <span className="tooltip-text">
-                  {`1 unit = ${param.per_unit_mark} marks, max ${param.max_marks} marks`}
+                  {`1 unit = ${param.per_unit_mark} marks, description: ${param.description}`}
                 </span>
               </div>
             </div>
@@ -749,9 +755,9 @@ const ApplyAppreciation = () => {
                 <table className="table-style-2 w-100">
                   <thead>
                     <tr style={{ backgroundColor: "#007bff" }}>
-                      <th style={{ width: 150, minWidth: 150, maxWidth: 150, color: "white" }}>Type</th>
-                      <th style={{ width: 200, minWidth: 200, maxWidth: 200, color: "white" }}>Year</th>
-                      <th style={{ width: 300, minWidth: 300, maxWidth: 300, color: "white" }}>Title</th>
+                      <th style={{ width: 150, minWidth: 150, maxWidth: 150, fontSize: "17", color: "white" }}>Type</th>
+                      <th style={{ width: 200, minWidth: 200, maxWidth: 200, fontSize: "17", color: "white" }}>Year</th>
+                      <th style={{ width: 300, minWidth: 300, maxWidth: 300, fontSize: "17", color: "white" }}>Title</th>
                     </tr>
                   </thead>
                   <tbody>

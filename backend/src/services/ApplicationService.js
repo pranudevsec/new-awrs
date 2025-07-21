@@ -173,8 +173,7 @@ exports.getAllApplicationsForUnit = async (user, query) => {
 exports.getAllApplicationsForHQ = async (user, query) => {
   const client = await dbService.getClient();
   try {
-    const { award_type, search, command_type, page = 1, limit = 10 } = query;
-    console.log(command_type);
+    const { award_type, search, page = 1, limit = 10 } = query;
 
     const citations = await client.query(`
       SELECT 
@@ -219,15 +218,8 @@ exports.getAllApplicationsForHQ = async (user, query) => {
       allApps = allApps.filter(
         (app) => app.type?.toLowerCase() === award_type.toLowerCase()
       );
-      console.log("Filtering by award_type:", award_type);
     }
 
-    if (command_type) {
-      allApps = allApps.filter(
-        (app) => app.fds?.command?.toLowerCase() === command_type.toLowerCase()
-      );
-      console.log("Filtering by command_type:", command_type);
-    }
 
     // Normalize and filter by search if provided
     const normalize = (str) =>
@@ -2490,7 +2482,7 @@ exports.getApplicationsHistory = async (user, query) => {
     (
       (status_flag = 'approved' AND last_approved_by_role = ANY($2)) OR
       (status_flag = 'shortlisted_approved' AND last_approved_by_role = ANY($2)) OR
-      (status_flag = 'rejected' AND last_approved_by_role = ANY($3)) OR
+      (status_flag = 'rejected' AND last_rejected_by_role = ANY($3)) OR
       (status_flag = 'withdrawed' AND  withdraw_requested_by = ANY($4))
     )
   `;
@@ -2723,7 +2715,7 @@ exports.getAllApplications = async (user, query) => {
   const client = await dbService.getClient();
   try {
     const { user_role } = user;
-    const { award_type, search, page = 1, limit = 10 } = query;
+    const { award_type, command_type, search, page = 1, limit = 10 } = query;
 
     const profile = await AuthService.getProfile(user);
     const unit = profile?.data?.unit;
@@ -2861,6 +2853,13 @@ exports.getAllApplications = async (user, query) => {
     if (award_type) {
       allApps = allApps.filter(
         (app) => app.fds?.award_type?.toLowerCase() === award_type.toLowerCase()
+      );
+    }
+
+    // Command type filter
+    if (command_type) {
+      allApps = allApps.filter(
+        (app) => app.fds?.command?.toLowerCase() === command_type.toLowerCase()
       );
     }
 

@@ -23,6 +23,7 @@ const URL = import.meta.env.VITE_VALIDATE_TOKEN_URL;
 
 interface FetchUnitsParams {
   award_type?: string;
+  command_type?: string;
   search?: string;
   page?: number;
   limit?: number;
@@ -33,7 +34,6 @@ interface FetchUnitsParams {
 
 interface FetchHQApplicationsParams {
   award_type?: string;
-  command_type?: string;
   search?: string;
   page?: number;
   limit?: number;
@@ -88,9 +88,6 @@ export const fetchApplicationHistory = createAsyncThunk<
     if (params?.award_type) {
       queryParams.append("award_type", params.award_type);
     }
-    if (params?.search) {
-      queryParams.append("search", params.search);
-    }
     if (params?.page) {
       queryParams.append("page", String(params.page));
     }
@@ -128,6 +125,9 @@ export const fetchAllApplications = createAsyncThunk<
 
     if (params?.award_type) {
       queryParams.append("award_type", params.award_type);
+    }
+    if (params?.command_type) {
+      queryParams.append("command_type", params.command_type);
     }
     if (params?.search) {
       queryParams.append("search", params.search);
@@ -180,9 +180,6 @@ export const fetchApplicationsForHQ = createAsyncThunk<
       }
       if (params?.limit) {
         queryParams.append("limit", String(params.limit));
-      }
-      if (params?.command_type) {
-        queryParams.append("command_type", params.command_type);
       }
 
       const response = await Axios.get(

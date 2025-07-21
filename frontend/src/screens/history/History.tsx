@@ -50,7 +50,7 @@ const History = () => {
 
     const fetchData = () => {
       const params = {
-        award_type: awardType ?? "",
+        ...(awardType && awardType !== "All" ? { award_type: awardType } : {}),
         search: debouncedSearch,
         page,
         limit,

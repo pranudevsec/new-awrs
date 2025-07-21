@@ -4,6 +4,7 @@ export interface ApplicationUnit {
   description: string;
   fds?: any;
   type: string;
+  clarifications_count?: number; // Added for sidebar and list usage
 }
 
 export interface FetchApplicationUnitsResponse {

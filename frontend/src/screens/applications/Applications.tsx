@@ -1,11 +1,14 @@
-import { useEffect } from "react";
-import { Link } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
 import { useAppDispatch, useAppSelector } from "../../reduxToolkit/hooks";
 import { getHomeCountStats } from "../../reduxToolkit/services/command-panel/commandPanelService";
 import Breadcrumb from "../../components/ui/breadcrumb/Breadcrumb";
+import DisclaimerModal from "../../modals/DisclaimerModal";
+import { DisclaimerText } from "../../data/options";
 
 const Applications = () => {
   const dispatch = useAppDispatch();
+  const navigate = useNavigate();
 
   const profile = useAppSelector((state) => state.admin.profile);
   const { homeCounts } = useAppSelector((state) => state.commandPanel);
@@ -16,9 +19,24 @@ const Applications = () => {
     userRole ?? ""
   );
 
+  const [showModal, setShowModal] = useState(false);
+  const [destination, setDestination] = useState<string | null>(null);
+
   useEffect(() => {
     dispatch(getHomeCountStats());
   }, [dispatch]);
+
+  const handleCardClick = (path: string) => {
+    setDestination(path);
+    setShowModal(true); 
+  };
+
+  const handleModalConfirm = () => {
+    if (destination) {
+      navigate(destination); 
+    }
+    setShowModal(false);
+  };
 
   return (
     <div className="application-section" style={{ paddingLeft: "1rem", paddingRight: "1rem" }}>
@@ -28,11 +46,15 @@ const Applications = () => {
       <div className="row row-gap-3">
         {isUnitRole && (
           <>
-            <div className="d-flex justify-content-center align-items-center" style={{ minHeight: "400px",marginTop: "1rem"  }}>
+            <div className="d-flex justify-content-center align-items-center" style={{ minHeight: "400px", marginTop: "1rem" }}>
               {/* Cards column */}
               <div className="d-flex flex-column align-items-center justify-content-center" style={{ width: 350, minWidth: 300, height: 350 }}>
                 <div className="mb-4 w-100">
-                  <Link to="/applications/citation" className="h-100 d-block w-100">
+                  <div
+                    className="h-100 d-block w-100"
+                    onClick={() => handleCardClick("/applications/citation")}
+                    style={{ cursor: "pointer" }}
+                  >
                     <div className="card border-0 h-100 d-flex align-items-center justify-content-center shadow-sm hover-shadow position-relative w-100" style={{ minHeight: 120 }}>
                       <div className="card-icon mb-2">
                         <img src="/media/icons/medal.png" alt="Medal" width={80} />
@@ -40,10 +62,14 @@ const Applications = () => {
                       <h5 className="fw-6 mt-2 mb-0">Citation</h5>
                       <span className="text-muted small mt-1">Apply for citation awards</span>
                     </div>
-                  </Link>
+                  </div>
                 </div>
                 <div className="w-100">
-                  <Link to="/applications/appreciation" className="h-100 d-block w-100">
+                  <div
+                    className="h-100 d-block w-100"
+                    onClick={() => handleCardClick("/applications/appreciation")}
+                    style={{ cursor: "pointer" }}
+                  >
                     <div className="card border-0 h-100 d-flex align-items-center justify-content-center shadow-sm hover-shadow position-relative w-100" style={{ minHeight: 120 }}>
                       <div className="card-icon mb-2">
                         <img src="/media/icons/thumb.png" alt="Thumb" width={80} />
@@ -51,7 +77,7 @@ const Applications = () => {
                       <h5 className="fw-6 mt-2 mb-0">Appreciation</h5>
                       <span className="text-muted small mt-1">Apply for appreciation awards</span>
                     </div>
-                  </Link>
+                  </div>
                 </div>
               </div>
               {/* Space between columns */}
@@ -146,6 +172,14 @@ const Applications = () => {
           </>
         )}
       </div>
+
+      {/* Disclaimer Modal */}
+      <DisclaimerModal
+        show={showModal}
+        onClose={() => setShowModal(false)}
+        onConfirm={handleModalConfirm}
+        message={DisclaimerText["unit"]}
+      />
     </div>
   );
 };
