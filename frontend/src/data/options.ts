@@ -350,6 +350,7 @@ export const matrixUnitOptions = [
   { label: "LC/AIOS/LAC/HAA/AGPL", value: "LC/AIOS/LAC/HAA/AGPL" },
   { label: "IS", value: "IS" },
   { label: "NM", value: "NM" },
+  { label: "Peace", value: "Peace" },
 ];
 
 export const rank = [
@@ -376,19 +377,19 @@ export const getParamDisplay = (param: any) => {
   if (name !== "no") {
     return {
       main: name,
-      header: category || null,
-      subheader: subcategory || null,
-      subsubheader: subsubcategory || null,
+      header: category ?? null,
+      subheader: subcategory ?? null,
+      subsubheader: subsubcategory ?? null,
     };
   }
 
   const main =
-    subsubcategory || subcategory || category || null;
+    subsubcategory ?? subcategory ?? category ?? null;
 
   return {
     main,
-    header: subsubcategory ? category || null : null,
-    subheader: subsubcategory ? subcategory || null : null,
+    header: subsubcategory ? category ?? null : null,
+    subheader: subsubcategory ? subcategory ?? null : null,
     subsubheader: null,
   };
 };
@@ -397,6 +398,6 @@ export const DisclaimerText = {
   "unit": `I hereby confirm that the information provided in my profile is accurate, up-to-date, and original. 
   I understand that it is my responsibility to ensure the correctness of the information, and I accept 
   any consequences arising from providing false or outdated details.`,
-  "All": `I hereby declare that I have thoroughly reviewed the application and supporting materials to the best of my knowledge and ability. 
+  "All": `I hereby declare that, I have thoroughly reviewed the application, channel of reporting and supporting documents. 
   My recommendation/decision is based solely on the information presented.`,
 };

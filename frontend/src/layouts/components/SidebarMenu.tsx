@@ -4,7 +4,6 @@ import { useEffect, useState } from "react";
 import Axios from "../../reduxToolkit/helper/axios";
 import { useAppDispatch, useAppSelector } from "../../reduxToolkit/hooks";
 import { getClarifications, getSubordinateClarifications } from "../../reduxToolkit/services/clarification/clarificationService";
-// import { fetchApplicationUnits, fetchSubordinates } from "../../reduxToolkit/services/application/applicationService";
 import { SVGICON } from "../../constants/iconsList";
 import { Chatbot } from "../../screens/Chatbot/Chatbot";
 
@@ -26,87 +25,61 @@ const SidebarMenu = () => {
   const isMember = user.is_member ?? false;
   const cw2_type = user.cw2_type?.toLowerCase() ?? "";
 
-  // Local state for clarification-raised units
   const [sidebarClarificationUnits, setSidebarClarificationUnits] = useState<any[]>([]);
 
-  // Fetch all clarifications and application units for sidebar counts
   useEffect(() => {
     if (!userRole) return;
-    // Fetch clarifications (received)
+    const fetchUnits = async (url: string) => {
+      const res = await Axios.get(url);
+      if (res.data && Array.isArray(res.data.data)) {
+        setSidebarClarificationUnits(res.data.data);
+      }
+    };
     if (userRole.trim() === "unit") {
       dispatch(getClarifications({ awardType: "", search: "", page: 1, limit: 1000 }));
-      // Fetch units for clarification-raised (unit role)
-      Axios.get("/api/applications/units?limit=1000").then(res => {
-        if (res.data && Array.isArray(res.data.data)) {
-          setSidebarClarificationUnits(res.data.data);
-        }
-      });
+      fetchUnits("/api/applications/units?limit=1000");
     } else {
       dispatch(getSubordinateClarifications({ awardType: "", search: "", page: 1, limit: 1000 }));
-      // Fetch units for clarification-raised (higher roles)
-      Axios.get("/api/applications/subordinates?limit=1000").then(res => {
-        if (res.data && Array.isArray(res.data.data)) {
-          setSidebarClarificationUnits(res.data.data);
-        }
-      });
+      fetchUnits("/api/applications/subordinates?limit=1000");
     }
   }, [dispatch, userRole]);
 
-  // Clarification counts (unit-wise)
-  // Received: count of unitClarifications where any parameter has a clarification_id
   const unitClarifications = useAppSelector((state) => state.clarification.unitClarifications);
   const totalReceivedClarifications = Array.isArray(unitClarifications)
     ? unitClarifications.filter(app =>
-        app?.fds?.parameters && app.fds.parameters.some((p: any) => p.clarification_id)
+        app?.fds?.parameters?.some((p: any) => p.clarification_id)
       ).length
     : 0;
 
-  // Raised: count of units where clarifications_count > 0 (from local state)
   const totalRaisedClarifications = Array.isArray(sidebarClarificationUnits)
-    ? sidebarClarificationUnits.filter(unit => (unit.clarifications_count || 0) > 0).length
+    ? sidebarClarificationUnits.filter(unit => (unit.clarifications_count ?? 0) > 0).length
     : 0;
 
-  // Applications to Review count (from Redux)
-  const applicationsToReview = useAppSelector((state) => state.commandPanel.homeCounts?.applicationsToReview || 0);
+  const applicationsToReview = useAppSelector((state) => state.commandPanel.homeCounts?.applicationsToReview ?? 0);
 
   const alwaysVisible = getAlwaysVisible(userRole);
 
-  // Show only the respective dashboard for each role
-  let dashboardItems: typeof sidebarStructure = [];
-  if (userRole === "brigade") {
-    dashboardItems = sidebarStructure.filter(item => item.label === "Brigade Dashboard");
-  } else if (userRole === "division") {
-    dashboardItems = sidebarStructure.filter(item => item.label === "Division Dashboard");
-  } else if (userRole === "corps") {
-    dashboardItems = sidebarStructure.filter(item => item.label === "Corps Dashboard");
-  } else if (userRole === "command") {
-    dashboardItems = sidebarStructure.filter(item => item.label === "Command Dashboard");
-  }
+  // Dashboard items logic
+  const dashboardLabelsMap: Record<string, string> = {
+    brigade: "Brigade Dashboard",
+    division: "Division Dashboard",
+    corps: "Corps Dashboard",
+    command: "Command Dashboard",
+  };
+  const dashboardLabel = dashboardLabelsMap[userRole];
+  const dashboardItems = dashboardLabel
+    ? sidebarStructure.filter(item => item.label === dashboardLabel)
+    : [];
 
-  let filteredStructure = filterSidebarStructure(userRole, alwaysVisible);
-  // Remove dashboard items from filteredStructure if present
-  filteredStructure = filteredStructure.filter(item => !extraDashboardLabels.includes(item.label));
+  let filteredStructure = filterSidebarStructure(userRole, alwaysVisible)
+    .filter(item => !extraDashboardLabels.includes(item.label));
 
-  // Remove 'Home' for brigade, division, corps, command
   if (["brigade", "division", "corps", "command"].includes(userRole)) {
     filteredStructure = filteredStructure.filter(item => item.label !== "Home");
-  }
-
-  if ((userRole === "headquarter") && sidebarStructure.find(item => item.label === "Dashboard")) {
-    filteredStructure = ([sidebarStructure.find(item => item.label === "Dashboard")].filter(Boolean) as typeof sidebarStructure).concat(filteredStructure);
-  }
-
-  if (userRole === "unit") {
-    filteredStructure.push(createSidebarItem("Submitted Forms", SVGICON.sidebar.raisedClarification, "/submitted-forms/list"));
-  }
-
-  if (["brigade", "division", "corps", "command"].includes(userRole)) {
     filteredStructure.push(createSidebarItem("All Applications", SVGICON.sidebar.allApplications, "/all-applications"));
-
     if (userRole !== "brigade") {
       filteredStructure.push(createSidebarItem("Withdraws", SVGICON.sidebar.withdraws, "/withdraw-quests"));
     }
-
     if (!isMember) {
       filteredStructure.push(
         createSidebarItem("History", SVGICON.sidebar.history, "/history"),
@@ -118,11 +91,58 @@ const SidebarMenu = () => {
   if (userRole === "headquarter") {
     filteredStructure.push(createSidebarItem("All Applications", SVGICON.sidebar.allApplications, "/all-applications"));
     filteredStructure = filteredStructure.filter(item => item.label !== "Profile Settings");
+    const dashboardItem = sidebarStructure.find(item => item.label === "Dashboard");
+    if (dashboardItem) {
+      filteredStructure = [dashboardItem, ...filteredStructure];
+    }
+  }
+
+  if (userRole === "unit") {
+    filteredStructure.push(createSidebarItem("Submitted Forms", SVGICON.sidebar.raisedClarification, "/submitted-forms/list"));
   }
 
   if (userRole === "cw2" && ["mo", "ol"].includes(cw2_type)) {
     filteredStructure.push(createSidebarItem("History", SVGICON.sidebar.history, "/history"));
   }
+
+  // Helper to render sidebar item with badge
+  const renderSidebarItemWithBadge = (item: any, badgeCount: number) => (
+    <div key={item.to} style={{ position: "relative" }}>
+      {badgeCount > 0 && (
+        <div style={{
+          position: "absolute",
+          top: -8,
+          right: 8,
+          minWidth: 22,
+          height: 22,
+          padding: "0 6px",
+          background: "#dc3545",
+          color: "#fff",
+          borderRadius: "50%",
+          fontSize: 13,
+          fontWeight: 600,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          zIndex: 2,
+          boxShadow: "0 1px 4px rgba(0,0,0,0.12)",
+        }}>
+          {badgeCount}
+        </div>
+      )}
+      <NavLink
+        to={item.to}
+        className="nav-items d-flex align-items-center fw-5 position-relative text-white py-2"
+      >
+        <div className="d-flex align-items-center text-truncate">
+          <span className="nav-icon me-2 d-inline-flex align-items-center justify-content-center">
+            {item.icon}
+          </span>
+          <span className="text-truncate">{item.label}</span>
+        </div>
+      </NavLink>
+    </div>
+  );
 
   return (
     <aside className="sidebar-menu flex-shrink-0 d-xl-block d-none bg-dark text-white p-3 px-0">
@@ -133,7 +153,6 @@ const SidebarMenu = () => {
         </div>
         <div className="scroll-style-85">
           <div className="sidebar-wrapper mt-3 pb-3">
-            {/* Render dashboard items at the top */}
             {dashboardItems.map((item) => (
               <NavLink
                 to={item.to}
@@ -148,127 +167,23 @@ const SidebarMenu = () => {
                 </div>
               </NavLink>
             ))}
-            {/* Render the Home (Applications to Review) tab with counter only for brigade, division, corps, command */}
             {["brigade", "division", "corps", "command"].includes(userRole) && (
-              <div style={{ position: "relative" }}>
-                {applicationsToReview > 0 && (
-                  <div style={{
-                    position: "absolute",
-                    top: -8,
-                    right: 8,
-                    minWidth: 22,
-                    height: 22,
-                    padding: "0 6px",
-                    background: "#dc3545",
-                    color: "#fff",
-                    borderRadius: "50%",
-                    fontSize: 13,
-                    fontWeight: 600,
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    zIndex: 2,
-                    boxShadow: "0 1px 4px rgba(0,0,0,0.12)",
-                  }}>
-                    {applicationsToReview}
-                  </div>
-                )}
-                <NavLink
-                  to="/applications/list"
-                  className="nav-items d-flex align-items-center fw-5 position-relative text-white py-2"
-                >
-                  <div className="d-flex align-items-center text-truncate">
-                    <span className="nav-icon me-2 d-inline-flex align-items-center justify-content-center">
-                      {SVGICON.sidebar.applications}
-                    </span>
-                    <span className="text-truncate">Applications to Review</span>
-                  </div>
-                </NavLink>
-              </div>
+              renderSidebarItemWithBadge(
+                {
+                  label: "Applications to Review",
+                  icon: SVGICON.sidebar.applications,
+                  to: "/applications/list"
+                },
+                applicationsToReview
+              )
             )}
-            {/* Render the rest of the sidebar items */}
             {filteredStructure.map((item) => {
-              // Show badge above the tab for Clarification Received
               if (item.label === "Clarification Received") {
-                return (
-                  <div key={item.to} style={{ position: "relative" }}>
-                    {totalReceivedClarifications > 0 && (
-                      <div style={{
-                        position: "absolute",
-                        top: -8,
-                        right: 8,
-                        minWidth: 22,
-                        height: 22,
-                        padding: "0 6px",
-                        background: "#dc3545",
-                        color: "#fff",
-                        borderRadius: "50%",
-                        fontSize: 13,
-                        fontWeight: 600,
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        zIndex: 2,
-                        boxShadow: "0 1px 4px rgba(0,0,0,0.12)",
-                      }}>
-                        {totalReceivedClarifications}
-                      </div>
-                    )}
-                    <NavLink
-                      to={item.to}
-                      className="nav-items d-flex align-items-center fw-5 position-relative text-white py-2"
-                    >
-                      <div className="d-flex align-items-center text-truncate">
-                        <span className="nav-icon me-2 d-inline-flex align-items-center justify-content-center">
-                          {item.icon}
-                        </span>
-                        <span className="text-truncate">{item.label}</span>
-                      </div>
-                    </NavLink>
-                  </div>
-                );
+                return renderSidebarItemWithBadge(item, totalReceivedClarifications);
               }
-              // Show badge above the tab for Clarification Raised
               if (item.label === "Clarification Raised") {
-                return (
-                  <div key={item.to} style={{ position: "relative" }}>
-                    {totalRaisedClarifications > 0 && (
-                      <div style={{
-                        position: "absolute",
-                        top: -8,
-                        right: 8,
-                        minWidth: 22,
-                        height: 22,
-                        padding: "0 6px",
-                        background: "#dc3545",
-                        color: "#fff",
-                        borderRadius: "50%",
-                        fontSize: 13,
-                        fontWeight: 600,
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        zIndex: 2,
-                        boxShadow: "0 1px 4px rgba(0,0,0,0.12)",
-                      }}>
-                        {totalRaisedClarifications}
-                      </div>
-                    )}
-                    <NavLink
-                      to={item.to}
-                      className="nav-items d-flex align-items-center fw-5 position-relative text-white py-2"
-                    >
-                      <div className="d-flex align-items-center text-truncate">
-                        <span className="nav-icon me-2 d-inline-flex align-items-center justify-content-center">
-                          {item.icon}
-                        </span>
-                        <span className="text-truncate">{item.label}</span>
-                      </div>
-                    </NavLink>
-                  </div>
-                );
+                return renderSidebarItemWithBadge(item, totalRaisedClarifications);
               }
-              // Default rendering
               return (
                 <NavLink
                   to={item.to}

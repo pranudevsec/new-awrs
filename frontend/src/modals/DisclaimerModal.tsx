@@ -16,7 +16,7 @@ const DisclaimerModal: React.FC<DisclaimerModalProps> = ({ show, onClose, onConf
       </Modal.Header>
       <Modal.Body>
         <p>
-            {message || "Please read the following disclaimer carefully before proceeding."}
+            {message ?? "Please read the following disclaimer carefully before proceeding."}
         </p>
       </Modal.Body>
       <Modal.Footer>

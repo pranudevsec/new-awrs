@@ -496,20 +496,9 @@ const ProfileSettings = () => {
             );
           })}
           {role === "unit" && (
-            <>
               <div className="col-12 mb-3">
-                <label className="form-label fw-6">Awards Received</label>
+                <span className="form-label fw-6">Awards Received</span>
                 <table className="table table-bordered">
-                  <thead>
-                    {awards.length !== 0 && (
-                      <tr>
-                        {/* <th>Type</th>
-                      <th>Brigade</th>
-                      <th>Year</th>
-                      <th>Action</th> */}
-                      </tr>
-                    )}
-                  </thead>
                   <tbody>
                     {awards.map((award, idx) => (
                       <tr key={award.award_id ?? idx}>
@@ -619,7 +608,6 @@ const ProfileSettings = () => {
                   </span>
                 </button>
               </div>
-            </>
           )}
           {!isMember &&(
             <div className="col-12 mt-3">
@@ -632,7 +620,7 @@ const ProfileSettings = () => {
                 onChange={handleCheckboxChange}
               />
               <label className="form-check-label" htmlFor="declarationCheckbox">
-                I agree and declare that the information filled by me is accurate and up-to-date.
+                I agree and declare that the information of Hierarchy/Channel of reporting filled by me is accurate and up-to-date.
               </label>
             </div>
           </div>

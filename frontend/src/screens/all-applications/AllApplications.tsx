@@ -22,7 +22,6 @@ const History = () => {
   // States
   const [awardType, setAwardType] = useState<string | null>(null);
   const [commandType, setCommandType] = useState<string | null>(null);
-  // console.log(commandType);
   const [searchTerm, setSearchTerm] = useState<string>("");
   const [debouncedSearch, setDebouncedSearch] = useState<string>("");
   const [page, setPage] = useState<number>(1);
@@ -41,7 +40,7 @@ const History = () => {
     const fetchData = async () => {
       const params = {
         ...(awardType && awardType !== "All" ? { award_type: awardType } : {}),
-        command_type: commandType === "All" ? undefined : commandType || undefined,
+        command_type: commandType === "All" ? undefined : commandType ?? undefined,
         search: debouncedSearch,
         page,
         limit,
