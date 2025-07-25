@@ -511,13 +511,17 @@ const ProfileSettings = () => {
                               updated[idx].award_type = e.target.value as
                                 | "GOC-in-C"
                                 | "COAS"
-                                | "CDS";
+                                | "CDS"
+                                | "VCOAS"
+                                | "CINCAN";
                               setAwards(updated);
                             }}
                           >
                             <option value="CDS">CDS</option>
                             <option value="COAS">COAS</option>
                             <option value="GOC-in-C">GOC-in-C</option>
+                            <option value="VCOAS">VCOAS</option>
+                            <option value="CINCAN">CINCAN</option>
                           </select>
                         </td>
                         <td>

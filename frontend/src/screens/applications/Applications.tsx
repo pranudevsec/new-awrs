@@ -75,7 +75,7 @@ const Applications = () => {
                   <div
                     role="button"
                     tabIndex={0}
-                    onClick={() => handleCardClick("/applications/citation")}
+                    onClick={() => handleCardClick("/applications/appreciation")}
                     onKeyDown={(e) => {
                       if (e.key === "Enter" || e.key === " ") {
                         e.preventDefault();

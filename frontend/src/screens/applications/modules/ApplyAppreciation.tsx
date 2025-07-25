@@ -710,7 +710,7 @@ const ApplyAppreciation = () => {
                   readOnly
                 />
               </div>
-              <div className="col-lg-3 col-sm-4 mb-sm-0 mb-2">
+              {/* <div className="col-lg-3 col-sm-4 mb-sm-0 mb-2">
                 <FormInput
                   label="Cycle Period"
                   name="cyclePeriod"
@@ -728,7 +728,7 @@ const ApplyAppreciation = () => {
                   onChange={formik.handleChange}
                   readOnly
                 />
-              </div>
+              </div> */}
               <div className="col-lg-3 col-sm-4">
                 <FormInput
                   label="Command"

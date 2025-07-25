@@ -5,7 +5,6 @@ import Header from './components/Header';
 import Topbar from './components/Topbar';
 import Footer from './components/Footer';
 import { Chatbot } from '../screens/Chatbot/Chatbot';
-import bgImg from '../assets/DSC_7849.jpg';
 
 const AuthLayout = ({ children }: { children: React.ReactNode }) => {
     const token = !!useAppSelector((state) => state.admin).admin?.token;

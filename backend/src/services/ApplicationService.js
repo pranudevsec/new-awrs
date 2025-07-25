@@ -531,7 +531,7 @@ exports.getApplicationsOfSubordinates = async (user, query) => {
 
     const hierarchy = ["unit", "brigade", "division", "corps", "command"];
     const currentIndex = hierarchy.indexOf(user_role.toLowerCase());
-    if (currentIndex === -1 || currentIndex === 0) {
+    if (currentIndex <= 0) {
       throw new Error("Invalid or lowest level user role");
     }
 
@@ -558,9 +558,10 @@ exports.getApplicationsOfSubordinates = async (user, query) => {
       });
     }
 
-    // --- Filter construction ---
     let baseFilters = "";
     const queryParams = [unitIds];
+    const roleLC = user_role.toLowerCase();
+
     if (isGetWithdrawRequests) {
       baseFilters = `
         unit_id = ANY($1) AND (
@@ -578,7 +579,7 @@ exports.getApplicationsOfSubordinates = async (user, query) => {
         AND last_approved_by_role = $4
       `;
       queryParams.push(user_role, user.user_id, lowerRole);
-    } else if (isShortlisted && user_role.toLowerCase() === "command") {
+    } else if (isShortlisted && roleLC === "command") {
       baseFilters = `
         unit_id = ANY($1)
         AND (
@@ -595,14 +596,13 @@ exports.getApplicationsOfSubordinates = async (user, query) => {
         AND last_shortlisted_approved_role = $2
       `;
       queryParams.push(user_role);
-    } else if (user_role.toLowerCase() === "brigade") {
+    } else if (roleLC === "brigade") {
       baseFilters = `unit_id = ANY($1) AND status_flag NOT IN ('approved', 'draft', 'shortlisted_approved', 'rejected') AND (last_approved_by_role IS NULL OR last_approved_at IS NULL)`;
     } else {
       baseFilters = `unit_id = ANY($1) AND status_flag = 'approved' AND status_flag NOT IN ('draft', 'shortlisted_approved', 'rejected') AND last_approved_by_role = $2`;
       queryParams.push(lowerRole);
     }
 
-    // --- Queries ---
     const citationQuery = `
       SELECT 
         citation_id AS id,
@@ -644,14 +644,14 @@ exports.getApplicationsOfSubordinates = async (user, query) => {
     ]);
     let allApps = [...citations.rows, ...appreciations.rows];
 
-    // --- Filtering ---
+    const normalize = (str) => str?.toString().toLowerCase().replace(/[\s-]/g, "");
+
     if (award_type) {
       allApps = allApps.filter(
         (app) => app.fds?.award_type?.toLowerCase() === award_type.toLowerCase()
       );
     }
-    const normalize = (str) =>
-      str?.toString().toLowerCase().replace(/[\s-]/g, "")
+
     if (search) {
       const searchLower = normalize(search);
       allApps = allApps.filter((app) => {
@@ -661,7 +661,6 @@ exports.getApplicationsOfSubordinates = async (user, query) => {
       });
     }
 
-    // --- Clarification linking ---
     const clarificationIds = [];
     allApps.forEach((app) => {
       app.fds?.parameters?.forEach((param) => {
@@ -681,7 +680,6 @@ exports.getApplicationsOfSubordinates = async (user, query) => {
       }, {});
     }
 
-    // --- Map clarification data to parameters ---
     allApps = allApps.map((app) => ({
       ...app,
       fds: {
@@ -694,7 +692,6 @@ exports.getApplicationsOfSubordinates = async (user, query) => {
       },
     }));
 
-    // --- Clarification count and cleaning ---
     let total_pending_clarifications = 0;
     allApps = allApps.map((app) => {
       let clarifications_count = 0;
@@ -722,7 +719,6 @@ exports.getApplicationsOfSubordinates = async (user, query) => {
       allApps = allApps.filter((app) => app.clarifications_count === 0);
     }
 
-    // --- Shortlisted logic ---
     if (isShortlisted) {
       const unitIdSet = [...new Set(allApps.map((app) => app.unit_id))];
       const unitDetailsRes = await client.query(
@@ -770,9 +766,7 @@ exports.getApplicationsOfSubordinates = async (user, query) => {
         };
       });
 
-      // Role-based priority sorting
-      const currentRole = user_role?.toLowerCase();
-      const currentRoleIndex = hierarchy.indexOf(currentRole);
+      const currentRoleIndex = hierarchy.indexOf(roleLC);
       if (currentRoleIndex > 0) {
         const lowerRole = hierarchy[currentRoleIndex - 1];
         allApps.sort((a, b) => {
@@ -783,7 +777,6 @@ exports.getApplicationsOfSubordinates = async (user, query) => {
       }
     }
 
-    // --- Sort and paginate ---
     allApps.sort((a, b) => new Date(b.date_init) - new Date(a.date_init));
     const pageInt = parseInt(page);
     const limitInt = parseInt(limit);
@@ -814,6 +807,7 @@ exports.getApplicationsOfSubordinates = async (user, query) => {
     client.release();
   }
 };
+
 
 exports.getApplicationsScoreboard = async (user, query) => {
   const client = await dbService.getClient();
