@@ -1,4 +1,5 @@
 import { useEffect, useState, type FormEvent } from "react";
+import { useNavigate } from "react-router-dom";
 import { useFormik } from "formik";
 import { unwrapResult } from "@reduxjs/toolkit";
 import toast from "react-hot-toast";
@@ -46,6 +47,7 @@ hierarchicalStructure.forEach(([command, corps, division, brigade, unit]) => {
 
 const ProfileSettings = () => {
   const dispatch = useAppDispatch();
+  const navigate = useNavigate();
   const { profile } = useAppSelector((state) => state.admin);
 
   const isMember = profile?.user?.is_member ?? false;
@@ -302,6 +304,9 @@ const ProfileSettings = () => {
         if (result.success) {
           resetForm();
           await dispatch(getProfile());
+          if ((role || "").toLowerCase() === "unit") {
+            navigate("/");
+          }
         }
       } catch (err) {
         console.error("Update failed", err);

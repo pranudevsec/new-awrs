@@ -79,6 +79,7 @@ const ApplicationDetails = () => {
   const [clarificationClarificationForView, setClarificationClarificationForView] = useState<string | null>(null);
   const [reviewerClarificationForView, setReviewerClarificationForView] = useState<string | null>(null);
   const [approvedMarksState, setApprovedMarksState] = useState<Record<string, string>>({});
+  const [approvedCountState, setApprovedCountState] = useState<Record<string, string>>({});
   const [remarksError, setRemarksError] = useState<string | null>(null);
   const [graceMarks, setGraceMarks] = useState("");
   const [decisions, setDecisions] = useState<{ [memberId: string]: string }>({});
@@ -145,7 +146,11 @@ const ApplicationDetails = () => {
 
     const approvedMarks = parameters.reduce((acc, param) => {
       const isRejected = param.clarification_details?.clarification_status === "rejected";
-      return acc + (isRejected ? 0 : Number(param.approved_marks ?? 0));
+      if (isRejected) {
+        return acc;
+      }
+      const approved_marks = Number(param.approved_marks ?? 0);
+      return acc + approved_marks;
     }, 0);
 
     // Calculate negativeMarks
@@ -204,10 +209,18 @@ const ApplicationDetails = () => {
   useEffect(() => {
     if (unitDetail?.fds?.parameters && profile) {
       const initialMarks: Record<string, string> = {};
+      const initialCounts: Record<string, string> = {};
       const initialComments: Record<string, string> = {};
 
       unitDetail.fds.parameters.forEach((param: any) => {
-        initialMarks[param.name] = param.approved_marks ?? "";
+        // This logic ensures that we don't overwrite user input on re-renders.
+        // We only set the initial value if the user hasn't touched the field yet.
+        if (approvedMarksState[param.id] === undefined) {
+          initialMarks[param.id] = param.approved_marks ?? "";
+        }
+        if (approvedCountState[param.id] === undefined) {
+          initialCounts[param.id] = param.approved_count ?? "";
+        }
 
         const matchingComments = (param.comments ?? []).filter(
           (c: any) =>
@@ -219,30 +232,54 @@ const ApplicationDetails = () => {
           const latest = matchingComments.reduce((a: any, b: any) =>
             new Date(a.commented_at) > new Date(b.commented_at) ? a : b
           );
-          initialComments[param.name] = latest.comment ?? "";
+          initialComments[param.id] = latest.comment ?? "";
         } else {
-          initialComments[param.name] = "";
+          initialComments[param.id] = "";
         }
       });
 
-      setApprovedMarksState(initialMarks);
-      setCommentsState(initialComments);
+      // Merge the initial values with the existing state.
+      // This preserves any values the user has already entered.
+      setApprovedMarksState((prev) => ({ ...initialMarks, ...prev }));
+      setApprovedCountState((prev) => ({ ...initialCounts, ...prev }));
+      setCommentsState((prev) => ({ ...initialComments, ...prev }));
     }
   }, [unitDetail, profile]);
 
-  const handleSave = async (paramName: string, marks: string) => {
-    if (marks === undefined) return;
+  const handleSave = async (paramId: string, approvedCountRaw: string) => {
+    if (approvedCountRaw === undefined) return;
+
+    const parameters = unitDetail?.fds?.parameters ?? [];
+    const param = parameters.find((p: any) => p.id === paramId);
+    if (!param) return;
+
+    const approved_count = Number(approvedCountRaw);
+    const marks = Number(param.marks ?? 0);
+    const count = Number(param.count ?? 0);
+
+    let finalApprovedMarks = 0;
+    if (count > 0) {
+      finalApprovedMarks = approved_count * (marks / count);
+    }
 
     const body = {
       type: unitDetail?.type ?? "citation",
       application_id: unitDetail?.id ?? 0,
-      parameters: [{ name: paramName, approved_marks: marks }],
+      parameters: [
+        {
+          id: paramId,
+          approved_marks: finalApprovedMarks,
+          approved_count: approved_count,
+        },
+      ],
     };
 
     try {
       await dispatch(approveMarks(body)).unwrap();
       dispatch(fetchApplicationUnitDetail({ award_type, numericAppId }));
-      const updatedStats = calculateParameterStats(unitDetail?.fds?.parameters);
+      const updatedStats = calculateParameterStats(
+        unitDetail?.fds?.parameters
+      );
       setParamStats(updatedStats);
     } catch (err) {
       console.error("Failed to save approved marks:", err);
@@ -250,9 +287,28 @@ const ApplicationDetails = () => {
   };
 
   const debouncedHandleSave = useDebounce(handleSave, 600);
-  const handleInputChange = (paramName: string, value: string) => {
-    setApprovedMarksState((prev) => ({ ...prev, [paramName]: value }));
-    debouncedHandleSave(paramName, value);
+
+  const handleCountChange = (paramId: string, value: string) => {
+    setApprovedCountState((prev) => ({ ...prev, [paramId]: value }));
+
+    // Also update the approved marks state for immediate UI feedback
+    const parameters = unitDetail?.fds?.parameters ?? [];
+    const param = parameters.find((p: any) => p.id === paramId);
+    if (param) {
+      const approved_count = Number(value);
+      const marks = Number(param.marks ?? 0);
+      const count = Number(param.count ?? 0);
+      let finalApprovedMarks = 0;
+      if (count > 0) {
+        finalApprovedMarks = approved_count * (marks / count);
+      }
+      setApprovedMarksState((prev) => ({
+        ...prev,
+        [paramId]: finalApprovedMarks.toFixed(2),
+      }));
+    }
+
+    debouncedHandleSave(paramId, value);
   };
 
   useEffect(() => {
@@ -315,7 +371,7 @@ const ApplicationDetails = () => {
     })
     .filter(Boolean);
 
-  const handleSaveComment = (paramName: string, comment: string) => {
+  const handleSaveComment = (paramId: string, comment: string) => {
     if (!comment) return;
 
     const body: any = {
@@ -323,10 +379,10 @@ const ApplicationDetails = () => {
       application_id: unitDetail?.id ?? 0,
     };
 
-    if (paramName === "__application__") {
+    if (paramId === "__application__") {
       body.comment = comment;
     } else {
-      body.parameters = [{ name: paramName, comment }];
+      body.parameters = [{ name: paramId, comment }];
     }
 
     dispatch(addApplicationComment(body))
@@ -360,9 +416,9 @@ const ApplicationDetails = () => {
 
   const debouncedHandleSaveComment = useDebounce(handleSaveComment, 600);
 
-  const handleCommentChange = (paramName: string, value: string) => {
-    setCommentsState((prev) => ({ ...prev, [paramName]: value }));
-    debouncedHandleSaveComment(paramName, value);
+  const handleCommentChange = (paramId: string, value: string) => {
+    setCommentsState((prev) => ({ ...prev, [paramId]: value }));
+    debouncedHandleSaveComment(paramId, value);
   };
 
   useEffect(() => {
@@ -412,105 +468,105 @@ const ApplicationDetails = () => {
     }
   };
   // with token
-  const handleAddsignature = async (member: any, memberdecision: string) => {
-    const newDecisions: { [memberId: string]: string } = {
-      ...decisions,
-      [member.id]: memberdecision,
-    };
-    setDecisions(newDecisions);
-
-    const result = await dispatch(
-      TokenValidation({ inputPersID: member.ic_number })
-    );
-    if (TokenValidation.fulfilled.match(result)) {
-      const isValid = result.payload.vaildId;
-      if (!isValid) {
-        return;
-      }
-      const SignPayload = {
-        data: {
-          application_id,
-          member,
-          type: unitDetail?.type,
-        },
-      };
-      const response = await dispatch(getSignedData(SignPayload));
-
-      const updatePayload = {
-        id: unitDetail?.id,
-        type: unitDetail?.type,
-        member: {
-          name: member.name,
-          ic_number: member.ic_number,
-          member_type: member.member_type,
-          member_id: member.id,
-          is_signature_added: true,
-          sign_digest: response.payload,
-        },
-        level: profile?.user?.user_role,
-      };
-      console.log(updatePayload);
-      if (memberdecision === "accepted") {
-        dispatch(updateApplication(updatePayload)).then(() => {
-          dispatch(fetchApplicationUnitDetail({ award_type, numericAppId }));
-          const allOthersAccepted = profile?.unit?.members
-            .filter((m: any) => m.id !== member.id)
-            .every((m: any) => decisions[m.id] === "accepted");
-
-          if (allOthersAccepted && memberdecision === "accepted") {
-            navigate("/applications/list");
-          }
-        });
-      } else if (memberdecision === "rejected") {
-        dispatch(
-          updateApplication({
-            ...updatePayload,
-            status: "rejected",
-          })
-        ).then(() => {
-          navigate("/applications/list");
-        });
-      }
-    }
-  };
-
-  // without token
   // const handleAddsignature = async (member: any, memberdecision: string) => {
-  //   const updatePayload = {
-  //     id: unitDetail?.id,
-  //     type: unitDetail?.type,
-  //     member: {
-  //       name: member.name,
-  //       ic_number: member.ic_number,
-  //       member_type: member.member_type,
-  //       member_id: member.id,
-  //       is_signature_added: true,
-  //       sign_digest: "something while developing",
-  //     },
-  //     level: profile?.user?.user_role,
+  //   const newDecisions: { [memberId: string]: string } = {
+  //     ...decisions,
+  //     [member.id]: memberdecision,
   //   };
-  //   if (memberdecision === "accepted") {
-  //     dispatch(updateApplication(updatePayload)).then(() => {
-  //       dispatch(fetchApplicationUnitDetail({ award_type, numericAppId }));
-  //       const allOthersAccepted = profile?.unit?.members
-  //         .filter((m: any) => m.id !== member.id)
-  //         .every((m: any) => decisions[m.id] === "accepted");
-  //       if (allOthersAccepted && memberdecision === "accepted") {
+  //   setDecisions(newDecisions);
+
+  //   const result = await dispatch(
+  //     TokenValidation({ inputPersID: member.ic_number })
+  //   );
+  //   if (TokenValidation.fulfilled.match(result)) {
+  //     const isValid = result.payload.vaildId;
+  //     if (!isValid) {
+  //       return;
+  //     }
+  //     const SignPayload = {
+  //       data: {
+  //         application_id,
+  //         member,
+  //         type: unitDetail?.type,
+  //       },
+  //     };
+  //     const response = await dispatch(getSignedData(SignPayload));
+
+  //     const updatePayload = {
+  //       id: unitDetail?.id,
+  //       type: unitDetail?.type,
+  //       member: {
+  //         name: member.name,
+  //         ic_number: member.ic_number,
+  //         member_type: member.member_type,
+  //         member_id: member.id,
+  //         is_signature_added: true,
+  //         sign_digest: response.payload,
+  //       },
+  //       level: profile?.user?.user_role,
+  //     };
+  //     console.log(updatePayload);
+  //     if (memberdecision === "accepted") {
+  //       dispatch(updateApplication(updatePayload)).then(() => {
+  //         dispatch(fetchApplicationUnitDetail({ award_type, numericAppId }));
+  //         const allOthersAccepted = profile?.unit?.members
+  //           .filter((m: any) => m.id !== member.id)
+  //           .every((m: any) => decisions[m.id] === "accepted");
+
+  //         if (allOthersAccepted && memberdecision === "accepted") {
+  //           navigate("/applications/list");
+  //         }
+  //       });
+  //     } else if (memberdecision === "rejected") {
+  //       dispatch(
+  //         updateApplication({
+  //           ...updatePayload,
+  //           status: "rejected",
+  //         })
+  //       ).then(() => {
   //         navigate("/applications/list");
-  //       }
-  //     });
-  //   } else if (memberdecision === "rejected") {
-  //     console.log(memberdecision);
-  //     dispatch(
-  //       updateApplication({
-  //         ...updatePayload,
-  //         status: "rejected",
-  //       })
-  //     ).then(() => {
-  //       navigate("/applications/list");
-  //     });
+  //       });
+  //     }
   //   }
   // };
+
+  // without token
+  const handleAddsignature = async (member: any, memberdecision: string) => {
+    const updatePayload = {
+      id: unitDetail?.id,
+      type: unitDetail?.type,
+      member: {
+        name: member.name,
+        ic_number: member.ic_number,
+        member_type: member.member_type,
+        member_id: member.id,
+        is_signature_added: true,
+        sign_digest: "something while developing",
+      },
+      level: profile?.user?.user_role,
+    };
+    if (memberdecision === "accepted") {
+      dispatch(updateApplication(updatePayload)).then(() => {
+        dispatch(fetchApplicationUnitDetail({ award_type, numericAppId }));
+        const allOthersAccepted = profile?.unit?.members
+          .filter((m: any) => m.id !== member.id)
+          .every((m: any) => decisions[m.id] === "accepted");
+        if (allOthersAccepted && memberdecision === "accepted") {
+          navigate("/applications/list");
+        }
+      });
+    } else if (memberdecision === "rejected") {
+      console.log(memberdecision);
+      dispatch(
+        updateApplication({
+          ...updatePayload,
+          status: "rejected",
+        })
+      ).then(() => {
+        navigate("/applications/list");
+      });
+    }
+  };
   const handleConfirmDecision = async () => {
     if (pendingDecision) {
       const { member, decision } = pendingDecision;
@@ -595,7 +651,8 @@ const ApplicationDetails = () => {
     const rows: JSX.Element[] = [];
 
     const isRejected = param?.clarification_details?.clarification_status === "rejected";
-    const approvedMarksValue = isRejected ? "0" : approvedMarksState[param.name] ?? "";
+    const approvedMarksValue = isRejected ? "0" : approvedMarksState[param.id] ?? "";
+    const approvedCountValue = isRejected ? "0" : approvedCountState[param.id] ?? "";
     const clarificationDetails = param?.clarification_details;
     const hasClarification = clarificationDetails?.clarification && clarificationDetails?.clarification_id;
     const clarificationStatus = clarificationDetails?.clarification_status;
@@ -649,11 +706,22 @@ const ApplicationDetails = () => {
               <input
                 type="text"
                 className="form-control"
+                placeholder="Enter approved count"
+                autoComplete="off"
+                value={approvedCountValue}
+                disabled={isRejected}
+                onChange={(e) => handleCountChange(param.id, e.target.value)}
+              />
+            </td>
+            <td style={{ width: 200 }}>
+              <input
+                type="text"
+                className="form-control"
                 placeholder="Enter approved marks"
                 autoComplete="off"
                 value={approvedMarksValue}
                 disabled={isRejected}
-                onChange={(e) => handleInputChange(param.name, e.target.value)}
+                readOnly
               />
             </td>
 
@@ -884,6 +952,7 @@ const ApplicationDetails = () => {
 
                 {!isUnitRole && !isHeadquarter && (
                   <>
+                    <th style={{ width: 200, color: "white" }}>Approved Count</th>
                     <th style={{ width: 200, color: "white" }}>Approved Marks</th>
                     {!isRaisedScreen && (
                       <th style={{ width: 150, color: "white" }}>Ask Clarification</th>
@@ -1135,7 +1204,7 @@ const ApplicationDetails = () => {
                                             handleDecisionClick(member, "accepted")
                                           }
                                         >
-                                          Accept
+                                          Recommend
                                         </button>
                                       )}
                                       <button
@@ -1409,7 +1478,7 @@ const ApplicationDetails = () => {
                                             handleDecisionClick(member, "accepted")
                                           }
                                         >
-                                          Accept
+                                          Recommend
                                         </button>
                                       )}
                                       <button

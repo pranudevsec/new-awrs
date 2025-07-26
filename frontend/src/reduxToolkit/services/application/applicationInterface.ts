@@ -78,7 +78,8 @@ export interface ApproveMarksParam {
   application_id: number;
   applicationPriorityPoints?: number;
   parameters: {
-    name: string;
+    id: string;
+    approved_count: string | number;
     approved_marks: string | number;
   }[];
 }

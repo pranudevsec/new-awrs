@@ -21,7 +21,7 @@ const UnitDashboard = ({ level }: { level: "brigade" | "division" | "corps" | "c
 
   // Get data from redux
   const loading = useAppSelector(state => state.application.loading);
-  const profile = useAppSelector(state => state.admin.profile);
+  // const profile = useAppSelector(state => state.admin.profile);
 
   // Fetch data on mount
   useEffect(() => {
@@ -59,9 +59,7 @@ const UnitDashboard = ({ level }: { level: "brigade" | "division" | "corps" | "c
   ).length;
   const rejected = historyUnits.filter((u: any) => {
     const status = (u.status_flag ?? '').toLowerCase();
-    const rejectedBy = u.last_rejected_by_role ?? '';
-    const userRole = profile?.user?.user_role ?? '';
-    return status === "rejected" && rejectedBy.toLowerCase() === userRole.toLowerCase();
+    return status === "rejected";
   }).length;
 
   // Compose dashboardStats object for components

@@ -8,6 +8,8 @@ import Pagination from "../../../components/ui/pagination/Pagination";
 import ReqSignatureApproveModal from "../../../modals/ReqSignatureApproveModal";
 import { awardTypeOptions } from "../../../data/options";
 import { SVGICON } from "../../../constants/iconsList";
+import jsPDF from "jspdf";
+import autoTable from "jspdf-autotable";
 import { useAppDispatch, useAppSelector } from "../../../reduxToolkit/hooks";
 import {
   approveApplications,
@@ -19,6 +21,14 @@ import {
   TokenValidation,
   getSignedData,
 } from "../../../reduxToolkit/services/application/applicationService";
+
+declare module "jspdf" {
+  interface jsPDF {
+    lastAutoTable: {
+      finalY: number;
+    };
+  }
+}
 
 const hierarchy = ["unit", "brigade", "division", "corps", "command"];
 const allRoles = ["brigade", "division", "corps", "command"];
@@ -321,6 +331,91 @@ const AcceptedApplicationsList = () => {
     }
   };
 
+  const handleExportPDF = () => {
+  const doc = new jsPDF();
+
+  // 1. Presiding Officer & Members
+  const memberHeaders = ["Type", "IC Number", "Rank", "Name", "Appointment"];
+  const memberRows = [];
+
+  const presiding = profile?.unit?.members?.find((m: any) => m.member_type === "presiding_officer");
+  const members = profile?.unit?.members?.filter((m: any) => m.member_type !== "presiding_officer");
+
+  if (presiding) {
+    memberRows.push(["Presiding Officer", presiding.rank, presiding.name, presiding.appointment]);
+  }
+  if (members && members.length > 0) {
+    members.forEach((m: any) => {
+      memberRows.push(["Member Officer", m.rank, m.name, m.appointment]);
+    });
+  }
+
+  autoTable(doc, {
+    head: [memberHeaders],
+    body: memberRows,
+    startY: 10,
+    theme: 'grid',
+    headStyles: { fillColor: [41, 128, 185] },
+  });
+
+  // 2. Text paragraphs
+  let currentY = doc.lastAutoTable?.finalY ? doc.lastAutoTable.finalY + 10 : 30;
+
+const paragraphs = [
+  "1. The Bd of Offr for evaluating COAS Unit Citation and COAS Cert of Appre assembled pursuant to Convening Order referred above on 20 Nov 2024 and subsequent days.",
+  "2. A total of 127 (One Hundred Twenty Seven) citations as per details given at Appx A were recd from Comd theatres for COAS / GOC-in-C Unit Citation.",
+  "3. Based on merit as per policy on COAS Unit Citation and Cert of Appre promulgated vide CW Dte (CW-2), AG’s Branch, IHQ of MoD (Army) letter No B/43057/UC/AG/CW-2 dt 29 Apr 22 and HQ Northern Comd SOP No 01/2022 issued vide this HQ letters No 23104/5/IR/2A(Cer) dt 31 Aug 22 and even No dt 16 Sep 22, a total of 36 (Thirty Six) units have been recommended for COAS Unit Citation and total of 07 (Seven) units have been recommended for COAS Cert of Appre. The bd for GOC-in-C Unit Citation will be considered separately on declaration of COAS Unit Citation and Cert of Appre.",
+  "4. Based on the overall performance of the Units, the Bd recommends the fwg units for COAS Unit Citation:"
+];
+
+paragraphs.forEach((para) => {
+  const lines = doc.splitTextToSize(para, 180); // wrap text at 180 width
+  doc.text(lines, 14, currentY);
+  currentY += lines.length * 8 + 5; // Adjust spacing between paragraphs
+});
+
+  // 3. Applications Table
+  const appHeaders = [
+    ["S. No", "Type", "Unit ID", "Unit Name", "Location", "Brigade", "Division", "Corps", "Command", "-ve Marks",
+    ...allowedRoles.map(r => `Points By ${r}`),
+    "Discretionary", ...(role === "headquarter" ? ["Command"] : []),
+    "Total", ...(role !== "brigade" ? ["Lower Priority"] : []),
+    ...(role === "command" ? ["Status"] : []),
+    `${role.charAt(0).toUpperCase() + role.slice(1)} Priority`]
+  ];
+
+  const appRows = units.map((unit: any) => [
+    `#${unit.id}`,
+    unit.type,
+    `#${unit.unit_id}`,
+    unit.unit_details?.name ?? "-",
+    unit.unit_details?.location ?? "-",
+    unit.unit_details?.bde ?? "-",
+    unit.unit_details?.div ?? "-",
+    unit.unit_details?.corps ?? "-",
+    unit.unit_details?.comd ?? "-",
+    unit?.totalNegativeMarks ?? "-",
+    ...allowedRoles.map((r) => getDiscretionaryMarksByRole(unit, r)),
+    graceMarksValues[String(unit.id)]?.[unit.type] ?? "",
+    ...(role === "headquarter" ? [unit?.fds?.command ?? "-"] : []),
+    getTotalMarks(unit),
+    ...(role !== "brigade" ? [getLowerRolePriority(unit)] : []),
+    ...(role === "command" ? [unit?.status_flag === "approved" ? "Approved" : "Pending"] : []),
+    priorityValues[String(unit.id)]?.[unit.type] ?? "",
+  ]);
+
+  autoTable(doc, {
+    head: appHeaders,
+    body: appRows,
+    startY: currentY + 10,
+    theme: 'grid',
+    headStyles: { fillColor: [52, 73, 94] },
+    styles: { fontSize: 6 }
+  });
+
+  doc.save("accepted-applications.pdf");
+};
+
   return (
     <div className="clarification-section" style={{ maxWidth: "80vw" }}>
       <div className="d-flex flex-sm-row flex-column align-items-sm-center justify-content-between mb-4">
@@ -331,6 +426,9 @@ const AcceptedApplicationsList = () => {
             { label: "Accepted Applications", href: "/application/accepted" },
           ]}
         />
+        <button className="btn btn-primary" onClick={handleExportPDF}>
+          Recommendation Report
+        </button>
       </div>
 
       <div className="filter-wrapper d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
@@ -629,51 +727,6 @@ const AcceptedApplicationsList = () => {
                       </div>
                     ) : (
                       // with token
-                      <div className="d-flex align-items-center gap-2">
-                        <button
-                          className="_btn success"
-                          onClick={async () => {
-                            const priorityExists = unit?.fds?.applicationPriority?.some(
-                              (p: any) => p.role === role && p.priority != null
-                            );
-
-                            if (!priorityExists) {
-                              toast.error(`Please add priority for the ${role} role before approving.`);
-                              return;
-                            }
-
-                            try {
-                              const graceMarksExist = unit?.fds?.applicationGraceMarks?.some(
-                                (m: any) => m.role === role && m.marks != null
-                              );
-
-                              if (!graceMarksExist) {
-                                toast.error(
-                                  `Please add Discretionary Points for the ${role} role before approving.`
-                                );
-                                return;
-                              }
-                              await handleAddsignature("approved", unit);
-                            } catch (error) {
-                              console.log("error ->", error)
-                              toast.error("Error while approving the application.");
-                            }
-                          }}
-                        >
-                          Approve
-                        </button>
-
-                        <button
-                          className="_btn danger"
-                          onClick={async () => {
-                            await handleAddsignature("rejected", unit);
-                          }}
-                        >
-                          Reject
-                        </button>
-                      </div>
-
-                      // without token 
                       // <div className="d-flex align-items-center gap-2">
                       //   <button
                       //     className="_btn success"
@@ -698,16 +751,9 @@ const AcceptedApplicationsList = () => {
                       //           );
                       //           return;
                       //         }
-                      //         await dispatch(
-                      //           updateApplication({
-                      //             id: unit?.id,
-                      //             type: unit?.type,
-                      //             status: "approved",
-                      //           })
-                      //         ).unwrap();
-                      //         // If all checks pass, navigate
-                      //         navigate("/applications/list");
+                      //         await handleAddsignature("approved", unit);
                       //       } catch (error) {
+                      //         console.log("error ->", error)
                       //         toast.error("Error while approving the application.");
                       //       }
                       //     }}
@@ -717,21 +763,73 @@ const AcceptedApplicationsList = () => {
 
                       //   <button
                       //     className="_btn danger"
-                      //     onClick={() => {
-                      //       dispatch(
-                      //         updateApplication({
-                      //           id: unit?.id,
-                      //           type: unit?.type,
-                      //           status: "rejected",
-                      //         })
-                      //       ).then(() => {
-                      //         navigate("/applications/list");
-                      //       });
+                      //     onClick={async () => {
+                      //       await handleAddsignature("rejected", unit);
                       //     }}
                       //   >
                       //     Reject
                       //   </button>
                       // </div>
+
+                      // without token 
+                      <div className="d-flex align-items-center gap-2">
+                        <button
+                          className="_btn success"
+                          onClick={async () => {
+                            const priorityExists = unit?.fds?.applicationPriority?.some(
+                              (p: any) => p.role === role && p.priority != null
+                            );
+
+                            if (!priorityExists) {
+                              toast.error(`Please add priority for the ${role} role before approving.`);
+                              return;
+                            }
+
+                            try {
+                              const graceMarksExist = unit?.fds?.applicationGraceMarks?.some(
+                                (m: any) => m.role === role && m.marks != null
+                              );
+
+                              if (!graceMarksExist) {
+                                toast.error(
+                                  `Please add Discretionary Points for the ${role} role before approving.`
+                                );
+                                return;
+                              }
+                              await dispatch(
+                                updateApplication({
+                                  id: unit?.id,
+                                  type: unit?.type,
+                                  status: "approved",
+                                })
+                              ).unwrap();
+                              // If all checks pass, navigate
+                              navigate("/applications/list");
+                            } catch (error) {
+                              toast.error("Error while approving the application.");
+                            }
+                          }}
+                        >
+                          Approve
+                        </button>
+
+                        <button
+                          className="_btn danger"
+                          onClick={() => {
+                            dispatch(
+                              updateApplication({
+                                id: unit?.id,
+                                type: unit?.type,
+                                status: "rejected",
+                              })
+                            ).then(() => {
+                              navigate("/applications/list");
+                            });
+                          }}
+                        >
+                          Reject
+                        </button>
+                      </div>
                     )}
                   </td>
 

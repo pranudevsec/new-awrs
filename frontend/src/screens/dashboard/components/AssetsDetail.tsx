@@ -12,7 +12,7 @@ const AssetsDetail: React.FC<ProductDetailProps> = ({ dashboardStats }) => {
                     <div className="card bg-pending d-flex flex-row align-items-center justify-content-between h-100">
                         <div className="left-content d-flex flex-wrap flex-xxl-row flex-xl-column flex-md-row flex-sm-column align-items-center gap-2">
                             <div className="text ">
-                                <h6 className="fw-4 mb-2">Application Pending</h6>
+                                <h6 className="fw-4 mb-2">Pending Applications</h6>
                                 <h4 className="fw-6 font-lexend color-pending">{dashboardStats?.totalPendingApplications ?? 0}</h4>
                             </div>
                         </div>
@@ -22,7 +22,7 @@ const AssetsDetail: React.FC<ProductDetailProps> = ({ dashboardStats }) => {
                     <div className="card bg-request d-flex flex-row align-items-center justify-content-between h-100">
                         <div className="left-content d-flex flex-wrap flex-xxl-row flex-xl-column flex-md-row flex-sm-column align-items-center gap-2">
                             <div className="text">
-                                <h6 className="fw-4 mb-2">Accepted Applications</h6>
+                                <h6 className="fw-4 mb-2">Recommended Applications</h6>
                                 <h4 className="fw-6 font-lexend color-request">{dashboardStats?.acceptedApplications ?? 0}</h4>
                             </div>
                         </div>

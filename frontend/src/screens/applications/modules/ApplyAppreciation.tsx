@@ -690,56 +690,12 @@ const ApplyAppreciation = () => {
       <div className="d-flex flex-sm-row flex-column align-items-sm-center justify-content-between mb-4">
         <Breadcrumb
           title="Apply For Appreciation"
-          paths={[
-            { label: "Home", href: "/applications" },
-            { label: "Apply For Appreciation", href: "/applications/appreciation" },
-          ]}
         />
       </div>
 
       {Object.keys(groupedParams).length === 0 ?
         <EmptyTable /> :
         <form onSubmit={formik.handleSubmit}>
-          <div className="table-filter-area mb-4">
-            <div className="row">
-              <div className="col-lg-3 col-sm-4 mb-sm-0 mb-2">
-                <FormInput
-                  label="Award Type"
-                  name="awardType"
-                  value="Appreciation"
-                  readOnly
-                />
-              </div>
-              {/* <div className="col-lg-3 col-sm-4 mb-sm-0 mb-2">
-                <FormInput
-                  label="Cycle Period"
-                  name="cyclePeriod"
-                  value={formik.values.cyclePeriod}
-                  onChange={formik.handleChange}
-                  readOnly
-                />
-              </div>
-              <div className="col-lg-3 col-sm-4">
-                <FormInput
-                  label="Last Date"
-                  name="lastDate"
-                  type="date"
-                  value={formik.values.lastDate}
-                  onChange={formik.handleChange}
-                  readOnly
-                />
-              </div> */}
-              <div className="col-lg-3 col-sm-4">
-                <FormInput
-                  label="Command"
-                  name="command"
-                  value={profile?.unit?.comd ?? "--"}
-                  onChange={formik.handleChange}
-                  readOnly
-                />
-              </div>
-            </div>
-          </div>
           <div className="position-sticky top-0 bg-white pb-3 mb-3" style={{ zIndex: 10, borderBottom: '1px solid #dee2e6' }}>
             <Tabs
               activeKey={activeTab}

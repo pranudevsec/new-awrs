@@ -1320,11 +1320,12 @@ exports.approveApplicationMarks = async (user, body) => {
     function updateParameterMarks(params, approvedParams) {
       if (!Array.isArray(params) || !Array.isArray(approvedParams)) return params;
       return params.map((param) => {
-        const approvedParam = approvedParams.find((p) => p.name === param.name);
+        const approvedParam = approvedParams.find((p) => p.id === param.id);
         if (approvedParam) {
           return {
             ...param,
             approved_marks: approvedParam.approved_marks,
+            approved_count: approvedParam.approved_count,
             approved_by_user: user.user_id,
             approved_by_role: user.user_role,
             approved_marks_at: now,
