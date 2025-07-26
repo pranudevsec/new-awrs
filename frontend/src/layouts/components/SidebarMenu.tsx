@@ -3,10 +3,14 @@ import { sidebarStructure } from "./structure";
 import { useEffect, useState } from "react";
 import Axios from "../../reduxToolkit/helper/axios";
 import { useAppDispatch, useAppSelector } from "../../reduxToolkit/hooks";
-import { getClarifications, getSubordinateClarifications } from "../../reduxToolkit/services/clarification/clarificationService";
+import { getClarifications, getSubordinateClarifications } from "../../../src/reduxToolkit/services/clarification/clarificationService";
 import { SVGICON } from "../../constants/iconsList";
 import { Chatbot } from "../../screens/Chatbot/Chatbot";
+import { GoSidebarExpand, GoSidebarCollapse } from "react-icons/go";
 
+type SidebarMenuProps = {
+  onToggleCollapse: (isCollapsed: boolean) => void; // Callback to notify parent about collapse state
+};
 const commandExtraLabels = ["Scoreboard", "Winners", "Home", "Profile Settings"];
 const headquarterExtraLabels = ["Dashboard", "Home", "Awards", "Scoreboard", "Profile Settings"];
 const extraDashboardLabels = ["Brigade Dashboard", "Division Dashboard", "Corps Dashboard", "Command Dashboard"];
@@ -17,7 +21,7 @@ type UserType = {
   cw2_type?: string;
 };
 
-const SidebarMenu = () => {
+const SidebarMenu = ({ onToggleCollapse }: SidebarMenuProps) => {
   const dispatch = useAppDispatch();
   const profile = useAppSelector((state) => state.admin.profile);
   const user = (profile?.user ?? {}) as UserType;
@@ -26,6 +30,11 @@ const SidebarMenu = () => {
   const cw2_type = user.cw2_type?.toLowerCase() ?? "";
 
   const [sidebarClarificationUnits, setSidebarClarificationUnits] = useState<any[]>([]);
+  const [isCollapsed, setIsCollapsed] = useState(false); // State for sidebar collapse
+
+  useEffect(() => {
+    onToggleCollapse(isCollapsed);
+  }, [isCollapsed]);
 
   useEffect(() => {
     if (!userRole) return;
@@ -107,63 +116,116 @@ const SidebarMenu = () => {
 
   // Helper to render sidebar item with badge
   const renderSidebarItemWithBadge = (item: any, badgeCount: number) => (
-    <div key={item.to} style={{ position: "relative" }}>
-      {badgeCount > 0 && (
-        <div style={{
-          position: "absolute",
-          top: -8,
-          right: 8,
-          minWidth: 22,
-          height: 22,
-          padding: "0 6px",
-          background: "#dc3545",
-          color: "#fff",
-          borderRadius: "50%",
-          fontSize: 13,
-          fontWeight: 600,
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          zIndex: 2,
-          boxShadow: "0 1px 4px rgba(0,0,0,0.12)",
-        }}>
-          {badgeCount}
-        </div>
-      )}
+    <div key={item.to} className="position-relative">
       <NavLink
         to={item.to}
-        className="nav-items d-flex align-items-center fw-5 position-relative text-white py-2"
+        className={`nav-items d-flex align-items-center fw-5 position-relative text-white py-2 ${isCollapsed ? "collapsed" : ""}`}
+        style={{ position: 'relative' }}  // <-- Ensure parent has relative position
       >
         <div className="d-flex align-items-center text-truncate">
           <span className="nav-icon me-2 d-inline-flex align-items-center justify-content-center">
             {item.icon}
           </span>
-          <span className="text-truncate">{item.label}</span>
+          {!isCollapsed && <span className="text-truncate">{item.label}</span>}
         </div>
+        {badgeCount > 0 && isCollapsed && (
+          <div style={{
+            position: "fixed",
+            top: "auto",
+            bottom: "auto",
+            left: "40px", // Adjust this value to be right outside the collapsed sidebar width
+            transform: "translateY(-50%)",
+            width: 12,
+            height: 12,
+            backgroundColor: "#dc3545",
+            borderRadius: "50%",
+            zIndex: 9999,
+            marginTop: 16 // Adjust vertical alignment with icon
+          }} />
+        )}
+        {badgeCount > 0 && !isCollapsed && (
+          <div style={{
+            position: "absolute",
+            top: "50%",
+            right: "-16px",
+            transform: "translateY(-50%)",
+            minWidth: 22,
+            height: 22,
+            padding: "0 6px",
+            background: "#dc3545",
+            color: "#fff",
+            borderRadius: "50%",
+            fontSize: 13,
+            fontWeight: 600,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            zIndex: 2,
+            boxShadow: "0 1px 4px rgba(0,0,0,0.12)"
+          }}>
+            {badgeCount}
+          </div>
+        )}
       </NavLink>
     </div>
   );
 
-  return (
-    <aside className="sidebar-menu flex-shrink-0 d-xl-block d-none bg-dark text-white p-3 px-0">
+return (
+  <aside className={`sidebar-menu flex-shrink-0 d-xl-block d-none bg-dark text-white p-3 px-0 ${isCollapsed ? "collapsed" : ""}`} style={isCollapsed ? { width: "60px" } : {}}>
       <div className="d-flex flex-column justify-content-between align-items-center">
         <div className="d-flex flex-column justify-content-center align-items-center gap-2 mb-2">
-          <h5 className="text-white" >Menu</h5>
-          <div className="w-50" style={{ height: "4px", backgroundColor: "#dc3545", borderRadius: "50px" }}></div>
+          {isCollapsed && (
+            <div className="d-flex align-items-center justify-content-center" style={{ height: '56px' }}>
+              <div
+                onClick={() => setIsCollapsed(!isCollapsed)}
+                style={{
+                  cursor: "pointer",
+                  width: 40,
+                  height: 40,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center"
+                }}
+              >
+                {isCollapsed ? <GoSidebarCollapse size={20} /> : <GoSidebarExpand size={20} />}
+              </div>
+            </div>
+          )}
+          {!isCollapsed && (
+            <div className="position-relative w-100 px-3 d-flex align-items-center justify-content-between">
+              <h5 className="text-white mb-0">Menu</h5>
+              <div
+                onClick={() => setIsCollapsed(!isCollapsed)}
+                style={{
+                  cursor: "pointer",
+                  width: 30,
+                  height: 30,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center"
+                }}
+              >
+                {isCollapsed ? <GoSidebarCollapse size={20} /> : <GoSidebarExpand size={20} />}
+              </div>
+            </div>
+          )}
+          {!isCollapsed && (
+            <div className="w-50" style={{ height: "4px", backgroundColor: "#dc3545", borderRadius: "50px" }}></div>
+          )}
         </div>
         <div className="scroll-style-85">
           <div className="sidebar-wrapper mt-3 pb-3">
             {dashboardItems.map((item) => (
               <NavLink
                 to={item.to}
-                className="nav-items d-flex align-items-center fw-5 position-relative text-white py-2"
+                className={`nav-items d-flex align-items-center fw-5 position-relative text-white py-2 ${isCollapsed ? "collapsed" : ""}`}
                 key={item.to}
               >
                 <div className="d-flex align-items-center text-truncate">
                   <span className="nav-icon me-2 d-inline-flex align-items-center justify-content-center">
                     {item.icon}
                   </span>
-                  <span className="text-truncate">{item.label}</span>
+                  {!isCollapsed && <span className="text-truncate">{item.label}</span>}
                 </div>
               </NavLink>
             ))}
@@ -187,21 +249,21 @@ const SidebarMenu = () => {
               return (
                 <NavLink
                   to={item.to}
-                  className="nav-items d-flex align-items-center fw-5 position-relative text-white py-2"
+                  className={`nav-items d-flex align-items-center fw-5 position-relative text-white py-2 ${isCollapsed ? "collapsed" : ""}`}
                   key={item.to}
                 >
                   <div className="d-flex align-items-center text-truncate">
                     <span className="nav-icon me-2 d-inline-flex align-items-center justify-content-center">
                       {item.icon}
                     </span>
-                    <span className="text-truncate">{item.label}</span>
+                    {!isCollapsed && <span className="text-truncate">{item.label}</span>}
                   </div>
                 </NavLink>
               );
             })}
           </div>
         </div>
-        <Chatbot />
+        {!isCollapsed && <Chatbot />}
       </div>
     </aside>
   );
