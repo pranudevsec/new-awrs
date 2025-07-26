@@ -291,6 +291,7 @@ const AppreciationReviewPage = () => {
     const filledFields = Object.values(counts).filter((value) => value !== "").length;
 
     let totalMarks = 0;
+    let positiveMarks = 0;
     let negativeMarks = 0;
 
     for (const param of parameters) {
@@ -301,12 +302,12 @@ const AppreciationReviewPage = () => {
             if (param.negative === true) {
                 negativeMarks += markValue;
             } else {
-                totalMarks += markValue;
+                positiveMarks += markValue;
             }
         }
     }
 
-    totalMarks = totalMarks - negativeMarks;
+    totalMarks = positiveMarks - negativeMarks;
 
     const renderParamRows = (params: any[]) => {
         let prevHeader: string | null = null;
@@ -522,6 +523,10 @@ const AppreciationReviewPage = () => {
                             <div className="col-6 col-sm-3">
                                 <span className="fw-medium text-muted">Filled Params:</span>
                                 <div className="fw-bold">{filledFields}</div>
+                            </div>
+                            <div className="col-6 col-sm-3">
+                                <span className="fw-medium text-muted">Positive Marks:</span>
+                                <div className="fw-bold text-danger">{positiveMarks}</div>
                             </div>
                             <div className="col-6 col-sm-3">
                                 <span className="fw-medium text-muted">Negative Marks:</span>
