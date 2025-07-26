@@ -34,7 +34,7 @@ const AuthLayout = ({ children }: { children: React.ReactNode }) => {
                     <Header />
 
                     {/* Page content */}
-                    <div className="flex-grow-1 " style={{ paddingLeft: "1rem", paddingTop: "1rem",overflowX: "hidden",paddingRight: "1rem" }}>
+                    <div className="flex-grow-1 " style={{ paddingLeft: "1rem", paddingTop: "1rem",overflowX: "hidden",paddingRight: "1rem"}}>
                         {children}
                     </div>
                 </div>

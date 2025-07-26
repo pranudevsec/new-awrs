@@ -8,6 +8,7 @@ import { useAppDispatch } from "../../reduxToolkit/hooks";
 import { reqToLogin } from "../../reduxToolkit/services/auth/authService";
 import FormInput from "../../components/form/FormInput";
 import FormSelect from "../../components/form/FormSelect";
+import bgimg from "../../assets/Picture7.png";
 
 // cw2_type options
 const cw2TypeOptions = [
@@ -126,7 +127,7 @@ const Login = () => {
     return (
         <div className="auth-section">
             <div className="container-fluid">
-                <div className="row min-vh-100 align-items-stretch justify-content-center">
+                <div className="row min-vh-100 align-items-stretch justify-content-center" style={{ backgroundImage: `url(${bgimg})`, backgroundSize: 'cover', backgroundPosition: 'center' }}>
                     <div className="col-xxl-6 col-xl-6 d-xl-block d-none">
                         <div className="auth-image-area d-flex align-items-end h-100">
                             {/* <img src="/media/auth/military.png" alt="Military" className="img-fluid object-fit-contain" /> */}
@@ -135,7 +136,7 @@ const Login = () => {
                     <div className="col-xxl-4 col-xl-5 col-md-10 d-flex align-items-center justify-content-center">
                         <div className="auth-form-wrapper w-100 d-flex flex-column align-items-center justify-content-center">
                             <div className="logo-area d-flex align-items-center">
-                                <h3 className="font-lexend fw-5">Unit</h3>
+                                <h3 className="font-lexend fw-5" >Unit</h3>
                                 <img src="/media/logo/logo.svg" alt="Logo" className="mb-3 mx-auto" width={110} />
                                 <h3 className="font-lexend fw-5">Citation</h3>
                             </div>

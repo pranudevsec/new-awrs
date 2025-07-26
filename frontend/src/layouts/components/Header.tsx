@@ -60,9 +60,9 @@ const Header = () => {
                         color: 'white',                      
                     }}>
                         <div className="position-relative" ref={notifRef}>
-                            <button className="nav-icon-btn d-inline-flex align-items-center justify-content-center bg-transparent border-0 text-white" onClick={() => setNotifOpen((prev) => !prev)}>
+                            {/* <button className="nav-icon-btn d-inline-flex align-items-center justify-content-center bg-transparent border-0 text-white" onClick={() => setNotifOpen((prev) => !prev)}>
                                 {SVGICON.header.notification}
-                            </button>
+                            </button> */}
                             <div className={`notification-dropdown-menu ${notifOpen ? "show" : ""}`} >
                                 <div className="top-header mb-3 d-flex align-items-center justify-content-between gap-2">
                                     <h5 className="fw-6">Notifications</h5>

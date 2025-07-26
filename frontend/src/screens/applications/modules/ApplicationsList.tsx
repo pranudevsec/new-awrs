@@ -45,7 +45,7 @@ const ApplicationsList = () => {
       const role = profile.user.user_role;
       const params = {
         ...(awardType && awardType !== "All" ? { award_type: awardType } : {}),
-        command_type: commandType === "All" ? undefined : commandType || undefined,
+        command_type: commandType === "All" ? undefined : commandType ?? undefined,
         search: debouncedSearch,
         page,
         limit,  

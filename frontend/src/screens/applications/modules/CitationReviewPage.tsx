@@ -477,51 +477,6 @@ const CitationReviewPage = () => {
               </div>
             </div>
           </div>
-          {/* {profile?.unit?.awards?.length > 0 && (
-            <div className="mt-4 mb-3">
-              <h5 className="mb-3">Awards</h5>
-              <div className="table-responsive">
-                <table className="table-style-2 w-100">
-                  <thead>
-                    <tr>
-                      <th style={{ width: 150, minWidth: 150, maxWidth: 150 }}>
-                        Type
-                      </th>
-                      <th style={{ width: 200, minWidth: 200, maxWidth: 200 }}>
-                        Year
-                      </th>
-                      <th style={{ width: 300, minWidth: 300, maxWidth: 300 }}>
-                        Title
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {profile?.unit?.awards?.map((award: any) => (
-                      <tr key={award.award_id}>
-                        <td
-                          style={{ width: 150, minWidth: 150, maxWidth: 150 }}
-                        >
-                          <p className="fw-4 text-capitalize">
-                            {award.award_type}
-                          </p>
-                        </td>
-                        <td
-                          style={{ width: 200, minWidth: 200, maxWidth: 200 }}
-                        >
-                          <p className="fw-4">{award.award_year}</p>
-                        </td>
-                        <td
-                          style={{ width: 300, minWidth: 300, maxWidth: 300 }}
-                        >
-                          <p className="fw-4">{award.award_title}</p>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          )} */}
           <div
             ref={scrollContainerRef}
             style={{

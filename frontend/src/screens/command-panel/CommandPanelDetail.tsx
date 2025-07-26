@@ -146,15 +146,6 @@ const CommandPanelDetail = () => {
                 <th style={{ width: 100, fontSize: "17", color: "white" }}>Count</th>
                 <th style={{ width: 100, fontSize: "17", color: "white" }}>Marks</th>
                 <th style={{ width: 200, fontSize: "17", color: "white" }}>Document</th>
-
-                {/* {!isUnitRole && (
-                  <>
-                        <th style={{ width: 200 }}>Approved Marks</th>
-                    <th style={{ width: 150 }}>Add Clarification</th>
-                    <th style={{ width: 200 }}>Requested Clarification</th>
-                    <th style={{ width: 150 }}>Action</th>
-                  </>
-                )} */}
               </tr>
             </thead>
             <tbody>

@@ -36,17 +36,13 @@ const ApplyCitation = () => {
   const dispatch = useAppDispatch();
   const isDraftRef = useRef(false);
   const { draftData } = useAppSelector((state) => state.citation);
-  // useEffect(() => {
-  //   localStorage.removeItem("applyCitationDraft");
-  //   localStorage.removeItem("applyCitationuploadedDocsDraft");
-  // }, []);
   const { profile } = useAppSelector((state) => state.admin);
 
   const { loading } = useAppSelector((state) => state.parameter);
 
   const initializedRef = useRef(false);
   const [searchParams] = useSearchParams();
-  const id = searchParams.get("id") || "";
+  const id = searchParams.get("id") ?? "";
 
   // States
   const [parameters, setParameters] = useState<Parameter[]>([]);
@@ -59,49 +55,60 @@ const ApplyCitation = () => {
   const [activeTab, setActiveTab] = useState(Object.keys(groupedParams)[0] || "");
   const [uploadedFiles, setUploadedFiles] = useState<Record<number, string[]>>(() => {
     try {
-      return JSON.parse(localStorage.getItem(DRAFT_FILE_UPLOAD_KEY) || "{}");
+      return JSON.parse(localStorage.getItem(DRAFT_FILE_UPLOAD_KEY) ?? "{}");
     } catch {
       return {};
     }
   });
   const [unitRemarks, setUnitRemarks] = useState(() => {
-    return localStorage.getItem("applyCitationUnitRemarks") || "";
+    return localStorage.getItem("applyCitationUnitRemarks") ?? "";
   });
-
-  // console.log("groupedParams -> ", groupedParams);
-  // console.log("parameters -> ", parameters);
 
   useEffect(() => {
     if (id) {
       dispatch(fetchCitationById(Number(id)));
     } else {
-      const savedDraft = localStorage.getItem(DRAFT_STORAGE_KEY);
-      const savedUploads = localStorage.getItem(DRAFT_FILE_UPLOAD_KEY);
-
-      if (savedDraft) {
-        try {
-          const parsed = JSON.parse(savedDraft);
-          if (parsed.counts) setCounts(parsed.counts);
-          if (parsed.marks) setMarks(parsed.marks);
-        } catch (err) {
-          console.error("Failed to parse draft counts/marks", err);
-        }
-      }
-
-      if (savedUploads) {
-        try {
-          const parsedUploads = JSON.parse(savedUploads);
-          setUploadedFiles(parsedUploads);
-        } catch (err) {
-          console.error("Failed to parse uploaded file draft", err);
-        }
-      }
+      restoreDraftFromLocalStorage();
     }
 
     return () => {
       dispatch(resetCitationState());
     };
   }, [id]);
+
+  // 🔹 Helper to restore draft from localStorage
+  const restoreDraftFromLocalStorage = () => {
+    restoreCountsAndMarks();
+    restoreUploadedFiles();
+  };
+
+  // 🔹 Restore counts/marks
+  const restoreCountsAndMarks = () => {
+    const savedDraft = localStorage.getItem(DRAFT_STORAGE_KEY);
+    if (!savedDraft) return;
+
+    try {
+      const parsed = JSON.parse(savedDraft);
+      if (parsed.counts) setCounts(parsed.counts);
+      if (parsed.marks) setMarks(parsed.marks);
+    } catch (err) {
+      console.error("Failed to parse draft counts/marks", err);
+    }
+  };
+
+  // 🔹 Restore uploaded files
+  const restoreUploadedFiles = () => {
+    const savedUploads = localStorage.getItem(DRAFT_FILE_UPLOAD_KEY);
+    if (!savedUploads) return;
+
+    try {
+      const parsedUploads = JSON.parse(savedUploads);
+      setUploadedFiles(parsedUploads);
+    } catch (err) {
+      console.error("Failed to parse uploaded file draft", err);
+    }
+  };
+
 
   useEffect(() => {
     localStorage.setItem("applyCitationUnitRemarks", unitRemarks);
@@ -161,12 +168,12 @@ const ApplyCitation = () => {
       draftData.citation_fds.parameters.forEach((param: any, index: number) => {
         if (param.upload) {
           if (Array.isArray(param.upload)) {
-            uploads[param.param_id || index] = param.upload;
+            uploads[param.param_id ?? index] = param.upload;
           } else if (typeof param.upload === "string") {
             if (param.upload.includes(",")) {
-              uploads[param.param_id || index] = param.upload.split(",").map((u: any) => u.trim());
+              uploads[param.param_id ?? index] = param.upload.split(",").map((u: any) => u.trim());
             } else {
-              uploads[param.param_id || index] = [param.upload.trim()];
+              uploads[param.param_id ?? index] = [param.upload.trim()];
             }
           }
         }
@@ -464,7 +471,6 @@ const ApplyCitation = () => {
   };
 
   const handlePreviewClick = () => {
-    // const uploadedDocs = JSON.parse(localStorage.getItem(DRAFT_FILE_UPLOAD_KEY) || "{}");
     const hasAtLeastOneCount = parameters.some(
       (param: any) => Number(counts[param.param_id] ?? 0) > 0
     );
@@ -503,13 +509,13 @@ const ApplyCitation = () => {
     if (param.name != "no") {
       return {
         main: param.name,
-        header: param.subcategory || null,
-        subheader: param.subsubcategory || null,
+        header: param.subcategory ?? null,
+        subheader: param.subsubcategory ?? null,
       };
     } else if (param.subsubcategory) {
       return {
         main: param.subsubcategory,
-        header: param.subcategory || null,
+        header: param.subcategory ?? null,
         subheader: null,
       };
     } else if (param.subcategory) {
@@ -539,6 +545,7 @@ const ApplyCitation = () => {
         setUploadedFiles({});
         navigate("/submitted-forms/list");
       } catch (error) {
+        toast.error("Failed to delete draft");
       }
     } else {
       localStorage.removeItem(DRAFT_STORAGE_KEY);
@@ -578,7 +585,7 @@ const ApplyCitation = () => {
                   readOnly
                 />
               </div>
-              <div className="col-lg-3 col-sm-4 mb-sm-0 mb-2">
+              {/* <div className="col-lg-3 col-sm-4 mb-sm-0 mb-2">
                 <FormInput
                   label="Cycle Period"
                   name="cyclePeriod"
@@ -586,7 +593,7 @@ const ApplyCitation = () => {
                   onChange={formik.handleChange}
                   readOnly
                 />
-              </div>
+              </div> */}
               {/* <div className="col-lg-3 col-sm-4">
                 <FormInput
                   label="Last Date"
@@ -601,47 +608,13 @@ const ApplyCitation = () => {
                 <FormInput
                   label="Command"
                   name="command"
-                  value={profile?.unit?.comd || "--"}
+                  value={profile?.unit?.comd ?? "--"}
                   onChange={formik.handleChange}
                   readOnly
                 />
               </div>
             </div>
           </div>
-
-          {/* {profile?.unit?.awards?.length > 0 && (
-            <div className="mt-4 mb-2">
-              <h5 className="mb-3">Awards Received</h5>
-              <div className="table-responsive">
-                <table className="table-style-2 w-100">
-                  <thead>
-                    <tr style={{ backgroundColor: "#007bff" }}>
-                      <th style={{ width: 150, minWidth: 150, maxWidth: 150, color: "white" }}>Type</th>
-                      <th style={{ width: 200, minWidth: 200, maxWidth: 200, color: "white" }}>Year</th>
-                      <th style={{ width: 300, minWidth: 300, maxWidth: 300, color: "white" }}>Title</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {profile?.unit?.awards?.map((award: any) => (
-                      <tr key={award.award_id}>
-
-                        <td style={{ width: 150, minWidth: 150, maxWidth: 150 }}>
-                          <p className="fw-4 text-capitalize">{award.award_type}</p>
-                        </td>
-                        <td style={{ width: 200, minWidth: 200, maxWidth: 200 }}>
-                          <p className="fw-4">{award.award_year}</p>
-                        </td>
-                        <td style={{ width: 300, minWidth: 300, maxWidth: 300 }}>
-                          <p className="fw-4">{award.award_title}</p>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          )} */}
-
           <div className="position-sticky top-0 bg-white pb-3 mb-3" style={{ zIndex: 10, borderBottom: '1px solid #dee2e6' }}>
             <Tabs
               activeKey={activeTab}
@@ -655,23 +628,6 @@ const ApplyCitation = () => {
                   title={
                     <span
                       className="form-label mb-1"
-                      // style={{
-                      //   color: activeTab === category ? "#fff" : "#2563eb",
-                      //   background: activeTab === category ? "linear-gradient(90deg, #3b82f6 60%, #2563eb 100%)" : "#e0e7ff",
-                      //   borderRadius: 20,
-                      //   padding: "0.5rem 1.8rem",
-                      //   fontWeight: 600,
-                      //   fontSize: 16,
-                      //   letterSpacing: 1,
-                      //   cursor: "pointer",
-                      //   transition: "all 0.2s",
-                      //   filter: activeTab === category ? "brightness(1.05)" : "none",
-                      //   textDecoration: "none",
-                      //   display: "inline-block",
-                      //   marginRight: "0.5rem",
-                      //   minWidth: 120,
-                      //   textAlign: "center",
-                      // }}
                     >
                       {category.toUpperCase()}
                     </span>
@@ -749,6 +705,19 @@ const ApplyCitation = () => {
                         prevHeader = display.header;
                         prevSubheader = display.subheader;
 
+                        const rawMarkValue = marks[param.param_id];
+                        let markInputValue: number;
+
+                        if (param.negative) {
+                          if (rawMarkValue === 0 || rawMarkValue === undefined) {
+                            markInputValue = 0;
+                          } else {
+                            markInputValue = -Math.abs(rawMarkValue);
+                          }
+                        } else {
+                          markInputValue = rawMarkValue ?? 0;
+                        }
+
                         rows.push(
                           <tr key={param.param_id}>
                             <td style={{ width: 250, minWidth: 250, maxWidth: 250, verticalAlign: "top" }}>
@@ -772,7 +741,7 @@ const ApplyCitation = () => {
                                   type="number"
                                   className="form-control"
                                   placeholder="Marks"
-                                  value={Number(marks[param.param_id] ?? 0).toFixed(3) }
+                                  value={markInputValue.toFixed(3)}
                                   readOnly
                                 />
                                 <div className="tooltip-icon">
@@ -790,7 +759,7 @@ const ApplyCitation = () => {
                                     <div className="mb-1" style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
                                       {uploadedFiles[param.param_id].map((fileUrl, idx) => (
                                         <div
-                                          key={idx}
+                                          key={`${param.param_id}-${fileUrl}`}
                                           style={{
                                             display: 'flex',
                                             alignItems: 'center',
