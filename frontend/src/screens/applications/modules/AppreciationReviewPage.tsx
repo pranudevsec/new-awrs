@@ -225,7 +225,10 @@ const AppreciationReviewPage = () => {
                         award_type: "appreciation",
                         cycle_period: values.cyclePeriod,
                         last_date: values.lastDate,
-                        command: values.command,
+                        command: profile?.unit?.comd ?? "",
+                        brigade: profile?.unit?.bde ?? "",
+                        division: profile?.unit?.div ?? "",
+                        corps: profile?.unit?.corps ?? "",
                         parameters: formattedParameters,
                         unitRemarks: unitRemarks,
                         unit_type: profile?.unit?.unit_type
@@ -299,7 +302,7 @@ const AppreciationReviewPage = () => {
         const markValue = marks[paramId];
 
         if (markValue !== undefined) {
-            if (param.negative === true) {
+            if (param.negative) {
                 negativeMarks += markValue;
             } else {
                 positiveMarks += markValue;
@@ -526,15 +529,15 @@ const AppreciationReviewPage = () => {
                             </div>
                             <div className="col-6 col-sm-3">
                                 <span className="fw-medium text-muted">Positive Marks:</span>
-                                <div className="fw-bold text-danger">{positiveMarks}</div>
+                                <div className="fw-bold text-danger">{positiveMarks.toFixed(3)}</div>
                             </div>
                             <div className="col-6 col-sm-3">
                                 <span className="fw-medium text-muted">Negative Marks:</span>
-                                <div className="fw-bold text-danger">{negativeMarks}</div>
+                                <div className="fw-bold text-danger">{negativeMarks.toFixed(3)}</div>
                             </div>
                             <div className="col-6 col-sm-3">
                                 <span className="fw-medium text-muted">Total Marks:</span>
-                                <div className="fw-bold text-success">{totalMarks}</div>
+                                <div className="fw-bold text-success">{totalMarks.toFixed(3)}</div>
                             </div>
                         </div>
 

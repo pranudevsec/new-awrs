@@ -139,7 +139,7 @@ const ApplicationDetails = () => {
 
     const marks = parameters.reduce((acc, param) => {
       const isRejected = param.clarification_details?.clarification_status === "rejected";
-      const isNegative = param.negative === true;
+      const isNegative = param.negative;
       if (isRejected || isNegative) return acc;
       return acc + (param.marks ?? 0);
     }, 0);
@@ -168,14 +168,14 @@ const ApplicationDetails = () => {
       const approved = hasValidApproved ? Number(param.approved_marks) : null;
       const original = param.marks ?? 0;
       const valueToCheck = approved ?? original;
-      return acc + (param.negative === true ? valueToCheck : 0);
+      return acc + (param.negative ? valueToCheck : 0);
     }, 0);
 
     const totalParameterMarks = parameters.reduce((acc, param) => {
       const isRejected = param.clarification_details?.clarification_status === "rejected";
 
       if (isRejected) return acc;
-      if (param.negative === true) return acc;
+      if (param.negative) return acc;
 
       const hasValidApproved =
         param.approved_marks !== undefined &&
@@ -724,8 +724,6 @@ const ApplicationDetails = () => {
                 readOnly
               />
             </td>
-
-            {!isRaisedScreen && (
               <td style={{ width: 120 }}>
                 {canViewClarification ? (
                   <button
@@ -761,7 +759,6 @@ const ApplicationDetails = () => {
                   </button>
                 )}
               </td>
-            )}
 
             {isRaisedScreen && (
               <>
@@ -871,24 +868,6 @@ const ApplicationDetails = () => {
               className="text-center flex-grow-1 flex-sm-grow-0 flex-basis-100 flex-sm-basis-auto"
               style={{ minWidth: "150px" }}
             >
-              <div className="form-label fw-semibold">Cycle Period</div>
-              <p className="fw-5 mb-0">
-                {unitDetail?.fds?.cycle_period ?? "--"}
-              </p>
-            </div>
-
-            <div
-              className="text-center flex-grow-1 flex-sm-grow-0 flex-basis-100 flex-sm-basis-auto"
-              style={{ minWidth: "150px" }}
-            >
-              <div className="form-label fw-semibold">Last Date</div>
-              <p className="fw-5 mb-0">{unitDetail?.fds?.last_date ?? "--"}</p>
-            </div>
-
-            <div
-              className="text-center flex-grow-1 flex-sm-grow-0 flex-basis-100 flex-sm-basis-auto"
-              style={{ minWidth: "150px" }}
-            >
               <div className="form-label fw-semibold">Command</div>
               <p className="fw-5 mb-0">{unitDetail?.fds?.command ?? "--"}</p>
             </div>
@@ -954,9 +933,7 @@ const ApplicationDetails = () => {
                   <>
                     <th style={{ width: 200, color: "white" }}>Approved Count</th>
                     <th style={{ width: 200, color: "white" }}>Approved Marks</th>
-                    {!isRaisedScreen && (
                       <th style={{ width: 150, color: "white" }}>Ask Clarification</th>
-                    )}
                     {isRaisedScreen && (
                       <>
                         <th style={{ width: 200,color: "white"  }}>Requested Clarification</th>
@@ -1103,12 +1080,12 @@ const ApplicationDetails = () => {
               </div>
               <div className="col-6 col-sm-2">
                 <span className="fw-medium text-muted">Negative Marks:</span>
-                <div className="fw-bold text-danger">{paramStats.negativeMarks}</div>
+                <div className="fw-bold text-danger">{paramStats.negativeMarks.toFixed(3)}</div>
               </div>
               <div className="col-6 col-sm-2">
                 <span className="fw-medium text-muted">Approved Marks:</span>
                 <div className="fw-bold text-primary">
-                  {paramStats.approvedMarks}
+                  {paramStats.approvedMarks.toFixed(3)}
                 </div>
               </div>
               <div className="col-6 col-sm-2">

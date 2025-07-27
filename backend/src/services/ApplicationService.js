@@ -1932,7 +1932,7 @@ exports.getAllApplications = async (user, query) => {
   const client = await dbService.getClient();
   try {
     const { user_role } = user;
-    const { award_type, command_type, search, page = 1, limit = 10 } = query;
+    const { award_type, command_type, corps_type, division_type, brigade_type, search, page = 1, limit = 10 } = query;
 
     const profile = await AuthService.getProfile(user);
     const unit = profile?.data?.unit;
@@ -2081,12 +2081,35 @@ exports.getAllApplications = async (user, query) => {
         (app) => app.fds?.command?.toLowerCase() === command_type.toLowerCase()
       );
     }
+    if (corps_type) {
+      allApps = allApps.filter(
+        (app) => app.fds?.corps?.toLowerCase() === corps_type.toLowerCase()
+      );
+    }
+    if (division_type) {
+      allApps = allApps.filter(
+        (app) => app.fds?.division?.toLowerCase() === division_type.toLowerCase()
+      );
+    }
+    if (brigade_type) {
+      allApps = allApps.filter(
+        (app) => app.fds?.brigade?.toLowerCase() === brigade_type.toLowerCase()
+      );
+    }
+    
     if (search) {
       const searchNorm = normalize(search);
       allApps = allApps.filter(
         (app) =>
           app.id.toString().toLowerCase().includes(searchNorm) ||
-          normalize(app.fds?.cycle_period || "").includes(searchNorm)
+          normalize(app.fds?.cycle_period || "").includes(searchNorm) ||
+          normalize(app.fds?.unit_name || "").includes(searchNorm) ||
+          normalize(app.fds?.brigade || "").includes(searchNorm) ||
+          normalize(app.fds?.division || "").includes(searchNorm) ||
+          normalize(app.fds?.corps || "").includes(searchNorm) ||
+          normalize(app.fds?.command || "").includes(searchNorm)
+
+          
       );
     }
 

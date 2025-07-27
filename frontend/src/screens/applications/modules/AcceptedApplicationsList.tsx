@@ -10,6 +10,7 @@ import { awardTypeOptions } from "../../../data/options";
 import { SVGICON } from "../../../constants/iconsList";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
+import { FaDownload } from "react-icons/fa";
 import { useAppDispatch, useAppSelector } from "../../../reduxToolkit/hooks";
 import {
   approveApplications,
@@ -39,6 +40,8 @@ const AcceptedApplicationsList = () => {
 
   const profile = useAppSelector((state) => state.admin.profile);
   const { units, loading, meta } = useAppSelector((state) => state.application);
+  const cit_count = units.filter((unit) => unit.fds.award_type === "citation").length;
+  const appr_count = units.filter((unit) => unit.fds.award_type === "appreciation").length;
   const role = profile?.user?.user_role?.toLowerCase() ?? "";
 
   // States
@@ -334,55 +337,59 @@ const AcceptedApplicationsList = () => {
   const handleExportPDF = () => {
   const doc = new jsPDF();
 
-  // 1. Presiding Officer & Members
-  const memberHeaders = ["Type", "IC Number", "Rank", "Name", "Appointment"];
+  const docHeader = `COAS Unit Citation and COAS Certificate of Appreciation Board of Officers Report`;
+  const level = profile?.user?.user_role?.toUpperCase() ?? "";
+  const memberHeaders = ["Role", "IC Number", "Rank", "Name", "Appointment"];
   const memberRows = [];
 
   const presiding = profile?.unit?.members?.find((m: any) => m.member_type === "presiding_officer");
   const members = profile?.unit?.members?.filter((m: any) => m.member_type !== "presiding_officer");
 
   if (presiding) {
-    memberRows.push(["Presiding Officer", presiding.rank, presiding.name, presiding.appointment]);
+    memberRows.push(["Presiding Officer", presiding.ic_number ?? "-", presiding.rank, presiding.name, presiding.appointment]);
   }
   if (members && members.length > 0) {
     members.forEach((m: any) => {
-      memberRows.push(["Member Officer", m.rank, m.name, m.appointment]);
+      memberRows.push(["Member Officer", m.ic_number ?? "-", m.rank, m.name, m.appointment]);
     });
   }
+
+  // Add header and level
+  doc.setFontSize(14);
+  doc.text(docHeader, 14, 10);
+
+  doc.setFontSize(10);
+  doc.text(`Level: ${level}`, 14, 18);
 
   autoTable(doc, {
     head: [memberHeaders],
     body: memberRows,
-    startY: 10,
+    startY: 28,
     theme: 'grid',
     headStyles: { fillColor: [41, 128, 185] },
   });
 
-  // 2. Text paragraphs
   let currentY = doc.lastAutoTable?.finalY ? doc.lastAutoTable.finalY + 10 : 30;
 
-const paragraphs = [
-  "1. The Bd of Offr for evaluating COAS Unit Citation and COAS Cert of Appre assembled pursuant to Convening Order referred above on 20 Nov 2024 and subsequent days.",
-  "2. A total of 127 (One Hundred Twenty Seven) citations as per details given at Appx A were recd from Comd theatres for COAS / GOC-in-C Unit Citation.",
-  "3. Based on merit as per policy on COAS Unit Citation and Cert of Appre promulgated vide CW Dte (CW-2), AG’s Branch, IHQ of MoD (Army) letter No B/43057/UC/AG/CW-2 dt 29 Apr 22 and HQ Northern Comd SOP No 01/2022 issued vide this HQ letters No 23104/5/IR/2A(Cer) dt 31 Aug 22 and even No dt 16 Sep 22, a total of 36 (Thirty Six) units have been recommended for COAS Unit Citation and total of 07 (Seven) units have been recommended for COAS Cert of Appre. The bd for GOC-in-C Unit Citation will be considered separately on declaration of COAS Unit Citation and Cert of Appre.",
-  "4. Based on the overall performance of the Units, the Bd recommends the fwg units for COAS Unit Citation:"
-];
+  const paragraphs = [
+    "1. The Bd of Offr for evaluating COAS Unit Citation and COAS Cert of Appre assembled pursuant to Convening Order referred above on 20 Nov 2024 and subsequent days.",
+    "2. A total of 127 (One Hundred Twenty Seven) citations as per details given at Appx A were recd from Comd theatres for COAS / GOC-in-C Unit Citation.",
+    `3. Based on merit as per policy on COAS Unit Citation and Cert of Appre promulgated vide CW Dte (CW-2), AG’s Branch, IHQ of MoD (Army) and HQ ${profile?.unit.comd} issued vide this HQ letters, a total of ${cit_count} units have been recommended for COAS Unit Citation and total of ${appr_count} units have been recommended for COAS Cert of Appre. The bd for GOC-in-C Unit Citation will be considered separately on declaration of COAS Unit Citation and Cert of Appre.`,
+    "4. Based on the overall performance of the Units, the Bd recommends the fwg units for COAS Unit Citation:"
+  ];
 
-paragraphs.forEach((para) => {
-  const lines = doc.splitTextToSize(para, 180); // wrap text at 180 width
-  doc.text(lines, 14, currentY);
-  currentY += lines.length * 8 + 5; // Adjust spacing between paragraphs
-});
+  paragraphs.forEach((para) => {
+    const lines = doc.splitTextToSize(para, 180);
+    doc.text(lines, 14, currentY);
+    currentY += lines.length * 6 + 3;
+  });
 
-  // 3. Applications Table
-  const appHeaders = [
-    ["S. No", "Type", "Unit ID", "Unit Name", "Location", "Brigade", "Division", "Corps", "Command", "-ve Marks",
+  const appHeaders = [[
+    "S. No", "Type", "Unit ID", "Unit Name", "Location", "Brigade", "Division", "Corps", "Command", "-ve Marks",
     ...allowedRoles.map(r => `Points By ${r}`),
-    "Discretionary", ...(role === "headquarter" ? ["Command"] : []),
     "Total", ...(role !== "brigade" ? ["Lower Priority"] : []),
     ...(role === "command" ? ["Status"] : []),
-    `${role.charAt(0).toUpperCase() + role.slice(1)} Priority`]
-  ];
+  ]];
 
   const appRows = units.map((unit: any) => [
     `#${unit.id}`,
@@ -396,18 +403,15 @@ paragraphs.forEach((para) => {
     unit.unit_details?.comd ?? "-",
     unit?.totalNegativeMarks ?? "-",
     ...allowedRoles.map((r) => getDiscretionaryMarksByRole(unit, r)),
-    graceMarksValues[String(unit.id)]?.[unit.type] ?? "",
-    ...(role === "headquarter" ? [unit?.fds?.command ?? "-"] : []),
     getTotalMarks(unit),
     ...(role !== "brigade" ? [getLowerRolePriority(unit)] : []),
     ...(role === "command" ? [unit?.status_flag === "approved" ? "Approved" : "Pending"] : []),
-    priorityValues[String(unit.id)]?.[unit.type] ?? "",
   ]);
 
   autoTable(doc, {
     head: appHeaders,
     body: appRows,
-    startY: currentY + 10,
+    startY: currentY + 4,
     theme: 'grid',
     headStyles: { fillColor: [52, 73, 94] },
     styles: { fontSize: 6 }
@@ -416,18 +420,20 @@ paragraphs.forEach((para) => {
   doc.save("accepted-applications.pdf");
 };
 
+
   return (
     <div className="clarification-section" style={{ maxWidth: "80vw" }}>
       <div className="d-flex flex-sm-row flex-column align-items-sm-center justify-content-between mb-4">
         <Breadcrumb
-          title="Accepted Applications"
+          title="Recommended Applications"
           paths={[
             { label: "Home", href: "/applications" },
             { label: "Accepted Applications", href: "/application/accepted" },
           ]}
         />
-        <button className="btn btn-primary" onClick={handleExportPDF}>
-          Recommendation Report
+        <button className="_btn primary mb-3 d-flex align-items-center gap-2" onClick={handleExportPDF}>
+          <FaDownload />
+          <span>Recommendation Report</span>
         </button>
       </div>
 
@@ -669,7 +675,7 @@ paragraphs.forEach((para) => {
                   )}
 
                   <td style={{ width: 200, minWidth: 200, maxWidth: 200 }}>
-                    <p className="fw-4">{getTotalMarks(unit)}</p>
+                    <p className="fw-4">{getTotalMarks(unit).toFixed(3)}</p>
                   </td>
                   {role.toLowerCase() !== "brigade" && (
                     <td style={{ width: 200, minWidth: 200, maxWidth: 200 }}>

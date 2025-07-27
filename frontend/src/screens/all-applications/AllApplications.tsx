@@ -6,7 +6,7 @@ import FormSelect from "../../components/form/FormSelect";
 import EmptyTable from "../../components/ui/empty-table/EmptyTable";
 import Loader from "../../components/ui/loader/Loader";
 import Pagination from "../../components/ui/pagination/Pagination";
-import { awardTypeOptions, commandOptions } from "../../data/options";
+import { awardTypeOptions, brigadeOptions, commandOptions, corpsOptions, divisionOptions } from "../../data/options";
 import { SVGICON } from "../../constants/iconsList";
 import { useAppDispatch, useAppSelector } from "../../reduxToolkit/hooks";
 import { fetchAllApplications } from "../../reduxToolkit/services/application/applicationService";
@@ -22,6 +22,9 @@ const History = () => {
   // States
   const [awardType, setAwardType] = useState<string | null>(null);
   const [commandType, setCommandType] = useState<string | null>(null);
+  const [corpsType, setCorpsType] = useState<string | null>(null);
+  const [divisionType, setDivisionType] = useState<string | null>(null);
+  const [brigadeType, setBrigadeType] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState<string>("");
   const [debouncedSearch, setDebouncedSearch] = useState<string>("");
   const [page, setPage] = useState<number>(1);
@@ -41,6 +44,9 @@ const History = () => {
       const params = {
         ...(awardType && awardType !== "All" ? { award_type: awardType } : {}),
         command_type: commandType === "All" ? undefined : commandType ?? undefined,
+        division_type: divisionType === "All" ? undefined : divisionType ?? undefined,
+        corps_type: corpsType === "All" ? undefined : corpsType ?? undefined,
+        brigade_type: brigadeType === "All" ? undefined : brigadeType ?? undefined,
         search: debouncedSearch,
         page,
         limit,
@@ -60,7 +66,7 @@ const History = () => {
     };
 
     fetchData();
-  }, [awardType, commandType, debouncedSearch, profile, page, limit]);
+  }, [awardType, commandType, corpsType, divisionType, brigadeType, debouncedSearch, profile, page, limit]);
 
   return (
     <div className="clarification-section">
@@ -105,6 +111,33 @@ const History = () => {
                 value={commandOptions.find((opt) => opt.value === commandType) ?? null}
                 placeholder="Select Command Type"
                 onChange={(option) => setCommandType(option?.value ?? null)}
+              />
+            }
+            {profile?.user?.user_role === "headquarter" &&
+              <FormSelect
+                name="corpsType"
+                options={corpsOptions}
+                value={corpsOptions.find((opt) => opt.value === corpsType) ?? null}
+                placeholder="Select Corps Type"
+                onChange={(option) => setCorpsType(option?.value ?? null)}
+              />
+            }
+            {profile?.user?.user_role === "headquarter" &&
+              <FormSelect
+                name="divisionType"
+                options={divisionOptions}
+                value={divisionOptions.find((opt) => opt.value === divisionType) ?? null}
+                placeholder="Select division Type"
+                onChange={(option) => setDivisionType(option?.value ?? null)}
+              />
+            }
+            {profile?.user?.user_role === "headquarter" &&
+              <FormSelect
+                name="brigadeType"
+                options={brigadeOptions}
+                value={brigadeOptions.find((opt) => opt.value === brigadeType) ?? null}
+                placeholder="Select Brigade Type"
+                onChange={(option) => setBrigadeType(option?.value ?? null)}
               />
             }
           </div>
