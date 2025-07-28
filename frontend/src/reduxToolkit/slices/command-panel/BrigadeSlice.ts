@@ -61,8 +61,8 @@ const brigadePanelSlice = createSlice({
       getBrigadeScoreBoards.fulfilled,
       (state, action: PayloadAction<CommandPanelResponse>) => {
         state.loading = false;
-        state.scoreboard = action.payload.data || [];
-        state.meta = action.payload.meta || initialState.meta;
+        state.scoreboard = action.payload.data ?? [];
+        state.meta = action.payload.meta ?? initialState.meta;
         state.error = null;
       }
     );
@@ -70,7 +70,7 @@ const brigadePanelSlice = createSlice({
       getBrigadeScoreBoards.rejected,
       (state, action: PayloadAction<any>) => {
         state.loading = false;
-        state.error = action.payload || "Failed to fetch scoreboard";
+        state.error = action.payload ?? "Failed to fetch scoreboard";
       }
     );
 
@@ -89,7 +89,7 @@ const brigadePanelSlice = createSlice({
       getBrigadeDashboardStats.rejected,
       (state, action: PayloadAction<any>) => {
         state.loading = false;
-        state.error = action.payload || "Something went wrong!";
+        state.error = action.payload ?? "Something went wrong!";
       }
     );
 
@@ -108,7 +108,7 @@ const brigadePanelSlice = createSlice({
       getBrigadeDashboardUnitScores.rejected,
       (state, action: PayloadAction<any>) => {
         state.loading = false;
-        state.error = action.payload || "Something went wrong!";
+        state.error = action.payload ?? "Something went wrong!";
       }
     );
 
@@ -127,7 +127,7 @@ const brigadePanelSlice = createSlice({
       getBrigadeHomeCountStats.rejected,
       (state, action: PayloadAction<any>) => {
         state.loading = false;
-        state.error = action.payload || "Failed to fetch home count data.";
+        state.error = action.payload ?? "Failed to fetch home count data.";
       }
     );
   },

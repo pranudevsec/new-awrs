@@ -3,11 +3,14 @@ import { sidebarStructure } from "./structure";
 import { useEffect, useState } from "react";
 import Axios from "../../reduxToolkit/helper/axios";
 import { useAppDispatch, useAppSelector } from "../../reduxToolkit/hooks";
-import { getClarifications, getSubordinateClarifications } from "../../reduxToolkit/services/clarification/clarificationService";
-// import { fetchApplicationUnits, fetchSubordinates } from "../../reduxToolkit/services/application/applicationService";
+import { getClarifications, getSubordinateClarifications } from "../../../src/reduxToolkit/services/clarification/clarificationService";
 import { SVGICON } from "../../constants/iconsList";
 import { Chatbot } from "../../screens/Chatbot/Chatbot";
+import { GoSidebarExpand, GoSidebarCollapse } from "react-icons/go";
 
+type SidebarMenuProps = {
+  onToggleCollapse: (isCollapsed: boolean) => void; // Callback to notify parent about collapse state
+};
 const commandExtraLabels = ["Scoreboard", "Winners", "Home", "Profile Settings"];
 const headquarterExtraLabels = ["Dashboard", "Home", "Awards", "Scoreboard", "Profile Settings"];
 const extraDashboardLabels = ["Brigade Dashboard", "Division Dashboard", "Corps Dashboard", "Command Dashboard"];
@@ -18,7 +21,7 @@ type UserType = {
   cw2_type?: string;
 };
 
-const SidebarMenu = () => {
+const SidebarMenu = ({ onToggleCollapse }: SidebarMenuProps) => {
   const dispatch = useAppDispatch();
   const profile = useAppSelector((state) => state.admin.profile);
   const user = (profile?.user ?? {}) as UserType;
@@ -26,91 +29,70 @@ const SidebarMenu = () => {
   const isMember = user.is_member ?? false;
   const cw2_type = user.cw2_type?.toLowerCase() ?? "";
 
-  // Local state for clarification-raised units
   const [sidebarClarificationUnits, setSidebarClarificationUnits] = useState<any[]>([]);
+  const [isCollapsed, setIsCollapsed] = useState(false); // State for sidebar collapse
 
-  // Fetch all clarifications and application units for sidebar counts
+  useEffect(() => {
+    onToggleCollapse(isCollapsed);
+  }, [isCollapsed]);
+
   useEffect(() => {
     if (!userRole) return;
-    // Fetch clarifications (received)
+    const fetchUnits = async (url: string) => {
+      const res = await Axios.get(url);
+      if (res.data && Array.isArray(res.data.data)) {
+        setSidebarClarificationUnits(res.data.data);
+      }
+    };
     if (userRole.trim() === "unit") {
       dispatch(getClarifications({ awardType: "", search: "", page: 1, limit: 1000 }));
-      // Fetch units for clarification-raised (unit role)
-      Axios.get("/api/applications/units?limit=1000").then(res => {
-        if (res.data && Array.isArray(res.data.data)) {
-          setSidebarClarificationUnits(res.data.data);
-        }
-      });
+      fetchUnits("/api/applications/units?limit=1000");
     } else {
       dispatch(getSubordinateClarifications({ awardType: "", search: "", page: 1, limit: 1000 }));
-      // Fetch units for clarification-raised (higher roles)
-      Axios.get("/api/applications/subordinates?limit=1000").then(res => {
-        if (res.data && Array.isArray(res.data.data)) {
-          setSidebarClarificationUnits(res.data.data);
-        }
-      });
+      fetchUnits("/api/applications/subordinates?limit=1000");
     }
   }, [dispatch, userRole]);
 
-  // Clarification counts (unit-wise)
-  // Received: count of unitClarifications where any parameter has a clarification_id
   const unitClarifications = useAppSelector((state) => state.clarification.unitClarifications);
   const totalReceivedClarifications = Array.isArray(unitClarifications)
     ? unitClarifications.filter(app =>
-        app?.fds?.parameters && app.fds.parameters.some((p: any) => p.clarification_id)
+        app?.fds?.parameters?.some((p: any) => p.clarification_id)
       ).length
     : 0;
 
-  // Raised: count of units where clarifications_count > 0 (from local state)
   const totalRaisedClarifications = Array.isArray(sidebarClarificationUnits)
-    ? sidebarClarificationUnits.filter(unit => (unit.clarifications_count || 0) > 0).length
+    ? sidebarClarificationUnits.filter(unit => (unit.clarifications_count ?? 0) > 0).length
     : 0;
 
-  // Applications to Review count (from Redux)
-  const applicationsToReview = useAppSelector((state) => state.commandPanel.homeCounts?.applicationsToReview || 0);
+  const applicationsToReview = useAppSelector((state) => state.commandPanel.homeCounts?.applicationsToReview ?? 0);
 
   const alwaysVisible = getAlwaysVisible(userRole);
 
-  // Show only the respective dashboard for each role
-  let dashboardItems: typeof sidebarStructure = [];
-  if (userRole === "brigade") {
-    dashboardItems = sidebarStructure.filter(item => item.label === "Brigade Dashboard");
-  } else if (userRole === "division") {
-    dashboardItems = sidebarStructure.filter(item => item.label === "Division Dashboard");
-  } else if (userRole === "corps") {
-    dashboardItems = sidebarStructure.filter(item => item.label === "Corps Dashboard");
-  } else if (userRole === "command") {
-    dashboardItems = sidebarStructure.filter(item => item.label === "Command Dashboard");
-  }
+  // Dashboard items logic
+  const dashboardLabelsMap: Record<string, string> = {
+    brigade: "Brigade Dashboard",
+    division: "Division Dashboard",
+    corps: "Corps Dashboard",
+    command: "Command Dashboard",
+  };
+  const dashboardLabel = dashboardLabelsMap[userRole];
+  const dashboardItems = dashboardLabel
+    ? sidebarStructure.filter(item => item.label === dashboardLabel)
+    : [];
 
-  let filteredStructure = filterSidebarStructure(userRole, alwaysVisible);
-  // Remove dashboard items from filteredStructure if present
-  filteredStructure = filteredStructure.filter(item => !extraDashboardLabels.includes(item.label));
+  let filteredStructure = filterSidebarStructure(userRole, alwaysVisible)
+    .filter(item => !extraDashboardLabels.includes(item.label));
 
-  // Remove 'Home' for brigade, division, corps, command
   if (["brigade", "division", "corps", "command"].includes(userRole)) {
     filteredStructure = filteredStructure.filter(item => item.label !== "Home");
-  }
-
-  if ((userRole === "headquarter") && sidebarStructure.find(item => item.label === "Dashboard")) {
-    filteredStructure = ([sidebarStructure.find(item => item.label === "Dashboard")].filter(Boolean) as typeof sidebarStructure).concat(filteredStructure);
-  }
-
-  if (userRole === "unit") {
-    filteredStructure.push(createSidebarItem("Submitted Forms", SVGICON.sidebar.raisedClarification, "/submitted-forms/list"));
-  }
-
-  if (["brigade", "division", "corps", "command"].includes(userRole)) {
     filteredStructure.push(createSidebarItem("All Applications", SVGICON.sidebar.allApplications, "/all-applications"));
-
     if (userRole !== "brigade") {
       filteredStructure.push(createSidebarItem("Withdraws", SVGICON.sidebar.withdraws, "/withdraw-quests"));
     }
-
     if (!isMember) {
       filteredStructure.push(
         createSidebarItem("History", SVGICON.sidebar.history, "/history"),
-        createSidebarItem("Accepted Application", SVGICON.sidebar.profile, "/application/accepted")
+        createSidebarItem("Recommended Application", SVGICON.sidebar.profile, "/application/accepted")
       );
     }
   }
@@ -118,175 +100,170 @@ const SidebarMenu = () => {
   if (userRole === "headquarter") {
     filteredStructure.push(createSidebarItem("All Applications", SVGICON.sidebar.allApplications, "/all-applications"));
     filteredStructure = filteredStructure.filter(item => item.label !== "Profile Settings");
+    const dashboardItem = sidebarStructure.find(item => item.label === "Dashboard");
+    if (dashboardItem) {
+      filteredStructure = [dashboardItem, ...filteredStructure];
+    }
+  }
+
+  if (userRole === "unit") {
+    filteredStructure.push(createSidebarItem("Submitted Forms", SVGICON.sidebar.raisedClarification, "/submitted-forms/list"));
   }
 
   if (userRole === "cw2" && ["mo", "ol"].includes(cw2_type)) {
     filteredStructure.push(createSidebarItem("History", SVGICON.sidebar.history, "/history"));
   }
 
-  return (
-    <aside className="sidebar-menu flex-shrink-0 d-xl-block d-none bg-dark text-white p-3 px-0">
+  // Helper to render sidebar item with badge
+  const renderSidebarItemWithBadge = (item: any, badgeCount: number) => (
+    <div key={item.to} className="position-relative">
+      <NavLink
+        to={item.to}
+        className={`nav-items d-flex align-items-center fw-5 position-relative text-white py-2 ${isCollapsed ? "collapsed" : ""}`}
+        style={{ position: 'relative' }}  // <-- Ensure parent has relative position
+      >
+        <div className="d-flex align-items-center text-truncate">
+          <span className="nav-icon me-2 d-inline-flex align-items-center justify-content-center">
+            {item.icon}
+          </span>
+          {!isCollapsed && <span className="text-truncate">{item.label}</span>}
+        </div>
+        {badgeCount > 0 && isCollapsed && (
+          <div style={{
+            position: "fixed",
+            top: "auto",
+            bottom: "auto",
+            left: "40px", // Adjust this value to be right outside the collapsed sidebar width
+            transform: "translateY(-50%)",
+            width: 12,
+            height: 12,
+            backgroundColor: "#dc3545",
+            borderRadius: "50%",
+            zIndex: 9999,
+            marginTop: 16 // Adjust vertical alignment with icon
+          }} />
+        )}
+        {badgeCount > 0 && !isCollapsed && (
+          <div style={{
+            position: "absolute",
+            top: "50%",
+            right: "-16px",
+            transform: "translateY(-50%)",
+            minWidth: 22,
+            height: 22,
+            padding: "0 6px",
+            background: "#dc3545",
+            color: "#fff",
+            borderRadius: "50%",
+            fontSize: 13,
+            fontWeight: 600,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            zIndex: 2,
+            boxShadow: "0 1px 4px rgba(0,0,0,0.12)"
+          }}>
+            {badgeCount}
+          </div>
+        )}
+      </NavLink>
+    </div>
+  );
+
+return (
+  <aside className={`sidebar-menu flex-shrink-0 d-xl-block d-none bg-dark text-white p-3 px-0 ${isCollapsed ? "collapsed" : ""}`} style={isCollapsed ? { width: "60px" } : {}}>
       <div className="d-flex flex-column justify-content-between align-items-center">
         <div className="d-flex flex-column justify-content-center align-items-center gap-2 mb-2">
-          <h5 className="text-white" >Menu</h5>
-          <div className="w-50" style={{ height: "4px", backgroundColor: "#dc3545", borderRadius: "50px" }}></div>
+          {isCollapsed && (
+            <div className="d-flex align-items-center justify-content-center" style={{ height: '56px' }}>
+              <div
+                onClick={() => setIsCollapsed(!isCollapsed)}
+                style={{
+                  cursor: "pointer",
+                  width: 40,
+                  height: 40,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center"
+                }}
+              >
+                {isCollapsed ? <GoSidebarCollapse size={20} /> : <GoSidebarExpand size={20} />}
+              </div>
+            </div>
+          )}
+          {!isCollapsed && (
+            <div className="position-relative w-100 px-3 d-flex align-items-center justify-content-between">
+              <h5 className="text-white mb-0">Menu</h5>
+              <div
+                onClick={() => setIsCollapsed(!isCollapsed)}
+                style={{
+                  cursor: "pointer",
+                  width: 30,
+                  height: 30,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center"
+                }}
+              >
+                {isCollapsed ? <GoSidebarCollapse size={20} /> : <GoSidebarExpand size={20} />}
+              </div>
+            </div>
+          )}
+          {!isCollapsed && (
+            <div className="w-50" style={{ height: "4px", backgroundColor: "#dc3545", borderRadius: "50px" }}></div>
+          )}
         </div>
         <div className="scroll-style-85">
           <div className="sidebar-wrapper mt-3 pb-3">
-            {/* Render dashboard items at the top */}
             {dashboardItems.map((item) => (
               <NavLink
                 to={item.to}
-                className="nav-items d-flex align-items-center fw-5 position-relative text-white py-2"
+                className={`nav-items d-flex align-items-center fw-5 position-relative text-white py-2 ${isCollapsed ? "collapsed" : ""}`}
                 key={item.to}
               >
                 <div className="d-flex align-items-center text-truncate">
                   <span className="nav-icon me-2 d-inline-flex align-items-center justify-content-center">
                     {item.icon}
                   </span>
-                  <span className="text-truncate">{item.label}</span>
+                  {!isCollapsed && <span className="text-truncate">{item.label}</span>}
                 </div>
               </NavLink>
             ))}
-            {/* Render the Home (Applications to Review) tab with counter only for brigade, division, corps, command */}
             {["brigade", "division", "corps", "command"].includes(userRole) && (
-              <div style={{ position: "relative" }}>
-                {applicationsToReview > 0 && (
-                  <div style={{
-                    position: "absolute",
-                    top: -8,
-                    right: 8,
-                    minWidth: 22,
-                    height: 22,
-                    padding: "0 6px",
-                    background: "#dc3545",
-                    color: "#fff",
-                    borderRadius: "50%",
-                    fontSize: 13,
-                    fontWeight: 600,
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    zIndex: 2,
-                    boxShadow: "0 1px 4px rgba(0,0,0,0.12)",
-                  }}>
-                    {applicationsToReview}
-                  </div>
-                )}
-                <NavLink
-                  to="/applications/list"
-                  className="nav-items d-flex align-items-center fw-5 position-relative text-white py-2"
-                >
-                  <div className="d-flex align-items-center text-truncate">
-                    <span className="nav-icon me-2 d-inline-flex align-items-center justify-content-center">
-                      {SVGICON.sidebar.applications}
-                    </span>
-                    <span className="text-truncate">Applications to Review</span>
-                  </div>
-                </NavLink>
-              </div>
+              renderSidebarItemWithBadge(
+                {
+                  label: "Applications to Review",
+                  icon: SVGICON.sidebar.applications,
+                  to: "/applications/list"
+                },
+                applicationsToReview
+              )
             )}
-            {/* Render the rest of the sidebar items */}
             {filteredStructure.map((item) => {
-              // Show badge above the tab for Clarification Received
               if (item.label === "Clarification Received") {
-                return (
-                  <div key={item.to} style={{ position: "relative" }}>
-                    {totalReceivedClarifications > 0 && (
-                      <div style={{
-                        position: "absolute",
-                        top: -8,
-                        right: 8,
-                        minWidth: 22,
-                        height: 22,
-                        padding: "0 6px",
-                        background: "#dc3545",
-                        color: "#fff",
-                        borderRadius: "50%",
-                        fontSize: 13,
-                        fontWeight: 600,
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        zIndex: 2,
-                        boxShadow: "0 1px 4px rgba(0,0,0,0.12)",
-                      }}>
-                        {totalReceivedClarifications}
-                      </div>
-                    )}
-                    <NavLink
-                      to={item.to}
-                      className="nav-items d-flex align-items-center fw-5 position-relative text-white py-2"
-                    >
-                      <div className="d-flex align-items-center text-truncate">
-                        <span className="nav-icon me-2 d-inline-flex align-items-center justify-content-center">
-                          {item.icon}
-                        </span>
-                        <span className="text-truncate">{item.label}</span>
-                      </div>
-                    </NavLink>
-                  </div>
-                );
+                return renderSidebarItemWithBadge(item, totalReceivedClarifications);
               }
-              // Show badge above the tab for Clarification Raised
               if (item.label === "Clarification Raised") {
-                return (
-                  <div key={item.to} style={{ position: "relative" }}>
-                    {totalRaisedClarifications > 0 && (
-                      <div style={{
-                        position: "absolute",
-                        top: -8,
-                        right: 8,
-                        minWidth: 22,
-                        height: 22,
-                        padding: "0 6px",
-                        background: "#dc3545",
-                        color: "#fff",
-                        borderRadius: "50%",
-                        fontSize: 13,
-                        fontWeight: 600,
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        zIndex: 2,
-                        boxShadow: "0 1px 4px rgba(0,0,0,0.12)",
-                      }}>
-                        {totalRaisedClarifications}
-                      </div>
-                    )}
-                    <NavLink
-                      to={item.to}
-                      className="nav-items d-flex align-items-center fw-5 position-relative text-white py-2"
-                    >
-                      <div className="d-flex align-items-center text-truncate">
-                        <span className="nav-icon me-2 d-inline-flex align-items-center justify-content-center">
-                          {item.icon}
-                        </span>
-                        <span className="text-truncate">{item.label}</span>
-                      </div>
-                    </NavLink>
-                  </div>
-                );
+                return renderSidebarItemWithBadge(item, totalRaisedClarifications);
               }
-              // Default rendering
               return (
                 <NavLink
                   to={item.to}
-                  className="nav-items d-flex align-items-center fw-5 position-relative text-white py-2"
+                  className={`nav-items d-flex align-items-center fw-5 position-relative text-white py-2 ${isCollapsed ? "collapsed" : ""}`}
                   key={item.to}
                 >
                   <div className="d-flex align-items-center text-truncate">
                     <span className="nav-icon me-2 d-inline-flex align-items-center justify-content-center">
                       {item.icon}
                     </span>
-                    <span className="text-truncate">{item.label}</span>
+                    {!isCollapsed && <span className="text-truncate">{item.label}</span>}
                   </div>
                 </NavLink>
               );
             })}
           </div>
         </div>
-        <Chatbot />
+        {!isCollapsed && <Chatbot />}
       </div>
     </aside>
   );

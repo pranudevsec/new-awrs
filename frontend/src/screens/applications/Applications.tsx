@@ -45,14 +45,21 @@ const Applications = () => {
       </div>
       <div className="row row-gap-3">
         {isUnitRole && (
-          <>
             <div className="d-flex justify-content-center align-items-center" style={{ minHeight: "400px", marginTop: "1rem" }}>
               {/* Cards column */}
               <div className="d-flex flex-column align-items-center justify-content-center" style={{ width: 350, minWidth: 300, height: 350 }}>
                 <div className="mb-4 w-100">
                   <div
-                    className="h-100 d-block w-100"
+                    role="button"
+                    tabIndex={0}
                     onClick={() => handleCardClick("/applications/citation")}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" || e.key === " ") {
+                        e.preventDefault();
+                        handleCardClick("/applications/citation");
+                      }
+                    }}
+                    className="h-100 d-block w-100"
                     style={{ cursor: "pointer" }}
                   >
                     <div className="card border-0 h-100 d-flex align-items-center justify-content-center shadow-sm hover-shadow position-relative w-100" style={{ minHeight: 120 }}>
@@ -66,8 +73,16 @@ const Applications = () => {
                 </div>
                 <div className="w-100">
                   <div
-                    className="h-100 d-block w-100"
+                    role="button"
+                    tabIndex={0}
                     onClick={() => handleCardClick("/applications/appreciation")}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" || e.key === " ") {
+                        e.preventDefault();
+                        handleCardClick("/applications/appreciation");
+                      }
+                    }}
+                    className="h-100 d-block w-100"
                     style={{ cursor: "pointer" }}
                   >
                     <div className="card border-0 h-100 d-flex align-items-center justify-content-center shadow-sm hover-shadow position-relative w-100" style={{ minHeight: 120 }}>
@@ -99,7 +114,6 @@ const Applications = () => {
                 </div>
               </div>
             </div>
-          </>
         )}
         {userRole !== "unit" && (
           <div className="col-lg-3 col-sm-6 mb-4">

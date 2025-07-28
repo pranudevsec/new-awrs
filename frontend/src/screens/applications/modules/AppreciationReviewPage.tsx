@@ -225,7 +225,10 @@ const AppreciationReviewPage = () => {
                         award_type: "appreciation",
                         cycle_period: values.cyclePeriod,
                         last_date: values.lastDate,
-                        command: values.command,
+                        command: profile?.unit?.comd ?? "",
+                        brigade: profile?.unit?.bde ?? "",
+                        division: profile?.unit?.div ?? "",
+                        corps: profile?.unit?.corps ?? "",
                         parameters: formattedParameters,
                         unitRemarks: unitRemarks,
                         unit_type: profile?.unit?.unit_type
@@ -291,6 +294,7 @@ const AppreciationReviewPage = () => {
     const filledFields = Object.values(counts).filter((value) => value !== "").length;
 
     let totalMarks = 0;
+    let positiveMarks = 0;
     let negativeMarks = 0;
 
     for (const param of parameters) {
@@ -298,15 +302,15 @@ const AppreciationReviewPage = () => {
         const markValue = marks[paramId];
 
         if (markValue !== undefined) {
-            if (param.negative === true) {
+            if (param.negative) {
                 negativeMarks += markValue;
             } else {
-                totalMarks += markValue;
+                positiveMarks += markValue;
             }
         }
     }
 
-    totalMarks = totalMarks - negativeMarks;
+    totalMarks = positiveMarks - negativeMarks;
 
     const renderParamRows = (params: any[]) => {
         let prevHeader: string | null = null;
@@ -462,39 +466,6 @@ const AppreciationReviewPage = () => {
                             </div>
                         </div>
                     </div>
-                    {/* {profile?.unit?.awards?.length > 0 && (
-                        <div className="mt-4 mb-2">
-                            <h5 className="mb-3">Awards</h5>
-                            <div className="table-responsive">
-                                <table className="table-style-2 w-100">
-                                    <thead>
-                                        <tr>
-                                            <th style={{ width: 150, minWidth: 150, maxWidth: 150 }}>Type</th>
-                                            <th style={{ width: 200, minWidth: 200, maxWidth: 200 }}>Year</th>
-                                            <th style={{ width: 300, minWidth: 300, maxWidth: 300 }}>Title</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        {profile?.unit?.awards?.map((award: any) => (
-                                            <tr key={award.award_id}>
-
-                                                <td style={{ width: 150, minWidth: 150, maxWidth: 150 }}>
-                                                    <p className="fw-4 text-capitalize">{award.award_type}</p>
-                                                </td>
-                                                <td style={{ width: 200, minWidth: 200, maxWidth: 200 }}>
-                                                    <p className="fw-4">{award.award_year}</p>
-                                                </td>
-                                                <td style={{ width: 300, minWidth: 300, maxWidth: 300 }}>
-                                                    <p className="fw-4">{award.award_title}</p>
-                                                </td>
-                                            </tr>
-                                        ))}
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
-                    )} */}
-
                     <div
                         ref={scrollContainerRef}
                         style={{
@@ -557,12 +528,16 @@ const AppreciationReviewPage = () => {
                                 <div className="fw-bold">{filledFields}</div>
                             </div>
                             <div className="col-6 col-sm-3">
+                                <span className="fw-medium text-muted">Positive Marks:</span>
+                                <div className="fw-bold text-danger">{positiveMarks.toFixed(3)}</div>
+                            </div>
+                            <div className="col-6 col-sm-3">
                                 <span className="fw-medium text-muted">Negative Marks:</span>
-                                <div className="fw-bold text-danger">{negativeMarks}</div>
+                                <div className="fw-bold text-danger">{negativeMarks.toFixed(3)}</div>
                             </div>
                             <div className="col-6 col-sm-3">
                                 <span className="fw-medium text-muted">Total Marks:</span>
-                                <div className="fw-bold text-success">{totalMarks}</div>
+                                <div className="fw-bold text-success">{totalMarks.toFixed(3)}</div>
                             </div>
                         </div>
 

@@ -24,6 +24,9 @@ const URL = import.meta.env.VITE_VALIDATE_TOKEN_URL;
 interface FetchUnitsParams {
   award_type?: string;
   command_type?: string;
+  corps_type?: string;
+  division_type?: string;
+  brigade_type?: string;
   search?: string;
   page?: number;
   limit?: number;
@@ -128,6 +131,15 @@ export const fetchAllApplications = createAsyncThunk<
     }
     if (params?.command_type) {
       queryParams.append("command_type", params.command_type);
+    }
+    if (params?.corps_type) {
+      queryParams.append("corps_type", params.corps_type);
+    }
+    if (params?.division_type) {
+      queryParams.append("division_type", params.division_type);
+    }
+    if (params?.brigade_type) {
+      queryParams.append("brigade_type", params.brigade_type);
     }
     if (params?.search) {
       queryParams.append("search", params.search);

@@ -10,6 +10,7 @@ import { awardTypeOptions, commandOptions } from "../../../data/options";
 import { SVGICON } from "../../../constants/iconsList";
 import { useAppDispatch, useAppSelector } from "../../../reduxToolkit/hooks";
 import { fetchApplicationsForHQ, fetchApplicationUnits, fetchSubordinates } from "../../../reduxToolkit/services/application/applicationService";
+import * as XLSX from "xlsx";
 
 const ApplicationsList = () => {
   const navigate = useNavigate();
@@ -45,7 +46,7 @@ const ApplicationsList = () => {
       const role = profile.user.user_role;
       const params = {
         ...(awardType && awardType !== "All" ? { award_type: awardType } : {}),
-        command_type: commandType === "All" ? undefined : commandType || undefined,
+        command_type: commandType === "All" ? undefined : commandType ?? undefined,
         search: debouncedSearch,
         page,
         limit,  
@@ -79,6 +80,88 @@ const ApplicationsList = () => {
     fetchData();
   }, [awardType, commandType, debouncedSearch, profile, page, limit]);
 
+  const hierarchy = ["unit", "brigade", "division", "corps", "command"];
+
+  const getTotalMarks = (unit: any): number => {
+    const parameters = unit?.fds?.parameters ?? [];
+    const graceMarks =
+      unit?.fds?.applicationGraceMarks?.reduce(
+        (acc: number, item: any) => acc + (item?.marks ?? 0),
+        0
+      ) ?? 0;
+    let totalNegativeMarks = 0;
+    const totalParameterMarks = parameters.reduce((acc: number, param: any) => {
+      const isRejected =
+        param?.clarification_details?.clarification_status === "rejected";
+      if (isRejected) return acc;
+      const hasValidApproved =
+        param?.approved_marks !== undefined &&
+        param?.approved_marks !== null &&
+        param?.approved_marks !== "" &&
+        !isNaN(Number(param?.approved_marks));
+      const approved = hasValidApproved ? Number(param.approved_marks) : null;
+      let original = 0;
+      if (param?.negative) {
+        totalNegativeMarks += Number(param?.marks ?? 0);
+      } else {
+        original = Number(param?.marks ?? 0);
+      }
+      return acc + (approved ?? original);
+    }, 0);
+    return totalParameterMarks + graceMarks - totalNegativeMarks;
+  };
+
+  const getTotalNegativeMarks = (unit: any): number => {
+    const parameters = unit?.fds?.parameters ?? [];
+    return parameters.reduce((acc: number, param: any) => {
+      if (param?.negative) {
+        return acc + Number(param?.marks ?? 0);
+      }
+      return acc;
+    }, 0);
+  };
+
+  const getLowerRolePriority = (unit: any) => {
+    const role = profile?.user?.user_role?.toLowerCase() ?? "";
+    const lowerRole = hierarchy[hierarchy.indexOf(role) - 1] ?? null;
+    if (!lowerRole || !unit?.fds?.applicationPriority) return "-";
+    const priorityEntry = unit?.fds.applicationPriority.find(
+      (p: any) => p.role?.toLowerCase() === lowerRole
+    );
+    return priorityEntry?.priority ?? "-";
+  };
+
+  const handleDownloadExcel = () => {
+    let col = [
+      "Application Id",
+      "Unit ID",
+      ...(role === "headquarter" ? ["Command"] : []),
+      "Submission Date",
+      "Dead Line",
+      "Type",
+      "Total Marks",
+      "Negative Marks",
+      ...(role !== "brigade" && role !== "unit" ? ["Lower Role Priority"] : []),
+      ...(role === "unit" ? ["Status"] : []),
+    ];
+    let rows = units.map((unit: any) => [
+      `#${unit.id}`,
+      `#${unit.unit_id}`,
+      ...(role === "headquarter" ? [unit?.fds?.command ?? "-"] : []),
+      new Date(unit.date_init).toLocaleDateString(),
+      unit.fds?.last_date ? new Date(unit.fds.last_date).toLocaleDateString() : "-",
+      unit.type.charAt(0).toUpperCase() + unit.type.slice(1),
+      getTotalMarks(unit),
+      getTotalNegativeMarks(unit),
+      ...(role !== "brigade" && role !== "unit" ? [getLowerRolePriority(unit)] : []),
+      ...(role === "unit" ? [unit?.status_flag ? unit.status_flag.charAt(0).toUpperCase() + unit.status_flag.slice(1) : "Submitted"] : []),
+    ]);
+    const worksheet = XLSX.utils.aoa_to_sheet([col, ...rows]);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Applications");
+    XLSX.writeFile(workbook, "applications-list.xlsx");
+  };
+
   return (
     <div className="clarification-section">
       <div className="d-flex flex-sm-row flex-column align-items-sm-center justify-content-between mb-4">
@@ -89,6 +172,9 @@ const ApplicationsList = () => {
             { label: "Applications", href: "/applications/list" },
           ]}
         />
+        <button className="btn btn-primary" onClick={handleDownloadExcel}>
+          Download Excel
+        </button>
       </div>
 
       <div className="filter-wrapper d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
@@ -140,6 +226,12 @@ const ApplicationsList = () => {
               </th>
               <th style={{ width: 200, minWidth: 200, maxWidth: 200 }}>Dead Line</th>
               <th style={{ width: 150, minWidth: 150, maxWidth: 150 }}>Type</th>
+              {/* New columns */}
+              <th style={{ width: 150, minWidth: 150, maxWidth: 150 }}>Total Marks</th>
+              <th style={{ width: 150, minWidth: 150, maxWidth: 150 }}>Negative Marks</th>
+              {role !== "brigade" && role !== "unit" && (
+                <th style={{ width: 150, minWidth: 150, maxWidth: 150 }}>Lower Role Priority</th>
+              )}
               {role === "unit" && (<th style={{ width: 150, minWidth: 150, maxWidth: 150 }}>Status</th>)}
               <th style={{ width: 100, minWidth: 100, maxWidth: 100 }}></th>
             </tr>
@@ -193,6 +285,18 @@ const ApplicationsList = () => {
                   <td style={{ width: 150, minWidth: 150, maxWidth: 150 }}>
                     <p className="fw-4">{unit.type.charAt(0).toUpperCase() + unit.type.slice(1)}</p>
                   </td>
+                  {/* New columns */}
+                  <td style={{ width: 150, minWidth: 150, maxWidth: 150 }}>
+                    <p className="fw-4">{getTotalMarks(unit).toFixed(3)}</p>
+                  </td>
+                  <td style={{ width: 150, minWidth: 150, maxWidth: 150 }}>
+                    <p className="fw-4">{getTotalNegativeMarks(unit)}</p>
+                  </td>
+                  {role !== "brigade" && (
+                    <td style={{ width: 150, minWidth: 150, maxWidth: 150 }}>
+                      <p className="fw-4">{getLowerRolePriority(unit)}</p>
+                    </td>
+                  )}
                   {role === "unit" && (
                     <td style={{ width: 150, minWidth: 150, maxWidth: 150 }}>
                       <p className="fw-4">

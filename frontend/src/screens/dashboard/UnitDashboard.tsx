@@ -12,12 +12,6 @@ import { awardTypeOptions } from "../../data/options";
 import * as XLSX from 'xlsx';
 import { saveAs } from 'file-saver';
 
-// const LEVEL_TITLES: Record<string, string> = {
-//   brigade: "Brigade Dashboard",
-//   division: "Division Dashboard",
-//   corps: "Corps Dashboard",
-// };
-
 const UnitDashboard = ({ level }: { level: "brigade" | "division" | "corps" | "command"}) => {
   const dispatch = useAppDispatch();
   const [pendingUnits, setPendingUnits] = useState<any[]>([]);
@@ -26,9 +20,8 @@ const UnitDashboard = ({ level }: { level: "brigade" | "division" | "corps" | "c
   const [awardTypeFilter, setAwardTypeFilter] = useState<string>("All");
 
   // Get data from redux
-  const homeCounts = useAppSelector(state => state.commandPanel.homeCounts);
   const loading = useAppSelector(state => state.application.loading);
-  const profile = useAppSelector(state => state.admin.profile);
+  // const profile = useAppSelector(state => state.admin.profile);
 
   // Fetch data on mount
   useEffect(() => {
@@ -38,17 +31,14 @@ const UnitDashboard = ({ level }: { level: "brigade" | "division" | "corps" | "c
       ...(awardTypeFilter !== "All" ? { award_type: awardTypeFilter } : {})
     };
     dispatch(fetchSubordinates(params)).then((action: any) => {
-      if (action.payload && action.payload.data) {
-        setPendingUnits(action.payload.data);
-      }
+      action.payload?.data && setPendingUnits(action.payload.data);
     });
+
     const historyParams = {
       ...(awardTypeFilter !== "All" ? { award_type: awardTypeFilter } : {})
     };
     dispatch(fetchApplicationHistory(historyParams)).then((action: any) => {
-      if (action.payload && action.payload.data) {
-        setHistoryUnits(action.payload.data);
-      }
+      action.payload?.data && setHistoryUnits(action.payload.data);
     });
     // Fetch accepted applications count
     const acceptedParams = {
@@ -57,9 +47,7 @@ const UnitDashboard = ({ level }: { level: "brigade" | "division" | "corps" | "c
       ...(awardTypeFilter !== "All" ? { award_type: awardTypeFilter } : {})
     };
     dispatch(fetchSubordinates(acceptedParams)).then((action: any) => {
-      if (action.payload && action.payload.data) {
-        setAcceptedApplicationsCount(action.payload.data.length);
-      }
+      action.payload?.data && setAcceptedApplicationsCount(action.payload.data.length);
     });
   }, [dispatch, level, awardTypeFilter]);
 
@@ -67,13 +55,11 @@ const UnitDashboard = ({ level }: { level: "brigade" | "division" | "corps" | "c
   // Calculate pending from filtered data instead of unfiltered Redux state
   const pending = pendingUnits.length;
   const approved = historyUnits.filter((u: any) =>
-    (u.status_flag || '').toLowerCase() === "approved"
+    (u.status_flag ?? '').toLowerCase() === "approved"
   ).length;
   const rejected = historyUnits.filter((u: any) => {
-    const status = (u.status_flag || '').toLowerCase();
-    const rejectedBy = u.last_rejected_by_role || '';
-    const userRole = profile?.user?.user_role || '';
-    return status === "rejected" && rejectedBy.toLowerCase() === userRole.toLowerCase();
+    const status = (u.status_flag ?? '').toLowerCase();
+    return status === "rejected";
   }).length;
 
   // Compose dashboardStats object for components
@@ -110,7 +96,7 @@ const UnitDashboard = ({ level }: { level: "brigade" | "division" | "corps" | "c
       } else {
         original = Number(param?.marks ?? 0);
       }
-      return acc + (approved !== null ? approved : original);
+      return acc + (approved ?? original);
     }, 0);
     return totalParameterMarks + graceMarks - totalNegativeMarks;
   };
@@ -132,7 +118,6 @@ const UnitDashboard = ({ level }: { level: "brigade" | "division" | "corps" | "c
       totalNegativeMarks,
       numParametersFilled,
     };
-    console.log(unit);
   });
 
   // Calculate dynamic y-axis domains for each metric
@@ -140,7 +125,7 @@ const UnitDashboard = ({ level }: { level: "brigade" | "division" | "corps" | "c
     if (!arr || arr.length === 0) return [0, 10];
     const max = Math.max(...arr, 0);
     // Round up to the next multiple of 10 for a cleaner axis
-    const roundedMax = isNaN(max) || max <= 10 ? 10 : Math.ceil(max / 10) * 10;
+    const roundedMax = isNaN(max) ?? max <= 10 ? 10 : Math.ceil(max / 10) * 10;
     return [0, roundedMax];
   };
 
@@ -157,7 +142,7 @@ const UnitDashboard = ({ level }: { level: "brigade" | "division" | "corps" | "c
       return {
         'Application Id': unit.id,
         'Unit ID': unit.unit_id,
-        'Arm/Service': unit.fds.unit_type || '',
+        'Arm/Service': unit.fds.unit_type ?? '',
         'Total Marks': getTotalMarks(unit),
         'Total Negative Marks': totalNegativeMarks,
         'Application Type': unit.type ? unit.type.charAt(0).toUpperCase() + unit.type.slice(1) : '-',
@@ -233,7 +218,6 @@ const UnitDashboard = ({ level }: { level: "brigade" | "division" | "corps" | "c
                 </thead>
                 <tbody>
                   {pendingUnits.map((unit: any) => {
-                    {console.log(unit)}
                     const parameters = unit?.fds?.parameters ?? [];
                     const totalNegativeMarks = parameters
                       .filter((param: any) => param?.negative)
@@ -242,7 +226,7 @@ const UnitDashboard = ({ level }: { level: "brigade" | "division" | "corps" | "c
                       <tr key={unit.id}>
                         <td>{unit.id}</td>
                         <td>{unit.unit_id}</td>
-                        <td>{unit.fds.unit_type || ''}</td>
+                        <td>{unit.fds.unit_type ?? ''}</td>
                         <td>{getTotalMarks(unit)}</td>
                         <td>{totalNegativeMarks}</td>
                         <td>{unit.type ? unit.type.charAt(0).toUpperCase() + unit.type.slice(1) : '-'}</td>

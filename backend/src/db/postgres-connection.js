@@ -7,6 +7,7 @@ const pool = new Pool({
   user: config.postgres.user,
   password: config.postgres.password,
   database: config.postgres.database,
+  ssl: config.postgres.ssl
 });
 
 let isConnected = false;

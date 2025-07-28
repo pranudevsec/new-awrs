@@ -1,12 +1,12 @@
-// // const { PGVectorStore } = require('@langchain/community/vectorstores/pgvector');
-// // const { OllamaEmbeddings } = require('@langchain/ollama');
+// const { PGVectorStore } = require('@langchain/community/vectorstores/pgvector');
+// const { OllamaEmbeddings } = require('@langchain/ollama');
 
-// // const embeddings = new OllamaEmbeddings({
-// //   model: 'nomic-embed-text:latest',
-// //   baseUrl: 'http://localhost:11434',
-// // });
+// const embeddings = new OllamaEmbeddings({
+//   model: 'nomic-embed-text:latest',
+//   baseUrl: 'http://localhost:11434',
+// });
 
-// // let vectorStore;
+// let vectorStore;
 
 // const initializeVectorStore = async () => {
 //   vectorStore = await PGVectorStore.initialize(embeddings, {
@@ -28,15 +28,15 @@
 //   });
 // };
 
-// // const ready = initializeVectorStore();
+// const ready = initializeVectorStore();
 
-// // module.exports = {
-// //   embeddings,
-// //   get vectorStore() {
-// //     if (!vectorStore) {
-// //       throw new Error('Vector store not initialized yet. Await `ready` first.');
-// //     }
-// //     return vectorStore;
-// //   },
-// //   ready,
-// // };
+// module.exports = {
+//   embeddings,
+//   get vectorStore() {
+//     if (!vectorStore) {
+//       throw new Error('Vector store not initialized yet. Await `ready` first.');
+//     }
+//     return vectorStore;
+//   },
+//   ready,
+// };

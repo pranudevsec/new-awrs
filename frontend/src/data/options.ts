@@ -1,3 +1,5 @@
+import { Label } from "recharts";
+
 export const awardTypeOptions: OptionType[] = [
   {value:"All", label:"All"},
   { value: "citation", label: "Citation" },
@@ -318,38 +320,60 @@ export const roleOptions2: OptionType[] = [
 ];
 
 export const unitTypeOptions = [
-  { label: "RR", value: "RR" },
-  { label: "SF", value: "SF" },
-  { label: "ARTY", value: "ARTY" },
-  { label: "INFANTRY", value: "INFANTRY" },
-  { label: "ARMD/MECH INF", value: "ARMD/MECH INF" },
-  { label: "MECH INF", value: "MECH INF" },
-  { label: "SATA", value: "SATA" },
-  { label: "ENGRS", value: "ENGRS" },
-  { label: "SIGS", value: "SIGS" },
-  { label: "EW", value: "EW" },
-  { label: "SI", value: "SI" },
   { label: "AAD", value: "AAD" },
+  { label: "ALL", value: "ALL" },
+  { label: "AMD AND TRG", value: "AMD AND TRG" },
+  { label: "ARMD/MECH INF", value: "ARMD/MECH INF" },
   { label: "ARMY AVN", value: "ARMY AVN" },
-  { label: "INT", value: "INT" },
-  { label: "ASC (MT)", value: "ASC (MT)" },
+  { label: "ARMY DOG UNIT", value: "ARMY DOG UNIT" },
+  { label: "ARTY", value: "ARTY" },
+  { label: "ASC", value: "ASC" },
   { label: "ASC (AT)", value: "ASC (AT)" },
+  { label: "ASC (MT)", value: "ASC (MT)" },
+  { label: "ASC (SUP)", value: "ASC (SUP)" },
   { label: "ASC (SUP/FOL)", value: "ASC (SUP/FOL)" },
-  { label: "MED", value: "MED" },
+  { label: "ASC 2nd & 3rd LINE TPT", value: "ASC 2nd & 3rd LINE TPT" },
+  { label: "AVN", value: "AVN" },
+  { label: "CERT OF APPRECIATION", value: "CERT OF APPRECIATION" },
+  { label: "CMP", value: "CMP" },
+  { label: "DENTAL", value: "DENTAL" },
+  { label: "DSC", value: "DSC" },
+  { label: "EME", value: "EME" },
+  { label: "ENGRS", value: "ENGRS" },
+  { label: "EW/SI", value: "EW/SI" },
   { label: "FD HOSP", value: "FD HOSP" },
-  { label: "ORD (FOD)", value: "ORD (FOD)" },
+  { label: "FFU", value: "FFU" },
+  { label: "HINTERLAND", value: "HINTERLAND" },
+  { label: "INFANTRY", value: "INFANTRY" },
+  { label: "INT", value: "INT" },
+  { label: "LC/AIOS/LAC/HAA/AGPL", value: "LC/AIOS/LAC/HAA/AGPL" },
+  { label: "MED", value: "MED" },
+  { label: "MED LESS FD HOSP", value: "MED LESS FD HOSP" },
+  { label: "ORD", value: "ORD" },
   { label: "ORD (DOU)", value: "ORD (DOU)" },
   { label: "ORD (FAD)", value: "ORD (FAD)" },
-  { label: "ORD (NVCD/VEH COY)", value: "ORD (NVCD/VEH COY)" },
-  { label: "EME", value: "EME" },
+  { label: "ORD (FOD)", value: "ORD (FOD)" },
+  { label: "ORD (NCVD/VEH COY)", value: "ORD (NCVD/VEH COY)" },
+  { label: "ORD AMN", value: "ORD AMN" },
+  { label: "REGT/TRG", value: "REGT/TRG" },
+  { label: "REGTL CENTRES & RECORDS", value: "REGTL CENTRES & RECORDS" },
   { label: "RVC", value: "RVC" },
+  { label: "RVC (REMOUNT TRG SCHOOL & DEPOTS)", value: "RVC (REMOUNT TRG SCHOOL & DEPOTS)" },
+  { label: "RVC : MIL VET HOSP", value: "RVC : MIL VET HOSP" },
+  { label: "RVC UNITS CMVL", value: "RVC UNITS CMVL" },
+  { label: "RVC UNITS(EQUINE BREEDING STUD)", value: "RVC UNITS(EQUINE BREEDING STUD)" },
+  { label: "SATA", value: "SATA" },
+  { label: "SIGNAL", value: "SIGNAL" },
+  { label: "TA", value: "TA" },
+  { label: "OTHERS", value: "OTHERS" },
 ];
 
 export const matrixUnitOptions = [
   { label: "CI/CT", value: "HINTERLAND" },
   { label: "LC/AIOS/LAC/HAA/AGPL", value: "LC/AIOS/LAC/HAA/AGPL" },
-  { label: "IS", value: "IS" },
-  { label: "NM", value: "NM" },
+  { label: "Internal Security (IS)", value: "IS" },
+  { label: "Non Metrics (NM)", value: "NM" },
+  { label: "Peace/Mod Fd", value: "Peace" },
 ];
 
 export const rank = [
@@ -376,27 +400,27 @@ export const getParamDisplay = (param: any) => {
   if (name !== "no") {
     return {
       main: name,
-      header: category || null,
-      subheader: subcategory || null,
-      subsubheader: subsubcategory || null,
+      header: category ?? null,
+      subheader: subcategory ?? null,
+      subsubheader: subsubcategory ?? null,
     };
   }
 
   const main =
-    subsubcategory || subcategory || category || null;
+    subsubcategory ?? subcategory ?? category ?? null;
 
   return {
     main,
-    header: subsubcategory ? category || null : null,
-    subheader: subsubcategory ? subcategory || null : null,
+    header: subsubcategory ? category ?? null : null,
+    subheader: subsubcategory ? subcategory ?? null : null,
     subsubheader: null,
   };
 };
 
 export const DisclaimerText = {
-  "unit": `I hereby confirm that the information provided in my profile is accurate, up-to-date, and original. 
-  I understand that it is my responsibility to ensure the correctness of the information, and I accept 
-  any consequences arising from providing false or outdated details.`,
-  "All": `I hereby declare that I have thoroughly reviewed the application and supporting materials to the best of my knowledge and ability. 
+  "unit": `I hereby confirm that the information provided by me is accurate and up-to-date. 
+  I understand that it is my sole responsibility to ensure the correctness of the information and I accept 
+  any consequences arising by providing false or outdated details.`,
+  "All": `I hereby declare that, I have thoroughly reviewed the application, channel of reporting and supporting documents. 
   My recommendation/decision is based solely on the information presented.`,
 };

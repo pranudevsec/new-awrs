@@ -1,9 +1,8 @@
 import { useEffect, useState, type JSX } from "react";
 import { MdClose } from "react-icons/md";
 import { IoMdCheckmark } from "react-icons/io";
-import { FaCheckCircle } from "react-icons/fa";
+import { FaCheckCircle, FaDownload } from "react-icons/fa";
 import { SVGICON } from "../../../constants/iconsList";
-import { FaDownload } from "react-icons/fa";
 import toast from "react-hot-toast";
 import Breadcrumb from "../../../components/ui/breadcrumb/Breadcrumb";
 import Loader from "../../../components/ui/loader/Loader";
@@ -12,7 +11,6 @@ import ReqClarificationModal from "../../../modals/ReqClarificationModal";
 import ReviewCommentModal from "../../../modals/ReviewCommentModal";
 import ViewCreatedClarificationModal from "../../../modals/ViewCreatedClarificationModal";
 import StepProgressBar from "../../../components/ui/stepProgressBar/StepProgressBar";
-// import { SVGICON } from "../../../constants/iconsList";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { useAppDispatch, useAppSelector } from "../../../reduxToolkit/hooks";
 import {
@@ -81,6 +79,7 @@ const ApplicationDetails = () => {
   const [clarificationClarificationForView, setClarificationClarificationForView] = useState<string | null>(null);
   const [reviewerClarificationForView, setReviewerClarificationForView] = useState<string | null>(null);
   const [approvedMarksState, setApprovedMarksState] = useState<Record<string, string>>({});
+  const [approvedCountState, setApprovedCountState] = useState<Record<string, string>>({});
   const [remarksError, setRemarksError] = useState<string | null>(null);
   const [graceMarks, setGraceMarks] = useState("");
   const [decisions, setDecisions] = useState<{ [memberId: string]: string }>({});
@@ -140,14 +139,18 @@ const ApplicationDetails = () => {
 
     const marks = parameters.reduce((acc, param) => {
       const isRejected = param.clarification_details?.clarification_status === "rejected";
-      const isNegative = param.negative === true;
+      const isNegative = param.negative;
       if (isRejected || isNegative) return acc;
       return acc + (param.marks ?? 0);
     }, 0);
 
     const approvedMarks = parameters.reduce((acc, param) => {
       const isRejected = param.clarification_details?.clarification_status === "rejected";
-      return acc + (isRejected ? 0 : Number(param.approved_marks ?? 0));
+      if (isRejected) {
+        return acc;
+      }
+      const approved_marks = Number(param.approved_marks ?? 0);
+      return acc + approved_marks;
     }, 0);
 
     // Calculate negativeMarks
@@ -165,14 +168,14 @@ const ApplicationDetails = () => {
       const approved = hasValidApproved ? Number(param.approved_marks) : null;
       const original = param.marks ?? 0;
       const valueToCheck = approved ?? original;
-      return acc + (param.negative === true ? valueToCheck : 0);
+      return acc + (param.negative ? valueToCheck : 0);
     }, 0);
 
     const totalParameterMarks = parameters.reduce((acc, param) => {
       const isRejected = param.clarification_details?.clarification_status === "rejected";
 
       if (isRejected) return acc;
-      if (param.negative === true) return acc;
+      if (param.negative) return acc;
 
       const hasValidApproved =
         param.approved_marks !== undefined &&
@@ -206,10 +209,18 @@ const ApplicationDetails = () => {
   useEffect(() => {
     if (unitDetail?.fds?.parameters && profile) {
       const initialMarks: Record<string, string> = {};
+      const initialCounts: Record<string, string> = {};
       const initialComments: Record<string, string> = {};
 
       unitDetail.fds.parameters.forEach((param: any) => {
-        initialMarks[param.name] = param.approved_marks ?? "";
+        // This logic ensures that we don't overwrite user input on re-renders.
+        // We only set the initial value if the user hasn't touched the field yet.
+        if (approvedMarksState[param.id] === undefined) {
+          initialMarks[param.id] = param.approved_marks ?? "";
+        }
+        if (approvedCountState[param.id] === undefined) {
+          initialCounts[param.id] = param.approved_count ?? "";
+        }
 
         const matchingComments = (param.comments ?? []).filter(
           (c: any) =>
@@ -221,30 +232,54 @@ const ApplicationDetails = () => {
           const latest = matchingComments.reduce((a: any, b: any) =>
             new Date(a.commented_at) > new Date(b.commented_at) ? a : b
           );
-          initialComments[param.name] = latest.comment ?? "";
+          initialComments[param.id] = latest.comment ?? "";
         } else {
-          initialComments[param.name] = "";
+          initialComments[param.id] = "";
         }
       });
 
-      setApprovedMarksState(initialMarks);
-      setCommentsState(initialComments);
+      // Merge the initial values with the existing state.
+      // This preserves any values the user has already entered.
+      setApprovedMarksState((prev) => ({ ...initialMarks, ...prev }));
+      setApprovedCountState((prev) => ({ ...initialCounts, ...prev }));
+      setCommentsState((prev) => ({ ...initialComments, ...prev }));
     }
   }, [unitDetail, profile]);
 
-  const handleSave = async (paramName: string, marks: string) => {
-    if (marks === undefined) return;
+  const handleSave = async (paramId: string, approvedCountRaw: string) => {
+    if (approvedCountRaw === undefined) return;
+
+    const parameters = unitDetail?.fds?.parameters ?? [];
+    const param = parameters.find((p: any) => p.id === paramId);
+    if (!param) return;
+
+    const approved_count = Number(approvedCountRaw);
+    const marks = Number(param.marks ?? 0);
+    const count = Number(param.count ?? 0);
+
+    let finalApprovedMarks = 0;
+    if (count > 0) {
+      finalApprovedMarks = approved_count * (marks / count);
+    }
 
     const body = {
       type: unitDetail?.type ?? "citation",
       application_id: unitDetail?.id ?? 0,
-      parameters: [{ name: paramName, approved_marks: marks }],
+      parameters: [
+        {
+          id: paramId,
+          approved_marks: finalApprovedMarks,
+          approved_count: approved_count,
+        },
+      ],
     };
 
     try {
       await dispatch(approveMarks(body)).unwrap();
       dispatch(fetchApplicationUnitDetail({ award_type, numericAppId }));
-      const updatedStats = calculateParameterStats(unitDetail?.fds?.parameters);
+      const updatedStats = calculateParameterStats(
+        unitDetail?.fds?.parameters
+      );
       setParamStats(updatedStats);
     } catch (err) {
       console.error("Failed to save approved marks:", err);
@@ -252,9 +287,28 @@ const ApplicationDetails = () => {
   };
 
   const debouncedHandleSave = useDebounce(handleSave, 600);
-  const handleInputChange = (paramName: string, value: string) => {
-    setApprovedMarksState((prev) => ({ ...prev, [paramName]: value }));
-    debouncedHandleSave(paramName, value);
+
+  const handleCountChange = (paramId: string, value: string) => {
+    setApprovedCountState((prev) => ({ ...prev, [paramId]: value }));
+
+    // Also update the approved marks state for immediate UI feedback
+    const parameters = unitDetail?.fds?.parameters ?? [];
+    const param = parameters.find((p: any) => p.id === paramId);
+    if (param) {
+      const approved_count = Number(value);
+      const marks = Number(param.marks ?? 0);
+      const count = Number(param.count ?? 0);
+      let finalApprovedMarks = 0;
+      if (count > 0) {
+        finalApprovedMarks = approved_count * (marks / count);
+      }
+      setApprovedMarksState((prev) => ({
+        ...prev,
+        [paramId]: finalApprovedMarks.toFixed(2),
+      }));
+    }
+
+    debouncedHandleSave(paramId, value);
   };
 
   useEffect(() => {
@@ -317,7 +371,7 @@ const ApplicationDetails = () => {
     })
     .filter(Boolean);
 
-  const handleSaveComment = (paramName: string, comment: string) => {
+  const handleSaveComment = (paramId: string, comment: string) => {
     if (!comment) return;
 
     const body: any = {
@@ -325,10 +379,10 @@ const ApplicationDetails = () => {
       application_id: unitDetail?.id ?? 0,
     };
 
-    if (paramName === "__application__") {
+    if (paramId === "__application__") {
       body.comment = comment;
     } else {
-      body.parameters = [{ name: paramName, comment }];
+      body.parameters = [{ name: paramId, comment }];
     }
 
     dispatch(addApplicationComment(body))
@@ -362,9 +416,9 @@ const ApplicationDetails = () => {
 
   const debouncedHandleSaveComment = useDebounce(handleSaveComment, 600);
 
-  const handleCommentChange = (paramName: string, value: string) => {
-    setCommentsState((prev) => ({ ...prev, [paramName]: value }));
-    debouncedHandleSaveComment(paramName, value);
+  const handleCommentChange = (paramId: string, value: string) => {
+    setCommentsState((prev) => ({ ...prev, [paramId]: value }));
+    debouncedHandleSaveComment(paramId, value);
   };
 
   useEffect(() => {
@@ -597,7 +651,8 @@ const ApplicationDetails = () => {
     const rows: JSX.Element[] = [];
 
     const isRejected = param?.clarification_details?.clarification_status === "rejected";
-    const approvedMarksValue = isRejected ? "0" : approvedMarksState[param.name] ?? "";
+    const approvedMarksValue = isRejected ? "0" : approvedMarksState[param.id] ?? "";
+    const approvedCountValue = isRejected ? "0" : approvedCountState[param.id] ?? "";
     const clarificationDetails = param?.clarification_details;
     const hasClarification = clarificationDetails?.clarification && clarificationDetails?.clarification_id;
     const clarificationStatus = clarificationDetails?.clarification_status;
@@ -651,15 +706,24 @@ const ApplicationDetails = () => {
               <input
                 type="text"
                 className="form-control"
+                placeholder="Enter approved count"
+                autoComplete="off"
+                value={approvedCountValue}
+                disabled={isRejected}
+                onChange={(e) => handleCountChange(param.id, e.target.value)}
+              />
+            </td>
+            <td style={{ width: 200 }}>
+              <input
+                type="text"
+                className="form-control"
                 placeholder="Enter approved marks"
                 autoComplete="off"
                 value={approvedMarksValue}
                 disabled={isRejected}
-                onChange={(e) => handleInputChange(param.name, e.target.value)}
+                readOnly
               />
             </td>
-
-            {!isRaisedScreen && (
               <td style={{ width: 120 }}>
                 {canViewClarification ? (
                   <button
@@ -695,7 +759,6 @@ const ApplicationDetails = () => {
                   </button>
                 )}
               </td>
-            )}
 
             {isRaisedScreen && (
               <>
@@ -733,22 +796,22 @@ const ApplicationDetails = () => {
 
   // Excel export handler
   const handleDownloadExcel = () => {
-    const parameters = unitDetail?.fds?.parameters || [];
-    const members = profile?.unit?.members || [];
+    const parameters = unitDetail?.fds?.parameters ?? [];
+    const members = profile?.unit?.members ?? [];
 
     // Prepare parameter data
     const paramData = parameters.map((param: any) => ({
-      category: param.category || "",
-      subcategory: param.subcategory || "",
-      subsubcategory: param.subsubcategory || "",
-      name: param.name || "",
+      category: param.category ?? "",
+      subcategory: param.subcategory ?? "",
+      subsubcategory: param.subsubcategory ?? "",
+      name: param.name ?? "",
       marks: param.marks ?? "",
     }));
 
     // Prepare member data
     const memberData = members.map((member: any) => ({
-      name: member.name || "",
-      rank: member.rank || "",
+      name: member.name ?? "",
+      rank: member.rank ?? "",
       member_type: member.member_type === "presiding_officer" ? "Presiding Officer" : "Member Officer",
     }));
 
@@ -765,7 +828,7 @@ const ApplicationDetails = () => {
     // Write and download
     const excelBuffer = XLSX.write(wb, { bookType: "xlsx", type: "array" });
     const data = new Blob([excelBuffer], { type: "application/octet-stream" });
-    saveAs(data, `Application_${unitDetail?.id || ""}_Details.xlsx`);
+    saveAs(data, `Application_${unitDetail?.id ?? ""}_Details.xlsx`);
   };
 
   return (
@@ -799,24 +862,6 @@ const ApplicationDetails = () => {
                   unitDetail.type.slice(1)
                   : "--"}
               </p>
-            </div>
-
-            <div
-              className="text-center flex-grow-1 flex-sm-grow-0 flex-basis-100 flex-sm-basis-auto"
-              style={{ minWidth: "150px" }}
-            >
-              <div className="form-label fw-semibold">Cycle Period</div>
-              <p className="fw-5 mb-0">
-                {unitDetail?.fds?.cycle_period ?? "--"}
-              </p>
-            </div>
-
-            <div
-              className="text-center flex-grow-1 flex-sm-grow-0 flex-basis-100 flex-sm-basis-auto"
-              style={{ minWidth: "150px" }}
-            >
-              <div className="form-label fw-semibold">Last Date</div>
-              <p className="fw-5 mb-0">{unitDetail?.fds?.last_date ?? "--"}</p>
             </div>
 
             <div
@@ -886,10 +931,9 @@ const ApplicationDetails = () => {
 
                 {!isUnitRole && !isHeadquarter && (
                   <>
+                    <th style={{ width: 200, color: "white" }}>Approved Count</th>
                     <th style={{ width: 200, color: "white" }}>Approved Marks</th>
-                    {!isRaisedScreen && (
                       <th style={{ width: 150, color: "white" }}>Ask Clarification</th>
-                    )}
                     {isRaisedScreen && (
                       <>
                         <th style={{ width: 200,color: "white"  }}>Requested Clarification</th>
@@ -1036,12 +1080,12 @@ const ApplicationDetails = () => {
               </div>
               <div className="col-6 col-sm-2">
                 <span className="fw-medium text-muted">Negative Marks:</span>
-                <div className="fw-bold text-danger">{paramStats.negativeMarks}</div>
+                <div className="fw-bold text-danger">{paramStats.negativeMarks.toFixed(3)}</div>
               </div>
               <div className="col-6 col-sm-2">
                 <span className="fw-medium text-muted">Approved Marks:</span>
                 <div className="fw-bold text-primary">
-                  {paramStats.approvedMarks}
+                  {paramStats.approvedMarks.toFixed(3)}
                 </div>
               </div>
               <div className="col-6 col-sm-2">
@@ -1137,7 +1181,7 @@ const ApplicationDetails = () => {
                                             handleDecisionClick(member, "accepted")
                                           }
                                         >
-                                          Accept
+                                          Recommend
                                         </button>
                                       )}
                                       <button
@@ -1411,7 +1455,7 @@ const ApplicationDetails = () => {
                                             handleDecisionClick(member, "accepted")
                                           }
                                         >
-                                          Accept
+                                          Recommend
                                         </button>
                                       )}
                                       <button

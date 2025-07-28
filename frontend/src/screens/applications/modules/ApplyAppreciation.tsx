@@ -97,11 +97,6 @@ const ApplyAppreciation = () => {
   const { profile } = useAppSelector((state) => state.admin);
   const { loading } = useAppSelector((state) => state.parameter);
 
-  // useEffect(() => {
-  //   localStorage.removeItem("applyAppreciationDraft");
-  //   localStorage.removeItem("applyAppreciationUploadedDocsDraft");
-  // }, []);
-
   // States
   const [parameters, setParameters] = useState<Parameter[]>([]);
   const [counts, setCounts] = useState<Record<number, string>>({});
@@ -521,9 +516,6 @@ const ApplyAppreciation = () => {
   };
 
   const handlePreviewClick = () => {
-    // const uploadedDocs = JSON.parse(localStorage.getItem(DRAFT_FILE_UPLOAD_KEY) ?? "{}");
-
-
     const missingUploads = parameters.filter((param: any) => {
       const count = Number(counts[param.param_id] ?? 0);
       const mark = Number(marks[param.param_id] ?? 0);
@@ -698,89 +690,12 @@ const ApplyAppreciation = () => {
       <div className="d-flex flex-sm-row flex-column align-items-sm-center justify-content-between mb-4">
         <Breadcrumb
           title="Apply For Appreciation"
-          paths={[
-            { label: "Home", href: "/applications" },
-            { label: "Apply For Appreciation", href: "/applications/appreciation" },
-          ]}
         />
       </div>
 
       {Object.keys(groupedParams).length === 0 ?
         <EmptyTable /> :
         <form onSubmit={formik.handleSubmit}>
-          <div className="table-filter-area mb-4">
-            <div className="row">
-              <div className="col-lg-3 col-sm-4 mb-sm-0 mb-2">
-                <FormInput
-                  label="Award Type"
-                  name="awardType"
-                  value="Appreciation"
-                  readOnly
-                />
-              </div>
-              <div className="col-lg-3 col-sm-4 mb-sm-0 mb-2">
-                <FormInput
-                  label="Cycle Period"
-                  name="cyclePeriod"
-                  value={formik.values.cyclePeriod}
-                  onChange={formik.handleChange}
-                  readOnly
-                />
-              </div>
-              <div className="col-lg-3 col-sm-4">
-                <FormInput
-                  label="Last Date"
-                  name="lastDate"
-                  type="date"
-                  value={formik.values.lastDate}
-                  onChange={formik.handleChange}
-                  readOnly
-                />
-              </div>
-              <div className="col-lg-3 col-sm-4">
-                <FormInput
-                  label="Command"
-                  name="command"
-                  value={profile?.unit?.comd ?? "--"}
-                  onChange={formik.handleChange}
-                  readOnly
-                />
-              </div>
-            </div>
-          </div>
-          {/* {profile?.unit?.awards?.length > 0 && (
-            <div className="mt-4 mb-2">
-              <h5 className="mb-3">Awards</h5>
-              <div className="table-responsive">
-                <table className="table-style-2 w-100">
-                  <thead>
-                    <tr style={{ backgroundColor: "#007bff" }}>
-                      <th style={{ width: 150, minWidth: 150, maxWidth: 150, fontSize: "17", color: "white" }}>Type</th>
-                      <th style={{ width: 200, minWidth: 200, maxWidth: 200, fontSize: "17", color: "white" }}>Year</th>
-                      <th style={{ width: 300, minWidth: 300, maxWidth: 300, fontSize: "17", color: "white" }}>Title</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {profile?.unit?.awards?.map((award: any) => (
-                      <tr key={award.award_id}>
-
-                        <td style={{ width: 150, minWidth: 150, maxWidth: 150 }}>
-                          <p className="fw-4 text-capitalize">{award.award_type}</p>
-                        </td>
-                        <td style={{ width: 200, minWidth: 200, maxWidth: 200 }}>
-                          <p className="fw-4">{award.award_year}</p>
-                        </td>
-                        <td style={{ width: 300, minWidth: 300, maxWidth: 300 }}>
-                          <p className="fw-4">{award.award_title}</p>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          )} */}
-
           <div className="position-sticky top-0 bg-white pb-3 mb-3" style={{ zIndex: 10, borderBottom: '1px solid #dee2e6' }}>
             <Tabs
               activeKey={activeTab}

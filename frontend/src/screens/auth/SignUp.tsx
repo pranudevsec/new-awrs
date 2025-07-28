@@ -9,6 +9,7 @@ import { roleOptions } from "../../data/options";
 import { SignUpSchema } from "../../validations/validations";
 import { reqToSignUp } from "../../reduxToolkit/services/auth/authService";
 import { useAppDispatch } from "../../reduxToolkit/hooks";
+import bgimg from "../../assets/Picture7.png"; // Adjust the path as necessary
 
 const SignUp = () => {
     const navigate = useNavigate();
@@ -51,7 +52,7 @@ const SignUp = () => {
     return (
         <div className="auth-section">
             <div className="container-fluid">
-                <div className="row min-vh-100 align-items-stretch justify-content-center">
+                <div className="row min-vh-100 align-items-stretch justify-content-center" style={{ backgroundImage: `url(${bgimg})`, backgroundSize: 'cover', backgroundPosition: 'center' }}>
                     <div className="col-xxl-6 col-xl-6 d-xl-block d-none">
                         <div className="auth-image-area d-flex align-items-end h-100">
                             {/* <img src="/media/auth/military.png" alt="Military" className="img-fluid object-fit-contain" /> */}

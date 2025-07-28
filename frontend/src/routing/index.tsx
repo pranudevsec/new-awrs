@@ -63,7 +63,7 @@ function RoleBasedDefaultRedirect() {
   if (userRole === "brigade") return <Navigate to="/brigade-dashboard" replace />;
   if (userRole === "division") return <Navigate to="/division-dashboard" replace />;
   if (userRole === "corps") return <Navigate to="/corps-dashboard" replace />;
-  if (userRole === "command") return <Navigate to="/dashboard" replace />;
+  if (userRole === "command") return <Navigate to="/command-dashboard" replace />;
   return <Navigate to="/applications" replace />;
 }
 

@@ -8,9 +8,22 @@
   width: 300px;
   background-color: var(--background);
   overflow: hidden;
+  transition: width 0.3s ease;
 
   .scroll-style-85 {
     @include scrollbar.custom-scrollbar(calc(100% - 32px), 0);
+  }
+
+  &.collapsed {
+    width: 60px;
+  }
+
+  .nav-items.collapsed {
+    justify-content: center;
+  }
+
+  &.collapsed .text-truncate {
+    display: none;
   }
 }
 

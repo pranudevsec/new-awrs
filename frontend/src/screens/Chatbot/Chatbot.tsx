@@ -114,8 +114,12 @@ export function Chatbot() {
         onClick={() => setChatOpen(!chatOpen)}
         style={{ zIndex: 1050, backgroundColor: 'var(--blue-primary-clr)',left : '1.5rem' }}
       >
-        <span className="d-flex align-items-center">
-          <img src={dgis} alt="DGIS Logo" style={{ width: '24px', height: '24px', marginRight: '8px' }} />
+        <span className="d-flex align-items-center gap-2">
+          <img
+            src={dgis}
+            alt="DGIS Logo"
+            style={{ width: '24px', height: '24px' }}
+          />
           DGIS Assist
         </span>
       </button>

@@ -8,6 +8,9 @@ import Pagination from "../../../components/ui/pagination/Pagination";
 import ReqSignatureApproveModal from "../../../modals/ReqSignatureApproveModal";
 import { awardTypeOptions } from "../../../data/options";
 import { SVGICON } from "../../../constants/iconsList";
+import jsPDF from "jspdf";
+import autoTable from "jspdf-autotable";
+import { FaDownload } from "react-icons/fa";
 import { useAppDispatch, useAppSelector } from "../../../reduxToolkit/hooks";
 import {
   approveApplications,
@@ -20,6 +23,14 @@ import {
   getSignedData,
 } from "../../../reduxToolkit/services/application/applicationService";
 
+declare module "jspdf" {
+  interface jsPDF {
+    lastAutoTable: {
+      finalY: number;
+    };
+  }
+}
+
 const hierarchy = ["unit", "brigade", "division", "corps", "command"];
 const allRoles = ["brigade", "division", "corps", "command"];
 
@@ -29,6 +40,8 @@ const AcceptedApplicationsList = () => {
 
   const profile = useAppSelector((state) => state.admin.profile);
   const { units, loading, meta } = useAppSelector((state) => state.application);
+  const cit_count = units.filter((unit) => unit.fds.award_type === "citation").length;
+  const appr_count = units.filter((unit) => unit.fds.award_type === "appreciation").length;
   const role = profile?.user?.user_role?.toLowerCase() ?? "";
 
   // States
@@ -321,16 +334,107 @@ const AcceptedApplicationsList = () => {
     }
   };
 
+  const handleExportPDF = () => {
+  const doc = new jsPDF();
+
+  const docHeader = `COAS Unit Citation and COAS Certificate of Appreciation Board of Officers Report`;
+  const level = profile?.user?.user_role?.toUpperCase() ?? "";
+  const memberHeaders = ["Role", "IC Number", "Rank", "Name", "Appointment"];
+  const memberRows = [];
+
+  const presiding = profile?.unit?.members?.find((m: any) => m.member_type === "presiding_officer");
+  const members = profile?.unit?.members?.filter((m: any) => m.member_type !== "presiding_officer");
+
+  if (presiding) {
+    memberRows.push(["Presiding Officer", presiding.ic_number ?? "-", presiding.rank, presiding.name, presiding.appointment]);
+  }
+  if (members && members.length > 0) {
+    members.forEach((m: any) => {
+      memberRows.push(["Member Officer", m.ic_number ?? "-", m.rank, m.name, m.appointment]);
+    });
+  }
+
+  // Add header and level
+  doc.setFontSize(14);
+  doc.text(docHeader, 14, 10);
+
+  doc.setFontSize(10);
+  doc.text(`Level: ${level}`, 14, 18);
+
+  autoTable(doc, {
+    head: [memberHeaders],
+    body: memberRows,
+    startY: 28,
+    theme: 'grid',
+    headStyles: { fillColor: [41, 128, 185] },
+  });
+
+  let currentY = doc.lastAutoTable?.finalY ? doc.lastAutoTable.finalY + 10 : 30;
+
+  const paragraphs = [
+    "1. The Bd of Offr for evaluating COAS Unit Citation and COAS Cert of Appre assembled pursuant to Convening Order referred above on 20 Nov 2024 and subsequent days.",
+    "2. A total of 127 (One Hundred Twenty Seven) citations as per details given at Appx A were recd from Comd theatres for COAS / GOC-in-C Unit Citation.",
+    `3. Based on merit as per policy on COAS Unit Citation and Cert of Appre promulgated vide CW Dte (CW-2), AG’s Branch, IHQ of MoD (Army) and HQ ${profile?.unit.comd} issued vide this HQ letters, a total of ${cit_count} units have been recommended for COAS Unit Citation and total of ${appr_count} units have been recommended for COAS Cert of Appre. The bd for GOC-in-C Unit Citation will be considered separately on declaration of COAS Unit Citation and Cert of Appre.`,
+    "4. Based on the overall performance of the Units, the Bd recommends the fwg units for COAS Unit Citation:"
+  ];
+
+  paragraphs.forEach((para) => {
+    const lines = doc.splitTextToSize(para, 180);
+    doc.text(lines, 14, currentY);
+    currentY += lines.length * 6 + 3;
+  });
+
+  const appHeaders = [[
+    "S. No", "Type", "Unit ID", "Unit Name", "Location", "Brigade", "Division", "Corps", "Command", "-ve Marks",
+    ...allowedRoles.map(r => `Points By ${r}`),
+    "Total", ...(role !== "brigade" ? ["Lower Priority"] : []),
+    ...(role === "command" ? ["Status"] : []),
+  ]];
+
+  const appRows = units.map((unit: any) => [
+    `#${unit.id}`,
+    unit.type,
+    `#${unit.unit_id}`,
+    unit.unit_details?.name ?? "-",
+    unit.unit_details?.location ?? "-",
+    unit.unit_details?.bde ?? "-",
+    unit.unit_details?.div ?? "-",
+    unit.unit_details?.corps ?? "-",
+    unit.unit_details?.comd ?? "-",
+    unit?.totalNegativeMarks ?? "-",
+    ...allowedRoles.map((r) => getDiscretionaryMarksByRole(unit, r)),
+    getTotalMarks(unit),
+    ...(role !== "brigade" ? [getLowerRolePriority(unit)] : []),
+    ...(role === "command" ? [unit?.status_flag === "approved" ? "Approved" : "Pending"] : []),
+  ]);
+
+  autoTable(doc, {
+    head: appHeaders,
+    body: appRows,
+    startY: currentY + 4,
+    theme: 'grid',
+    headStyles: { fillColor: [52, 73, 94] },
+    styles: { fontSize: 6 }
+  });
+
+  doc.save("accepted-applications.pdf");
+};
+
+
   return (
     <div className="clarification-section" style={{ maxWidth: "80vw" }}>
       <div className="d-flex flex-sm-row flex-column align-items-sm-center justify-content-between mb-4">
         <Breadcrumb
-          title="Accepted Applications"
+          title="Recommended Applications"
           paths={[
             { label: "Home", href: "/applications" },
             { label: "Accepted Applications", href: "/application/accepted" },
           ]}
         />
+        <button className="_btn primary mb-3 d-flex align-items-center gap-2" onClick={handleExportPDF}>
+          <FaDownload />
+          <span>Recommendation Report</span>
+        </button>
       </div>
 
       <div className="filter-wrapper d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
@@ -571,7 +675,7 @@ const AcceptedApplicationsList = () => {
                   )}
 
                   <td style={{ width: 200, minWidth: 200, maxWidth: 200 }}>
-                    <p className="fw-4">{getTotalMarks(unit)}</p>
+                    <p className="fw-4">{getTotalMarks(unit).toFixed(3)}</p>
                   </td>
                   {role.toLowerCase() !== "brigade" && (
                     <td style={{ width: 200, minWidth: 200, maxWidth: 200 }}>
