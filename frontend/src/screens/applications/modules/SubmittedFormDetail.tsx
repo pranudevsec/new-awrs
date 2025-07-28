@@ -213,7 +213,7 @@ const SubmittedFormDetail = () => {
         };
 
         try {
-            await dispatch(approveMarks(body)).unwrap();
+            await dispatch(approveMarks(body as any)).unwrap();
             dispatch(fetchApplicationUnitDetail({ award_type, numericAppId }));
             const updatedStats = calculateParameterStats(unitDetail?.fds?.parameters);
             setParamStats(updatedStats);

@@ -18,9 +18,7 @@ import {
   fetchApplicationsForHQ,
   fetchApplicationUnits,
   fetchSubordinates,
-  updateApplication,
-  TokenValidation,
-  getSignedData,
+  updateApplication
 } from "../../../reduxToolkit/services/application/applicationService";
 
 declare module "jspdf" {
@@ -278,61 +276,61 @@ const AcceptedApplicationsList = () => {
     dispatch(approveMarks(body)).unwrap().then(() => { fetchData() });
   };
 
-  const handleAddsignature = async (decision: string, unit: any) => {
-    const result = await dispatch(
-      TokenValidation({ inputPersID: profile?.user?.pers_no ?? "" })
-    );
+  // const handleAddsignature = async (decision: string, unit: any) => {
+  //   const result = await dispatch(
+  //     TokenValidation({ inputPersID: profile?.user?.pers_no ?? "" })
+  //   );
 
-    if (TokenValidation.fulfilled.match(result)) {
-      const isValid = result.payload.vaildId;
-      if (!isValid) {
-        return;
-      }
+  //   if (TokenValidation.fulfilled.match(result)) {
+  //     const isValid = result.payload.vaildId;
+  //     if (!isValid) {
+  //       return;
+  //     }
 
-      const SignPayload = {
-        data: {
-          id: unit?.id,
-          user: profile?.user,
-          type: profile?.user?.user_role,
-        },
-      };
-      const response = await dispatch(getSignedData(SignPayload));
+  //     const SignPayload = {
+  //       data: {
+  //         id: unit?.id,
+  //         user: profile?.user,
+  //         type: profile?.user?.user_role,
+  //       },
+  //     };
+  //     const response = await dispatch(getSignedData(SignPayload));
 
-      const updatePayload = {
-        id: unit?.id,
-        type: unit?.type,
-        member: {
-          name: profile?.user?.name,
-          ic_number: profile?.user?.pers_no,
-          member_type: profile?.user?.user_role,
-          iscdr: true,
-          member_id: profile?.user?.user_id,
-          is_signature_added: true,
-          sign_digest: response.payload,
-        },
-        level: profile?.user?.user_role,
-      };
-      if (decision === "approved") {
-        await dispatch(
-          updateApplication({
-            ...updatePayload,
-            status: "approved",
-          })
-        ).then(() => {
-          navigate("/applications/list");
-        });
-      } else if (decision === "rejected") {
-        dispatch(
-          updateApplication({
-            ...updatePayload,
-            status: "rejected",
-          })
-        ).then(() => {
-          navigate("/applications/list");
-        });
-      }
-    }
-  };
+  //     const updatePayload = {
+  //       id: unit?.id,
+  //       type: unit?.type,
+  //       member: {
+  //         name: profile?.user?.name,
+  //         ic_number: profile?.user?.pers_no,
+  //         member_type: profile?.user?.user_role,
+  //         iscdr: true,
+  //         member_id: profile?.user?.user_id,
+  //         is_signature_added: true,
+  //         sign_digest: response.payload,
+  //       },
+  //       level: profile?.user?.user_role,
+  //     };
+  //     if (decision === "approved") {
+  //       await dispatch(
+  //         updateApplication({
+  //           ...updatePayload,
+  //           status: "approved",
+  //         })
+  //       ).then(() => {
+  //         navigate("/applications/list");
+  //       });
+  //     } else if (decision === "rejected") {
+  //       dispatch(
+  //         updateApplication({
+  //           ...updatePayload,
+  //           status: "rejected",
+  //         })
+  //       ).then(() => {
+  //         navigate("/applications/list");
+  //       });
+  //     }
+  //   }
+  // };
 
   const handleExportPDF = () => {
   const doc = new jsPDF();

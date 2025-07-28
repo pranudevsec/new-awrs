@@ -1,4 +1,3 @@
-import { Label } from "recharts";
 
 export const awardTypeOptions: OptionType[] = [
   {value:"All", label:"All"},

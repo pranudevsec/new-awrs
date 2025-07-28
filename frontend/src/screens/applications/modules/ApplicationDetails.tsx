@@ -17,9 +17,7 @@ import {
   addApplicationComment,
   approveMarks,
   fetchApplicationUnitDetail,
-  updateApplication,
-  TokenValidation,
-  getSignedData
+  updateApplication
 } from "../../../reduxToolkit/services/application/applicationService";
 import { updateClarification } from "../../../reduxToolkit/services/clarification/clarificationService";
 import { baseURL } from "../../../reduxToolkit/helper/axios";
@@ -82,7 +80,7 @@ const ApplicationDetails = () => {
   const [approvedCountState, setApprovedCountState] = useState<Record<string, string>>({});
   const [remarksError, setRemarksError] = useState<string | null>(null);
   const [graceMarks, setGraceMarks] = useState("");
-  const [decisions, setDecisions] = useState<{ [memberId: string]: string }>({});
+  const [decisions, ] = useState<{ [memberId: string]: string }>({});
   const [priority, setPriority] = useState(userPriority);
   const [commentsState, setCommentsState] = useState<Record<string, string>>({});
   const [localComment, setLocalComment] = useState(commentsState?.__application__ ?? "");
