@@ -220,13 +220,9 @@ exports.getAllApplicationsForHQ = async (user, query) => {
       );
     }
 
-
     // Normalize and filter by search if provided
     const normalize = (str) =>
-      str
-        ?.toString()
-        .toLowerCase()
-        .replace(/[\s-]/g, "");
+      str?.toString().toLowerCase().replace(/[\s-]/g, "");
 
     if (search) {
       const searchLower = normalize(search);
@@ -451,7 +447,9 @@ exports.getSingleApplicationForUnit = async (
         FROM Clarification_tab
         WHERE clarification_id = $1
       `;
-      const clarRes = await client.query(clarificationsQuery, [clarificationId]);
+      const clarRes = await client.query(clarificationsQuery, [
+        clarificationId,
+      ]);
       return clarRes.rows[0] || null;
     }
 
@@ -461,7 +459,9 @@ exports.getSingleApplicationForUnit = async (
       const clarificationRoleIndex = roleHierarchy.indexOf(
         param.clarification_details.clarification_by_role?.toLowerCase()
       );
-      return clarificationRoleIndex >= 0 && userRoleIndex > clarificationRoleIndex;
+      return (
+        clarificationRoleIndex >= 0 && userRoleIndex > clarificationRoleIndex
+      );
     }
 
     // Attach and clean clarifications for all parameters
@@ -469,8 +469,11 @@ exports.getSingleApplicationForUnit = async (
     if (Array.isArray(fds.parameters)) {
       for (let i = 0; i < fds.parameters.length; i++) {
         const param = fds.parameters[i];
-        const clarificationId = param.clarification_id || param.last_clarification_id;
-        param.clarification_details = await fetchClarificationDetails(clarificationId);
+        const clarificationId =
+          param.clarification_id || param.last_clarification_id;
+        param.clarification_details = await fetchClarificationDetails(
+          clarificationId
+        );
         if (shouldCleanClarification(param, userRoleIndex)) {
           delete param.clarification_id;
           delete param.last_clarification_id;
@@ -644,7 +647,8 @@ exports.getApplicationsOfSubordinates = async (user, query) => {
     ]);
     let allApps = [...citations.rows, ...appreciations.rows];
 
-    const normalize = (str) => str?.toString().toLowerCase().replace(/[\s-]/g, "");
+    const normalize = (str) =>
+      str?.toString().toLowerCase().replace(/[\s-]/g, "");
 
     if (award_type) {
       allApps = allApps.filter(
@@ -656,7 +660,9 @@ exports.getApplicationsOfSubordinates = async (user, query) => {
       const searchLower = normalize(search);
       allApps = allApps.filter((app) => {
         const idMatch = app.id.toString().toLowerCase().includes(searchLower);
-        const cycleMatch = normalize(app.fds?.cycle_period || "").includes(searchLower);
+        const cycleMatch = normalize(app.fds?.cycle_period || "").includes(
+          searchLower
+        );
         return idMatch || cycleMatch;
       });
     }
@@ -664,7 +670,8 @@ exports.getApplicationsOfSubordinates = async (user, query) => {
     const clarificationIds = [];
     allApps.forEach((app) => {
       app.fds?.parameters?.forEach((param) => {
-        if (param.clarification_id) clarificationIds.push(param.clarification_id);
+        if (param.clarification_id)
+          clarificationIds.push(param.clarification_id);
       });
     });
 
@@ -686,7 +693,10 @@ exports.getApplicationsOfSubordinates = async (user, query) => {
         ...app.fds,
         parameters: (app.fds?.parameters || []).map((param) =>
           param.clarification_id
-            ? { ...param, clarification: clarificationMap[param.clarification_id] || null }
+            ? {
+                ...param,
+                clarification: clarificationMap[param.clarification_id] || null,
+              }
             : param
         ),
       },
@@ -750,11 +760,13 @@ exports.getApplicationsOfSubordinates = async (user, query) => {
       allApps = allApps.map((app) => {
         const parameters = app.fds?.parameters || [];
         const totalMarks = parameters.reduce(
-          (sum, param) => !negativeParamMap[param.id] ? sum + (param.marks || 0) : sum,
+          (sum, param) =>
+            !negativeParamMap[param.id] ? sum + (param.marks || 0) : sum,
           0
         );
         const totalNegativeMarks = parameters.reduce(
-          (sum, param) => negativeParamMap[param.id] ? sum + (param.marks || 0) : sum,
+          (sum, param) =>
+            negativeParamMap[param.id] ? sum + (param.marks || 0) : sum,
           0
         );
         const netMarks = totalMarks - totalNegativeMarks;
@@ -770,8 +782,12 @@ exports.getApplicationsOfSubordinates = async (user, query) => {
       if (currentRoleIndex > 0) {
         const lowerRole = hierarchy[currentRoleIndex - 1];
         allApps.sort((a, b) => {
-          const aPriority = a.fds?.applicationPriority?.find((p) => p.role === lowerRole)?.priority ?? Number.MAX_SAFE_INTEGER;
-          const bPriority = b.fds?.applicationPriority?.find((p) => p.role === lowerRole)?.priority ?? Number.MAX_SAFE_INTEGER;
+          const aPriority =
+            a.fds?.applicationPriority?.find((p) => p.role === lowerRole)
+              ?.priority ?? Number.MAX_SAFE_INTEGER;
+          const bPriority =
+            b.fds?.applicationPriority?.find((p) => p.role === lowerRole)
+              ?.priority ?? Number.MAX_SAFE_INTEGER;
           return aPriority - bPriority;
         });
       }
@@ -807,7 +823,6 @@ exports.getApplicationsOfSubordinates = async (user, query) => {
     client.release();
   }
 };
-
 
 exports.getApplicationsScoreboard = async (user, query) => {
   const client = await dbService.getClient();
@@ -859,17 +874,39 @@ exports.getApplicationsScoreboard = async (user, query) => {
         clauses.push(`${table}.last_approved_by_role = 'cw2'`);
       }
       if (award_type) {
-        clauses.push(`LOWER(${table}.${table === "c" ? "citation_fds" : "appre_fds"}->>'award_type') = LOWER($2)`);
+        clauses.push(
+          `LOWER(${table}.${
+            table === "c" ? "citation_fds" : "appre_fds"
+          }->>'award_type') = LOWER($2)`
+        );
       }
       if (search) {
-        clauses.push(`(CAST(${table}.${table === "c" ? "citation_id" : "appreciation_id"} AS TEXT) ILIKE $3 OR LOWER(${table}.${table === "c" ? "citation_fds" : "appre_fds"}->>'cycle_period') ILIKE $3)`);
+        clauses.push(
+          `(CAST(${table}.${
+            table === "c" ? "citation_id" : "appreciation_id"
+          } AS TEXT) ILIKE $3 OR LOWER(${table}.${
+            table === "c" ? "citation_fds" : "appre_fds"
+          }->>'cycle_period') ILIKE $3)`
+        );
       }
       return clauses.join(" AND ");
     }
 
     const isCommand = user_role.toLowerCase() === "command";
-    const citationWhere = buildWhereClause("c", unitIds, award_type, search, isCommand);
-    const appreWhere = buildWhereClause("a", unitIds, award_type, search, isCommand);
+    const citationWhere = buildWhereClause(
+      "c",
+      unitIds,
+      award_type,
+      search,
+      isCommand
+    );
+    const appreWhere = buildWhereClause(
+      "a",
+      unitIds,
+      award_type,
+      search,
+      isCommand
+    );
 
     // Params for queries
     let params = isCommand ? [unitIds] : [];
@@ -943,7 +980,8 @@ exports.getApplicationsScoreboard = async (user, query) => {
     const clarificationIds = [];
     allApps.forEach((app) => {
       app.fds?.parameters?.forEach((param) => {
-        if (param.clarification_id) clarificationIds.push(param.clarification_id);
+        if (param.clarification_id)
+          clarificationIds.push(param.clarification_id);
       });
     });
 
@@ -984,11 +1022,13 @@ exports.getApplicationsScoreboard = async (user, query) => {
     allApps = allApps.map((app) => {
       const parameters = app.fds?.parameters || [];
       const totalMarks = parameters.reduce(
-        (sum, param) => !negativeParamMap[param.id] ? sum + (param.marks || 0) : sum,
+        (sum, param) =>
+          !negativeParamMap[param.id] ? sum + (param.marks || 0) : sum,
         0
       );
       const totalNegativeMarks = parameters.reduce(
-        (sum, param) => negativeParamMap[param.id] ? sum + (param.marks || 0) : sum,
+        (sum, param) =>
+          negativeParamMap[param.id] ? sum + (param.marks || 0) : sum,
         0
       );
       const netMarks = totalMarks - totalNegativeMarks;
@@ -1048,8 +1088,16 @@ exports.updateApplicationStatus = async (
   try {
     const iscdr = member?.iscdr ?? false;
     const validTypes = {
-      citation: { table: "Citation_tab", column: "citation_id", fdsColumn: "citation_fds" },
-      appreciation: { table: "Appre_tab", column: "appreciation_id", fdsColumn: "appre_fds" },
+      citation: {
+        table: "Citation_tab",
+        column: "citation_id",
+        fdsColumn: "citation_fds",
+      },
+      appreciation: {
+        table: "Appre_tab",
+        column: "appreciation_id",
+        fdsColumn: "appre_fds",
+      },
     };
     const config = validTypes[type];
     if (!config) throw new Error("Invalid application type");
@@ -1069,7 +1117,8 @@ exports.updateApplicationStatus = async (
       `;
       const withdrawValues = [user.user_role, now, user.user_id, id];
       const withdrawResult = await client.query(withdrawQuery, withdrawValues);
-      if (withdrawResult.rowCount === 0) throw new Error("Application not found or withdraw update failed");
+      if (withdrawResult.rowCount === 0)
+        throw new Error("Application not found or withdraw update failed");
       return withdrawResult.rows[0];
     }
 
@@ -1079,8 +1128,10 @@ exports.updateApplicationStatus = async (
         `SELECT is_withdraw_requested FROM ${config.table} WHERE ${config.column} = $1`,
         [id]
       );
-      if (checkRes.rowCount === 0) throw new Error("Application not found for withdraw status update");
-      if (!checkRes.rows[0].is_withdraw_requested) throw new Error("No withdraw request found on this application.");
+      if (checkRes.rowCount === 0)
+        throw new Error("Application not found for withdraw status update");
+      if (!checkRes.rows[0].is_withdraw_requested)
+        throw new Error("No withdraw request found on this application.");
 
       const now = new Date();
       const updateWithdrawStatusQuery = `
@@ -1089,7 +1140,11 @@ exports.updateApplicationStatus = async (
             withdraw_approved_by_role = $2,
             withdraw_approved_by_user_id = $3,
             withdraw_approved_at = $4
-            ${withdraw_status === "approved" ? ", status_flag = 'withdrawed'" : ""}
+            ${
+              withdraw_status === "approved"
+                ? ", status_flag = 'withdrawed'"
+                : ""
+            }
         WHERE ${config.column} = $5
         RETURNING *;
       `;
@@ -1100,8 +1155,12 @@ exports.updateApplicationStatus = async (
         now,
         id,
       ];
-      const updateResult = await client.query(updateWithdrawStatusQuery, updateValues);
-      if (updateResult.rowCount === 0) throw new Error("Failed to update withdraw status");
+      const updateResult = await client.query(
+        updateWithdrawStatusQuery,
+        updateValues
+      );
+      if (updateResult.rowCount === 0)
+        throw new Error("Failed to update withdraw status");
       return updateResult.rows[0];
     }
 
@@ -1166,7 +1225,9 @@ exports.updateApplicationStatus = async (
         const profile = await AuthService.getProfile(user);
         const unit = profile?.data?.unit;
         if (unit?.members?.length && fds.accepted_members?.length) {
-          const acceptedMap = new Map(fds.accepted_members.map((m) => [m.member_id, m]));
+          const acceptedMap = new Map(
+            fds.accepted_members.map((m) => [m.member_id, m])
+          );
           const allSigned = unit.members.every((unitMember) => {
             const accepted = acceptedMap.get(unitMember.id);
             return accepted?.is_signature_added === true;
@@ -1191,12 +1252,14 @@ exports.updateApplicationStatus = async (
                   [id, true, approvedAt, now]
                 );
               }
-              await client.query(
-                `UPDATE ${config.table}
-                 SET last_approved_by_role = $2
-                 WHERE is_mo_approved = $3 AND is_ol_approved = $4 AND ${config.column} = $1 RETURNING *;`,
-                [id, user.user_role, true, true]
-              );
+              if (user.user_role !== "cw2" && user.cw2_type !== "ol") {
+                await client.query(
+                  `UPDATE ${config.table}
+                   SET last_approved_by_role = $2
+                   WHERE is_mo_approved = $3 AND is_ol_approved = $4 AND ${config.column} = $1 RETURNING *;`,
+                  [id, user.user_role, true, true]
+                );
+              }
             } else {
               if (status !== "rejected") statusLower = "shortlisted_approved";
               isMemberStatusUpdate = true;
@@ -1227,6 +1290,8 @@ exports.updateApplicationStatus = async (
           RETURNING *;
         `;
         values = [statusLower, id, user.user_role, now];
+
+        console.log("🚀 ~ values:", values);
       } else if (statusLower === "shortlisted_approved") {
         query = `
           UPDATE ${config.table}
@@ -1263,7 +1328,8 @@ exports.updateApplicationStatus = async (
         values = [id];
       }
       const result = await client.query(query, values);
-      if (result.rowCount === 0) throw new Error("Application not found or update failed");
+      if (result.rowCount === 0)
+        throw new Error("Application not found or update failed");
       return result.rows[0];
     } else if (member) {
       const result = await client.query(
@@ -1318,7 +1384,8 @@ exports.approveApplicationMarks = async (user, body) => {
 
     // Helper for updating marks
     function updateParameterMarks(params, approvedParams) {
-      if (!Array.isArray(params) || !Array.isArray(approvedParams)) return params;
+      if (!Array.isArray(params) || !Array.isArray(approvedParams))
+        return params;
       return params.map((param) => {
         const approvedParam = approvedParams.find((p) => p.id === param.id);
         if (approvedParam) {
@@ -1408,8 +1475,14 @@ exports.approveApplicationMarks = async (user, body) => {
     if (Array.isArray(parameters) && parameters.length > 0) {
       fds.parameters = updateParameterMarks(fds.parameters, parameters);
     }
-    fds.applicationGraceMarks = updateGraceMarks(fds.applicationGraceMarks, applicationGraceMarks);
-    fds.applicationPriority = updatePriority(fds.applicationPriority, applicationPriorityPoints);
+    fds.applicationGraceMarks = updateGraceMarks(
+      fds.applicationGraceMarks,
+      applicationGraceMarks
+    );
+    fds.applicationPriority = updatePriority(
+      fds.applicationPriority,
+      applicationPriorityPoints
+    );
     remarks = updateRemarks(remarks, remark);
 
     await client.query(
@@ -1791,7 +1864,12 @@ exports.getApplicationsHistory = async (user, query) => {
 
     // CW2 role shortcut
     if (user_role.toLowerCase() === "cw2") {
-      const approvalField = user.cw2_type === "mo" ? "is_mo_approved" : user.cw2_type === "ol" ? "is_ol_approved" : null;
+      const approvalField =
+        user.cw2_type === "mo"
+          ? "is_mo_approved"
+          : user.cw2_type === "ol"
+          ? "is_ol_approved"
+          : null;
       if (!approvalField) throw new Error("Invalid cw2_type for CW2 user.");
 
       const [citationsRes, appreciationsRes] = await Promise.all([
@@ -1807,13 +1885,16 @@ exports.getApplicationsHistory = async (user, query) => {
       let allApps = [...citationsRes.rows, ...appreciationsRes.rows];
 
       if (award_type) {
-        allApps = allApps.filter(app => app.fds?.award_type?.toLowerCase() === award_type.toLowerCase());
+        allApps = allApps.filter(
+          (app) =>
+            app.fds?.award_type?.toLowerCase() === award_type.toLowerCase()
+        );
       }
       if (search) {
-        const normalize = s => s?.toLowerCase().replace(/[\s-]/g, "")
+        const normalize = (s) => s?.toLowerCase().replace(/[\s-]/g, "");
         const searchNorm = normalize(search);
         allApps = allApps.filter(
-          app =>
+          (app) =>
             app.id.toString().toLowerCase().includes(searchNorm) ||
             normalize(app.fds?.cycle_period || "").includes(searchNorm)
         );
@@ -1856,12 +1937,16 @@ exports.getApplicationsHistory = async (user, query) => {
       unitIds = subUnitsRes.rows.map((u) => u.unit_id);
     }
     if (unitIds.length === 0) {
-      return ResponseHelper.success(200, "No applications found", [], { totalItems: 0 });
+      return ResponseHelper.success(200, "No applications found", [], {
+        totalItems: 0,
+      });
     }
 
     const allowedRoles = ROLE_HIERARCHY.slice(currentIndex);
     const lowerRoles = allowedRoles
-      .map((role, idx) => (idx > 0 ? ROLE_HIERARCHY[currentIndex + idx - 1] : null))
+      .map((role, idx) =>
+        idx > 0 ? ROLE_HIERARCHY[currentIndex + idx - 1] : null
+      )
       .filter(Boolean);
 
     const baseFilters = `
@@ -1887,13 +1972,15 @@ exports.getApplicationsHistory = async (user, query) => {
     let allApps = [...citations.rows, ...appreciations.rows];
 
     if (award_type) {
-      allApps = allApps.filter(app => app.fds?.award_type?.toLowerCase() === award_type.toLowerCase());
+      allApps = allApps.filter(
+        (app) => app.fds?.award_type?.toLowerCase() === award_type.toLowerCase()
+      );
     }
     if (search) {
-      const normalize = s => s?.toLowerCase().replace(/[\s-]/g, "")
+      const normalize = (s) => s?.toLowerCase().replace(/[\s-]/g, "");
       const searchNorm = normalize(search);
       allApps = allApps.filter(
-        app =>
+        (app) =>
           app.id.toString().toLowerCase().includes(searchNorm) ||
           normalize(app.fds?.cycle_period || "").includes(searchNorm)
       );
@@ -1932,7 +2019,16 @@ exports.getAllApplications = async (user, query) => {
   const client = await dbService.getClient();
   try {
     const { user_role } = user;
-    const { award_type, command_type, corps_type, division_type, brigade_type, search, page = 1, limit = 10 } = query;
+    const {
+      award_type,
+      command_type,
+      corps_type,
+      division_type,
+      brigade_type,
+      search,
+      page = 1,
+      limit = 10,
+    } = query;
 
     const profile = await AuthService.getProfile(user);
     const unit = profile?.data?.unit;
@@ -2070,7 +2166,7 @@ exports.getAllApplications = async (user, query) => {
     let allApps = [...citations.rows, ...appreciations.rows];
 
     // Filtering helpers
-    const normalize = (s) => s?.toLowerCase().replace(/[\s-]/g, "")
+    const normalize = (s) => s?.toLowerCase().replace(/[\s-]/g, "");
     if (award_type) {
       allApps = allApps.filter(
         (app) => app.fds?.award_type?.toLowerCase() === award_type.toLowerCase()
@@ -2088,7 +2184,8 @@ exports.getAllApplications = async (user, query) => {
     }
     if (division_type) {
       allApps = allApps.filter(
-        (app) => app.fds?.division?.toLowerCase() === division_type.toLowerCase()
+        (app) =>
+          app.fds?.division?.toLowerCase() === division_type.toLowerCase()
       );
     }
     if (brigade_type) {
@@ -2096,7 +2193,7 @@ exports.getAllApplications = async (user, query) => {
         (app) => app.fds?.brigade?.toLowerCase() === brigade_type.toLowerCase()
       );
     }
-    
+
     if (search) {
       const searchNorm = normalize(search);
       allApps = allApps.filter(
@@ -2108,8 +2205,6 @@ exports.getAllApplications = async (user, query) => {
           normalize(app.fds?.division || "").includes(searchNorm) ||
           normalize(app.fds?.corps || "").includes(searchNorm) ||
           normalize(app.fds?.command || "").includes(searchNorm)
-
-          
       );
     }
 
@@ -2235,4 +2330,4 @@ exports.getAllApplications = async (user, query) => {
   } finally {
     client.release();
   }
-}
+};
