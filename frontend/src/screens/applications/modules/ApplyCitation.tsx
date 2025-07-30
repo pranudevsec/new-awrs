@@ -238,8 +238,24 @@ const ApplyCitation = () => {
   }, [activeTab]);
 
   const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const tabsContainerRef = useRef<HTMLDivElement>(null);
   const categoryRefs = useRef<{ [key: string]: HTMLDivElement | null }>({});
+  useEffect(() => {
+    const container = tabsContainerRef.current;
+    if (!container) return;
 
+    const activeTabElement = container.querySelector(
+      `[role="tab"][aria-selected="true"]`
+    );
+
+    if (activeTabElement instanceof HTMLElement) {
+      activeTabElement.scrollIntoView({
+        behavior: "smooth",
+        inline: "center",
+        block: "nearest",
+      });
+    }
+  }, [activeTab]);
   const handleTabSelect = (key: string | null) => {
     if (!key) return;
     setActiveTab(key);
@@ -609,12 +625,13 @@ const ApplyCitation = () => {
           <div
             className="position-sticky top-0 bg-white pb-3 mb-3"
             style={{ zIndex: 10, borderBottom: "1px solid #dee2e6" }}
+            ref={tabsContainerRef}
           >
             <Tabs
               activeKey={activeTab}
               onSelect={handleTabSelect}
               id="category-tabs"
-              className="custom-tabs d-flex gap-2 flex-nowrap overflow-x-auto text-nowrap "
+              className="custom-tabs d-flex gap-2 flex-nowrap overflow-x-auto text-nowrap"
             >
               {Object.keys(groupedParams).map((category) => (
                 <Tab
