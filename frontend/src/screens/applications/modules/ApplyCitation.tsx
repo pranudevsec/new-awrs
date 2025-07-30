@@ -12,11 +12,15 @@ import { useAppDispatch, useAppSelector } from "../../../reduxToolkit/hooks";
 import { getConfig } from "../../../reduxToolkit/services/config/configService";
 import { fetchParameters } from "../../../reduxToolkit/services/parameter/parameterService";
 import { resetCitationState } from "../../../reduxToolkit/slices/citation/citationSlice";
-import { createCitation, deleteCitation, fetchCitationById, updateCitation } from "../../../reduxToolkit/services/citation/citationService";
+import {
+  createCitation,
+  deleteCitation,
+  fetchCitationById,
+  updateCitation,
+} from "../../../reduxToolkit/services/citation/citationService";
 import type { Parameter } from "../../../reduxToolkit/services/parameter/parameterInterface";
 import Axios, { baseURL } from "../../../reduxToolkit/helper/axios";
 import { checkUnitProfileFields } from "../../../reduxToolkit/services/utils/utilities";
-
 
 const DRAFT_STORAGE_KEY = "applyCitationDraft";
 const DRAFT_FILE_UPLOAD_KEY = "applyCitationuploadedDocsDraft";
@@ -52,14 +56,18 @@ const ApplyCitation = () => {
   const [cyclePerios, setCyclePerios] = useState("");
   const [command, setCommand] = useState("");
   const groupedParams = groupParametersByCategory(parameters);
-  const [activeTab, setActiveTab] = useState(Object.keys(groupedParams)[0] || "");
-  const [uploadedFiles, setUploadedFiles] = useState<Record<number, string[]>>(() => {
-    try {
-      return JSON.parse(localStorage.getItem(DRAFT_FILE_UPLOAD_KEY) ?? "{}");
-    } catch {
-      return {};
+  const [activeTab, setActiveTab] = useState(
+    Object.keys(groupedParams)[0] || ""
+  );
+  const [uploadedFiles, setUploadedFiles] = useState<Record<number, string[]>>(
+    () => {
+      try {
+        return JSON.parse(localStorage.getItem(DRAFT_FILE_UPLOAD_KEY) ?? "{}");
+      } catch {
+        return {};
+      }
     }
-  });
+  );
   const [unitRemarks, setUnitRemarks] = useState(() => {
     return localStorage.getItem("applyCitationUnitRemarks") ?? "";
   });
@@ -109,7 +117,6 @@ const ApplyCitation = () => {
     }
   };
 
-
   useEffect(() => {
     localStorage.setItem("applyCitationUnitRemarks", unitRemarks);
   }, [unitRemarks]);
@@ -122,10 +129,13 @@ const ApplyCitation = () => {
       const newUploads: Record<number, string[]> = {};
 
       // Map by param.id (from API) to param.param_id (from parameters)
-      const idToParamIdMap = parameters.reduce((acc: Record<string, number>, param: any) => {
-        acc[String(param.id ?? param.param_id)] = param.param_id;
-        return acc;
-      }, {});
+      const idToParamIdMap = parameters.reduce(
+        (acc: Record<string, number>, param: any) => {
+          acc[String(param.id ?? param.param_id)] = param.param_id;
+          return acc;
+        },
+        {}
+      );
 
       draftData.citation_fds.parameters.forEach((param: any) => {
         const paramId = idToParamIdMap[String(param.id)];
@@ -138,7 +148,9 @@ const ApplyCitation = () => {
               newUploads[paramId] = param.upload;
             } else if (typeof param.upload === "string") {
               if (param.upload.includes(",")) {
-                newUploads[paramId] = param.upload.split(",").map((u: any) => u.trim());
+                newUploads[paramId] = param.upload
+                  .split(",")
+                  .map((u: any) => u.trim());
               } else {
                 newUploads[paramId] = [param.upload.trim()];
               }
@@ -171,7 +183,9 @@ const ApplyCitation = () => {
             uploads[param.param_id ?? index] = param.upload;
           } else if (typeof param.upload === "string") {
             if (param.upload.includes(",")) {
-              uploads[param.param_id ?? index] = param.upload.split(",").map((u: any) => u.trim());
+              uploads[param.param_id ?? index] = param.upload
+                .split(",")
+                .map((u: any) => u.trim());
             } else {
               uploads[param.param_id ?? index] = [param.upload.trim()];
             }
@@ -204,7 +218,9 @@ const ApplyCitation = () => {
 
       Object.entries(categoryRefs.current).forEach(([category, el]) => {
         if (el) {
-          const offset = Math.abs(el.getBoundingClientRect().top - containerTop);
+          const offset = Math.abs(
+            el.getBoundingClientRect().top - containerTop
+          );
           if (offset < minOffset) {
             closestCategory = category;
             minOffset = offset;
@@ -238,7 +254,7 @@ const ApplyCitation = () => {
 
       container.scrollTo({
         top: scrollOffset,
-        behavior: 'smooth',
+        behavior: "smooth",
       });
     }
   };
@@ -256,11 +272,15 @@ const ApplyCitation = () => {
     formData.append(fieldName, file);
 
     try {
-      const response = await Axios.post("/api/applications/upload-doc", formData, {
-        headers: {
-          "Content-Type": "multipart/form-data",
-        },
-      });
+      const response = await Axios.post(
+        "/api/applications/upload-doc",
+        formData,
+        {
+          headers: {
+            "Content-Type": "multipart/form-data",
+          },
+        }
+      );
 
       const uploadedData = response.data;
       if (Array.isArray(uploadedData) && uploadedData.length > 0) {
@@ -288,9 +308,14 @@ const ApplyCitation = () => {
     const uploadedUrls: string[] = [];
 
     for (const file of files) {
-      const ext = file.name.substring(file.name.lastIndexOf('.')).toLowerCase();
-      if (!allowedTypes.includes(file.type) && !allowedExtensions.includes(ext)) {
-        toast.error(`Incorrect file type: ${file.name}. Only PDF, JPG, PNG allowed.`);
+      const ext = file.name.substring(file.name.lastIndexOf(".")).toLowerCase();
+      if (
+        !allowedTypes.includes(file.type) &&
+        !allowedExtensions.includes(ext)
+      ) {
+        toast.error(
+          `Incorrect file type: ${file.name}. Only PDF, JPG, PNG allowed.`
+        );
         continue;
       }
       if (file.size > 5 * 1024 * 1024) {
@@ -306,7 +331,7 @@ const ApplyCitation = () => {
     if (uploadedUrls.length > 0) {
       const newUploads = {
         ...uploadedFiles,
-        [paramId]: [...(uploadedFiles[paramId] || []), ...uploadedUrls]
+        [paramId]: [...(uploadedFiles[paramId] || []), ...uploadedUrls],
       };
       setUploadedFiles(newUploads);
       localStorage.setItem(DRAFT_FILE_UPLOAD_KEY, JSON.stringify(newUploads));
@@ -321,7 +346,9 @@ const ApplyCitation = () => {
     if (!updatedFiles[paramId]) return;
 
     // Remove file at index
-    updatedFiles[paramId] = updatedFiles[paramId].filter((_, idx) => idx !== index);
+    updatedFiles[paramId] = updatedFiles[paramId].filter(
+      (_, idx) => idx !== index
+    );
 
     // If no files left, remove the paramId key
     if (updatedFiles[paramId].length === 0) {
@@ -343,7 +370,6 @@ const ApplyCitation = () => {
     },
     onSubmit: async (values) => {
       try {
-
         const formattedParameters = parameters
           .map((param: any) => {
             const display = getParamDisplay(param);
@@ -378,7 +404,9 @@ const ApplyCitation = () => {
         let resultAction;
         if (id) {
           // Update if `id` exists
-          resultAction = await dispatch(updateCitation({ id: Number(id), ...payload }));
+          resultAction = await dispatch(
+            updateCitation({ id: Number(id), ...payload })
+          );
         } else {
           // Otherwise, create new
           resultAction = await dispatch(createCitation(payload));
@@ -403,31 +431,34 @@ const ApplyCitation = () => {
         console.error("Submit failed:", err);
         toast.error("An error occurred while submitting.");
       }
-    }
-
+    },
   });
 
   useEffect(() => {
     const fetchAllData = async () => {
       try {
-        if(checkUnitProfileFields(profile) === false) {
-          toast.error("Please complete your profile details before applying for a citation.");
+        if (checkUnitProfileFields(profile) === false) {
+          toast.error(
+            "Please complete your profile details before applying for a citation."
+          );
           navigate("/profile-settings");
-          return; 
+          return;
         }
         const [configRes, paramsRes] = await Promise.all([
           dispatch(getConfig()).unwrap(),
-          dispatch(fetchParameters({
-            awardType: "citation",
-            search: "",
-            matrix_unit: profile?.unit?.matrix_unit ?? undefined,
-            comd: profile?.unit?.comd ?? undefined,
-            // matrix_unit: "",
-            // comd: "",
-            unit_type: profile?.unit?.unit_type ?? undefined,
-            page: 1,
-            limit: 5000
-          })).unwrap(),
+          dispatch(
+            fetchParameters({
+              awardType: "citation",
+              search: "",
+              matrix_unit: profile?.unit?.matrix_unit ?? undefined,
+              comd: profile?.unit?.comd ?? undefined,
+              // matrix_unit: "",
+              // comd: "",
+              unit_type: profile?.unit?.unit_type ?? undefined,
+              page: 1,
+              limit: 5000,
+            })
+          ).unwrap(),
         ]);
 
         if (configRes?.success && configRes.data) {
@@ -435,7 +466,7 @@ const ApplyCitation = () => {
           const formattedDate = configRes.data.deadline?.split("T")[0] || "";
           setLastDate(formattedDate);
           if (profile) {
-            setCommand(profile?.unit?.comd)
+            setCommand(profile?.unit?.comd);
           }
         }
         if (paramsRes.success && paramsRes.data) {
@@ -451,9 +482,9 @@ const ApplyCitation = () => {
   }, []);
 
   useEffect(() => {
-    if(!id){
-        const draft = { counts, marks };
-        localStorage.setItem(DRAFT_STORAGE_KEY, JSON.stringify(draft));
+    if (!id) {
+      const draft = { counts, marks };
+      localStorage.setItem(DRAFT_STORAGE_KEY, JSON.stringify(draft));
     }
   }, [counts, marks]);
 
@@ -465,7 +496,10 @@ const ApplyCitation = () => {
 
     const param: any = parameters.find((p: any) => p.param_id === paramId);
     if (param) {
-      const calcMarks = Math.min(countNum * param.per_unit_mark, param.max_marks);
+      const calcMarks = Math.min(
+        countNum * param.per_unit_mark,
+        param.max_marks
+      );
       setMarks((prev) => ({ ...prev, [paramId]: calcMarks }));
     }
   };
@@ -476,7 +510,9 @@ const ApplyCitation = () => {
     );
 
     if (!hasAtLeastOneCount) {
-      toast.error("Please fill at least one parameter count before previewing.");
+      toast.error(
+        "Please fill at least one parameter count before previewing."
+      );
       return;
     }
     const missingUploads = parameters.filter((param: any) => {
@@ -502,7 +538,7 @@ const ApplyCitation = () => {
     localStorage.setItem(DRAFT_STORAGE_KEY, JSON.stringify({ counts, marks }));
 
     // If all good, navigate
-    navigate('/applications/citation-review');
+    navigate("/applications/citation-review");
   };
 
   const getParamDisplay = (param: any) => {
@@ -558,20 +594,22 @@ const ApplyCitation = () => {
   };
 
   // Show loader
-  if (loading) return <Loader />
+  if (loading) return <Loader />;
 
   return (
     <div className="apply-citation-section">
       <div className="d-flex flex-sm-row flex-column align-items-sm-center justify-content-between mb-4">
-        <Breadcrumb
-          title="Apply For Citation"
-        />
+        <Breadcrumb title="Apply For Citation" />
       </div>
 
-      {Object.keys(groupedParams).length === 0 ?
-        <EmptyTable /> :
+      {Object.keys(groupedParams).length === 0 ? (
+        <EmptyTable />
+      ) : (
         <form onSubmit={formik.handleSubmit}>
-          <div className="position-sticky top-0 bg-white pb-3 mb-3" style={{ zIndex: 10, borderBottom: '1px solid #dee2e6' }}>
+          <div
+            className="position-sticky top-0 bg-white pb-3 mb-3"
+            style={{ zIndex: 10, borderBottom: "1px solid #dee2e6" }}
+          >
             <Tabs
               activeKey={activeTab}
               onSelect={handleTabSelect}
@@ -582,9 +620,7 @@ const ApplyCitation = () => {
                 <Tab
                   eventKey={category}
                   title={
-                    <span
-                      className="form-label mb-1"
-                    >
+                    <span className="form-label mb-1">
                       {category.toUpperCase()}
                     </span>
                   }
@@ -594,15 +630,14 @@ const ApplyCitation = () => {
             </Tabs>
           </div>
 
-
           <div
             ref={scrollContainerRef}
             style={{
-              height: '60vh',
-              overflowY: 'auto',
-              paddingRight: '1rem',
-              scrollbarWidth: 'none',
-              msOverflowStyle: 'none',
+              height: "60vh",
+              overflowY: "auto",
+              paddingRight: "1rem",
+              scrollbarWidth: "none",
+              msOverflowStyle: "none",
             }}
           >
             {Object.entries(groupedParams).map(([category, params]) => (
@@ -623,10 +658,50 @@ const ApplyCitation = () => {
                 <table className="table-style-1 w-100">
                   <thead>
                     <tr style={{ backgroundColor: "#007bff" }}>
-                      <th style={{ width: 250, minWidth: 250, maxWidth: 250, fontSize: "17" ,color:"white"}}>Parameter</th>
-                      <th style={{ width: 300, minWidth: 300, maxWidth: 300, fontSize: "17" ,color:"white"}}>Count</th>
-                      <th style={{ width: 300, minWidth: 300, maxWidth: 300, fontSize: "17" ,color:"white"}}>Marks</th>
-                      <th style={{ width: 300, minWidth: 300, maxWidth: 300, fontSize: "17" ,color:"white"}}>Upload</th>
+                      <th
+                        style={{
+                          width: 250,
+                          minWidth: 250,
+                          maxWidth: 250,
+                          fontSize: "17",
+                          color: "white",
+                        }}
+                      >
+                        Parameter
+                      </th>
+                      <th
+                        style={{
+                          width: 300,
+                          minWidth: 300,
+                          maxWidth: 300,
+                          fontSize: "17",
+                          color: "white",
+                        }}
+                      >
+                        Count
+                      </th>
+                      <th
+                        style={{
+                          width: 300,
+                          minWidth: 300,
+                          maxWidth: 300,
+                          fontSize: "17",
+                          color: "white",
+                        }}
+                      >
+                        Marks
+                      </th>
+                      <th
+                        style={{
+                          width: 300,
+                          minWidth: 300,
+                          maxWidth: 300,
+                          fontSize: "17",
+                          color: "white",
+                        }}
+                      >
+                        Upload
+                      </th>
                     </tr>
                   </thead>
                   <tbody>
@@ -636,13 +711,24 @@ const ApplyCitation = () => {
                       const rows: any = [];
                       params.forEach((param: any, idx: number) => {
                         const display = getParamDisplay(param);
-                        const showHeader = display.header && display.header !== prevHeader;
-                        const showSubheader = display.subheader && display.subheader !== prevSubheader;
+                        const showHeader =
+                          display.header && display.header !== prevHeader;
+                        const showSubheader =
+                          display.subheader &&
+                          display.subheader !== prevSubheader;
 
                         if (showHeader) {
                           rows.push(
                             <tr key={`header-${display.header}-${idx}`}>
-                              <td colSpan={4} style={{ fontWeight: 500, fontSize: 15, backgroundColor: "#ebeae8", lineHeight: "1" }}>
+                              <td
+                                colSpan={4}
+                                style={{
+                                  fontWeight: 500,
+                                  fontSize: 15,
+                                  backgroundColor: "#ebeae8",
+                                  lineHeight: "1",
+                                }}
+                              >
                                 {display.header}
                               </td>
                             </tr>
@@ -651,7 +737,14 @@ const ApplyCitation = () => {
                         if (showSubheader) {
                           rows.push(
                             <tr key={`subheader-${display.subheader}-${idx}`}>
-                              <td colSpan={4} style={{ color: display.header ? "black" : "#888", fontSize: 15, fontWeight: 700 }}>
+                              <td
+                                colSpan={4}
+                                style={{
+                                  color: display.header ? "black" : "#888",
+                                  fontSize: 15,
+                                  fontWeight: 700,
+                                }}
+                              >
                                 {display.subheader}
                               </td>
                             </tr>
@@ -665,7 +758,10 @@ const ApplyCitation = () => {
                         let markInputValue: number;
 
                         if (param.negative) {
-                          if (rawMarkValue === 0 || rawMarkValue === undefined) {
+                          if (
+                            rawMarkValue === 0 ||
+                            rawMarkValue === undefined
+                          ) {
                             markInputValue = 0;
                           } else {
                             markInputValue = -Math.abs(rawMarkValue);
@@ -676,22 +772,48 @@ const ApplyCitation = () => {
 
                         rows.push(
                           <tr key={param.param_id}>
-                            <td style={{ width: 250, minWidth: 250, maxWidth: 250, verticalAlign: "top" }}>
+                            <td
+                              style={{
+                                width: 250,
+                                minWidth: 250,
+                                maxWidth: 250,
+                                verticalAlign: "top",
+                              }}
+                            >
                               <p className="fw-5 mb-0">{display.main}</p>
                             </td>
-                            <td style={{ width: 300, minWidth: 300, maxWidth: 300, verticalAlign: "top" }}>
+                            <td
+                              style={{
+                                width: 300,
+                                minWidth: 300,
+                                maxWidth: 300,
+                                verticalAlign: "top",
+                              }}
+                            >
                               <input
                                 type="text"
                                 className="form-control"
                                 placeholder="Enter count"
                                 autoComplete="off"
                                 value={counts[param.param_id] ?? ""}
-                                onChange={(e) => handleCountChange(param.param_id, e.target.value)}
+                                onChange={(e) =>
+                                  handleCountChange(
+                                    param.param_id,
+                                    e.target.value
+                                  )
+                                }
                                 inputMode="numeric"
                                 pattern="[0-9]*"
                               />
                             </td>
-                            <td style={{ width: 300, minWidth: 300, maxWidth: 300, verticalAlign: "top" }}>
+                            <td
+                              style={{
+                                width: 300,
+                                minWidth: 300,
+                                maxWidth: 300,
+                                verticalAlign: "top",
+                              }}
+                            >
                               <div className="input-with-tooltip">
                                 <input
                                   type="number"
@@ -703,55 +825,85 @@ const ApplyCitation = () => {
                                 <div className="tooltip-icon">
                                   <i className="info-circle">i</i>
                                   <span className="tooltip-text">
-                                    {`1 count = ${(param.per_unit_mark)} marks, description: ${param.description}`}
+                                    {`1 unit = ${param.per_unit_mark} marks${
+                                      param.description
+                                        ? `, description: ${param.description}`
+                                        : ""
+                                    }`}
                                   </span>
                                 </div>
                               </div>
                             </td>
-                            <td style={{ width: 300, minWidth: 300, maxWidth: 300, verticalAlign: "top" }}>
+                            <td
+                              style={{
+                                width: 300,
+                                minWidth: 300,
+                                maxWidth: 300,
+                                verticalAlign: "top",
+                              }}
+                            >
                               {param.proof_reqd ? (
                                 <>
-                                  {uploadedFiles[param.param_id]?.length > 0 && (
-                                    <div className="mb-1" style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                                      {uploadedFiles[param.param_id].map((fileUrl, idx) => (
-                                        <div
-                                          key={`${param.param_id}-${fileUrl}`}
-                                          style={{
-                                            display: 'flex',
-                                            alignItems: 'center',
-                                            justifyContent: 'space-between',
-                                            gap: '0.5rem',
-                                            fontSize: 14,
-                                            wordBreak: 'break-all',
-                                            background: '#f1f5f9',
-                                            padding: '4px 8px',
-                                            borderRadius: 4,
-                                          }}
-                                        >
-                                          <a
-                                            href={`${baseURL}${fileUrl}`}
-                                            target="_blank"
-                                            rel="noopener noreferrer"
-                                            style={{ flex: 1, color: '#1d4ed8', textDecoration: 'underline' }}
-                                          >
-                                            {fileUrl.split("/").pop()}
-                                          </a>
-                                          <button
-                                            type="button"
-                                            onClick={() => handleRemoveUploadedFile(param.param_id, idx)}
+                                  {uploadedFiles[param.param_id]?.length >
+                                    0 && (
+                                    <div
+                                      className="mb-1"
+                                      style={{
+                                        display: "flex",
+                                        flexDirection: "column",
+                                        gap: "4px",
+                                      }}
+                                    >
+                                      {uploadedFiles[param.param_id].map(
+                                        (fileUrl, idx) => (
+                                          <div
+                                            key={`${param.param_id}-${fileUrl}`}
                                             style={{
-                                              background: 'transparent',
-                                              border: 'none',
-                                              color: '#dc2626',
-                                              cursor: 'pointer',
-                                              fontSize: 16,
+                                              display: "flex",
+                                              alignItems: "center",
+                                              justifyContent: "space-between",
+                                              gap: "0.5rem",
+                                              fontSize: 14,
+                                              wordBreak: "break-all",
+                                              background: "#f1f5f9",
+                                              padding: "4px 8px",
+                                              borderRadius: 4,
                                             }}
-                                            title="Remove file"
                                           >
-                                            🗑️
-                                          </button>
-                                        </div>
-                                      ))}
+                                            <a
+                                              href={`${baseURL}${fileUrl}`}
+                                              target="_blank"
+                                              rel="noopener noreferrer"
+                                              style={{
+                                                flex: 1,
+                                                color: "#1d4ed8",
+                                                textDecoration: "underline",
+                                              }}
+                                            >
+                                              {fileUrl.split("/").pop()}
+                                            </a>
+                                            <button
+                                              type="button"
+                                              onClick={() =>
+                                                handleRemoveUploadedFile(
+                                                  param.param_id,
+                                                  idx
+                                                )
+                                              }
+                                              style={{
+                                                background: "transparent",
+                                                border: "none",
+                                                color: "#dc2626",
+                                                cursor: "pointer",
+                                                fontSize: 16,
+                                              }}
+                                              title="Remove file"
+                                            >
+                                              🗑️
+                                            </button>
+                                          </div>
+                                        )
+                                      )}
                                     </div>
                                   )}
                                   <input
@@ -762,15 +914,21 @@ const ApplyCitation = () => {
                                     accept=".pdf,.jpg,.jpeg,.png,application/pdf,image/jpeg,image/png"
                                     onChange={(e) => {
                                       const display = getParamDisplay(param);
-                                      handleFileChange(e, param.param_id, display.main);
+                                      handleFileChange(
+                                        e,
+                                        param.param_id,
+                                        display.main
+                                      );
                                     }}
                                   />
-                                  <span style={{ fontSize: 12, color: 'red' }}>*File not more than 5 MB. Only PDF, JPG, PNG allowed.</span>
+                                  <span style={{ fontSize: 12, color: "red" }}>
+                                    *File not more than 5 MB. Only PDF, JPG, PNG
+                                    allowed.
+                                  </span>
                                 </>
                               ) : (
                                 <span>Not required</span>
                               )}
-
                             </td>
                           </tr>
                         );
@@ -824,7 +982,7 @@ const ApplyCitation = () => {
             </div>
           </div>
         </form>
-      }
+      )}
     </div>
   );
 };
