@@ -49,7 +49,7 @@ const ApplicationsList = () => {
         command_type: commandType === "All" ? undefined : commandType ?? undefined,
         search: debouncedSearch,
         page,
-        limit,  
+        limit,
       };
 
       if (role === 'cw2' || role === 'headquarter') {
@@ -196,13 +196,13 @@ const ApplicationsList = () => {
             options={awardTypeOptions}
             value={awardTypeOptions.find((opt) => opt.value === awardType) ?? null}
             onChange={(option) => setAwardType(option?.value ?? null)}
-            placeholder="Select Award Type"
+            placeholder="Select Type"
           />
           {profile?.user?.user_role === "headquarter" &&
             <FormSelect
               name="commandType"
               options={commandOptions}
-              value={commandOptions.find((opt) => opt.value === commandType)?? null}
+              value={commandOptions.find((opt) => opt.value === commandType) ?? null}
               onChange={(option) => setCommandType(option?.value ?? null)}
               placeholder="Select Command Type"
             />
@@ -234,13 +234,14 @@ const ApplicationsList = () => {
               )}
               {role === "unit" && (<th style={{ width: 150, minWidth: 150, maxWidth: 150 }}>Status</th>)}
               <th style={{ width: 100, minWidth: 100, maxWidth: 100 }}></th>
+              <th style={{ width: 100, minWidth: 100, maxWidth: 100 }}></th>
             </tr>
           </thead>
 
           <tbody>
             {loading ?
               <tr>
-                <td colSpan={6}>
+                <td colSpan={10}>
                   <div className="d-flex justify-content-center py-5">
                     <Loader inline size={40} />
                   </div>

@@ -1,9 +1,9 @@
 import { lazy, type ReactElement } from "react";
 import { Navigate } from "react-router-dom";
+import { useAppSelector } from "../reduxToolkit/hooks";
 
 import Login from "../screens/auth/Login";
 import SignUp from "../screens/auth/SignUp";
-import { useAppSelector } from "../reduxToolkit/hooks";
 
 const Applications = lazy(() => import("../screens/applications/Applications"));
 const AcceptedApplicationsList = lazy(() => import("../screens/applications/modules/AcceptedApplicationsList"));

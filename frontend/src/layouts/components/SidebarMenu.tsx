@@ -1,25 +1,26 @@
-import { NavLink } from "react-router-dom";
-import { sidebarStructure } from "./structure";
 import { useEffect, useState } from "react";
-import Axios from "../../reduxToolkit/helper/axios";
-import { useAppDispatch, useAppSelector } from "../../reduxToolkit/hooks";
-import { getClarifications, getSubordinateClarifications } from "../../../src/reduxToolkit/services/clarification/clarificationService";
+import { NavLink } from "react-router-dom";
+import { GoSidebarExpand, GoSidebarCollapse } from "react-icons/go";
+import { sidebarStructure } from "./structure";
 import { SVGICON } from "../../constants/iconsList";
 import { Chatbot } from "../../screens/Chatbot/Chatbot";
-import { GoSidebarExpand, GoSidebarCollapse } from "react-icons/go";
+import { useAppDispatch, useAppSelector } from "../../reduxToolkit/hooks";
+import { getClarifications, getSubordinateClarifications } from "../../../src/reduxToolkit/services/clarification/clarificationService";
+import Axios from "../../reduxToolkit/helper/axios";
 
 type SidebarMenuProps = {
-  onToggleCollapse: (isCollapsed: boolean) => void; // Callback to notify parent about collapse state
+  onToggleCollapse: (isCollapsed: boolean) => void;
 };
-const commandExtraLabels = ["Scoreboard", "Winners", "Home", "Profile Settings"];
-const headquarterExtraLabels = ["Dashboard", "Home", "Awards", "Scoreboard", "Profile Settings"];
-const extraDashboardLabels = ["Brigade Dashboard", "Division Dashboard", "Corps Dashboard", "Command Dashboard"];
 
 type UserType = {
   user_role?: string;
   is_member?: boolean;
   cw2_type?: string;
 };
+
+const commandExtraLabels = ["Scoreboard", "Winners", "Home", "Profile Settings"];
+const headquarterExtraLabels = ["Dashboard", "Home", "Awards", "Scoreboard", "Profile Settings"];
+const extraDashboardLabels = ["Brigade Dashboard", "Division Dashboard", "Corps Dashboard", "Command Dashboard"];
 
 const SidebarMenu = ({ onToggleCollapse }: SidebarMenuProps) => {
   const dispatch = useAppDispatch();
@@ -30,7 +31,7 @@ const SidebarMenu = ({ onToggleCollapse }: SidebarMenuProps) => {
   const cw2_type = user.cw2_type?.toLowerCase() ?? "";
 
   const [sidebarClarificationUnits, setSidebarClarificationUnits] = useState<any[]>([]);
-  const [isCollapsed, setIsCollapsed] = useState(false); // State for sidebar collapse
+  const [isCollapsed, setIsCollapsed] = useState(false);
 
   useEffect(() => {
     onToggleCollapse(isCollapsed);
@@ -56,8 +57,8 @@ const SidebarMenu = ({ onToggleCollapse }: SidebarMenuProps) => {
   const unitClarifications = useAppSelector((state) => state.clarification.unitClarifications);
   const totalReceivedClarifications = Array.isArray(unitClarifications)
     ? unitClarifications.filter(app =>
-        app?.fds?.parameters?.some((p: any) => p.clarification_id)
-      ).length
+      app?.fds?.parameters?.some((p: any) => p.clarification_id)
+    ).length
     : 0;
 
   const totalRaisedClarifications = Array.isArray(sidebarClarificationUnits)
@@ -120,10 +121,10 @@ const SidebarMenu = ({ onToggleCollapse }: SidebarMenuProps) => {
       <NavLink
         to={item.to}
         className={`nav-items d-flex align-items-center fw-5 position-relative text-white py-2 ${isCollapsed ? "collapsed" : ""}`}
-        style={{ position: 'relative' }}  // <-- Ensure parent has relative position
+        style={{ margin: isCollapsed ? "8px 5px" : "8px 20px" }}
       >
         <div className="d-flex align-items-center text-truncate">
-          <span className="nav-icon me-2 d-inline-flex align-items-center justify-content-center">
+          <span className={`nav-icon ${isCollapsed ? "me-0" : "me-2"} d-inline-flex align-items-center justify-content-center`}>
             {item.icon}
           </span>
           {!isCollapsed && <span className="text-truncate">{item.label}</span>}
@@ -133,14 +134,14 @@ const SidebarMenu = ({ onToggleCollapse }: SidebarMenuProps) => {
             position: "fixed",
             top: "auto",
             bottom: "auto",
-            left: "40px", // Adjust this value to be right outside the collapsed sidebar width
+            left: "40px",
             transform: "translateY(-50%)",
             width: 12,
             height: 12,
             backgroundColor: "#dc3545",
             borderRadius: "50%",
             zIndex: 9999,
-            marginTop: 16 // Adjust vertical alignment with icon
+            marginTop: 16
           }} />
         )}
         {badgeCount > 0 && !isCollapsed && (
@@ -170,8 +171,8 @@ const SidebarMenu = ({ onToggleCollapse }: SidebarMenuProps) => {
     </div>
   );
 
-return (
-  <aside className={`sidebar-menu flex-shrink-0 d-xl-block d-none bg-dark text-white p-3 px-0 ${isCollapsed ? "collapsed" : ""}`} style={isCollapsed ? { width: "60px" } : {}}>
+  return (
+    <aside className={`sidebar-menu flex-shrink-0 d-xl-block d-none bg-dark text-white p-3 px-0 ${isCollapsed ? "collapsed" : ""}`} style={isCollapsed ? { width: "60px" } : {}}>
       <div className="d-flex flex-column justify-content-between align-items-center">
         <div className="d-flex flex-column justify-content-center align-items-center gap-2 mb-2">
           {isCollapsed && (
@@ -213,16 +214,17 @@ return (
             <div className="w-50" style={{ height: "4px", backgroundColor: "#dc3545", borderRadius: "50px" }}></div>
           )}
         </div>
-        <div className="scroll-style-85">
+        <div className="scroll-style-85 w-100">
           <div className="sidebar-wrapper mt-3 pb-3">
             {dashboardItems.map((item) => (
               <NavLink
                 to={item.to}
                 className={`nav-items d-flex align-items-center fw-5 position-relative text-white py-2 ${isCollapsed ? "collapsed" : ""}`}
                 key={item.to}
+                style={{ margin: isCollapsed ? "8px 5px" : "8px 20px" }}
               >
-                <div className="d-flex align-items-center text-truncate">
-                  <span className="nav-icon me-2 d-inline-flex align-items-center justify-content-center">
+                <div className={`d-flex align-items-center text-truncate`}>
+                  <span className={`nav-icon ${isCollapsed ? "me-0" : "me-2"} d-inline-flex align-items-center justify-content-center`}>
                     {item.icon}
                   </span>
                   {!isCollapsed && <span className="text-truncate">{item.label}</span>}
@@ -251,9 +253,10 @@ return (
                   to={item.to}
                   className={`nav-items d-flex align-items-center fw-5 position-relative text-white py-2 ${isCollapsed ? "collapsed" : ""}`}
                   key={item.to}
+                  style={{ margin: isCollapsed ? "8px 5px" : "8px 20px" }}
                 >
                   <div className="d-flex align-items-center text-truncate">
-                    <span className="nav-icon me-2 d-inline-flex align-items-center justify-content-center">
+                    <span className={`nav-icon ${isCollapsed ? "me-0" : "me-2"} d-inline-flex align-items-center justify-content-center`}>
                       {item.icon}
                     </span>
                     {!isCollapsed && <span className="text-truncate">{item.label}</span>}
@@ -283,7 +286,7 @@ const filterSidebarStructure = (userRole: string, alwaysVisible: string[]) => {
     if (["brigade", "division", "corps"].includes(userRole)) {
       if (extraDashboardLabels.includes(item.label)) return true;
     }
-    
+
     if (item.label === "Dashboard") return false;
     if (alwaysVisible.includes(item.label)) return true;
 

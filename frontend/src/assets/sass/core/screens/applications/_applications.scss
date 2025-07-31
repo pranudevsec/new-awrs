@@ -8,6 +8,7 @@
   cursor: pointer;
   transition: box-shadow 0.3s ease, transform 0.3s ease;
   z-index: 0;
+  overflow: hidden;
 
   .count-badge {
     position: absolute;
@@ -48,16 +49,17 @@
     transform: translateY(-2px);
     background: #0085FE;
     background: linear-gradient(180deg, rgba(0, 133, 254, 1) 0%, rgba(0, 91, 176, 1) 100%);
-    
-    h5{
-      color: var(--gray-0);
+
+    h5,
+    span {
+      color: var(--gray-0) !important;
     }
 
     &::before {
       animation: shine 0.9s ease-in-out;
     }
 
-    .count-badge{
+    .count-badge {
       background: var(--gray-0);
       color: var(--gray-800);
     }

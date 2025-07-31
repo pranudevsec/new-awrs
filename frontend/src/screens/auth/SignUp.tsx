@@ -5,11 +5,11 @@ import { unwrapResult } from "@reduxjs/toolkit";
 import ReCAPTCHA from "react-google-recaptcha";
 import FormInput from "../../components/form/FormInput";
 import FormSelect from "../../components/form/FormSelect";
+import bgimg from "../../assets/Picture7.png";
 import { roleOptions } from "../../data/options";
 import { SignUpSchema } from "../../validations/validations";
 import { reqToSignUp } from "../../reduxToolkit/services/auth/authService";
 import { useAppDispatch } from "../../reduxToolkit/hooks";
-import bgimg from "../../assets/Picture7.png"; // Adjust the path as necessary
 
 const SignUp = () => {
     const navigate = useNavigate();
@@ -32,9 +32,7 @@ const SignUp = () => {
         },
         validationSchema: SignUpSchema,
         onSubmit: async (values, { resetForm }) => {
-            if (!values.captchaToken) {
-                return;
-            }
+            if (!values.captchaToken) return;
             const resultAction = await dispatch(reqToSignUp(values));
             const result = unwrapResult(resultAction);
             if (result.success) {
@@ -97,7 +95,6 @@ const SignUp = () => {
                                             touched={formik.touched.rank}
                                         />
                                     </div>
-
                                     <div className="mb-2">
                                         <FormInput
                                             label="Name"
@@ -122,7 +119,7 @@ const SignUp = () => {
                                             touched={formik.touched.username}
                                         />
                                     </div>
-                                    <div className="mb-4">
+                                    <div className="mb-2">
                                         <label
                                             htmlFor="password"
                                             className="form-label subtitle_3 text_gray_800 mb-1"
@@ -161,7 +158,6 @@ const SignUp = () => {
                                             <p className="error-text">{formik.errors.password}</p>
                                         )}
                                     </div>
-
                                     <div className="mb-4">
                                         <label
                                             htmlFor="confirmPassword"
@@ -187,7 +183,6 @@ const SignUp = () => {
                                             <p className="error-text">{formik.errors.confirmPassword}</p>
                                         )}
                                     </div>
-                                    {/* Captcha */}
                                     <div className="mb-4">
                                         <ReCAPTCHA
                                             sitekey="6LeIxAcTAAAAAJcZVRqyHh71UMIEGNQ_MXjiZKhI"

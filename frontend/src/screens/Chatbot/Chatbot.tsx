@@ -3,13 +3,14 @@ import axios from 'axios';
 import dgis from '../../assets/dgislogo.png';
 
 export function Chatbot() {
+  const bottomRef = useRef<HTMLDivElement>(null);
+
   const [chatOpen, setChatOpen] = useState(false);
+  const [input, setInput] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
   const [messages, setMessages] = useState([
     { from: 'bot', text: 'Hi! How can I help you?' }
   ]);
-  const [input, setInput] = useState('');
-  const bottomRef = useRef<HTMLDivElement>(null);
-  const [isLoading, setIsLoading] = useState(false);
 
   const sendMessage = async () => {
     try {
@@ -32,26 +33,23 @@ export function Chatbot() {
   };
 
   useEffect(() => {
-    if (bottomRef.current) {
-      bottomRef.current.scrollIntoView({ behavior: 'smooth' });
-    }
+    if (bottomRef.current) bottomRef.current.scrollIntoView({ behavior: 'smooth' });
   }, [messages, chatOpen]);
 
   return (
     <>
       {chatOpen && (
-          <div
-            className="position-fixed m-5 border rounded shadow bg-white"
-            style={{
-              width: '360px',
-              maxHeight: '500px',
-              height: 'auto',
-              zIndex: 1050,
-              left: '200px',
-              bottom: '50px'
-            }}
-          >
-
+        <div
+          className="position-fixed m-5 border rounded shadow bg-white"
+          style={{
+            width: '360px',
+            maxHeight: '500px',
+            height: 'auto',
+            zIndex: 1050,
+            left: '200px',
+            bottom: '50px'
+          }}
+        >
           {/* Header */}
           <div className="text-white d-flex justify-content-between align-items-center px-3 py-2 rounded-top" style={{ backgroundColor: 'var(--blue-primary-clr)' }}>
             <strong>Chat with Us</strong>
@@ -112,7 +110,7 @@ export function Chatbot() {
       <button
         className="btn text-white  position-fixed bottom-0  m-5 rounded-pill shadow"
         onClick={() => setChatOpen(!chatOpen)}
-        style={{ zIndex: 1050, backgroundColor: 'var(--blue-primary-clr)',left : '1.5rem' }}
+        style={{ zIndex: 1050, backgroundColor: 'var(--blue-primary-clr)', left: '1.5rem' }}
       >
         <span className="d-flex align-items-center gap-2">
           <img

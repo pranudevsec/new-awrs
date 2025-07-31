@@ -19,25 +19,25 @@ const cw2TypeOptions = [
   { label: "MP", value: "mp" },
 ];
 const roleCredentials: Record<string, { username: string; password: string }> =
-  {
-    unit: { username: "unit", password: "12345678" },
-    special_unit: { username: "testspecialunit", password: "12345678" },
-    brigade: { username: "bde1", password: "12345678" },
-    brigade_member: { username: "bde1_member", password: "12345678" },
-    division: { username: "div1", password: "12345678" },
-    division_member: { username: "div1_member", password: "12345678" },
-    corps: { username: "corps1", password: "12345678" },
-    corps_member: { username: "corps1_member", password: "12345678" },
-    command: { username: "ncomd", password: "12345678" },
-    command_member: { username: "ncomd_member", password: "12345678" },
-    admin: { username: "admin", password: "12345678" },
-    headquarter: { username: "testheadquarter", password: "12345678" },
-    cw2_mo: { username: "testcw2_mo", password: "12345678" },
-    cw2_ol: { username: "testcw2_ol", password: "12345678" },
-    cw2_hr: { username: "testcw2_hr", password: "12345678" },
-    cw2_dv: { username: "testcw2_dv", password: "12345678" },
-    cw2_mp: { username: "testcw2_mp", password: "12345678" },
-  };
+{
+  unit: { username: "unit", password: "12345678" },
+  special_unit: { username: "testspecialunit", password: "12345678" },
+  brigade: { username: "bde1", password: "12345678" },
+  brigade_member: { username: "bde1_member", password: "12345678" },
+  division: { username: "div1", password: "12345678" },
+  division_member: { username: "div1_member", password: "12345678" },
+  corps: { username: "corps1", password: "12345678" },
+  corps_member: { username: "corps1_member", password: "12345678" },
+  command: { username: "ncomd", password: "12345678" },
+  command_member: { username: "ncomd_member", password: "12345678" },
+  admin: { username: "admin", password: "12345678" },
+  headquarter: { username: "testheadquarter", password: "12345678" },
+  cw2_mo: { username: "testcw2_mo", password: "12345678" },
+  cw2_ol: { username: "testcw2_ol", password: "12345678" },
+  cw2_hr: { username: "testcw2_hr", password: "12345678" },
+  cw2_dv: { username: "testcw2_dv", password: "12345678" },
+  cw2_mp: { username: "testcw2_mp", password: "12345678" },
+};
 
 const Login = () => {
   const navigate = useNavigate();
@@ -74,23 +74,21 @@ const Login = () => {
       if (result.success) {
         resetForm();
 
-        setTimeout(() => {
-          if (payload.user_role === "admin") {
-            navigate("/admin-settings");
-          } else if (payload.user_role === "command") {
-            navigate("/command-dashboard");
-          } else if (payload.user_role === "brigade") {
-            navigate("/brigade-dashboard");
-          } else if (payload.user_role === "division") {
-            navigate("/division-dashboard");
-          } else if (payload.user_role === "corps") {
-            navigate("/corps-dashboard");
-          } else if (payload.user_role === "headquarter") {
-            navigate("/dashboard");
-          } else {
-            navigate("/");
-          }
-        }, 400);
+        if (payload.user_role === "admin") {
+          navigate("/admin-settings");
+        } else if (payload.user_role === "command") {
+          navigate("/command-dashboard");
+        } else if (payload.user_role === "brigade") {
+          navigate("/brigade-dashboard");
+        } else if (payload.user_role === "division") {
+          navigate("/division-dashboard");
+        } else if (payload.user_role === "corps") {
+          navigate("/corps-dashboard");
+        } else if (payload.user_role === "headquarter") {
+          navigate("/dashboard");
+        } else {
+          navigate("/");
+        }
       }
     },
   });
@@ -214,11 +212,10 @@ const Login = () => {
                     <div className="position-relative">
                       <input
                         type={passwordType}
-                        className={`form-control ${
-                          formik.errors.password && formik.touched.password
-                            ? "invalid"
-                            : ""
-                        }`}
+                        className={`form-control ${formik.errors.password && formik.touched.password
+                          ? "invalid"
+                          : ""
+                          }`}
                         id="password"
                         name="password"
                         autoComplete="off"
@@ -238,11 +235,10 @@ const Login = () => {
                         aria-label="Toggle password visibility"
                       >
                         <img
-                          src={`/media/icons/${
-                            passwordType === "password"
-                              ? "open-eye"
-                              : "close-eye"
-                          }.svg`}
+                          src={`/media/icons/${passwordType === "password"
+                            ? "open-eye"
+                            : "close-eye"
+                            }.svg`}
                           alt="Toggle Password Visibility"
                         />
                       </button>

@@ -1,11 +1,11 @@
+import { useState, useCallback } from 'react';
 import { Navigate } from 'react-router-dom';
 import { useAppSelector } from '../reduxToolkit/hooks';
+import { Chatbot } from '../screens/Chatbot/Chatbot';
 import SidebarMenu from './components/SidebarMenu';
 import Header from './components/Header';
 import Topbar from './components/Topbar';
 import Footer from './components/Footer';
-import { useState,useCallback } from 'react';
-import { Chatbot } from '../screens/Chatbot/Chatbot';
 
 const AuthLayout = ({ children }: { children: React.ReactNode }) => {
     const token = !!useAppSelector((state) => state.admin).admin?.token;
@@ -16,49 +16,28 @@ const AuthLayout = ({ children }: { children: React.ReactNode }) => {
     }, []);
 
     if (!token) return <Navigate to="/authentication/sign-in" />;
+
     return (
         <div className="d-flex flex-column vh-100">
             {/* Topbar */}
             <Topbar />
-
-            <div className="d-flex flex-grow-1" style={{ flex: 1, minHeight: 0 }}>
+            <div className="d-flex flex-grow-1" style={{ minHeight: 0 }}>
                 {/* Sidebar */}
-                <div
-                    className="sidebar-container"
-                    style={{
-                        height: "100%",
-                        background: "#fff",
-                        display: "flex",
-                        flexDirection: "column",
-                        flexShrink: 0, // Prevent shrinking
-                        width: isSidebarCollapsed ? "60px" : "300px", // Dynamic width based on collapse state
-                        transition: "width 0.3s ease", // Smooth transition for shrinking/expanding
-                    }}
-                >
+                <div className="sidebar-container h-100 flex-column flex-shrink-0 d-xl-flex d-none" style={{
+                    width: isSidebarCollapsed ? "60px" : "300px",
+                    transition: "width 0.3s ease",
+                }}>
                     <SidebarMenu onToggleCollapse={handleToggleCollapse} />
                 </div>
-
-                {/* Main content column */}
-                <div
-                    className="main-content-container"
-                    style={{
-                        flexGrow: 1, // Allow main content to take remaining space
-                        position: "relative",
-                        overflowY: "auto",
-                        transition: "margin-left 0.3s ease", // Smooth transition for margin adjustment
-                    }}
-                >
+                <div className="main-content-container position-relative flex-grow-1 overflow-y-auto overflow-x-hidden">
                     {/* Header */}
                     <Header />
 
                     {/* Page content */}
-                    <div
-                        className="page-content"
+                    <div className="page-content flex-grow-1 overflow-x-hidden"
                         style={{
-                            flexGrow: 1,
                             paddingLeft: "1rem",
                             paddingTop: "1rem",
-                            overflowX: "hidden",
                             paddingRight: "1rem",
                         }}
                     >
@@ -69,7 +48,7 @@ const AuthLayout = ({ children }: { children: React.ReactNode }) => {
             {/* Footer */}
             <Footer />
             {/* Chatbot */}
-            <Chatbot/>
+            <Chatbot />
         </div>
     );
 };
