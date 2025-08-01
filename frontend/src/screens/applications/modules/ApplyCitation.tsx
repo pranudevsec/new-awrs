@@ -842,11 +842,10 @@ const ApplyCitation = () => {
                                 <div className="tooltip-icon">
                                   <i className="info-circle">i</i>
                                   <span className="tooltip-text">
-                                    {`1 unit = ${param.per_unit_mark} marks${
-                                      param.description
-                                        ? `, description: ${param.description}`
-                                        : ""
-                                    }`}
+                                    {`1 unit = ${param.per_unit_mark} marks${param.description
+                                      ? `, description: ${param.description}`
+                                      : ""
+                                      }`}
                                   </span>
                                 </div>
                               </div>
@@ -863,66 +862,66 @@ const ApplyCitation = () => {
                                 <>
                                   {uploadedFiles[param.param_id]?.length >
                                     0 && (
-                                    <div
-                                      className="mb-1"
-                                      style={{
-                                        display: "flex",
-                                        flexDirection: "column",
-                                        gap: "4px",
-                                      }}
-                                    >
-                                      {uploadedFiles[param.param_id].map(
-                                        (fileUrl, idx) => (
-                                          <div
-                                            key={`${param.param_id}-${fileUrl}`}
-                                            style={{
-                                              display: "flex",
-                                              alignItems: "center",
-                                              justifyContent: "space-between",
-                                              gap: "0.5rem",
-                                              fontSize: 14,
-                                              wordBreak: "break-all",
-                                              background: "#f1f5f9",
-                                              padding: "4px 8px",
-                                              borderRadius: 4,
-                                            }}
-                                          >
-                                            <a
-                                              href={`${baseURL}${fileUrl}`}
-                                              target="_blank"
-                                              rel="noopener noreferrer"
+                                      <div
+                                        className="mb-1"
+                                        style={{
+                                          display: "flex",
+                                          flexDirection: "column",
+                                          gap: "4px",
+                                        }}
+                                      >
+                                        {uploadedFiles[param.param_id].map(
+                                          (fileUrl, idx) => (
+                                            <div
+                                              key={`${param.param_id}-${fileUrl}`}
                                               style={{
-                                                flex: 1,
-                                                color: "#1d4ed8",
-                                                textDecoration: "underline",
+                                                display: "flex",
+                                                alignItems: "center",
+                                                justifyContent: "space-between",
+                                                gap: "0.5rem",
+                                                fontSize: 14,
+                                                wordBreak: "break-all",
+                                                background: "#f1f5f9",
+                                                padding: "4px 8px",
+                                                borderRadius: 4,
                                               }}
                                             >
-                                              {fileUrl.split("/").pop()}
-                                            </a>
-                                            <button
-                                              type="button"
-                                              onClick={() =>
-                                                handleRemoveUploadedFile(
-                                                  param.param_id,
-                                                  idx
-                                                )
-                                              }
-                                              style={{
-                                                background: "transparent",
-                                                border: "none",
-                                                color: "#dc2626",
-                                                cursor: "pointer",
-                                                fontSize: 16,
-                                              }}
-                                              title="Remove file"
-                                            >
-                                              🗑️
-                                            </button>
-                                          </div>
-                                        )
-                                      )}
-                                    </div>
-                                  )}
+                                              <a
+                                                href={`${baseURL}${fileUrl}`}
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                style={{
+                                                  flex: 1,
+                                                  color: "#1d4ed8",
+                                                  textDecoration: "underline",
+                                                }}
+                                              >
+                                                {fileUrl.split("/").pop()}
+                                              </a>
+                                              <button
+                                                type="button"
+                                                onClick={() =>
+                                                  handleRemoveUploadedFile(
+                                                    param.param_id,
+                                                    idx
+                                                  )
+                                                }
+                                                style={{
+                                                  background: "transparent",
+                                                  border: "none",
+                                                  color: "#dc2626",
+                                                  cursor: "pointer",
+                                                  fontSize: 16,
+                                                }}
+                                                title="Remove file"
+                                              >
+                                                🗑️
+                                              </button>
+                                            </div>
+                                          )
+                                        )}
+                                      </div>
+                                    )}
                                   <input
                                     type="file"
                                     className="form-control"
@@ -963,9 +962,15 @@ const ApplyCitation = () => {
                 name="unitRemarks"
                 placeholder="Enter remarks (max 500 characters)"
                 value={unitRemarks}
-                onChange={(e) => setUnitRemarks(e.target.value)}
+                onChange={(e) => {
+                  const value = e.target.value;
+                  if (value.length <= 500) {
+                    setUnitRemarks(value);
+                    localStorage.setItem("applyCitationUnitRemarks", value);
+                  }
+                }}
               />
-              {unitRemarks.length > 500 && (
+              {unitRemarks.length >= 500 && (
                 <p className="error-text">Maximum 500 characters allowed</p>
               )}
             </div>

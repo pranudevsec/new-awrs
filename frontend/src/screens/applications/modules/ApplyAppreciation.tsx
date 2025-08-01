@@ -286,11 +286,11 @@ const ApplyAppreciation = () => {
   useEffect(() => {
     const container = tabsContainerRef.current;
     if (!container) return;
-  
+
     const activeTabElement = container.querySelector(
       `[role="tab"][aria-selected="true"]`
     );
-  
+
     if (activeTabElement instanceof HTMLElement) {
       activeTabElement.scrollIntoView({
         behavior: "smooth",
@@ -745,11 +745,10 @@ const ApplyAppreciation = () => {
               <div className="tooltip-icon">
                 <i className="info-circle">i</i>
                 <span className="tooltip-text">
-                  {`1 unit = ${param.per_unit_mark} marks${
-                    param.description
-                      ? `, description: ${param.description}`
-                      : ""
-                  }`}
+                  {`1 unit = ${param.per_unit_mark} marks${param.description
+                    ? `, description: ${param.description}`
+                    : ""
+                    }`}
                 </span>
               </div>
             </div>
@@ -809,7 +808,7 @@ const ApplyAppreciation = () => {
         <EmptyTable />
       ) : (
         <form onSubmit={formik.handleSubmit}>
-<div
+          <div
             className="position-sticky top-0 bg-white pb-3 mb-3"
             style={{ zIndex: 10, borderBottom: "1px solid #dee2e6" }}
             ref={tabsContainerRef}
@@ -915,9 +914,15 @@ const ApplyAppreciation = () => {
                 name="unitRemarks"
                 placeholder="Enter remarks (max 500 characters)"
                 value={unitRemarks}
-                onChange={(e) => setUnitRemarks(e.target.value)}
+                onChange={(e) => {
+                  const value = e.target.value;
+                  if (value.length <= 500) {
+                    setUnitRemarks(value);
+                    localStorage.setItem("applyAppreciationUnitRemarks", value);
+                  }
+                }}
               />
-              {unitRemarks.length > 500 && (
+              {unitRemarks.length >= 500 && (
                 <p className="error-text">Maximum 500 characters allowed</p>
               )}
             </div>

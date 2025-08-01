@@ -1,4 +1,4 @@
-import { useEffect, useState, type JSX } from "react";
+import { useEffect, useRef, useState, type JSX } from "react";
 import { MdClose } from "react-icons/md";
 import { IoMdCheckmark } from "react-icons/io";
 import { FaCheckCircle, FaDownload } from "react-icons/fa";
@@ -53,6 +53,8 @@ const ApplicationDetails = () => {
   const [searchParams] = useSearchParams();
   const { application_id } = useParams();
 
+  const debounceRef = useRef<any>(null);
+
   const profile = useAppSelector((state) => state.admin.profile);
   const { loading, unitDetail } = useAppSelector((state) => state.application);
 
@@ -80,7 +82,7 @@ const ApplicationDetails = () => {
   const [approvedCountState, setApprovedCountState] = useState<Record<string, string>>({});
   const [remarksError, setRemarksError] = useState<string | null>(null);
   const [graceMarks, setGraceMarks] = useState("");
-  const [decisions, ] = useState<{ [memberId: string]: string }>({});
+  const [decisions,] = useState<{ [memberId: string]: string }>({});
   const [priority, setPriority] = useState(userPriority);
   const [commentsState, setCommentsState] = useState<Record<string, string>>({});
   const [localComment, setLocalComment] = useState(commentsState?.__application__ ?? "");
@@ -331,30 +333,39 @@ const ApplicationDetails = () => {
     }
   }, [unitDetail?.remarks, role]);
 
-  const handleRemarksChange = async (e: any) => {
+  const handleRemarksChange = (e: any) => {
     const value = e.target.value;
-    setUnitRemarks(value);
 
     if (value.length > 200) {
       setRemarksError("Remarks cannot exceed 200 characters.");
       return;
-    } else {
-      setRemarksError(null);
     }
 
-    const body = {
-      type: unitDetail?.type ?? "citation",
-      application_id: unitDetail?.id ?? 0,
-      remark: value,
-      parameters: [],
-    };
-
-    try {
-      await dispatch(approveMarks(body)).unwrap();
-    } catch (err) {
-      console.error("Failed to update remarks", err);
-    }
+    setRemarksError(null);
+    setUnitRemarks(value);
   };
+
+  // Debounce effect
+  useEffect(() => {
+    if (remarksError || unitRemarks.length === 0) return;
+
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+
+    debounceRef.current = setTimeout(async () => {
+      const body = {
+        type: unitDetail?.type ?? "citation",
+        application_id: unitDetail?.id ?? 0,
+        remark: unitRemarks,
+        parameters: [],
+      };
+
+      try {
+        await dispatch(approveMarks(body)).unwrap();
+      } catch (err) {
+        console.error("Failed to update remarks", err);
+      }
+    }, 500);
+  }, [unitRemarks]);
 
   const currentRoleIndex = hierarchy.indexOf(role?.toLowerCase());
   const lowerRoles = hierarchy.slice(0, currentRoleIndex)
@@ -583,11 +594,6 @@ const ApplicationDetails = () => {
   };
 
   const handleDecisionClick = (member: any, decision: string) => {
-    if(isNaN(parseInt(priority)) && (cw2_type === 'mo' || cw2_type === 'ol'))  {
-      toast.error("Please enter priority points before making a decision.");
-      return;
-    }
-    
     // Store the decision details and show the disclaimer modal
     setPendingDecision({ member, decision });
     setShowDisclaimerModal(true);
@@ -595,7 +601,7 @@ const ApplicationDetails = () => {
 
   const renderHeaderRow = (header: string, index: number) => (
     <tr key={`header-${header}-${index}`}>
-      <td colSpan={6} style={{ fontWeight: 600, color: "#555", fontSize: 15, background: "#f5f5f5" }}>
+      <td colSpan={8} style={{ fontWeight: 600, color: "#555", fontSize: 15, background: "#f5f5f5" }}>
         {header}
       </td>
     </tr>
@@ -727,41 +733,41 @@ const ApplicationDetails = () => {
                 readOnly
               />
             </td>
-              <td style={{ width: 120 }}>
-                {canViewClarification ? (
-                  <button
-                    className="action-btn bg-transparent d-inline-flex align-items-center justify-content-center"
-                    onClick={() => {
-                      setReqViewCreatedClarificationShow(true);
-                      setReviewerClarificationForView(
-                        clarificationDetails?.reviewer_comment
-                      );
-                    }}
-                  >
-                    {SVGICON.app.eye}
-                  </button>
-                ) : (
-                  <button
-                    onClick={() => {
-                      setClarificationType(unitDetail?.type ?? "");
-                      setClarificationApplicationId(unitDetail?.id ?? 0);
-                      setClarificationParameterName(param.name);
-                      setClarificationParameterId(param.id);
-                      setClarificationDocForView(
-                        clarificationDetails?.clarification_doc
-                      );
-                      setClarificationClarificationForView(
-                        clarificationDetails?.clarification
-                      );
-                      setClarificationShow(true);
-                    }}
-                    className="fw-5 text-decoration-underline bg-transparent border-0"
-                    style={{ fontSize: 14, color: "#0d6efd" }}
-                  >
-                    Ask Clarification
-                  </button>
-                )}
-              </td>
+            <td style={{ width: 120 }}>
+              {canViewClarification ? (
+                <button
+                  className="action-btn bg-transparent d-inline-flex align-items-center justify-content-center"
+                  onClick={() => {
+                    setReqViewCreatedClarificationShow(true);
+                    setReviewerClarificationForView(
+                      clarificationDetails?.reviewer_comment
+                    );
+                  }}
+                >
+                  {SVGICON.app.eye}
+                </button>
+              ) : (
+                <button
+                  onClick={() => {
+                    setClarificationType(unitDetail?.type ?? "");
+                    setClarificationApplicationId(unitDetail?.id ?? 0);
+                    setClarificationParameterName(param.name);
+                    setClarificationParameterId(param.id);
+                    setClarificationDocForView(
+                      clarificationDetails?.clarification_doc
+                    );
+                    setClarificationClarificationForView(
+                      clarificationDetails?.clarification
+                    );
+                    setClarificationShow(true);
+                  }}
+                  className="fw-5 text-decoration-underline bg-transparent border-0"
+                  style={{ fontSize: 14, color: "#0d6efd" }}
+                >
+                  Ask Clarification
+                </button>
+              )}
+            </td>
 
             {isRaisedScreen && (
               <>
@@ -851,7 +857,7 @@ const ApplicationDetails = () => {
             <span>Report</span>
           </button>
         </div>
-      
+
         <div className="table-filter-area mb-4">
           <div className="d-flex flex-wrap justify-content-between align-items-center gap-3">
             <div
@@ -936,11 +942,11 @@ const ApplicationDetails = () => {
                   <>
                     <th style={{ width: 200, color: "white" }}>Approved Count</th>
                     <th style={{ width: 200, color: "white" }}>Approved Marks</th>
-                      <th style={{ width: 150, color: "white" }}>Ask Clarification</th>
+                    <th style={{ width: 150, color: "white" }}>Ask Clarification</th>
                     {isRaisedScreen && (
                       <>
-                        <th style={{ width: 200,color: "white"  }}>Requested Clarification</th>
-                        <th style={{ width: 150,color: "white"  }}>Action</th>{" "}
+                        <th style={{ width: 200, color: "white" }}>Requested Clarification</th>
+                        <th style={{ width: 150, color: "white" }}>Action</th>{" "}
                       </>
                     )}
                   </>
@@ -972,7 +978,7 @@ const ApplicationDetails = () => {
                     rows.push(
                       <tr key={`subheader-${display.subheader}-${index}`}>
                         <td
-                          colSpan={6}
+                          colSpan={8}
                           style={{
                             color: display.header ? "#1976d2" : "#888",
                             fontSize: 13,
@@ -1078,8 +1084,8 @@ const ApplicationDetails = () => {
                 <div className="fw-bold">{paramStats.filledParams}</div>
               </div>
               <div className="col-6 col-sm-2">
-                <span className="fw-medium text-muted">Positive Marks:</span>
-                <div className="fw-bold text-primary">{Number(paramStats.marks).toFixed(2)}</div>
+                <span className="fw-medium text-muted">Marks:</span>
+                <div className="fw-bold">{Number(paramStats.marks).toFixed(2)}</div>
               </div>
               <div className="col-6 col-sm-2">
                 <span className="fw-medium text-muted">Negative Marks:</span>
@@ -1167,7 +1173,7 @@ const ApplicationDetails = () => {
                             <td>
                               {member.member_type === "presiding_officer"
                                 ? "Presiding Officer"
-                                : "Member Officer"} 
+                                : "Member Officer"}
                             </td>
                             <td>{member.name ?? "-"}</td>
                             <td>{member.rank ?? "-"}</td>
@@ -1388,7 +1394,7 @@ const ApplicationDetails = () => {
                   />
                   <div className="d-flex align-items-center justify-content-end mt-2">
                     <button type="submit" className="_btn success">
-                      Add Comment
+                      Submit
                     </button>
                   </div>
                 </form>
@@ -1530,7 +1536,7 @@ const ApplicationDetails = () => {
         handleClose={() => setReviewCommentsShow(false)}
         reviewCommentsData={reviewCommentsData}
       />
-        <DisclaimerModal
+      <DisclaimerModal
         show={showDisclaimerModal}
         onClose={() => setShowDisclaimerModal(false)}
         onConfirm={handleConfirmDecision}

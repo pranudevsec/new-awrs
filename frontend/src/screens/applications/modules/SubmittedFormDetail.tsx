@@ -1,4 +1,4 @@
-import { useEffect, useState, type JSX } from "react";
+import { useEffect, useRef, useState, type JSX } from "react";
 import { MdClose } from "react-icons/md";
 import { IoMdCheckmark } from "react-icons/io";
 import { FaCheckCircle } from "react-icons/fa";
@@ -44,6 +44,8 @@ const SubmittedFormDetail = () => {
     const dispatch = useAppDispatch();
     const [searchParams] = useSearchParams();
     const { application_id } = useParams();
+
+    const debounceRef = useRef<any>(null);
 
     const profile = useAppSelector((state) => state.admin.profile);
     const { loading, unitDetail } = useAppSelector((state) => state.application);
@@ -249,28 +251,40 @@ const SubmittedFormDetail = () => {
         }
     }, [unitDetail?.remarks, role]);
 
-    const handleRemarksChange = async (e: any) => {
+    const handleRemarksChange = (e: any) => {
         const value = e.target.value;
-        setUnitRemarks(value);
+
         if (value.length > 200) {
             setRemarksError("Remarks cannot exceed 200 characters.");
             return;
-        } else {
-            setRemarksError(null);
         }
-        const body = {
-            type: unitDetail?.type ?? "citation",
-            application_id: unitDetail?.id ?? 0,
-            remark: value,
-            parameters: [],
-        };
 
-        try {
-            await dispatch(approveMarks(body)).unwrap();
-        } catch (err) {
-            console.error("Failed to update remarks", err);
-        }
+        setRemarksError(null);
+        setUnitRemarks(value);
     };
+
+    // Debounce effect
+    useEffect(() => {
+        if (remarksError || unitRemarks.length === 0) return;
+
+        if (debounceRef.current) clearTimeout(debounceRef.current);
+
+        debounceRef.current = setTimeout(async () => {
+            const body = {
+                type: unitDetail?.type ?? "citation",
+                application_id: unitDetail?.id ?? 0,
+                remark: unitRemarks,
+                parameters: [],
+            };
+
+            try {
+                await dispatch(approveMarks(body)).unwrap();
+            } catch (err) {
+                console.error("Failed to update remarks", err);
+            }
+        }, 500);
+    }, [unitRemarks]);
+
     const hierarchy = ["brigade", "division", "corps", "command", "headquarter"];
     const currentRoleIndex = hierarchy.indexOf(role?.toLowerCase());
 
@@ -667,7 +681,7 @@ const SubmittedFormDetail = () => {
                     </div>
                 </div>
             </div>
-                {/* {unitDetail?.fds?.awards?.length > 0 && (
+            {/* {unitDetail?.fds?.awards?.length > 0 && (
                     <div className="mt-4">
                         <h5 className="mb-3">Awards</h5>
                         <div className="table-responsive">
@@ -689,14 +703,14 @@ const SubmittedFormDetail = () => {
                         </table>
                     </div>
                 )} */}
-                <div className="table-responsive mt-4">
-                    <table className="table-style-1 w-100">
-                        <thead>
-                            <tr style={{ backgroundColor: "#007bff" }}>
-                                <th style={{ width: 150, fontSize: "17", color: "white" }}>Parameter</th>
-                                <th style={{ width: 100, fontSize: "17", color: "white" }}>Count</th>
-                                <th style={{ width: 100, fontSize: "17", color: "white" }}>Marks</th>
-                                <th style={{ width: 100, fontSize: "17", color: "white" }}>Document</th>
+            <div className="table-responsive mt-4">
+                <table className="table-style-1 w-100">
+                    <thead>
+                        <tr style={{ backgroundColor: "#007bff" }}>
+                            <th style={{ width: 150, fontSize: "17", color: "white" }}>Parameter</th>
+                            <th style={{ width: 100, fontSize: "17", color: "white" }}>Count</th>
+                            <th style={{ width: 100, fontSize: "17", color: "white" }}>Marks</th>
+                            <th style={{ width: 100, fontSize: "17", color: "white" }}>Document</th>
 
                             {!isUnitRole && !isHeadquarter && (
                                 <>
