@@ -583,6 +583,11 @@ const ApplicationDetails = () => {
   };
 
   const handleDecisionClick = (member: any, decision: string) => {
+    if(isNaN(parseInt(priority)) && (cw2_type === 'mo' || cw2_type === 'ol'))  {
+      toast.error("Please enter priority points before making a decision.");
+      return;
+    }
+    
     // Store the decision details and show the disclaimer modal
     setPendingDecision({ member, decision });
     setShowDisclaimerModal(true);
