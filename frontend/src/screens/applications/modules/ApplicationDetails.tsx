@@ -1074,16 +1074,16 @@ const ApplicationDetails = () => {
               </div>
               <div className="col-6 col-sm-2">
                 <span className="fw-medium text-muted">Marks:</span>
-                <div className="fw-bold">{Number(paramStats.marks).toFixed(3)}</div>
+                <div className="fw-bold">{Number(paramStats.marks).toFixed(2)}</div>
               </div>
               <div className="col-6 col-sm-2">
                 <span className="fw-medium text-muted">Negative Marks:</span>
-                <div className="fw-bold text-danger">{paramStats.negativeMarks.toFixed(3)}</div>
+                <div className="fw-bold text-danger">{paramStats.negativeMarks.toFixed(2)}</div>
               </div>
               <div className="col-6 col-sm-2">
                 <span className="fw-medium text-muted">Approved Marks:</span>
                 <div className="fw-bold text-primary">
-                  {paramStats.approvedMarks.toFixed(3)}
+                  {paramStats.approvedMarks.toFixed(2)}
                 </div>
               </div>
               <div className="col-6 col-sm-2">

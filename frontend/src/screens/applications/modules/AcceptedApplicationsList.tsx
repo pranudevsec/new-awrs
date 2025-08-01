@@ -673,7 +673,7 @@ const AcceptedApplicationsList = () => {
                   )}
 
                   <td style={{ width: 200, minWidth: 200, maxWidth: 200 }}>
-                    <p className="fw-4">{getTotalMarks(unit).toFixed(3)}</p>
+                    <p className="fw-4">{getTotalMarks(unit).toFixed(2)}</p>
                   </td>
                   {role.toLowerCase() !== "brigade" && (
                     <td style={{ width: 200, minWidth: 200, maxWidth: 200 }}>

@@ -529,15 +529,15 @@ const AppreciationReviewPage = () => {
                             </div>
                             <div className="col-6 col-sm-3">
                                 <span className="fw-medium text-muted">Positive Marks:</span>
-                                <div className="fw-bold text-danger">{positiveMarks.toFixed(3)}</div>
+                                <div className="fw-bold text-danger">{positiveMarks.toFixed(2)}</div>
                             </div>
                             <div className="col-6 col-sm-3">
                                 <span className="fw-medium text-muted">Negative Marks:</span>
-                                <div className="fw-bold text-danger">{negativeMarks.toFixed(3)}</div>
+                                <div className="fw-bold text-danger">{negativeMarks.toFixed(2)}</div>
                             </div>
                             <div className="col-6 col-sm-3">
                                 <span className="fw-medium text-muted">Total Marks:</span>
-                                <div className="fw-bold text-success">{totalMarks.toFixed(3)}</div>
+                                <div className="fw-bold text-success">{totalMarks.toFixed(2)}</div>
                             </div>
                         </div>
 

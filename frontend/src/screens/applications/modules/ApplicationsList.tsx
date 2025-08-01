@@ -288,7 +288,7 @@ const ApplicationsList = () => {
                   </td>
                   {/* New columns */}
                   <td style={{ width: 150, minWidth: 150, maxWidth: 150 }}>
-                    <p className="fw-4">{getTotalMarks(unit).toFixed(3)}</p>
+                    <p className="fw-4">{getTotalMarks(unit).toFixed(2)}</p>
                   </td>
                   <td style={{ width: 150, minWidth: 150, maxWidth: 150 }}>
                     <p className="fw-4">{getTotalNegativeMarks(unit)}</p>

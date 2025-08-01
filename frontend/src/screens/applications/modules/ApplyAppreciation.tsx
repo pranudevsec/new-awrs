@@ -739,7 +739,7 @@ const ApplyAppreciation = () => {
                 type="number"
                 className="form-control"
                 placeholder="Marks"
-                value={markInputValue.toFixed(3)}
+                value={markInputValue.toFixed(2)}
                 readOnly
               />
               <div className="tooltip-icon">

@@ -215,7 +215,7 @@ const CitationReviewPage = () => {
               id: param.param_id,
               name: display.main,
               count,
-              marks: Number((calculatedMarks).toFixed(3)),
+              marks: Number((calculatedMarks).toFixed(2)),
               upload: uploadPaths,
               negative: param.negative,
             };
@@ -368,7 +368,7 @@ const CitationReviewPage = () => {
       let displayMark: string | number = "--";
 
       if (markValue !== undefined) {
-        displayMark = param.negative ? `-${Number(markValue).toFixed(3)}` : Number(markValue).toFixed(3);
+        displayMark = param.negative ? `-${Number(markValue).toFixed(2)}` : Number(markValue).toFixed(2);
       }
 
       rows.push(
@@ -561,15 +561,15 @@ const CitationReviewPage = () => {
               </div>
               <div className="col-6 col-sm-3">
                 <span className="fw-medium text-muted">Positive Marks:</span>
-                <div className="fw-bold text-danger">{positiveMarks.toFixed(3)}</div>
+                <div className="fw-bold text-danger">{positiveMarks.toFixed(2)}</div>
               </div>
               <div className="col-6 col-sm-3">
                 <span className="fw-medium text-muted">Negative Marks:</span>
-                <div className="fw-bold text-danger">{negativeMarks.toFixed(3)}</div>
+                <div className="fw-bold text-danger">{negativeMarks.toFixed(2)}</div>
               </div>
               <div className="col-6 col-sm-3">
                 <span className="fw-medium text-muted">Total Marks:</span>
-                <div className="fw-bold text-success">{totalMarks.toFixed(3)}</div>
+                <div className="fw-bold text-success">{totalMarks.toFixed(2)}</div>
               </div>
             </div>
 
