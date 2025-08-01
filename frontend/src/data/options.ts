@@ -320,8 +320,6 @@ export const roleOptions2: OptionType[] = [
 
 export const unitTypeOptions = [
   { label: "AAD", value: "AAD" },
-  { label: "ALL", value: "ALL" },
-  { label: "AMD AND TRG", value: "AMD AND TRG" },
   { label: "ARMD/MECH INF", value: "ARMD/MECH INF" },
   { label: "ARMY AVN", value: "ARMY AVN" },
   { label: "ARMY DOG UNIT", value: "ARMY DOG UNIT" },
@@ -333,7 +331,6 @@ export const unitTypeOptions = [
   { label: "ASC (SUP/FOL)", value: "ASC (SUP/FOL)" },
   { label: "ASC 2nd & 3rd LINE TPT", value: "ASC 2nd & 3rd LINE TPT" },
   { label: "AVN", value: "AVN" },
-  { label: "CERT OF APPRECIATION", value: "CERT OF APPRECIATION" },
   { label: "CMP", value: "CMP" },
   { label: "DENTAL", value: "DENTAL" },
   { label: "DSC", value: "DSC" },
@@ -342,10 +339,8 @@ export const unitTypeOptions = [
   { label: "EW/SI", value: "EW/SI" },
   { label: "FD HOSP", value: "FD HOSP" },
   { label: "FFU", value: "FFU" },
-  { label: "HINTERLAND", value: "HINTERLAND" },
   { label: "INFANTRY", value: "INFANTRY" },
   { label: "INT", value: "INT" },
-  { label: "LC/AIOS/LAC/HAA/AGPL", value: "LC/AIOS/LAC/HAA/AGPL" },
   { label: "MED", value: "MED" },
   { label: "MED LESS FD HOSP", value: "MED LESS FD HOSP" },
   { label: "ORD", value: "ORD" },

@@ -1073,8 +1073,8 @@ const ApplicationDetails = () => {
                 <div className="fw-bold">{paramStats.filledParams}</div>
               </div>
               <div className="col-6 col-sm-2">
-                <span className="fw-medium text-muted">Marks:</span>
-                <div className="fw-bold">{Number(paramStats.marks).toFixed(2)}</div>
+                <span className="fw-medium text-muted">Positive Marks:</span>
+                <div className="fw-bold text-primary">{Number(paramStats.marks).toFixed(2)}</div>
               </div>
               <div className="col-6 col-sm-2">
                 <span className="fw-medium text-muted">Negative Marks:</span>
@@ -1162,7 +1162,7 @@ const ApplicationDetails = () => {
                             <td>
                               {member.member_type === "presiding_officer"
                                 ? "Presiding Officer"
-                                : "Member Officer"}
+                                : "Member Officer"} 
                             </td>
                             <td>{member.name ?? "-"}</td>
                             <td>{member.rank ?? "-"}</td>
@@ -1383,7 +1383,7 @@ const ApplicationDetails = () => {
                   />
                   <div className="d-flex align-items-center justify-content-end mt-2">
                     <button type="submit" className="_btn success">
-                      Submit
+                      Add Comment
                     </button>
                   </div>
                 </form>

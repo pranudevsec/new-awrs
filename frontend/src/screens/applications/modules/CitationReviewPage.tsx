@@ -561,7 +561,7 @@ const CitationReviewPage = () => {
               </div>
               <div className="col-6 col-sm-3">
                 <span className="fw-medium text-muted">Positive Marks:</span>
-                <div className="fw-bold text-danger">{positiveMarks.toFixed(2)}</div>
+                <div className="fw-bold text-primary">{positiveMarks.toFixed(2)}</div>
               </div>
               <div className="col-6 col-sm-3">
                 <span className="fw-medium text-muted">Negative Marks:</span>
