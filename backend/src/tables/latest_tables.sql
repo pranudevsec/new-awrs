@@ -339,7 +339,7 @@ ALTER SEQUENCE public.unit_tab_unit_id_seq OWNED BY public.unit_tab.unit_id;
 --
 
 CREATE TABLE public.user_tab (
-    user_id integer NOT NULL,
+    user_id SERIAL PRIMARY KEY,
     pers_no character(8) NOT NULL,
     rank character(8) NOT NULL,
     name character varying NOT NULL,
@@ -4363,7 +4363,7 @@ INSERT INTO public.user_tab VALUES (22, '4994927 ', 'CO      ', 'CO', 'unit', 'u
 INSERT INTO public.user_tab VALUES (23, '1923615 ', 'CO      ', 'CO', 'unit', 'unit5', '$2b$10$t18v.y9OKiw9QCG3HjZFkuwVCZTMFMF0hts/96jtZVfjNyuWNM8Ke', 13, NULL, false, false, NULL, false, false, true, '2025-07-27 12:07:48.326667', '2025-07-27 13:11:01.542334');
 INSERT INTO public.user_tab VALUES (24, '1052614 ', 'CO      ', 'CO', 'unit', 'unit6', '$2b$10$wL/My84oDrEQIJ5aIEaGYu6qUcI22jhR02y.ldn0H/Y.yNLVyge46', 14, NULL, false, false, NULL, false, false, true, '2025-07-27 12:08:11.156901', '2025-07-27 13:12:53.019649');
 INSERT INTO public.user_tab VALUES (25, '7109625 ', 'CO      ', 'CO', 'unit', 'unit7', '$2b$10$ktu6bdN5mnUg5CE5z7tuMepKMR1JNqojG6hQzXTGbp16sTpvS9Cx2', 15, NULL, false, false, NULL, false, false, true, '2025-07-27 12:08:37.337739', '2025-07-27 13:14:37.294499');
-INSERT INTO public.user_tab VALUES (31, '5628146 ', 'CDR     ', 'CRD', 'brigade', 'bde1', '$2b$10$YcEU07AEKUExKVJWy78IpuAbpx.gXF9ckwrzH6kSLrrYDYqRFDU2y', 16, NULL, false, false, NULL, false, false, true, '2025-07-27 12:11:59.989562', '2025-07-27 13:15:52.415612');
+INSERT INTO public.user_tab VALUES (31, '5628146 ', 'CDR     ', 'CDR', 'brigade', 'bde1', '$2b$10$YcEU07AEKUExKVJWy78IpuAbpx.gXF9ckwrzH6kSLrrYDYqRFDU2y', 16, NULL, false, false, NULL, false, false, true, '2025-07-27 12:11:59.989562', '2025-07-27 13:15:52.415612');
 INSERT INTO public.user_tab VALUES (33, '9890959 ', 'CDR     ', 'CDR', 'brigade', 'bde2', '$2b$10$teZCd1oNHwAv/39FIde7/.moaU/eA1uAkYTc.4kf1IyDBM5OJooMq', 17, NULL, false, false, NULL, false, false, true, '2025-07-27 12:14:03.882564', '2025-07-27 13:22:56.674804');
 INSERT INTO public.user_tab VALUES (39, '1428481 ', 'DIV GOS ', 'DIV GOC', 'division', 'div1', '$2b$10$1N5k.TAHalBZ3Ta3ilRbguO6bUo1ksLjhaOst0i9RjM0Hdg5dNrYG', 18, NULL, false, false, NULL, false, false, true, '2025-07-27 12:17:08.36756', '2025-07-27 13:28:57.523669');
 INSERT INTO public.user_tab VALUES (45, '2724902 ', 'CORPS C ', 'CORPS CDR', 'corps', 'corps1', '$2b$10$R/8aah.gbaI9ebL6T0.lz.fVC2XBbvpH3aLCFeBwaD4Oe8o9XAWcW', 19, NULL, false, false, NULL, false, false, true, '2025-07-27 12:20:28.494464', '2025-07-27 13:32:19.262108');

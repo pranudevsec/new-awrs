@@ -260,7 +260,7 @@ const ProfileSettings = () => {
     enableReinitialize: true,
     onSubmit: async (values: any, { resetForm }) => {
       try {
-        if(!isDeclarationChecked){
+        if (!isDeclarationChecked) {
           toast.error("Please agree to the declaration before submitting.");
           return;
         }
@@ -501,138 +501,138 @@ const ProfileSettings = () => {
             );
           })}
           {role === "unit" && (
-              <div className="col-12 mb-3">
-                <span className="form-label fw-6">Awards Received</span>
-                <table className="table table-bordered">
-                  <tbody>
-                    {awards.map((award, idx) => (
-                      <tr key={award.award_id ?? idx}>
-                        <td>
-                          <select
-                            className="form-select"
-                            value={award.award_type}
-                            onChange={(e) => {
-                              const updated = [...awards];
-                              updated[idx].award_type = e.target.value as
-                                | "GOC-in-C"
-                                | "COAS"
-                                | "CDS"
-                                | "VCOAS"
-                                | "CINCAN";
-                              setAwards(updated);
-                            }}
-                          >
-                            <option value="CDS">CDS</option>
-                            <option value="COAS">COAS</option>
-                            <option value="GOC-in-C">GOC-in-C</option>
-                            <option value="VCOAS">VCOAS</option>
-                            <option value="CINCAN">CINCAN</option>
-                          </select>
-                        </td>
-                        <td>
-                          <select
-                            className="form-select"
-                            value={award.award_title}
-                            onChange={(e) => {
-                              const updated = [...awards];
-                              updated[idx].award_title = e.target.value as
-                                | "citation"
-                                | "appreciation";
-                              setAwards(updated);
-                            }}
-                          >
-                            <option value="">Select Award Title</option>
-                            <option value="citation">Citation</option>
-                            <option value="appreciation">Appreciation</option>
-                          </select>
-                        </td>
-                        <td>
-                          <select
-                            className="form-select"
-                            value={award.award_year}
-                            onChange={(e) => {
-                              const updated = [...awards];
-                              updated[idx].award_year = e.target.value;
-                              setAwards(updated);
-                            }}
-                          >
-                            <option value="">Select Year</option>
-                            {yearOptions.map((year) => (
-                              <option key={year} value={year}>
-                                {year}
-                              </option>
-                            ))}
-                          </select>
-                        </td>
-                        <td>
-                          <button
-                            type="button"
-                            className="_btn danger btn-sm"
-                            onClick={() => {
-                              setAwards((prev) =>
-                                prev.filter((_, i) => i !== idx)
-                              );
-                            }}
-                          >
-                            Remove
-                          </button>
-                        </td>
-                      </tr>
-                    ))}
-                    {awards.length === 0 && (
-                      <tr>
-                        <td colSpan={4} className="text-center text-muted">
-                          No awards added
-                        </td>
-                      </tr>
-                    )}
-                  </tbody>
-                </table>
-                <button
-                  type="button"
-                  
-                  style={{
-                    background: "#9c9c9cff",
-                    color: "#fff",
-                    borderRadius: "20px",
-                    width: "40px",
-                    height: "40px",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    fontSize: "1.3rem",
-                    boxShadow: "0 2px 8px rgba(59,130,246,0.15)",
-                    border: "none",
-                    padding: 0,
-                  }}
-                  onClick={() => {
-                    setAwards((prev) => [
-                      ...prev,
-                      { award_type: "GOC-in-C", award_title: "", award_year: "" },
-                    ]);
-                  }}
-                >
-                  <span style={{ display: "inline-flex", alignItems: "center", gap: "0.5em" }}>
-                    <FaPlus />
-                  </span>
-                </button>
-              </div>
-          )}
-          {!isMember &&(
-            <div className="col-12 mt-3">
-            <div className="form-check">
-              <input
-                type="checkbox"
-                className="form-check-input"
-                id="declarationCheckbox"
-                checked={isDeclarationChecked}
-                onChange={handleCheckboxChange}
-              />
-              <label className="form-check-label" htmlFor="declarationCheckbox">
-                I agree and declare that the information of Hierarchy/Channel of reporting filled by me is accurate and up-to-date.
-              </label>
+            <div className="col-12 mb-3">
+              <span className="form-label fw-6">Awards Received</span>
+              <table className="table table-bordered">
+                <tbody>
+                  {awards.map((award, idx) => (
+                    <tr key={award.award_id ?? idx}>
+                      <td>
+                        <select
+                          className="form-select"
+                          value={award.award_type}
+                          onChange={(e) => {
+                            const updated = [...awards];
+                            updated[idx].award_type = e.target.value as
+                              | "GOC-in-C"
+                              | "COAS"
+                              | "CDS"
+                              | "VCOAS"
+                              | "CINCAN";
+                            setAwards(updated);
+                          }}
+                        >
+                          <option value="CDS">CDS</option>
+                          <option value="COAS">COAS</option>
+                          <option value="GOC-in-C">GOC-in-C</option>
+                          <option value="VCOAS">VCOAS</option>
+                          <option value="CINCAN">CINCAN</option>
+                        </select>
+                      </td>
+                      <td>
+                        <select
+                          className="form-select"
+                          value={award.award_title}
+                          onChange={(e) => {
+                            const updated = [...awards];
+                            updated[idx].award_title = e.target.value as
+                              | "citation"
+                              | "appreciation";
+                            setAwards(updated);
+                          }}
+                        >
+                          <option value="">Select Award Title</option>
+                          <option value="citation">Citation</option>
+                          <option value="appreciation">Appreciation</option>
+                        </select>
+                      </td>
+                      <td>
+                        <select
+                          className="form-select"
+                          value={award.award_year}
+                          onChange={(e) => {
+                            const updated = [...awards];
+                            updated[idx].award_year = e.target.value;
+                            setAwards(updated);
+                          }}
+                        >
+                          <option value="">Select Year</option>
+                          {yearOptions.map((year) => (
+                            <option key={year} value={year}>
+                              {year}
+                            </option>
+                          ))}
+                        </select>
+                      </td>
+                      <td>
+                        <button
+                          type="button"
+                          className="_btn danger btn-sm"
+                          onClick={() => {
+                            setAwards((prev) =>
+                              prev.filter((_, i) => i !== idx)
+                            );
+                          }}
+                        >
+                          Remove
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                  {awards.length === 0 && (
+                    <tr>
+                      <td colSpan={4} className="text-center text-muted">
+                        No awards added
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+              <button
+                type="button"
+
+                style={{
+                  background: "#9c9c9cff",
+                  color: "#fff",
+                  borderRadius: "20px",
+                  width: "40px",
+                  height: "40px",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  fontSize: "1.3rem",
+                  boxShadow: "0 2px 8px rgba(59,130,246,0.15)",
+                  border: "none",
+                  padding: 0,
+                }}
+                onClick={() => {
+                  setAwards((prev) => [
+                    ...prev,
+                    { award_type: "GOC-in-C", award_title: "", award_year: "" },
+                  ]);
+                }}
+              >
+                <span style={{ display: "inline-flex", alignItems: "center", gap: "0.5em" }}>
+                  <FaPlus />
+                </span>
+              </button>
             </div>
-          </div>
+          )}
+          {!isMember && (
+            <div className="col-12 mt-3">
+              <div className="form-check">
+                <input
+                  type="checkbox"
+                  className="form-check-input"
+                  id="declarationCheckbox"
+                  checked={isDeclarationChecked}
+                  onChange={handleCheckboxChange}
+                />
+                <label className="form-check-label" htmlFor="declarationCheckbox">
+                  I agree and declare that the information of Hierarchy/Channel of reporting filled by me is accurate and up-to-date.
+                </label>
+              </div>
+            </div>
           )}
           {!isDisabled && role !== "cw2" && (
             <div className="col-12 mt-2">
@@ -766,6 +766,8 @@ const ProfileSettings = () => {
                   </div>
                 </div>
               </form>
+
+
               {/* Officers */}
               <form
                 className="mb-5"
@@ -874,6 +876,36 @@ const ProfileSettings = () => {
                   </button>
                 </div>
               </form>
+
+              {officers.length > 0 && (
+                <div className="my-4">
+                  <div className="d-flex flex-sm-row flex-column align-items-sm-center justify-content-between mb-3">
+                    <Breadcrumb title="Member Officers List" />
+                  </div>
+                  <div className="table-responsive mt-4">
+                    <table className="table-style-1 w-100">
+                      <thead>
+                        <tr>
+                          <th>#</th>
+                          <th>Rank</th>
+                          <th>Name</th>
+                          <th>Appointment</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {officers.map((officer, index) => (
+                          <tr key={officer.id ?? index}>
+                            <td>{index + 1}</td>
+                            <td>{officer.rank}</td>
+                            <td>{officer.name}</td>
+                            <td>{officer.appointment}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              )}
             </>
           )}
         </>
