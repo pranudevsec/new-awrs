@@ -21,6 +21,7 @@ import {
 import type { Parameter } from "../../../reduxToolkit/services/parameter/parameterInterface";
 import Axios, { baseURL } from "../../../reduxToolkit/helper/axios";
 import { checkUnitProfileFields } from "../../../reduxToolkit/services/utils/utilities";
+import { getProfile } from "../../../reduxToolkit/services/auth/authService";
 
 const DRAFT_STORAGE_KEY = "applyCitationDraft";
 const DRAFT_FILE_UPLOAD_KEY = "applyCitationuploadedDocsDraft";
@@ -55,6 +56,7 @@ const ApplyCitation = () => {
   const [lastDate, setLastDate] = useState("");
   const [cyclePerios, setCyclePerios] = useState("");
   const [command, setCommand] = useState("");
+  const [isLoadingParameters, setIsLoadingParameters] = useState(false);
   const groupedParams = groupParametersByCategory(parameters);
   const [activeTab, setActiveTab] = useState(
     Object.keys(groupedParams)[0] || ""
@@ -451,40 +453,40 @@ const ApplyCitation = () => {
   });
 
   useEffect(() => {
-    const fetchAllData = async () => {
+    const fetchAllData = async (profileData:any) => {
       try {
-        if (checkUnitProfileFields(profile) === false) {
+        if (checkUnitProfileFields(profileData) === false) {
           toast.error(
             "Please complete your profile details before applying for a citation."
           );
           navigate("/profile-settings");
           return;
         }
+  
         const [configRes, paramsRes] = await Promise.all([
           dispatch(getConfig()).unwrap(),
           dispatch(
             fetchParameters({
               awardType: "citation",
               search: "",
-              matrix_unit: profile?.unit?.matrix_unit ?? undefined,
-              comd: profile?.unit?.comd ?? undefined,
-              // matrix_unit: "",
-              // comd: "",
-              unit_type: profile?.unit?.unit_type ?? undefined,
+              matrix_unit: profileData?.unit?.matrix_unit ?? undefined,
+              comd: profileData?.unit?.comd ?? undefined,
+              unit_type: profileData?.unit?.unit_type ?? undefined,
               page: 1,
               limit: 5000,
             })
           ).unwrap(),
         ]);
-
+  
         if (configRes?.success && configRes.data) {
           setCyclePerios(configRes.data.current_cycle_period);
           const formattedDate = configRes.data.deadline?.split("T")[0] || "";
           setLastDate(formattedDate);
-          if (profile) {
-            setCommand(profile?.unit?.comd);
+          if (profileData) {
+            setCommand(profileData?.unit?.comd);
           }
         }
+  
         if (paramsRes.success && paramsRes.data) {
           const revParams = [...paramsRes.data].reverse();
           setParameters(revParams);
@@ -493,10 +495,24 @@ const ApplyCitation = () => {
         console.error("Failed to fetch data", err);
       }
     };
-
-    fetchAllData();
-  }, []);
-
+  
+    const init = async () => {
+      setIsLoadingParameters(true);
+      try {
+        const profileRes = await dispatch(getProfile()).unwrap();
+        if (profileRes?.data) {
+          await fetchAllData(profileRes.data);
+        }
+      } catch (err) {
+        console.error("Failed to fetch profile", err);
+      } finally {
+        setIsLoadingParameters(false);
+      }
+    };
+  
+    init();
+  }, [dispatch, navigate]);
+  
   useEffect(() => {
     if (!id) {
       const draft = { counts, marks };
@@ -610,7 +626,7 @@ const ApplyCitation = () => {
   };
 
   // Show loader
-  if (loading) return <Loader />;
+  if (loading || isLoadingParameters) return <Loader />;
 
   return (
     <div className="apply-citation-section">

@@ -21,6 +21,7 @@ import type { Parameter } from "../../../reduxToolkit/services/parameter/paramet
 import Axios, { baseURL } from "../../../reduxToolkit/helper/axios";
 import { resetAppreciationState } from "../../../reduxToolkit/slices/appreciation/appreciationSlice";
 import { checkUnitProfileFields } from "../../../reduxToolkit/services/utils/utilities";
+import { getProfile } from "../../../reduxToolkit/services/auth/authService";
 
 const DRAFT_STORAGE_KEY = "applyAppreciationDraft";
 const DRAFT_FILE_UPLOAD_KEY = "applyAppreciationUploadedDocsDraft";
@@ -107,7 +108,6 @@ const ApplyAppreciation = () => {
   const id = searchParams.get("id") ?? "";
 
   const { draftData } = useAppSelector((state) => state.appreciation);
-  const { profile } = useAppSelector((state) => state.admin);
   const { loading } = useAppSelector((state) => state.parameter);
 
   // States
@@ -118,6 +118,7 @@ const ApplyAppreciation = () => {
   const [cyclePerios, setCyclePerios] = useState("");
   const [command, setCommand] = useState("");
   const groupedParams = groupParametersByCategory(parameters);
+  const [isLoadingParameters, setIsLoadingParameters] = useState(false);
   const [activeTab, setActiveTab] = useState(
     Object.keys(groupedParams)[0] ?? ""
   );
@@ -490,34 +491,33 @@ const ApplyAppreciation = () => {
   });
 
   useEffect(() => {
-    const fetchAllData = async () => {
+    const fetchAllData = async (profileData:any) => {
       try {
-        if (!checkUnitProfileFields(profile)) {
+        if (!checkUnitProfileFields(profileData)) {
           navigate("/profile-settings");
           return;
         }
+  
         const [configRes, paramsRes] = await Promise.all([
           dispatch(getConfig()).unwrap(),
           dispatch(
             fetchParameters({
               awardType: "appreciation",
               search: "",
-              comd: profile?.unit?.comd ?? undefined,
+              comd: profileData?.unit?.comd ?? undefined,
               page: 1,
               limit: 500,
             })
           ).unwrap(),
         ]);
-
+  
         if (configRes?.success && configRes.data) {
           setCyclePerios(configRes.data.current_cycle_period);
           const formattedDate = configRes.data.deadline?.split("T")[0] ?? "";
           setLastDate(formattedDate);
-          if (profile) {
-            setCommand(profile?.unit?.comd);
-          }
+          setCommand(profileData?.unit?.comd);
         }
-
+  
         if (paramsRes.success && paramsRes.data) {
           const revParams = [...paramsRes.data].reverse();
           setParameters(revParams);
@@ -526,10 +526,24 @@ const ApplyAppreciation = () => {
         console.error("Failed to fetch data", err);
       }
     };
-
-    fetchAllData();
-  }, []);
-
+  
+    const init = async () => {
+      setIsLoadingParameters(true);
+      try {
+        const profileRes = await dispatch(getProfile()).unwrap();
+        if (profileRes?.data) {
+          await fetchAllData(profileRes.data); 
+        }
+      } catch (err) {
+        console.error("Failed to fetch profile", err);
+      } finally {
+        setIsLoadingParameters(false); 
+      }
+    };
+  
+    init();
+  }, [dispatch, navigate]);
+  
   useEffect(() => {
     if (!id) {
       const draft = { counts, marks };
@@ -796,7 +810,7 @@ const ApplyAppreciation = () => {
   };
 
   // Show loader
-  if (loading) return <Loader />;
+  if (loading || isLoadingParameters) return <Loader />;
 
   return (
     <div className="apply-citation-section">
