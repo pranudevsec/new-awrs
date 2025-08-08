@@ -5,7 +5,7 @@ DROP TABLE IF EXISTS User_tab;
 CREATE TABLE User_tab (
         user_id SERIAL PRIMARY KEY,
         pers_no VARCHAR NOT NULL,
-        rank CHAR(8) NOT NULL,
+        rank CHAR(16) NOT NULL,
         name VARCHAR NOT NULL,
         user_role VARCHAR NOT NULL,
         username VARCHAR UNIQUE NOT NULL,
@@ -42,6 +42,14 @@ BEFORE UPDATE ON User_tab
 FOR EACH ROW
 EXECUTE FUNCTION update_user_tab_timestamp();
 
+SELECT setval(
+  pg_get_serial_sequence('"unit_tab"', 'unit_id'),
+  COALESCE((SELECT MAX(unit_id) FROM "unit_tab"), 1)
+);
+SELECT setval(
+  pg_get_serial_sequence('"User_tab"', 'user_id'),
+  COALESCE((SELECT MAX(user_id) FROM "User_tab"), 1)
+);
  -- Insert a sample user
  INSERT INTO User_tab (
     pers_no,

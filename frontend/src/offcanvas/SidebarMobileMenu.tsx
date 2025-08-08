@@ -28,7 +28,7 @@ const SidebarMobileMenu: FC<SidebarMobileMenuProps> = ({ show, handleClose }) =>
 
     const dashboardItem = sidebarStructure.find(item => item.label === "Dashboard");
 
-    const commandExtraLabels = ["Scoreboard", "Winners", "Home", "Profile Settings"];
+    const commandExtraLabels = ["Scoreboard", "Home", "Profile Settings"];
     const headquarterExtraLabels = ["Dashboard", "Home", "Awards", "Scoreboard", "Profile Settings"];
 
     let filteredStructure = sidebarStructure.filter((item) => {

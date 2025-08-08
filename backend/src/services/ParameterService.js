@@ -52,54 +52,75 @@ exports.createParameter = async (data) => {
 exports.getAllParameters = async (query) => {
   const client = await dbService.getClient();
   try {
-    const { awardType, search,matrix_unit,comd,unit_type, page = 1, limit = 10 } = query;
-    let award_type = awardType;
+    const {
+      awardType,
+      search,
+      matrix_unit,
+      comd,
+      unit_type,
+      page = 1,
+      limit = 10
+    } = query;
+
     const pageInt = parseInt(page);
     const limitInt = parseInt(limit);
     const offset = (pageInt - 1) * limitInt;
 
-    // Build dynamic query
     const filters = [];
     const values = [];
     const orConditions = [];
 
-    if (award_type) {
-      values.push(award_type);
+    // awardType filter
+    if (awardType) {
+      values.push(awardType);
       filters.push(`award_type = $${values.length}`);
     }
+
+    // comd filter
     if (comd) {
       values.push(comd);
       filters.push(`comd = $${values.length}`);
     }
-    if (unit_type) {
-      values.push(unit_type);
-      orConditions.push(`arms_service = $${values.length}`);
-      orConditions.push(`arms_service = 'ALL'`); 
-    }
-    if (matrix_unit) {
-    const matrixUnits = matrix_unit.split(',').map(u => u.trim()).filter(Boolean);
-    matrixUnits.forEach(unit => {
-      values.push(unit);
-      orConditions.push(`arms_service = $${values.length}`);
-    });
-  }
+
+    // name search filter
     if (search) {
       values.push(`%${search.toLowerCase()}%`);
       filters.push(`LOWER(name) LIKE $${values.length}`);
     }
+
+    // unit_type OR matrix_unit OR 'ALL' match arms_service
+if (unit_type) {
+  values.push(unit_type);
+  orConditions.push(`TRIM(LOWER(arms_service)) = TRIM(LOWER($${values.length}))`);
+}
+
+if (matrix_unit) {
+  const units = matrix_unit
+    .split(',')
+    .map(u => u.trim())
+    .filter(Boolean);
+
+  units.forEach(unit => {
+    values.push(unit);
+    orConditions.push(`TRIM(LOWER(arms_service)) = TRIM(LOWER($${values.length}))`);
+  });
+}
+
+// Add arms_service = 'ALL'
+orConditions.push(`TRIM(LOWER(arms_service)) = 'all'`);
+
     if (orConditions.length > 0) {
       filters.push(`(${orConditions.join(" OR ")})`);
     }
-    
-    const whereClause = filters.length ? `WHERE ${filters.join(" AND ")}` : "";
-    
 
-    // Count total
+    const whereClause = filters.length ? `WHERE ${filters.join(" AND ")}` : "";
+
+    // Count query
     const countQuery = `SELECT COUNT(*) FROM Parameter_Master ${whereClause}`;
     const countResult = await client.query(countQuery, values);
     const totalItems = parseInt(countResult.rows[0].count);
 
-    // Fetch paginated data
+    // Data query
     const dataQuery = `
       SELECT * FROM Parameter_Master 
       ${whereClause}
@@ -116,7 +137,7 @@ exports.getAllParameters = async (query) => {
       itemsPerPage: limitInt,
     };
 
-    return ResponseHelper.success(200, "Fetched parameters", dataResult.rows,pagination);
+    return ResponseHelper.success(200, "Fetched parameters", dataResult.rows, pagination);
   } catch (err) {
     console.error("Error in getAllParameters:", err.message);
     return ResponseHelper.error(500, "Failed to fetch parameters", err.message);
@@ -124,7 +145,6 @@ exports.getAllParameters = async (query) => {
     client.release();
   }
 };
-
 
 // Get Parameter by ID
 exports.getParameterById = async (id) => {

@@ -64,9 +64,11 @@ const Applications = () => {
                     </div>
                     <h5 className="fw-6 mt-2 mb-0">Citation</h5>
                     <span className="text-muted small mt-1">Apply for citation awards</span>
+                    <span className="small mt-1 text-danger">(Only for units in field)</span>
                   </div>
                 </div>
               </div>
+           
               <div className="w-100">
                 <div
                   role="button"
@@ -87,10 +89,12 @@ const Applications = () => {
                     </div>
                     <h5 className="fw-6 mt-2 mb-0">Appreciation</h5>
                     <span className="text-muted small mt-1">Apply for appreciation awards</span>
+                    <span className="small mt-1 text-danger">(Only for static units and units in peace)</span>
+
                   </div>
                 </div>
               </div>
-            </div>
+            </div>  
             {/* Space between columns */}
             <div style={{ width: 100 }}></div>
             {/* Requirements column */}
@@ -101,13 +105,18 @@ const Applications = () => {
             }}>
               <div className="border-0 p-4 bg-light shadow-sm w-100 h-100 d-flex flex-column justify-content-center align-items-center h-100" style={{ borderRadius: 8 }}>
                 <h6 className="fw-bold mb-3 text-primary text-center">Requirements for Citation & Appreciation</h6>
-                <ul className="mb-0" style={{ fontSize: "15px", color: "#333", textAlign: "left", width: "100%" }}>
-                  <li>• Fill all mandatory fields.</li>
-                  <li>• Upload supporting/relevant documents.</li>
-                  <li>• Provide unit remarks (max 500 chars).</li>
-                  <li>• Ensure counts and marks are accurate.</li>
-                  <li>• Check all details before submitting.</li>
-                </ul>
+              <ul
+  className="mb-0"
+  style={{ fontSize: "15px", color: "#333", textAlign: "left", width: "100%" }}
+>
+  <li>• Fill all mandatory fields.</li>
+  <li>• Upload supporting/relevant documents.</li>
+  <li>• Provide unit remarks (max 500 chars).</li>
+  <li>• Ensure counts and marks are accurate.</li>
+  <li>• Check all details before submitting.</li>
+  
+</ul>
+ 
               </div>
             </div>
           </div>

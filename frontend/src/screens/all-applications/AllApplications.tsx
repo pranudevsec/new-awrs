@@ -78,6 +78,10 @@ const History = () => {
             { label: "All Application", href: "/all-applications" },
           ]}
         />
+                      <button className="_btn primary mb-3 d-flex align-items-center gap-2" >
+                  {/* <FaDownload /> */}
+                  <span>Generate Report</span>
+                </button>
       </div>
 
       <div className="filter-wrapper d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3">

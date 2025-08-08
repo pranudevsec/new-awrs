@@ -18,7 +18,7 @@ import {
   approveMarks,
   fetchApplicationUnitDetail,
   updateApplication
-} from "../../../reduxToolkit/services/application/applicationService";
+} from "../../../reduxToolkit/services/application/applicationService"; 
 import { updateClarification } from "../../../reduxToolkit/services/clarification/clarificationService";
 import { baseURL } from "../../../reduxToolkit/helper/axios";
 import { useDebounce } from "../../../hooks/useDebounce";
@@ -1177,54 +1177,65 @@ const ApplicationDetails = () => {
                             </td>
                             <td>{member.name ?? "-"}</td>
                             <td>{member.rank ?? "-"}</td>
-                            <td>
-                              <div className="d-flex flex-sm-row flex-column gap-sm-3 gap-1 align-items-center">
-                                {member.member_type === "presiding_officer" &&
-                                  !isSignatureAdded && (
-                                    <>
-                                      {isReadyToSubmit && (
-                                        <button
-                                          type="button"
-                                          className="_btn success w-sm-auto"
-                                          onClick={() =>
-                                            handleDecisionClick(member, "accepted")
-                                          }
-                                        >
-                                          Recommend
-                                        </button>
-                                      )}
-                                      <button
-                                        type="button"
-                                        className="_btn danger w-sm-auto"
-                                        onClick={() =>
-                                          handleDecisionClick(member, "rejected")
-                                        }
-                                      >
-                                        Decline
-                                      </button>
-                                    </>
-                                  )}
+                     <td>
+  <div className="d-flex flex-sm-row flex-column gap-sm-3 gap-1 align-items-center">
+    {profile?.user?.is_member ? (
+      <>
+        {member.member_type === "presiding_officer" &&
+          !isSignatureAdded && (
+            <>
+              {isReadyToSubmit && (
+                <button
+                  type="button"
+                  className="_btn success w-sm-auto"
+                  onClick={() => handleDecisionClick(member, "accepted")}
+                >
+                  Recommend
+                </button>
+              )}
+              <button
+                type="button"
+                className="_btn danger w-sm-auto"
+                onClick={() => handleDecisionClick(member, "rejected")}
+              >
+                Decline
+              </button>
+            </>
+          )}
 
-                                {member.member_type !== "presiding_officer" &&
-                                  !isSignatureAdded && (
-                                    <button
-                                      type="button"
-                                      className="_btn success text-nowrap w-sm-auto"
-                                      onClick={() =>
-                                        handleDecisionClick(member, "accepted")
-                                      }
-                                    >
-                                      Add Signature
-                                    </button>
-                                  )}
+        {member.member_type !== "presiding_officer" &&
+          !isSignatureAdded && (
+            <button
+              type="button"
+              className="_btn success text-nowrap w-sm-auto"
+              onClick={() => handleDecisionClick(member, "accepted")}
+            >
+              Add Signature
+            </button>
+          )}
 
-                                {isSignatureAdded && (
-                                  <span className="text-success fw-semibold text-nowrap d-flex align-items-center gap-1">
-                                    <FaCheckCircle className="fs-5" /> Signature Added
-                                  </span>
-                                )}
-                              </div>
-                            </td>
+        {isSignatureAdded && (
+          <span className="text-success fw-semibold text-nowrap d-flex align-items-center gap-1">
+            <FaCheckCircle className="fs-5" /> Signature Added
+          </span>
+        )}
+      </>
+    ) : (
+      <>
+        {isSignatureAdded ? (
+          <span className="text-success fw-semibold text-nowrap d-flex align-items-center gap-1">
+            <FaCheckCircle className="fs-5" /> Signature Added
+          </span>
+        ) : (
+          <span className="text-danger fw-semibold text-nowrap">
+            Signature Not Added
+          </span>
+        )}
+      </>
+    )}
+  </div>
+</td>
+
                           </tr>
                         );
                       })}
@@ -1285,7 +1296,7 @@ const ApplicationDetails = () => {
                         <td>
                           {isAlreadySent ? (
                             <span className="text-danger fw-semibold">
-                              Already Sent
+                               Sent
                             </span>
                           ) : (
                             <button

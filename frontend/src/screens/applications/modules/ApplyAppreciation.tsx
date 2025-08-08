@@ -503,10 +503,12 @@ const ApplyAppreciation = () => {
           dispatch(
             fetchParameters({
               awardType: "appreciation",
-              search: "",
+            search: "",
+              matrix_unit: profileData?.unit?.matrix_unit ?? undefined,
               comd: profileData?.unit?.comd ?? undefined,
+              unit_type: profileData?.unit?.unit_type ?? undefined,
               page: 1,
-              limit: 500,
+              limit: 5000,
             })
           ).unwrap(),
         ]);

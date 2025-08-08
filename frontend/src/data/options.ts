@@ -364,7 +364,11 @@ export const unitTypeOptions = [
 
 export const matrixUnitOptions = [
   { label: "CI/CT", value: "HINTERLAND" },
-  { label: "LC/AIOS/LAC/HAA/AGPL", value: "LC/AIOS/LAC/HAA/AGPL" },
+  { label: "LC", value: "LC" },
+  { label: "AIOS", value: "AIOS" },
+  { label: "LAC", value: "LAC" },
+  { label: "HAA", value: "HAA" },
+  { label: "AGPL", value: "AGPL" },
   { label: "Internal Security (IS)", value: "IS" },
   { label: "Non Metrics (NM)", value: "NM" },
   { label: "Peace/Mod Fd", value: "Peace" },
