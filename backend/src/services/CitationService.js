@@ -177,7 +177,6 @@ exports.updateCitation = async (id, data,user) => {
 
     if (keys.includes("citation_fds")) {
       const { award_type, parameters } = data.citation_fds;
-      console.log(parameters)
 
       const paramResult = await client.query(
         `SELECT param_id,name,subsubcategory, subcategory, category, per_unit_mark, max_marks

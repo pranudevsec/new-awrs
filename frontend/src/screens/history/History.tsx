@@ -10,6 +10,7 @@ import { awardTypeOptions } from "../../data/options";
 import { SVGICON } from "../../constants/iconsList";
 import { useAppDispatch, useAppSelector } from "../../reduxToolkit/hooks";
 import { fetchApplicationHistory, updateApplication, } from "../../reduxToolkit/services/application/applicationService";
+import jsPDF from "jspdf";
 
 const getStatusColor = (status: string) => {
   if (["pending", "in_review", "shortlisted_approved"].includes(status)) return "orange";
@@ -73,6 +74,143 @@ const History = () => {
     fetchData();
   }, [awardType, debouncedSearch, profile, page, limit]);
 
+    const handleExportPDF = () => {
+    const doc = new jsPDF();
+  
+  
+    doc.save("history-data.pdf");
+  };
+
+//   from units i want to generate a excel units data are like 
+//   [
+//         {
+//             "id": 1,
+//             "type": "citation",
+//             "unit_id": 9,
+//             "date_init": "2025-08-07T18:30:00.000Z",
+//             "fds": {
+//                 "corps": "corps1",
+//                 "awards": [],
+//                 "brigade": "brigade1",
+//                 "command": "Northern Command",
+//                 "division": "divison1",
+//                 "last_date": "2025-12-30",
+//                 "unit_type": "ENGRS",
+//                 "award_type": "citation",
+//                 "parameters": [
+//                     {
+//                         "id": "121",
+//                         "info": "1 no = 10 marks (Max 10 marks)",
+//                         "name": "no",
+//                         "count": 1,
+//                         "marks": 10,
+//                         "upload": [
+//                             "/uploads/DELL PC NO.2(Mac-10-98-19-20-F4-B3).pdf"
+//                         ],
+//                         "category": "Area of Ops -Deg of Difficulty",
+//                         "negative": false,
+//                         "subcategory": "OP MEGHDOOT /8 Mtn Div",
+//                         "approved_count": 1,
+//                         "subsubcategory": null,
+//                         "last_clarification_handled_by": "brigade",
+//                         "last_clarification_status": "clarified",
+//                         "last_clarification_id": 1
+//                     }
+//                 ],
+//                 "unitRemarks": "Unit citation submitted///",
+//                 "cycle_period": "2024 - H1",
+//                 "accepted_members": [
+//                     {
+//                         "name": "AB Jha",
+//                         "ic_number": "12334",
+//                         "member_type": "presiding_officer",
+//                         "member_id": "6f260f85-f1ff-48df-b7d1-10fe205aa6ab",
+//                         "is_signature_added": true,
+//                         "sign_digest": "something while developing"
+//                     },
+//                     {
+//                         "name": "Rahul",
+//                         "ic_number": "53543647",
+//                         "member_type": "member_officer",
+//                         "member_id": "ba69d13f-179a-49b7-8dca-3a941376e2ff",
+//                         "is_signature_added": true,
+//                         "sign_digest": "something while developing"
+//                     },
+//                     {
+//                         "name": "A D Kumar",
+//                         "ic_number": "132432",
+//                         "member_type": "presiding_officer",
+//                         "member_id": "1eb53ea2-473d-42dc-9a6d-4b3c5d5bfb22",
+//                         "is_signature_added": true,
+//                         "sign_digest": "something while developing"
+//                     },
+//                     {
+//                         "name": "AK Gupta",
+//                         "ic_number": "13333",
+//                         "member_type": "member_officer",
+//                         "member_id": "89d412f6-ca09-43c1-9892-acc678680c0b",
+//                         "is_signature_added": true,
+//                         "sign_digest": "something while developing"
+//                     },
+//                     {
+//                         "name": "AK Tiwary",
+//                         "ic_number": "123334",
+//                         "member_type": "presiding_officer",
+//                         "member_id": "656cd465-d5b9-4261-9eb4-ed11a4d25d81",
+//                         "is_signature_added": true,
+//                         "sign_digest": "something while developing"
+//                     }
+//                 ],
+//                 "applicationGraceMarks": [
+//                     {
+//                         "role": "brigade",
+//                         "marksBy": 31,
+//                         "marksAddedAt": "2025-08-08T06:06:15.838Z",
+//                         "marks": 1
+//                     },
+//                     {
+//                         "role": "division",
+//                         "marksBy": 39,
+//                         "marksAddedAt": "2025-08-08T06:16:00.674Z",
+//                         "marks": 2
+//                     },
+//                     {
+//                         "role": "corps",
+//                         "marksBy": 45,
+//                         "marksAddedAt": "2025-08-08T06:16:51.817Z",
+//                         "marks": 1
+//                     }
+//                 ],
+//                 "applicationPriority": [
+//                     {
+//                         "role": "brigade",
+//                         "priority": 2,
+//                         "priorityAddedAt": "2025-08-08T06:06:35.002Z"
+//                     },
+//                     {
+//                         "role": "division",
+//                         "priority": 3,
+//                         "priorityAddedAt": "2025-08-08T06:16:01.828Z"
+//                     },
+//                     {
+//                         "role": "corps",
+//                         "priority": 2,
+//                         "priorityAddedAt": "2025-08-08T06:16:50.792Z"
+//                     }
+//                 ]
+//             },
+//             "status_flag": "withdrawed",
+//             "is_withdraw_requested": true,
+//             "withdraw_requested_by": "brigade",
+//             "withdraw_requested_at": "2025-08-08T06:17:47.694Z",
+//             "withdraw_status": "approved",
+//             "withdraw_requested_by_user_id": 31,
+//             "withdraw_approved_by_role": "command",
+//             "withdraw_approved_by_user_id": 49,
+//             "withdraw_approved_at": "2025-08-08T06:30:51.264Z"
+//         },
+// using this data 
+
   return (
     <div className="clarification-section">
       <div className="d-flex flex-sm-row flex-column align-items-sm-center justify-content-between mb-4">
@@ -83,6 +221,10 @@ const History = () => {
             { label: "History", href: "/history" },
           ]}
         />
+              <button className="_btn primary mb-3 d-flex align-items-center gap-2" onClick={handleExportPDF}>
+                  {/* <FaDownload /> */}
+                  <span>Generate Report</span>
+                </button>
       </div>
 
       <div className="filter-wrapper d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
@@ -234,23 +376,26 @@ const History = () => {
                     </td>
                     <td><p className="fw-4">{roleDisplay}</p></td>
                     {role !== "cw2" && (
-                      <td>
-                        {unit?.is_withdraw_requested ? (
-                          <>
-                            {unit.withdraw_status === "approved" && (
-                              <span className="badge bg-success text-nowrap">Withdraw Approved</span>
-                            )}
-                            {unit.withdraw_status === "rejected" && (
-                              <span className="badge bg-danger text-nowrap">Withdraw Rejected</span>
-                            )}
-                            {["pending", "in_review", "shortlisted_approved"].includes(unit.withdraw_status) && (
-                              <span className="badge bg-warning text-white text-nowrap">Withdraw Pending</span>
-                            )}
-                          </>
-                        ) : (
-                          withdrawAction
-                        )}
-                      </td>
+                     <td>
+  {(() => {
+    return unit?.is_withdraw_requested ? (
+      <>
+        {unit.withdraw_status === "approved" && (
+          <span className="badge bg-success text-nowrap">Withdraw Approved</span>
+        )}
+        {unit.withdraw_status === "rejected" && (
+          <span className="badge bg-danger text-nowrap">Withdraw Rejected</span>
+        )}
+        {["pending", "in_review", "shortlisted_approved"].includes(unit.withdraw_status) && (
+          <span className="badge bg-warning text-white text-nowrap">Withdraw Pending</span>
+        )}
+      </>
+    ) : (
+      withdrawAction
+    );
+  })()}
+</td>
+
                     )}
                   </tr>
                 );

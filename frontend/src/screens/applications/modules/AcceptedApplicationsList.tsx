@@ -651,20 +651,41 @@ const AcceptedApplicationsList = () => {
                       </p>
                     </td>
                   ))}
-                  <td style={{ width: 200, minWidth: 200, maxWidth: 200 }}>
-                    <input
-                      type="number"
-                      className="form-control"
-                      placeholder="Enter discretionary points"
-                      autoComplete="off"
-                      value={
-                        (graceMarksValues[String(unit.id)]?.[unit.type]) ?? ""
-                      }
-                      onChange={(e) =>
-                        handleGraceMarksChange(String(unit.id), e.target.value, unit.type)
-                      }
-                    />
-                  </td>
+        <td style={{ width: 200, minWidth: 200, maxWidth: 200 }}>
+  <input
+    type="number"
+    className="form-control"
+    placeholder="Enter discretionary points"
+    autoComplete="off"
+    value={graceMarksValues[String(unit.id)]?.[unit.type] ?? ""}
+    onChange={(e) => {
+      const value = e.target.value;
+
+      // Prevent single 0
+      if (value === "0") {
+        toast.error("Value cannot be 0");
+        return;
+      }
+
+      // Prevent multiple zeros like 00, 000, etc.
+      if (/^0{2,}$/.test(value)) {
+        toast.error("Value cannot be multiple zeros");
+        return;
+      }
+
+      const numValue = Number(value);
+
+      if (numValue > 10) {
+        toast.error("Value cannot be more than 10");
+        return;
+      }
+
+      handleGraceMarksChange(String(unit.id), value, unit.type);
+    }}
+  />
+</td>
+
+
 
                   {role === "headquarter" && (
                     <td style={{ width: 150, minWidth: 150, maxWidth: 150 }}>
@@ -696,26 +717,43 @@ const AcceptedApplicationsList = () => {
                     </td>
                   )}
 
-                  <td style={{ width: 200, minWidth: 200, maxWidth: 200 }}>
-                    <input
-                      type="text"
-                      className="form-control"
-                      placeholder="Enter priority"
-                      autoComplete="off"
-                      value={priorityValues[String(unit.id)]?.[unit.type] ?? ""}
-                      onChange={(e) => {
-                        const value = e.target.value;
-                        setPriorityValues((prev) => ({
-                          ...prev,
-                          [String(unit.id)]: {
-                            ...(prev[String(unit.id)] ?? {}),
-                            [unit.type]: value,
-                          },
-                        }));
-                        handlePriorityChange(unit, value);
-                      }}
-                    />
-                  </td>
+<td style={{ width: 200, minWidth: 200, maxWidth: 200 }}>
+  <input
+    type="text"
+    className="form-control"
+    placeholder="Enter priority"
+    autoComplete="off"
+    value={priorityValues[String(unit.id)]?.[unit.type] ?? ""}
+    onChange={(e) => {
+      const value = e.target.value;
+
+      // Count how many '0' digits are in the value
+      const zeroCount = (value.match(/0/g) || []).length;
+
+      if (value === "0") {
+        toast.error("Priority cannot be 0");
+        return;
+      }
+
+      if (zeroCount > 1) {
+        toast.error("Priority cannot contain more than one zero");
+        return;
+      }
+
+      setPriorityValues((prev) => ({
+        ...prev,
+        [String(unit.id)]: {
+          ...(prev[String(unit.id)] ?? {}),
+          [unit.type]: value,
+        },
+      }));
+
+      handlePriorityChange(unit, value);
+    }}
+  />
+</td>
+
+
                   <td style={{ maxWidth: "100%" }}>
                     {unit.status_flag === "approved" || unit.status_flag === "rejected" ? (
                       <div>

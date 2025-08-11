@@ -1290,8 +1290,6 @@ exports.updateApplicationStatus = async (
           RETURNING *;
         `;
         values = [statusLower, id, user.user_role, now];
-
-        console.log("🚀 ~ values:", values);
       } else if (statusLower === "shortlisted_approved") {
         query = `
           UPDATE ${config.table}

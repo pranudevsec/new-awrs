@@ -79,7 +79,6 @@ const Dashboard = () => {
     const hqChartData = (hqApplications || [])
     .filter((app: any) => app && (typeof app.id === 'number' || typeof app.id === 'string'))
     .map((app: any) => {
-        console.log(app);
         let nameValue = `unit${app.unit_id}`;
         if (typeof nameValue === 'object' && nameValue !== null) {
             // Defensive: if name is an object, convert to JSON string

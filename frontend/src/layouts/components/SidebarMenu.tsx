@@ -18,7 +18,7 @@ type UserType = {
   cw2_type?: string;
 };
 
-const commandExtraLabels = ["Scoreboard", "Winners", "Home", "Profile Settings"];
+const commandExtraLabels = ["Scoreboard",  "Home", "Profile Settings"];
 const headquarterExtraLabels = ["Dashboard", "Home", "Awards", "Scoreboard", "Profile Settings"];
 const extraDashboardLabels = ["Brigade Dashboard", "Division Dashboard", "Corps Dashboard", "Command Dashboard"];
 

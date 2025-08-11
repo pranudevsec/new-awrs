@@ -262,7 +262,12 @@ const AppreciationReviewPage = () => {
             try {
                 const [configRes, paramsRes] = await Promise.all([
                     dispatch(getConfig()).unwrap(),
-                    dispatch(fetchParameters({ awardType: "appreciation", search: "", limit: 5000 })).unwrap(),
+                    dispatch(fetchParameters({ awardType: "appreciation"    ,  search: "",
+              matrix_unit: profile?.unit?.matrix_unit ?? undefined,
+              comd: profile?.unit?.comd ?? undefined,
+              unit_type: profile?.unit?.unit_type ?? undefined,
+              page: 1,
+              limit: 5000, })).unwrap(),
                 ]);
 
                 if (configRes?.success && configRes.data) {

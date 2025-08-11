@@ -4,6 +4,7 @@ const config = require("../config/config");
 const ResponseHelper = require("../utils/responseHelper");
 const MSG = require("../utils/MSG");
 const db = require("../db/postgres-connection");
+const pool = require("../db/postgres-connection");
 
 exports.register = async ({ rank, name, user_role, username, password }) => {
   try {

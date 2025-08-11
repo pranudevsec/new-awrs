@@ -32,11 +32,6 @@ export const sidebarStructure = [
     to: "/command-panel",
   },
   {
-    label: "Winners",
-    icon: SVGICON.sidebar.winners,
-    to: "/winners",
-  },
-  {
     label: "Admin Settings",
     icon: SVGICON.sidebar.adminSettings,
     to: "/admin-settings",

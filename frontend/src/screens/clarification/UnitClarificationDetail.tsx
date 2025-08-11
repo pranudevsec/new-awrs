@@ -155,20 +155,25 @@ const UnitClarificationDetail = () => {
         <p className="fw-4">{param.clarification_details?.reviewer_comment ?? "—"}</p>
       </td>
       <td style={{ width: 200 }}>
-        {param?.clarification_details?.clarification ? (
-          <div>{param.clarification_details.clarification.slice(0, 10)}...</div>
-        ) : (
-          <button
-            className="_btn outline"
-            onClick={() => {
-              setClarificationId(param?.clarification_id);
-              setClarificationShow(true);
-            }}
-          >
-            Add Clarification
-          </button>
-        )}
-      </td>
+  {param?.clarification_details?.clarification ? (
+    <div>
+      {param.clarification_details.clarification.slice(0, 10)}...
+    </div>
+  ) : param?.clarification_details?.clarification_id ? (
+    <button
+      className="_btn outline"
+      onClick={() => {
+        setClarificationId(param?.clarification_id);
+        setClarificationShow(true);
+      }}
+    >
+      Add Clarification
+    </button>
+  ) : (
+    "--"
+  )}
+</td>
+
     </tr>
   );
 

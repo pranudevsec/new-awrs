@@ -63,8 +63,6 @@ exports.getApplicationsScoreboard = async (req, res) => {
       console.log("Updating application status");
       const { type, status,member,withdrawRequested,withdraw_status,level} = req.body;
       const id=req.params.id;
-      console.log(member);
-
 
       if (status) {
         if (!['approved', 'rejected', "shortlisted_approved"].includes(status)) {
@@ -78,7 +76,6 @@ exports.getApplicationsScoreboard = async (req, res) => {
       const result = await ApplicationService.updateApplicationStatus(id, type,status, req.user,member,withdrawRequested,withdraw_status);
 
       if(member){
-        console.log("here");
         await SignatureLogService.addSignatureLogs(id,status,member,level);
       }
   
