@@ -76,14 +76,14 @@ const History = () => {
     const matricUnits = [
       "CI/CT", "LC", "AIOS", "LAC", "HAA", "AGPL", "Internal Security (IS)"
     ];
-    
+
     const nonMatricUnits = [
       "Non Metrics (NM)", "Peace/Mod Fd"
     ];
     const allGraceRoles: string[] = [];
-  
+
     const allPriorityRoles: string[] = [];
-  
+
     units.forEach((unit: any) => {
       const params = unit.fds?.parameters ?? [];
       params.forEach((p: any) => {
@@ -93,32 +93,32 @@ const History = () => {
           paramNameMap[key] = p.name;
         }
       });
-  
+
       (unit.fds?.applicationGraceMarks ?? []).forEach((g: any) => {
         if (!allGraceRoles.includes(g.role)) {
           allGraceRoles.push(g.role);
         }
       });
-  
+
       (unit.fds?.applicationPriority ?? []).forEach((pr: any) => {
         if (!allPriorityRoles.includes(pr.role)) {
           allPriorityRoles.push(pr.role);
         }
       });
     });
-  
+
     const appDetailCols = 8;
     const paramCols = allParameterKeys.length;
     const graceCols = allGraceRoles.length;
     const priorityCols = allPriorityRoles.length;
-  
+
     const headerRow1 = [
       "Application Details",
-      ...Array(appDetailCols - 1).fill(""),     
+      ...Array(appDetailCols - 1).fill(""),
       "Matric Units",
-      ...Array(matricUnits.length - 1).fill(""), 
+      ...Array(matricUnits.length - 1).fill(""),
       "Non-Matric Units",
-      ...Array(nonMatricUnits.length - 1).fill(""), 
+      ...Array(nonMatricUnits.length - 1).fill(""),
       "Parameters",
       ...Array(paramCols - 1).fill(""),
       "Discretionary Points",
@@ -127,7 +127,7 @@ const History = () => {
       ...Array(priorityCols - 1).fill(""),
       "Total Marks"
     ];
-    
+
     const headerRow2 = [
       "S. No",
       "Award Type",
@@ -144,20 +144,20 @@ const History = () => {
       ...allPriorityRoles.map((role) => role),
       ""
     ];
-    
-  
+
+
     const rows = units.map((unit: any, index: number) => {
       const paramMap: Record<string, number | string> = {};
       const graceMap: Record<string, number | string> = {};
       const priorityMap: Record<string, number | string> = {};
       let totalMarks = 0;
-    
+
       const matricCounts: Record<string, number> = {};
       const nonMatricCounts: Record<string, number> = {};
-      
+
       matricUnits.forEach((label) => (matricCounts[label] = 0));
       nonMatricUnits.forEach((label) => (nonMatricCounts[label] = 0));
-    
+
       (unit.fds?.parameters ?? []).forEach((p: any) => {
         const key = `${p.name} (${p.id})`;
         const marksVal = p.approved_marks ?? p.marks ?? 0;
@@ -169,9 +169,9 @@ const History = () => {
           totalMarks += numVal;
           paramMap[key] = numVal;
         }
-    
+
         const armsServiceValue = p.arms_service ?? "";
-    
+
         const matchedMatric = matrixUnitOptions.find(
           (opt) => opt.value === armsServiceValue && matricUnits.includes(opt.label)
         );
@@ -186,11 +186,11 @@ const History = () => {
           }
         }
       });
-    
+
       (unit.fds?.applicationGraceMarks ?? []).forEach((g: any) => {
         graceMap[g.role] = g.marks ?? "-";
       });
-    
+
       const roleOrder = ["brigade", "division", "corps", "command"];
       for (let i = roleOrder.length - 1; i >= 0; i--) {
         const role = roleOrder[i];
@@ -199,14 +199,14 @@ const History = () => {
           break;
         }
       }
-    
+
       (unit.fds?.applicationPriority ?? []).forEach((pr: any) => {
         priorityMap[pr.role] = pr.priority ?? "-";
       });
-    
+
       const matricValues = matricUnits.map((label) => matricCounts[label] || "-");
       const nonMatricValues = nonMatricUnits.map((label) => nonMatricCounts[label] || "-");
-    
+
       return [
         index + 1,
         unit.type ?? "-",
@@ -224,26 +224,26 @@ const History = () => {
         totalMarks,
       ];
     });
-    
-  
+
+
     const worksheetData = [headerRow1, headerRow2, ...rows];
-  
+
     const worksheet = XLSX.utils.aoa_to_sheet(worksheetData);
-  
+
     worksheet['!merges'] = [
       { s: { r: 0, c: 0 }, e: { r: 0, c: appDetailCols - 1 } },
       { s: { r: 0, c: appDetailCols }, e: { r: 0, c: appDetailCols + matricUnits.length - 1 } },
       { s: { r: 0, c: appDetailCols + matricUnits.length }, e: { r: 0, c: appDetailCols + matricUnits.length + nonMatricUnits.length - 1 } },
-      { s: { r: 0, c: appDetailCols + matricUnits.length + nonMatricUnits.length }, e: { r: 0, c: appDetailCols + matricUnits.length + nonMatricUnits.length + paramCols - 1 } }, 
-      { s: { r: 0, c: appDetailCols + matricUnits.length + nonMatricUnits.length + paramCols }, e: { r: 0, c: appDetailCols + matricUnits.length + nonMatricUnits.length + paramCols + graceCols - 1 } }, 
-      { s: { r: 0, c: appDetailCols + matricUnits.length + nonMatricUnits.length + paramCols + graceCols }, e: { r: 0, c: appDetailCols + matricUnits.length + nonMatricUnits.length + paramCols + graceCols + priorityCols - 1 } }, 
-    
+      { s: { r: 0, c: appDetailCols + matricUnits.length + nonMatricUnits.length }, e: { r: 0, c: appDetailCols + matricUnits.length + nonMatricUnits.length + paramCols - 1 } },
+      { s: { r: 0, c: appDetailCols + matricUnits.length + nonMatricUnits.length + paramCols }, e: { r: 0, c: appDetailCols + matricUnits.length + nonMatricUnits.length + paramCols + graceCols - 1 } },
+      { s: { r: 0, c: appDetailCols + matricUnits.length + nonMatricUnits.length + paramCols + graceCols }, e: { r: 0, c: appDetailCols + matricUnits.length + nonMatricUnits.length + paramCols + graceCols + priorityCols - 1 } },
+
       {
         s: { r: 0, c: appDetailCols + matricUnits.length + nonMatricUnits.length + paramCols + graceCols + priorityCols },
         e: { r: 1, c: appDetailCols + matricUnits.length + nonMatricUnits.length + paramCols + graceCols + priorityCols }
       }
     ];
-  
+
     const workbook = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(workbook, worksheet, "Units Report");
     XLSX.writeFile(workbook, "applications.xlsx");
@@ -260,16 +260,16 @@ const History = () => {
   //     { label: "AGPL", value: "AGPL" },
   //     { label: "Internal Security (IS)", value: "IS" },
   //   ];
-  
+
   //   // Updated non-matric units for matching matrix_unit values
   //   const nonMatricUnits = [
   //     { label: "Non Metrics (NM)", value: "NM" },
   //     { label: "Peace/Mod Fd", value: "Peace" },
   //   ];
-  
+
   //   // Group by FMN
   //   const groupedByFMN: any = {};
-  
+
   //   units.forEach(unit => {
   //     const fmn = unit.fds.command || "Unknown FMN";
   //     if (!groupedByFMN[fmn]) {
@@ -288,7 +288,7 @@ const History = () => {
   //       };
   //     }
   //     const fmnGroup = groupedByFMN[fmn];
-  
+
   //     // Count matric units based on fds.matrix_unit matching matric units
   //     const isMatric = matricUnits.some(({ value }) => value === unit.fds.matrix_unit);
   //     if (isMatric) {
@@ -316,10 +316,10 @@ const History = () => {
   //         }
   //       }
   //     }
-  
+
   //     fmnGroup.total++;
   //   });
-  
+
   //   // Prepare header rows
   //   const headerRow1 = [
   //     "FMN",
@@ -329,14 +329,14 @@ const History = () => {
   //     "Unit Appreciations",
   //     "Total",
   //   ];
-    
+
   //   const headerRow2 = [
   //     "",
   //     "CI/CT", "LC", "AIOS", "LAC", "HAA", "AGPL", "Internal Security (IS)", 
   //     "Non Metrics (NM)", "Peace/Mod Fd", 
   //     "", "", "",
   //   ];
-  
+
   //   // Data rows
   //   const dataRows = Object.entries(groupedByFMN).map(([fmn, counts]: any) => [
   //     fmn,
@@ -346,12 +346,12 @@ const History = () => {
   //     counts.unitAppreciations,
   //     counts.total,
   //   ]);
-  
+
   //   const worksheetData = [headerRow1, headerRow2, ...dataRows];
-  
+
   //   // Create worksheet
   //   const worksheet = XLSX.utils.aoa_to_sheet(worksheetData);
-  
+
   //   // Merge cells for grouped headers
   //   worksheet["!merges"] = [
   //     { s: { r: 0, c: 1 }, e: { r: 0, c: 7 } },  // B1:H1 Matric Units (unchanged)
@@ -365,7 +365,7 @@ const History = () => {
   //   // Create workbook and append sheet
   //   const workbook = XLSX.utils.book_new();
   //   XLSX.utils.book_append_sheet(workbook, worksheet, "FMN Report");
-  
+
   //   // Export Excel file
   //   XLSX.writeFile(workbook, "FMN_Report.xlsx");
   // };
@@ -380,12 +380,12 @@ const History = () => {
             { label: "All Application", href: "/all-applications" },
           ]}
         />
-                  <div className="d-flex gap-2">
-        <button className="_btn primary mb-3 d-flex align-items-center gap-2" onClick={handleExportExcel}>
-                  {/* <FaDownload /> */}
-                  <span>Generate Applications Report</span>
-                </button>
-                {/* <button className="_btn primary mb-3 d-flex align-items-center justify-content-center gap-2" onClick={handleExportExcel}>
+        <div className="d-flex gap-2">
+          <button className="_btn primary mb-3 d-flex align-items-center gap-2" onClick={handleExportExcel}>
+            {/* <FaDownload /> */}
+            <span>Generate Applications Report</span>
+          </button>
+          {/* <button className="_btn primary mb-3 d-flex align-items-center justify-content-center gap-2" onClick={handleExportExcel}>
                 
                   <span>
   Generate {role === "headquarter" ? "CW2" : role.charAt(0).toUpperCase() + role.slice(1)} Report
@@ -511,7 +511,7 @@ const History = () => {
                 }
 
                 return (
-                  <tr className="cursor-auto" key={unit.id} onClick={() => navigate(`/all-applications/${unit.id}?award_type=${unit.type}`)}>
+                  <tr key={unit.id} onClick={() => navigate(`/all-applications/${unit.id}?award_type=${unit.type}`)}>
                     <td style={{ width: 150, minWidth: 150, maxWidth: 150 }}>
                       <p className="fw-4">#{unit.id}</p>
                     </td>
