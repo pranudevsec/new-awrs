@@ -78,10 +78,10 @@ const History = () => {
             { label: "All Application", href: "/all-applications" },
           ]}
         />
-                      <button className="_btn primary mb-3 d-flex align-items-center gap-2" >
-                  {/* <FaDownload /> */}
-                  <span>Generate Report</span>
-                </button>
+        <button className="_btn primary mb-3 d-flex align-items-center gap-2" >
+          {/* <FaDownload /> */}
+          <span>Generate Report</span>
+        </button>
       </div>
 
       <div className="filter-wrapper d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
@@ -201,7 +201,7 @@ const History = () => {
                 }
 
                 return (
-                  <tr className="cursor-auto" key={unit.id}>
+                  <tr key={unit.id} onClick={() => navigate(`/all-applications/${unit.id}?award_type=${unit.type}`)} >
                     <td style={{ width: 150, minWidth: 150, maxWidth: 150 }}>
                       <p className="fw-4">#{unit.id}</p>
                     </td>

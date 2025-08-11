@@ -929,7 +929,6 @@ const SubmittedFormDetail = () => {
                     )}
                     {isHeadquarter && (
                         <StepProgressBar
-                            award_type={award_type}
                             unitDetail={unitDetail}
                         />
                     )}

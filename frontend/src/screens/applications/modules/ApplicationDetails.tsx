@@ -93,7 +93,7 @@ const ApplicationDetails = () => {
   const [pendingDecision, setPendingDecision] = useState<{
     member: any;
     decision: string;
-  } | null>(null); // State to store the pending decision
+  } | null>(null);
   const [paramStats, setParamStats] = useState({
     totalParams: 0,
     filledParams: 0,
@@ -105,9 +105,6 @@ const ApplicationDetails = () => {
   const [approvedMarksDocumentsState, setApprovedMarksDocumentsState] = useState<any>({});
   const [approvedMarksReasonState, setApprovedMarksReasonState] = useState<Record<string, string>>({});
   const [lastUploadedParam, setLastUploadedParam] = useState<string | null>(null);
-
-  console.log("approvedMarksDocumentsState -> ", approvedMarksDocumentsState);
-
 
   const isUnitRole = ["unit", "cw2"].includes(profile?.user?.user_role ?? "");
   const isCW2Role = profile?.user?.user_role === "cw2";
@@ -298,9 +295,6 @@ const ApplicationDetails = () => {
         },
       ],
     };
-
-    console.log("body -> ", body);
-
 
     try {
       await dispatch(approveMarks(body)).unwrap();
@@ -612,7 +606,6 @@ const ApplicationDetails = () => {
   //       },
   //       level: profile?.user?.user_role,
   //     };
-  //     console.log(updatePayload);
   //     if (memberdecision === "accepted") {
   //       dispatch(updateApplication(updatePayload)).then(() => {
   //         dispatch(fetchApplicationUnitDetail({ award_type, numericAppId }));
@@ -663,7 +656,6 @@ const ApplicationDetails = () => {
         }
       });
     } else if (memberdecision === "rejected") {
-      console.log(memberdecision);
       dispatch(
         updateApplication({
           ...updatePayload,
@@ -693,9 +685,11 @@ const ApplicationDetails = () => {
   };
 
   const handleDecisionClick = (member: any, decision: string) => {
-    if (!priority || priority.trim() === "") {
-      setPriorityError("Priority is required");
-      return;
+    if (isCW2Role && (profile.user.cw2_type === "mo" || profile.user.cw2_type === "ol")) {
+      if (!priority || priority.trim() === "") {
+        setPriorityError("Please Fill First Priority...");
+        return;
+      }
     }
     setPendingDecision({ member, decision });
     setShowDisclaimerModal(true);
@@ -1316,9 +1310,7 @@ const ApplicationDetails = () => {
               </div>
             )}
             {isHeadquarter && (
-              <StepProgressBar
-                award_type={award_type}
-                unitDetail={unitDetail}
+              <StepProgressBar unitDetail={unitDetail}
               />
             )}
             {profile?.unit?.members &&

@@ -1,25 +1,31 @@
 import { format } from "date-fns";
 
-const steps = [
-  { label: "Brigade" },
-  { label: "Division" },
-  { label: "Corps" },
-  { label: "Command" },
-  { label: "MO" },
-  { label: "OL" },
-  { label: "CW2" },
-];
-
 interface StepProgressBarProps {
-  award_type: string;
   unitDetail: any;
+  isCommand?: boolean;
 }
 
 const StepProgressBar: React.FC<StepProgressBarProps> = ({
-  award_type,
   unitDetail,
+  isCommand = false
 }) => {
-  console.log(award_type)
+  const steps = isCommand
+    ? [
+      { label: "Brigade" },
+      { label: "Division" },
+      { label: "Corps" },
+      { label: "Command" },
+    ]
+    : [
+      { label: "Brigade" },
+      { label: "Division" },
+      { label: "Corps" },
+      { label: "Command" },
+      { label: "MO" },
+      { label: "OL" },
+      { label: "CW2" },
+    ];
+
   const getCurrentStep = () => {
     if (!unitDetail) return 0;
 
@@ -41,6 +47,7 @@ const StepProgressBar: React.FC<StepProgressBarProps> = ({
 
     return step;
   };
+
   const getStepDate = (label: string): string | null => {
     if (!unitDetail) return null;
 
@@ -72,7 +79,6 @@ const StepProgressBar: React.FC<StepProgressBarProps> = ({
 
     return null;
   };
-
 
   const currentStep = getCurrentStep();
 
@@ -115,4 +121,3 @@ const StepProgressBar: React.FC<StepProgressBarProps> = ({
 };
 
 export default StepProgressBar;
-

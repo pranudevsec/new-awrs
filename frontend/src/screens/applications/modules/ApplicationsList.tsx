@@ -21,6 +21,9 @@ const ApplicationsList = () => {
   const { units, loading, meta } = useAppSelector((state) => state.application);
   const role = profile?.user?.user_role?.toLowerCase() ?? "";
 
+  console.log("units -> ", units);
+
+
   // States
   const [awardType, setAwardType] = useState<string | null>(null);
   const [commandType, setCommandType] = useState<string | null>(null);
@@ -224,16 +227,13 @@ const ApplicationsList = () => {
               <th style={{ width: 200, minWidth: 200, maxWidth: 200 }}>
                 Submission Date
               </th>
-              <th style={{ width: 200, minWidth: 200, maxWidth: 200 }}>Dead Line</th>
               <th style={{ width: 150, minWidth: 150, maxWidth: 150 }}>Type</th>
               {/* New columns */}
               <th style={{ width: 150, minWidth: 150, maxWidth: 150 }}>Total Marks</th>
-              <th style={{ width: 150, minWidth: 150, maxWidth: 150 }}>Negative Marks</th>
-              {role !== "brigade" && role !== "unit" && (
-                <th style={{ width: 150, minWidth: 150, maxWidth: 150 }}>Lower Role Priority</th>
-              )}
+              <th style={{ width: 150, minWidth: 150, maxWidth: 150 }}>command</th>
+              <th style={{ width: 150, minWidth: 150, maxWidth: 150 }}>Arm / Service</th>
+              <th style={{ width: 150, minWidth: 150, maxWidth: 150 }}>Location</th>
               {role === "unit" && (<th style={{ width: 150, minWidth: 150, maxWidth: 150 }}>Status</th>)}
-              <th style={{ width: 100, minWidth: 100, maxWidth: 100 }}></th>
               <th style={{ width: 100, minWidth: 100, maxWidth: 100 }}></th>
             </tr>
           </thead>
@@ -241,7 +241,7 @@ const ApplicationsList = () => {
           <tbody>
             {loading ?
               <tr>
-                <td colSpan={10}>
+                <td colSpan={8}>
                   <div className="d-flex justify-content-center py-5">
                     <Loader inline size={40} />
                   </div>
@@ -251,7 +251,7 @@ const ApplicationsList = () => {
                 <tr
                   key={unit.id}
                   onClick={() => {
-                    if (unit.status_flag === "draft") return; // Prevent navigation
+                    if (unit.status_flag === "draft") return;
 
                     if (location.pathname === "/submitted-forms/list") {
                       navigate(`/submitted-forms/list/${unit.id}?award_type=${unit.type}`);
@@ -265,18 +265,12 @@ const ApplicationsList = () => {
                   <td style={{ width: 150, minWidth: 150, maxWidth: 150 }}>
                     <p className="fw-4">#{unit.id}</p>
                   </td>
-
                   <td style={{ width: 150, minWidth: 150, maxWidth: 150 }}>
                     <p className="fw-4">#{unit.unit_id}</p>
                   </td>
                   {role === "headquarter" && <td style={{ width: 150, minWidth: 150, maxWidth: 150 }}>
                     <p className="fw-4">{unit?.fds?.command}</p>
                   </td>}
-                  <td style={{ width: 200, minWidth: 200, maxWidth: 200 }}>
-                    <p className="fw-4">
-                      {new Date(unit.date_init).toLocaleDateString()}
-                    </p>
-                  </td>
                   <td style={{ width: 200, minWidth: 200, maxWidth: 200 }}>
                     <p className="fw-4">
                       {unit.fds?.last_date
@@ -292,13 +286,14 @@ const ApplicationsList = () => {
                     <p className="fw-4">{getTotalMarks(unit).toFixed(2)}</p>
                   </td>
                   <td style={{ width: 150, minWidth: 150, maxWidth: 150 }}>
-                    <p className="fw-4">{getTotalNegativeMarks(unit)}</p>
+                    <p className="fw-4">{unit.fds.command ?? "-"}</p>
                   </td>
-                  {role !== "brigade" && (
-                    <td style={{ width: 150, minWidth: 150, maxWidth: 150 }}>
-                      <p className="fw-4">{getLowerRolePriority(unit)}</p>
-                    </td>
-                  )}
+                  <td style={{ width: 150, minWidth: 150, maxWidth: 150 }}>
+                    <p className="fw-4">{unit.fds.unit_type ?? "-"}</p>
+                  </td>
+                  <td style={{ width: 150, minWidth: 150, maxWidth: 150 }}>
+                    <p className="fw-4">{unit.fds.location ?? "-"}</p>
+                  </td>
                   {role === "unit" && (
                     <td style={{ width: 150, minWidth: 150, maxWidth: 150 }}>
                       <p className="fw-4">

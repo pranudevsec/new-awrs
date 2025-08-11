@@ -14,9 +14,6 @@ const Applications = () => {
   const { homeCounts } = useAppSelector((state) => state.commandPanel);
   const userRole = profile?.user?.user_role;
 
-  console.log("userRole -> ", profile?.user);
-
-
   const isUnitRole = userRole === "unit";
   const isHigherRole = ["brigade", "division", "corps", "command"].includes(userRole ?? "");
 
@@ -130,7 +127,7 @@ const Applications = () => {
             <Link to="/applications/list" className="h-100 d-block">
               <div className="card border-0 h-100 d-flex align-items-center justify-content-center shadow-sm hover-shadow position-relative">
                 {homeCounts?.applicationsToReview > 0 && (
-                  <span className="count-badge bg-danger text-white position-absolute top-0 end-0 translate-middle badge rounded-pill">
+                  <span className="count-badge bg-danger text-white position-absolute badge rounded-pill">
                     {homeCounts?.applicationsToReview}
                   </span>
                 )}
@@ -155,7 +152,7 @@ const Applications = () => {
               <Link to="/clarifications/raised-list" className="h-100 d-block">
                 <div className="card border-0 h-100 d-flex align-items-center justify-content-center shadow-sm hover-shadow position-relative">
                   {homeCounts?.clarificationsIRaised > 0 && (
-                    <span className="count-badge bg-warning text-dark position-absolute top-0 end-0 translate-middle badge rounded-pill">
+                    <span className="count-badge bg-warning text-dark position-absolute  badge rounded-pill">
                       {homeCounts?.clarificationsIRaised}
                     </span>
                   )}
@@ -176,7 +173,7 @@ const Applications = () => {
                 <Link to="/clarification" className="h-100 d-block">
                   <div className="card border-0 h-100 d-flex align-items-center justify-content-center shadow-sm hover-shadow position-relative">
                     {homeCounts?.clarificationsToResolve > 0 && (
-                      <span className="count-badge bg-info text-white position-absolute top-0 end-0 translate-middle badge rounded-pill">
+                      <span className="count-badge bg-info text-white position-absolute badge rounded-pill">
                         {homeCounts?.clarificationsToResolve}
                       </span>
                     )}
