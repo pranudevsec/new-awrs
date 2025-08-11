@@ -6,7 +6,7 @@ import ReCAPTCHA from "react-google-recaptcha";
 import FormInput from "../../components/form/FormInput";
 import FormSelect from "../../components/form/FormSelect";
 import bgimg from "../../assets/Picture7.png";
-import { roleOptions } from "../../data/options";
+import { matrixUnitOptions, roleOptions } from "../../data/options";
 import { SignUpSchema } from "../../validations/validations";
 import { reqToSignUp } from "../../reduxToolkit/services/auth/authService";
 import { useAppDispatch } from "../../reduxToolkit/hooks";
@@ -84,13 +84,18 @@ const SignUp = () => {
                                         />
                                     </div>
                                     <div className="mb-2">
-                                        <FormInput
+                                        <FormSelect
                                             label="Rank"
                                             name="rank"
-                                            placeholder="Enter rank"
-                                            value={formik.values.rank}
-                                            onChange={formik.handleChange}
-                                            onBlur={formik.handleBlur}
+                                            options={matrixUnitOptions}
+                                            value={matrixUnitOptions.find((opt) => opt.value === formik.values.rank) ?? null}
+                                            onChange={(selectedOption) =>
+                                                formik.setFieldValue(
+                                                    "rank",
+                                                    selectedOption?.value ?? ""
+                                                )
+                                            }
+                                            placeholder="Select"
                                             errors={formik.errors.rank}
                                             touched={formik.touched.rank}
                                         />

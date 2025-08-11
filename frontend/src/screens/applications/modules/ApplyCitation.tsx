@@ -358,6 +358,7 @@ const ApplyCitation = () => {
       input.value = "";
     }
   };
+  
   const handleRemoveUploadedFile = (paramId: number, index: number) => {
     const updatedFiles = { ...uploadedFiles };
 
@@ -453,7 +454,7 @@ const ApplyCitation = () => {
   });
 
   useEffect(() => {
-    const fetchAllData = async (profileData:any) => {
+    const fetchAllData = async (profileData: any) => {
       try {
         if (checkUnitProfileFields(profileData) === false) {
           toast.error(
@@ -462,7 +463,7 @@ const ApplyCitation = () => {
           navigate("/profile-settings");
           return;
         }
-  
+
         const [configRes, paramsRes] = await Promise.all([
           dispatch(getConfig()).unwrap(),
           dispatch(
@@ -477,7 +478,7 @@ const ApplyCitation = () => {
             })
           ).unwrap(),
         ]);
-  
+
         if (configRes?.success && configRes.data) {
           setCyclePerios(configRes.data.current_cycle_period);
           const formattedDate = configRes.data.deadline?.split("T")[0] || "";
@@ -486,7 +487,7 @@ const ApplyCitation = () => {
             setCommand(profileData?.unit?.comd);
           }
         }
-  
+
         if (paramsRes.success && paramsRes.data) {
           const revParams = [...paramsRes.data].reverse();
           setParameters(revParams);
@@ -495,7 +496,7 @@ const ApplyCitation = () => {
         console.error("Failed to fetch data", err);
       }
     };
-  
+
     const init = async () => {
       setIsLoadingParameters(true);
       try {
@@ -509,10 +510,10 @@ const ApplyCitation = () => {
         setIsLoadingParameters(false);
       }
     };
-  
+
     init();
   }, [dispatch, navigate]);
-  
+
   useEffect(() => {
     if (!id) {
       const draft = { counts, marks };

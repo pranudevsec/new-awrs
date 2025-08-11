@@ -18,9 +18,9 @@ import {
   approveMarks,
   fetchApplicationUnitDetail,
   updateApplication
-} from "../../../reduxToolkit/services/application/applicationService"; 
+} from "../../../reduxToolkit/services/application/applicationService";
 import { updateClarification } from "../../../reduxToolkit/services/clarification/clarificationService";
-import { baseURL } from "../../../reduxToolkit/helper/axios";
+import Axios, { baseURL } from "../../../reduxToolkit/helper/axios";
 import { useDebounce } from "../../../hooks/useDebounce";
 import { updateCitation } from "../../../reduxToolkit/services/citation/citationService";
 import { updateAppreciation } from "../../../reduxToolkit/services/appreciation/appreciationService";
@@ -86,7 +86,9 @@ const ApplicationDetails = () => {
   const [priority, setPriority] = useState(userPriority);
   const [commentsState, setCommentsState] = useState<Record<string, string>>({});
   const [localComment, setLocalComment] = useState(commentsState?.__application__ ?? "");
+  const [commentError, setCommentError] = useState<string | null>(null);
   const [unitRemarks, setUnitRemarks] = useState("");
+  const [priorityError, setPriorityError] = useState("");
   const [showDisclaimerModal, setShowDisclaimerModal] = useState(false);
   const [pendingDecision, setPendingDecision] = useState<{
     member: any;
@@ -100,6 +102,12 @@ const ApplicationDetails = () => {
     totalMarks: 0,
     negativeMarks: 0,
   });
+  const [approvedMarksDocumentsState, setApprovedMarksDocumentsState] = useState<any>({});
+  const [approvedMarksReasonState, setApprovedMarksReasonState] = useState<Record<string, string>>({});
+  const [lastUploadedParam, setLastUploadedParam] = useState<string | null>(null);
+
+  console.log("approvedMarksDocumentsState -> ", approvedMarksDocumentsState);
+
 
   const isUnitRole = ["unit", "cw2"].includes(profile?.user?.user_role ?? "");
   const isCW2Role = profile?.user?.user_role === "cw2";
@@ -121,6 +129,13 @@ const ApplicationDetails = () => {
       userPriority = foundPriority.priority ?? "";
     }
   }
+
+  useEffect(() => {
+    if (lastUploadedParam) {
+      debouncedHandleSave(lastUploadedParam, approvedCountState[lastUploadedParam] ?? "");
+      setLastUploadedParam(null);
+    }
+  }, [approvedMarksDocumentsState]);
 
   useEffect(() => {
     setPriority(userPriority);
@@ -211,15 +226,21 @@ const ApplicationDetails = () => {
       const initialMarks: Record<string, string> = {};
       const initialCounts: Record<string, string> = {};
       const initialComments: Record<string, string> = {};
+      const initialApprovedMarksDocuments: Record<string, string> = {};
+      const initialApprovedMarksReason: Record<string, string> = {};
 
       unitDetail.fds.parameters.forEach((param: any) => {
-        // This logic ensures that we don't overwrite user input on re-renders.
-        // We only set the initial value if the user hasn't touched the field yet.
         if (approvedMarksState[param.id] === undefined) {
           initialMarks[param.id] = param.approved_marks ?? "";
         }
         if (approvedCountState[param.id] === undefined) {
           initialCounts[param.id] = param.approved_count ?? "";
+        }
+        if (approvedMarksDocumentsState[param.id] === undefined) {
+          initialApprovedMarksDocuments[param.id] = param.approved_marks_documents ?? "";
+        }
+        if (approvedMarksReasonState[param.id] === undefined) {
+          initialApprovedMarksReason[param.id] = param.approved_marks_reason ?? "";
         }
 
         const matchingComments = (param.comments ?? []).filter(
@@ -238,15 +259,15 @@ const ApplicationDetails = () => {
         }
       });
 
-      // Merge the initial values with the existing state.
-      // This preserves any values the user has already entered.
       setApprovedMarksState((prev) => ({ ...initialMarks, ...prev }));
       setApprovedCountState((prev) => ({ ...initialCounts, ...prev }));
+      setApprovedMarksDocumentsState((prev: any) => ({ ...initialApprovedMarksDocuments, ...prev }));
+      setApprovedMarksReasonState((prev) => ({ ...initialApprovedMarksReason, ...prev }));
       setCommentsState((prev) => ({ ...initialComments, ...prev }));
     }
   }, [unitDetail, profile]);
 
-  const handleSave = async (paramId: string, approvedCountRaw: string) => {
+  const handleSave = async (paramId: string, approvedCountRaw: string, docsOverride?: string[]) => {
     if (approvedCountRaw === undefined) return;
 
     const parameters = unitDetail?.fds?.parameters ?? [];
@@ -270,16 +291,21 @@ const ApplicationDetails = () => {
           id: paramId,
           approved_marks: finalApprovedMarks,
           approved_count: approved_count,
+          approved_marks_documents: docsOverride ?? (Array.isArray(approvedMarksDocumentsState[paramId])
+            ? approvedMarksDocumentsState[paramId]
+            : []),
+          approved_marks_reason: approvedMarksReasonState[paramId] ?? "",
         },
       ],
     };
 
+    console.log("body -> ", body);
+
+
     try {
       await dispatch(approveMarks(body)).unwrap();
-      dispatch(fetchApplicationUnitDetail({ award_type, numericAppId }));
-      const updatedStats = calculateParameterStats(
-        unitDetail?.fds?.parameters
-      );
+      await dispatch(fetchApplicationUnitDetail({ award_type, numericAppId }));
+      const updatedStats = calculateParameterStats(unitDetail?.fds?.parameters);
       setParamStats(updatedStats);
     } catch (err) {
       console.error("Failed to save approved marks:", err);
@@ -321,7 +347,6 @@ const ApplicationDetails = () => {
     }
   }, [unitDetail, role]);
 
-
   useEffect(() => {
     if (unitDetail?.remarks && Array.isArray(unitDetail?.remarks)) {
       const existing = unitDetail?.remarks.find(
@@ -343,6 +368,79 @@ const ApplicationDetails = () => {
 
     setRemarksError(null);
     setUnitRemarks(value);
+  };
+
+  const handleCommentInputChange = (e: any) => {
+    const value = e.target.value;
+
+    if (value.length > 200) {
+      setCommentError("Comment cannot exceed 200 characters.");
+      return;
+    }
+
+    setCommentError(null);
+    setLocalComment(value);
+  };
+
+  const makeFieldName = (name: string) => {
+    return name.toLowerCase().replace(/\s+/g, "_") + "_" + Date.now();
+  };
+
+  const uploadFileToServer = async (
+    file: File,
+    paramName: string
+  ): Promise<string | null> => {
+    const fieldName = makeFieldName(paramName);
+    const formData = new FormData();
+    formData.append(fieldName, file);
+
+    try {
+      const response = await Axios.post(
+        "/api/applications/upload-doc",
+        formData,
+        {
+          headers: {
+            "Content-Type": "multipart/form-data",
+          },
+        }
+      );
+
+      const uploadedData = response.data;
+      if (Array.isArray(uploadedData) && uploadedData.length > 0) {
+        return uploadedData[0].urlPath;
+      } else {
+        throw new Error("Invalid upload response");
+      }
+    } catch (error) {
+      console.error("Upload failed:", error);
+      return null;
+    }
+  };
+
+  const handleApprovedMarksDocumentsChange = async (
+    paramId: string,
+    files: FileList | null
+  ) => {
+    if (!files || files.length === 0) return;
+
+    const uploadedUrls: string[] = [];
+    for (const file of Array.from(files)) {
+      const url = await uploadFileToServer(file, paramId);
+      if (url) uploadedUrls.push(url);
+    }
+
+    setApprovedMarksDocumentsState((prev: any) => ({
+      ...prev,
+      [paramId]: [...(prev[paramId] || []), ...uploadedUrls],
+    }));
+
+    setLastUploadedParam(paramId);
+    debouncedHandleSave(paramId, approvedCountState[paramId] ?? "");
+  };
+
+  const handleApprovedMarksReasonChange = (paramId: any, value: any) => {
+    setApprovedMarksReasonState((prev) => ({ ...prev, [paramId]: value }));
+    debouncedHandleSave(paramId, approvedCountState[paramId] ?? "");
   };
 
   // Debounce effect
@@ -576,6 +674,7 @@ const ApplicationDetails = () => {
       });
     }
   };
+
   const handleConfirmDecision = async () => {
     if (pendingDecision) {
       const { member, decision } = pendingDecision;
@@ -594,14 +693,17 @@ const ApplicationDetails = () => {
   };
 
   const handleDecisionClick = (member: any, decision: string) => {
-    // Store the decision details and show the disclaimer modal
+    if (!priority || priority.trim() === "") {
+      setPriorityError("Priority is required");
+      return;
+    }
     setPendingDecision({ member, decision });
     setShowDisclaimerModal(true);
   };
 
   const renderHeaderRow = (header: string, index: number) => (
     <tr key={`header-${header}-${index}`}>
-      <td colSpan={8} style={{ fontWeight: 600, color: "#555", fontSize: 15, background: "#f5f5f5" }}>
+      <td colSpan={9} style={{ fontWeight: 600, color: "#555", fontSize: 15, background: "#f5f5f5" }}>
         {header}
       </td>
     </tr>
@@ -631,6 +733,15 @@ const ApplicationDetails = () => {
   const handleReject = (id: number) => {
     dispatch(updateClarification({ id, clarification_status: "rejected" }))
       .then(() => setIsRefreshData(prev => !prev));
+  };
+
+  const handleRemoveApprovedMarkDocument = (paramId: string, fileIndex: number) => {
+    setApprovedMarksDocumentsState((prev: any) => {
+      const updatedFiles = [...(prev[paramId] || [])];
+      updatedFiles.splice(fileIndex, 1);
+      debouncedHandleSave(paramId, approvedCountState[paramId] ?? "", updatedFiles);
+      return { ...prev, [paramId]: updatedFiles };
+    });
   };
 
   const renderClarificationActions = (param: any) => {
@@ -733,6 +844,82 @@ const ApplicationDetails = () => {
                 readOnly
               />
             </td>
+            <td style={{ width: 200 }}>
+              {(approvedMarksDocumentsState[param.id] || []).length > 0 &&
+                <div
+                  className="mb-1"
+                  style={{
+                    display: "flex",
+                    flexDirection: "column",
+                    gap: "4px",
+                  }}
+                >
+                  {(approvedMarksDocumentsState[param.id] || []).map((fileUrl: any, idx: any) => (
+                    <div
+                      key={idx}
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "space-between",
+                        gap: "0.5rem",
+                        fontSize: 14,
+                        wordBreak: "break-all",
+                        background: "#f1f5f9",
+                        padding: "4px 8px",
+                        borderRadius: 4,
+                      }}
+                    >
+                      <a
+                        href={`${baseURL}${fileUrl}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        style={{
+                          flex: 1,
+                          color: "#1d4ed8",
+                          textDecoration: "underline",
+                        }}
+                      >
+                        {fileUrl.split("/").pop()}
+                      </a>
+                      <button
+                        type="button"
+                        onClick={() => handleRemoveApprovedMarkDocument(param.id, idx)}
+                        style={{
+                          background: "transparent",
+                          border: "none",
+                          color: "#dc2626",
+                          cursor: "pointer",
+                          fontSize: 16,
+                        }}
+                        title="Remove file"
+                      >
+                        🗑️
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              }
+              <input
+                type="file"
+                className="form-control"
+                accept=".pdf,.jpg,.jpeg,.png"
+                multiple
+                onChange={(e) => handleApprovedMarksDocumentsChange(param.id, e.target.files)}
+                disabled={isRejected}
+              />
+
+            </td>
+            <td style={{ width: 200 }}>
+              <input
+                type="text"
+                className="form-control"
+                placeholder="Enter approved marks reason"
+                autoComplete="off"
+                value={approvedMarksReasonState[param.id] ?? ""}
+                onChange={(e) => handleApprovedMarksReasonChange(param.id, e.target.value)}
+                disabled={isRejected}
+              />
+            </td>
             <td style={{ width: 120 }}>
               {canViewClarification ? (
                 <button
@@ -793,15 +980,13 @@ const ApplicationDetails = () => {
               </>
             )}
           </>
-        )}
-      </tr>
+        )
+        }
+      </tr >
     );
 
     return rows;
   };
-
-  // Show loader
-  if (loading) return <Loader />;
 
   // Excel export handler
   const handleDownloadExcel = () => {
@@ -839,6 +1024,9 @@ const ApplicationDetails = () => {
     const data = new Blob([excelBuffer], { type: "application/octet-stream" });
     saveAs(data, `Application_${unitDetail?.id ?? ""}_Details.xlsx`);
   };
+
+  // Show loader
+  if (loading) return <Loader />;
 
   return (
     <>
@@ -942,11 +1130,13 @@ const ApplicationDetails = () => {
                   <>
                     <th style={{ width: 200, color: "white" }}>Approved Count</th>
                     <th style={{ width: 200, color: "white" }}>Approved Marks</th>
+                    <th style={{ width: 150, color: "white" }}>Approved marks documents</th>
+                    <th style={{ width: 150, color: "white" }}>Approved marks reason</th>
                     <th style={{ width: 150, color: "white" }}>Ask Clarification</th>
                     {isRaisedScreen && (
                       <>
                         <th style={{ width: 200, color: "white" }}>Requested Clarification</th>
-                        <th style={{ width: 150, color: "white" }}>Action</th>{" "}
+                        <th style={{ width: 150, color: "white" }}>Action</th>
                       </>
                     )}
                   </>
@@ -1021,6 +1211,7 @@ const ApplicationDetails = () => {
             </tbody>
           </table>
         </div>
+
         {!isUnitRole && (
           <ul
             style={{
@@ -1069,7 +1260,6 @@ const ApplicationDetails = () => {
               ))}
           </ul>
         )}
-
         {!isUnitRole && (
           <div
             style={{
@@ -1177,65 +1367,64 @@ const ApplicationDetails = () => {
                             </td>
                             <td>{member.name ?? "-"}</td>
                             <td>{member.rank ?? "-"}</td>
-                     <td>
-  <div className="d-flex flex-sm-row flex-column gap-sm-3 gap-1 align-items-center">
-    {profile?.user?.is_member ? (
-      <>
-        {member.member_type === "presiding_officer" &&
-          !isSignatureAdded && (
-            <>
-              {isReadyToSubmit && (
-                <button
-                  type="button"
-                  className="_btn success w-sm-auto"
-                  onClick={() => handleDecisionClick(member, "accepted")}
-                >
-                  Recommend
-                </button>
-              )}
-              <button
-                type="button"
-                className="_btn danger w-sm-auto"
-                onClick={() => handleDecisionClick(member, "rejected")}
-              >
-                Decline
-              </button>
-            </>
-          )}
+                            <td>
+                              <div className="d-flex flex-sm-row flex-column gap-sm-3 gap-1 align-items-center">
+                                {profile?.user?.is_member ? (
+                                  <>
+                                    {member.member_type === "presiding_officer" &&
+                                      !isSignatureAdded && (
+                                        <>
+                                          {isReadyToSubmit && (
+                                            <button
+                                              type="button"
+                                              className="_btn success w-sm-auto"
+                                              onClick={() => handleDecisionClick(member, "accepted")}
+                                            >
+                                              Recommend
+                                            </button>
+                                          )}
+                                          <button
+                                            type="button"
+                                            className="_btn danger w-sm-auto"
+                                            onClick={() => handleDecisionClick(member, "rejected")}
+                                          >
+                                            Decline
+                                          </button>
+                                        </>
+                                      )}
 
-        {member.member_type !== "presiding_officer" &&
-          !isSignatureAdded && (
-            <button
-              type="button"
-              className="_btn success text-nowrap w-sm-auto"
-              onClick={() => handleDecisionClick(member, "accepted")}
-            >
-              Add Signature
-            </button>
-          )}
+                                    {member.member_type !== "presiding_officer" &&
+                                      !isSignatureAdded && (
+                                        <button
+                                          type="button"
+                                          className="_btn success text-nowrap w-sm-auto"
+                                          onClick={() => handleDecisionClick(member, "accepted")}
+                                        >
+                                          Add Signature
+                                        </button>
+                                      )}
 
-        {isSignatureAdded && (
-          <span className="text-success fw-semibold text-nowrap d-flex align-items-center gap-1">
-            <FaCheckCircle className="fs-5" /> Signature Added
-          </span>
-        )}
-      </>
-    ) : (
-      <>
-        {isSignatureAdded ? (
-          <span className="text-success fw-semibold text-nowrap d-flex align-items-center gap-1">
-            <FaCheckCircle className="fs-5" /> Signature Added
-          </span>
-        ) : (
-          <span className="text-danger fw-semibold text-nowrap">
-            Signature Not Added
-          </span>
-        )}
-      </>
-    )}
-  </div>
-</td>
-
+                                    {isSignatureAdded && (
+                                      <span className="text-success fw-semibold text-nowrap d-flex align-items-center gap-1">
+                                        <FaCheckCircle className="fs-5" /> Signature Added
+                                      </span>
+                                    )}
+                                  </>
+                                ) : (
+                                  <>
+                                    {isSignatureAdded ? (
+                                      <span className="text-success fw-semibold text-nowrap d-flex align-items-center gap-1">
+                                        <FaCheckCircle className="fs-5" /> Signature Added
+                                      </span>
+                                    ) : (
+                                      <span className="text-danger fw-semibold text-nowrap">
+                                        Signature Not Added
+                                      </span>
+                                    )}
+                                  </>
+                                )}
+                              </div>
+                            </td>
                           </tr>
                         );
                       })}
@@ -1296,7 +1485,7 @@ const ApplicationDetails = () => {
                         <td>
                           {isAlreadySent ? (
                             <span className="text-danger fw-semibold">
-                               Sent
+                              Sent
                             </span>
                           ) : (
                             <button
@@ -1375,7 +1564,7 @@ const ApplicationDetails = () => {
                   <div className="mb-2">
                     <label htmlFor="priority" className="form-label mb-1">Priority:</label>
                     <input
-                      type="text"
+                      type="number"
                       className="form-control"
                       name="priority"
                       id="priority"
@@ -1386,9 +1575,9 @@ const ApplicationDetails = () => {
                         handlePriorityChange(value);
                       }}
                     />
+                    {priorityError && <p className="error-text">{priorityError}</p>}
                   </div>
                 )}
-
                 <form
                   onSubmit={(e) => {
                     e.preventDefault();
@@ -1401,8 +1590,9 @@ const ApplicationDetails = () => {
                     placeholder="Enter comment"
                     rows={4}
                     value={localComment}
-                    onChange={(e) => setLocalComment(e.target.value)}
+                    onChange={handleCommentInputChange}
                   />
+                  {commentError && <p className="error-text">{commentError}</p>}
                   <div className="d-flex align-items-center justify-content-end mt-2">
                     <button type="submit" className="_btn success">
                       Submit

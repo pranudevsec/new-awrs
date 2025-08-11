@@ -65,6 +65,7 @@ const SubmittedFormDetail = () => {
     const [priority, setPriority] = useState(userPriority);
     const [commentsState, setCommentsState] = useState<Record<string, string>>({});
     const [localComment, setLocalComment] = useState(commentsState?.__application__ ?? "");
+    const [commentError, setCommentError] = useState<string | null>(null);
     const [unitRemarks, setUnitRemarks] = useState("");
     const [paramStats, setParamStats] = useState({
         totalParams: 0,
@@ -261,6 +262,18 @@ const SubmittedFormDetail = () => {
 
         setRemarksError(null);
         setUnitRemarks(value);
+    };
+
+    const handleCommentInputChange = (e: any) => {
+        const value = e.target.value;
+
+        if (value.length > 200) {
+            setCommentError("Comment cannot exceed 200 characters.");
+            return;
+        }
+
+        setCommentError(null);
+        setLocalComment(value);
     };
 
     // Debounce effect
@@ -1146,7 +1159,7 @@ const SubmittedFormDetail = () => {
                                 <div className="mb-2">
                                     <label htmlFor="priority" className="form-label mb-1">Priority:</label>
                                     <input
-                                        type="text"
+                                        type="number"
                                         className="form-control"
                                         name="priority"
                                         id="priority"
@@ -1172,8 +1185,9 @@ const SubmittedFormDetail = () => {
                                     placeholder="Enter comment"
                                     rows={4}
                                     value={localComment}
-                                    onChange={(e) => setLocalComment(e.target.value)}
+                                    onChange={handleCommentInputChange}
                                 />
+                                {commentError && <p className="error-text">{commentError}</p>}
                                 <div className="d-flex align-items-center justify-content-end mt-2">
                                     <button type="submit" className="_btn success">
                                         Submit

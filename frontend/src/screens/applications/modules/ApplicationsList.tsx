@@ -250,15 +250,15 @@ const ApplicationsList = () => {
               : units.length > 0 && units.map((unit: any) => (
                 <tr
                   key={unit.id}
-           onClick={() => {
-  if (unit.status_flag === "draft") return; // Prevent navigation
+                  onClick={() => {
+                    if (unit.status_flag === "draft") return; // Prevent navigation
 
-  if (location.pathname === "/submitted-forms/list") {
-    navigate(`/submitted-forms/list/${unit.id}?award_type=${unit.type}`);
-  } else {
-    navigate(`/applications/list/${unit.id}?award_type=${unit.type}`);
-  }
-}}
+                    if (location.pathname === "/submitted-forms/list") {
+                      navigate(`/submitted-forms/list/${unit.id}?award_type=${unit.type}`);
+                    } else {
+                      navigate(`/applications/list/${unit.id}?award_type=${unit.type}`);
+                    }
+                  }}
 
                   style={{ cursor: "pointer" }}
                 >

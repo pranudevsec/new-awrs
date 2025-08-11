@@ -6,7 +6,7 @@ export const LoginSchema = Yup.object().shape({
     .min(3, 'User name must be at least 3 characters')
     .required('User name number is required'),
   password: Yup.string()
-    .min(4, 'Password must be at least 4 characters')
+    .min(6, 'Password must be at least 4 characters')
     .required('Password is required'),
 });
 
@@ -15,10 +15,11 @@ export const SignUpSchema = Yup.object().shape({
   name: Yup.string().required('Name is required'),
   user_role: Yup.string().required('Role is required'),
   username: Yup.string()
+    .matches(/^[a-z]+$/, 'Username must contain only lowercase letters, no spaces or special characters')
     .min(3, 'User name must be at least 3 characters')
     .required('User name is required'),
   password: Yup.string()
-    .min(4, 'Password must be at least 4 characters')
+    .min(6, 'Password must be at least 4 characters')
     .required('Password is required'),
   confirmPassword: Yup.string()
     .oneOf([Yup.ref("password")], "Passwords must match")

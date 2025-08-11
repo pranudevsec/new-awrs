@@ -284,6 +284,7 @@ const ApplyAppreciation = () => {
     container.addEventListener("scroll", handleScroll);
     return () => container.removeEventListener("scroll", handleScroll);
   }, [activeTab]);
+  
   useEffect(() => {
     const container = tabsContainerRef.current;
     if (!container) return;
