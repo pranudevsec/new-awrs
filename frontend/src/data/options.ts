@@ -6,7 +6,7 @@ export const awardTypeOptions: OptionType[] = [
 ];
 
 export const unitOptions: OptionType[] = [
-  { value: "n/a", label: "N/A" },
+  { value: "", label: "All" },
   { value: "unit1", label: "Unit 1" },
   { value: "myunit", label: "My Unit" },
   { value: "unit2", label: "Unit 2" },
@@ -21,7 +21,7 @@ export const unitOptions: OptionType[] = [
 ];
 
 export const brigadeOptions: OptionType[] = [
-  { value: "n/a", label: "N/A" },
+  { value: "", label: "All" },
   { value: "mybde", label: "My Brigade" },
   { value: "brigade1", label: "Brigade 1" },
   { value: "brigade2", label: "Brigade 2" },
@@ -36,7 +36,7 @@ export const brigadeOptions: OptionType[] = [
 ];
 
 export const divisionOptions: OptionType[] = [
-  { value: "n/a", label: "N/A" },
+  { value: "", label: "All" },
   { value: "divison1", label: "Divison 1" },
   { value: "divison2", label: "Divison 2" },
   { value: "divison3", label: "Divison 3" },
@@ -76,7 +76,7 @@ export const divisionOptions: OptionType[] = [
 ];
 
 export const corpsOptions: OptionType[] = [
-  { value: "n/a", label: "N/A" },
+  { value: "", label: "All" },
   { value: "mycorps", label: "My Corps" },
   { value: "corps1", label: "Corps 1" },
   { value: "corps2", label: "Corps 2" },
@@ -306,7 +306,6 @@ export const roleOptions = [
   { label: "HR", value: "cw2_hr" },
   { label: "DV", value: "cw2_dv" },
   { label: "MP", value: "cw2_mp" },
-  { label: "Admin", value: "admin" },
 ];
 
 export const roleOptions2: OptionType[] = [

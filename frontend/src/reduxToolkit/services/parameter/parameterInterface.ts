@@ -5,6 +5,7 @@ export interface Parameter {
   param_id: string;
   comd: string;
   award_type: string;
+  arms_service: string;
   applicability: string;
   category: string;
   name: string;

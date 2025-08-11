@@ -213,6 +213,7 @@ const AppreciationReviewPage = () => {
                             id: param.param_id,
                             name: display.main,
                             count,
+                            arms_service:param.arms_service,
                             marks: calculatedMarks,
                             upload: uploadPaths,
                         };
@@ -229,6 +230,9 @@ const AppreciationReviewPage = () => {
                         brigade: profile?.unit?.bde ?? "",
                         division: profile?.unit?.div ?? "",
                         corps: profile?.unit?.corps ?? "",
+                        arms_service: profile?.unit?.unit_type ?? "",
+                        matrix_unit: profile?.unit?.matrix_unit ?? "",
+                        location: profile?.unit?.location ?? "",
                         parameters: formattedParameters,
                         unitRemarks: unitRemarks,
                         unit_type: profile?.unit?.unit_type

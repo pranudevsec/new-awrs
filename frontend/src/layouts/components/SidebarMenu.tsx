@@ -19,7 +19,7 @@ type UserType = {
 };
 
 const commandExtraLabels = ["Scoreboard",  "Home", "Profile Settings"];
-const headquarterExtraLabels = ["Dashboard", "Home", "Awards", "Scoreboard", "Profile Settings"];
+const headquarterExtraLabels = ["Dashboard", "Home", "Awards", "Scoreboard","Admin Settings", "Parameters", "Profile Settings"];
 const extraDashboardLabels = ["Brigade Dashboard", "Division Dashboard", "Corps Dashboard", "Command Dashboard"];
 
 const SidebarMenu = ({ onToggleCollapse }: SidebarMenuProps) => {
@@ -296,10 +296,6 @@ const filterSidebarStructure = (userRole: string, alwaysVisible: string[]) => {
 
     if (userRole === "headquarter") {
       return headquarterExtraLabels.includes(item.label);
-    }
-
-    if (userRole === "admin") {
-      return ["Admin Settings", "Parameters"].includes(item.label);
     }
 
     return false;

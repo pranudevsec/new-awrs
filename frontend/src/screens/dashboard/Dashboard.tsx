@@ -6,7 +6,6 @@ import Breadcrumb from "../../components/ui/breadcrumb/Breadcrumb"
 import ApplicationStatus from "./components/ApplicationStatus"
 import AssetsDetail from "./components/AssetsDetail"
 import TopCandidates from "./components/TopCandidates"
-import TopWinnersList from "./components/TopWinnersList"
 import UnitScoreChart from "./components/UnitScoreChart"
 import Loader from "../../components/ui/loader/Loader"
 import FormSelect from "../../components/form/FormSelect"
@@ -138,7 +137,7 @@ const Dashboard = () => {
                     <TopCandidates setReportCount={setReportCount} reportCount={reportCount} />
                 </div>
             </div>
-            <TopWinnersList />
+            {/* <TopWinnersList /> */}
         </div>
     )
 }

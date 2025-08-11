@@ -1391,6 +1391,8 @@ exports.approveApplicationMarks = async (user, body) => {
             ...param,
             approved_marks: approvedParam.approved_marks,
             approved_count: approvedParam.approved_count,
+            approved_marks_documents: approvedParam.approved_marks_documents || [],
+            approved_marks_reason: approvedParam.approved_marks_reason,
             approved_by_user: user.user_id,
             approved_by_role: user.user_role,
             approved_marks_at: now,
@@ -1956,17 +1958,95 @@ exports.getApplicationsHistory = async (user, query) => {
       )
     `;
     const queryParams = [unitIds, allowedRoles, lowerRoles, [user.user_role]];
-
-    const [citations, appreciations] = await Promise.all([
-      client.query(
-        `SELECT citation_id AS id, 'citation' AS type, unit_id, date_init, citation_fds AS fds, status_flag FROM Citation_tab WHERE ${baseFilters}`,
-        queryParams
-      ),
-      client.query(
-        `SELECT appreciation_id AS id, 'appreciation' AS type, unit_id, date_init, appre_fds AS fds, status_flag FROM Appre_tab WHERE ${baseFilters}`,
-        queryParams
-      ),
-    ]);
+    const citationQuery = `
+    SELECT 
+      c.citation_id AS id,
+      'citation' AS type,
+      c.unit_id,
+      row_to_json(u) AS unit_details,
+      c.date_init,
+      c.citation_fds AS fds,
+      c.status_flag,
+      c.is_mo_approved,
+      c.mo_approved_at,
+      c.is_ol_approved,
+      c.ol_approved_at,
+      c.last_approved_by_role,
+      c.last_approved_at
+    FROM Citation_tab c
+    LEFT JOIN (
+      SELECT 
+        unit_id,
+        sos_no,
+        name,
+        adm_channel,
+        tech_channel,
+        bde,
+        div,
+        corps,
+        comd,
+        unit_type,
+        matrix_unit,
+        location,
+        awards,
+        members,
+        is_hr_review,
+        is_dv_review,
+        is_mp_review,
+        created_at,
+        updated_at
+      FROM Unit_tab
+    ) u ON c.unit_id = u.unit_id
+    WHERE ${baseFilters.replace(/unit_id/g, 'c.unit_id')}
+  `;
+  
+  const appreQuery = `
+    SELECT 
+      a.appreciation_id AS id,
+      'appreciation' AS type,
+      a.unit_id,
+      row_to_json(u) AS unit_details,
+      a.date_init,
+      a.appre_fds AS fds,
+      a.status_flag,
+      a.is_mo_approved,
+      a.mo_approved_at,
+      a.is_ol_approved,
+      a.ol_approved_at,
+      a.last_approved_by_role,
+      a.last_approved_at
+    FROM Appre_tab a
+    LEFT JOIN (
+      SELECT 
+        unit_id,
+        sos_no,
+        name,
+        adm_channel,
+        tech_channel,
+        bde,
+        div,
+        corps,
+        comd,
+        unit_type,
+        matrix_unit,
+        location,
+        awards,
+        members,
+        is_hr_review,
+        is_dv_review,
+        is_mp_review,
+        created_at,
+        updated_at
+      FROM Unit_tab
+    ) u ON a.unit_id = u.unit_id
+    WHERE ${baseFilters.replace(/unit_id/g, 'a.unit_id')}
+  `;
+  
+  const [citations, appreciations] = await Promise.all([
+    client.query(citationQuery, queryParams),
+    client.query(appreQuery, queryParams)
+  ]);
+  
     let allApps = [...citations.rows, ...appreciations.rows];
 
     if (award_type) {
@@ -2121,40 +2201,89 @@ exports.getAllApplications = async (user, query) => {
     }
 
     const citationQuery = `
+    SELECT 
+      c.citation_id AS id,
+      'citation' AS type,
+      c.unit_id,
+      row_to_json(u) AS unit_details,
+      c.date_init,
+      c.citation_fds AS fds,
+      c.status_flag,
+      c.is_mo_approved,
+      c.mo_approved_at,
+      c.is_ol_approved,
+      c.ol_approved_at,
+      c.last_approved_by_role,
+      c.last_approved_at
+    FROM Citation_tab c
+    LEFT JOIN (
       SELECT 
-        citation_id AS id,
-        'citation' AS type,
         unit_id,
-        date_init,
-        citation_fds AS fds,
-        status_flag,
-        is_mo_approved,
-        mo_approved_at,
-        is_ol_approved,
-        ol_approved_at,
-        last_approved_by_role,
-        last_approved_at
-      FROM Citation_tab
-      WHERE ${baseFilters}
+        sos_no,
+        name,
+        adm_channel,
+        tech_channel,
+        bde,
+        div,
+        corps,
+        comd,
+        unit_type,
+        matrix_unit,
+        location,
+        awards,
+        members,
+        is_hr_review,
+        is_dv_review,
+        is_mp_review,
+        created_at,
+        updated_at
+      FROM Unit_tab
+    ) u ON c.unit_id = u.unit_id
+    WHERE ${baseFilters.replace(/unit_id/g, 'c.unit_id')}
     `;
-
+    
     const appreQuery = `
+    SELECT 
+      a.appreciation_id AS id,
+      'appreciation' AS type,
+      a.unit_id,
+      row_to_json(u) AS unit_details,
+      a.date_init,
+      a.appre_fds AS fds,
+      a.status_flag,
+      a.is_mo_approved,
+      a.mo_approved_at,
+      a.is_ol_approved,
+      a.ol_approved_at,
+      a.last_approved_by_role,
+      a.last_approved_at
+    FROM Appre_tab a
+    LEFT JOIN (
       SELECT 
-        appreciation_id AS id,
-        'appreciation' AS type,
         unit_id,
-        date_init,
-        appre_fds AS fds,
-        status_flag,
-        is_mo_approved,
-        mo_approved_at,
-        is_ol_approved,
-        ol_approved_at,
-        last_approved_by_role,
-        last_approved_at
-      FROM Appre_tab
-      WHERE ${baseFilters}
+        sos_no,
+        name,
+        adm_channel,
+        tech_channel,
+        bde,
+        div,
+        corps,
+        comd,
+        unit_type,
+        matrix_unit,
+        location,
+        awards,
+        members,
+        is_hr_review,
+        is_dv_review,
+        is_mp_review,
+        created_at,
+        updated_at
+      FROM Unit_tab
+    ) u ON a.unit_id = u.unit_id
+    WHERE ${baseFilters.replace(/unit_id/g, 'a.unit_id')}
     `;
+    
 
     const [citations, appreciations] = await Promise.all([
       client.query(citationQuery, queryParams),

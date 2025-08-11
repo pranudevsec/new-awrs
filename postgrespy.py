@@ -1,21 +1,24 @@
 import pandas as pd
 from sqlalchemy import create_engine
+from urllib.parse import quote_plus
 import json
 
 # Static configuration
-DB_HOST = 'localhost'
-DB_PORT = '5432'
-DB_USER = 'postgres'
-DB_PASSWORD = '123'
-DB_NAME = 'army'
-DB_SSL = 'false'
+DB_HOST = "aws-0-ap-southeast-1.pooler.supabase.com"
+DB_PORT = "5432"
+DB_USER = "postgres.sdkchxdqfxjhuygnkkjb"
+DB_PASSWORD = "Ansh@4018"  # contains special char '@'
+DB_NAME = "postgres"
 
 # Excel file path
 excel_path = 'DATABASE AS ON 04 AUG 2025.xlsx'
 
-# Create SQLAlchemy engine using static credentials
+# URL-encode password
+encoded_password = quote_plus(DB_PASSWORD)
+
+# Create SQLAlchemy engine with SSL (Supabase requires it)
 engine = create_engine(
-    f"postgresql+pg8000://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}"
+    f"postgresql+psycopg2://{DB_USER}:{encoded_password}@{DB_HOST}:{DB_PORT}/{DB_NAME}?sslmode=require"
 )
 
 # Load Excel file

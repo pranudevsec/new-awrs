@@ -547,7 +547,7 @@ const ProfileSettings = () => {
                         </select>
                       </td>
                       <td>
-                        <select
+                      <select
                           className="form-select"
                           value={award.award_year}
                           onChange={(e) => {
@@ -557,11 +557,17 @@ const ProfileSettings = () => {
                           }}
                         >
                           <option value="">Select Year</option>
-                          {yearOptions.map((year) => (
-                            <option key={year} value={year}>
-                              {year}
-                            </option>
-                          ))}
+                          {yearOptions
+                            .filter(
+                              (year) =>
+                                !awards.some((a, i) => i !== idx && a.award_year === year) ||
+                                award.award_year === year
+                            )
+                            .map((year) => (
+                              <option key={year} value={year}>
+                                {year}
+                              </option>
+                            ))}
                         </select>
                       </td>
                       <td>

@@ -27,11 +27,6 @@ export const sidebarStructure = [
     to: "/clarifications/raised-list",
   },
   {
-    label: "Scoreboard",
-    icon: SVGICON.sidebar.commandPanel,
-    to: "/command-panel",
-  },
-  {
     label: "Admin Settings",
     icon: SVGICON.sidebar.adminSettings,
     to: "/admin-settings",

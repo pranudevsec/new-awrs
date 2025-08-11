@@ -30,7 +30,6 @@ const roleCredentials: Record<string, { username: string; password: string }> =
   corps_member: { username: "corps1_member", password: "12345678" },
   command: { username: "ncomd", password: "12345678" },
   command_member: { username: "ncomd_member", password: "12345678" },
-  admin: { username: "admin", password: "12345678" },
   headquarter: { username: "testheadquarter", password: "12345678" },
   cw2_mo: { username: "testcw2_mo", password: "12345678" },
   cw2_ol: { username: "testcw2_ol", password: "12345678" },
