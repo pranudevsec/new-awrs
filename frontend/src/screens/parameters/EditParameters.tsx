@@ -5,7 +5,7 @@ import { unwrapResult } from "@reduxjs/toolkit";
 import { ParametersSchema } from "../../validations/validations";
 import { useAppDispatch } from "../../reduxToolkit/hooks";
 import { updateParameter } from "../../reduxToolkit/services/parameter/parameterService";
-import { awardTypeOptions, roleOptions2 } from "../../data/options";
+import { awardTypeOptions, parameterArmService, roleOptions2 } from "../../data/options";
 import Breadcrumb from "../../components/ui/breadcrumb/Breadcrumb";
 import FormInput from "../../components/form/FormInput";
 import FormSelect from "../../components/form/FormSelect";
@@ -28,6 +28,10 @@ const EditParameters = () => {
             applicability: parameters.applicability?.trim() ?? "",
             name: parameters.name?.trim() ?? "",
             category: parameters.category?.trim() ?? "",
+            subcategory: parameters.subcategory?.trim() ?? "",
+            subsubcategory: parameters.subsubcategory?.trim() ?? "",
+            arms_service: parameters.arms_service?.trim() ?? "",
+            location: parameters.location?.trim() ?? "",
             description: parameters.description?.trim() ?? "",
             negative: parameters.negative ?? false,
             per_unit_mark: parameters.per_unit_mark ?? "",
@@ -96,6 +100,22 @@ const EditParameters = () => {
                         />
                     </div>
                     <div className="col-sm-6 mb-3">
+                        <FormSelect
+                            label="Arm / Service"
+                            name="arms_service"
+                            options={parameterArmService}
+                            value={parameterArmService.find((opt) => opt.value === formik.values.arms_service) ?? null}
+                            onChange={(selectedOption) =>
+                                formik.setFieldValue(
+                                    "arms_service",
+                                    selectedOption?.value ?? ""
+                                )
+                            }
+                            placeholder="Select"
+                            {...getErrorProps("arms_service")}
+                        />
+                    </div>
+                    <div className="col-sm-6 mb-3">
                         <FormInput
                             label="Name"
                             name="name"
@@ -115,6 +135,39 @@ const EditParameters = () => {
                             onChange={formik.handleChange}
                             onBlur={formik.handleBlur}
                             {...getErrorProps("category")}
+                        />
+                    </div>
+                    <div className="col-sm-6 mb-3">
+                        <FormInput
+                            label="Sub Category"
+                            name="subcategory"
+                            placeholder="Enter sub category"
+                            value={formik.values.subcategory}
+                            onChange={formik.handleChange}
+                            onBlur={formik.handleBlur}
+                            {...getErrorProps("subcategory")}
+                        />
+                    </div>
+                    <div className="col-sm-6 mb-3">
+                        <FormInput
+                            label="Sub Sub Category"
+                            name="subsubcategory"
+                            placeholder="Enter sub sub category"
+                            value={formik.values.subsubcategory}
+                            onChange={formik.handleChange}
+                            onBlur={formik.handleBlur}
+                            {...getErrorProps("subsubcategory")}
+                        />
+                    </div>
+                    <div className="col-sm-6 mb-3">
+                        <FormInput
+                            label="Location"
+                            name="location"
+                            placeholder="Enter location"
+                            value={formik.values.location}
+                            onChange={formik.handleChange}
+                            onBlur={formik.handleBlur}
+                            {...getErrorProps("location")}
                         />
                     </div>
                     <div className="col-sm-6 mb-3">

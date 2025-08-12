@@ -29,6 +29,7 @@
   }
 }
 
-.form-control.invalid {
+.form-control.invalid,
+.form-select.invalid {
   border-color: var(--red-default) !important;
 }

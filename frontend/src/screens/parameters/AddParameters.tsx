@@ -4,7 +4,7 @@ import { unwrapResult } from "@reduxjs/toolkit";
 import { useAppDispatch } from "../../reduxToolkit/hooks";
 import { ParametersSchema } from "../../validations/validations";
 import { createParameter } from "../../reduxToolkit/services/parameter/parameterService";
-import { awardTypeOptions, roleOptions2 } from "../../data/options";
+import { awardTypeOptions, parameterArmService, roleOptions2 } from "../../data/options";
 import Breadcrumb from "../../components/ui/breadcrumb/Breadcrumb";
 import FormInput from "../../components/form/FormInput";
 import FormSelect from "../../components/form/FormSelect";
@@ -21,6 +21,10 @@ const AddParameters = () => {
             applicability: "",
             name: "",
             category: "",
+            subcategory: "",
+            subsubcategory: "",
+            arms_service: "",
+            location: "",
             description: "",
             negative: null,
             per_unit_mark: "",
@@ -84,6 +88,23 @@ const AddParameters = () => {
                         />
                     </div>
                     <div className="col-sm-6 mb-3">
+                        <FormSelect
+                            label="Arm / Service"
+                            name="arms_service"
+                            options={parameterArmService}
+                            value={parameterArmService.find((opt) => opt.value === formik.values.arms_service) ?? null}
+                            onChange={(selectedOption) =>
+                                formik.setFieldValue(
+                                    "arms_service",
+                                    selectedOption?.value ?? ""
+                                )
+                            }
+                            placeholder="Select"
+                            errors={formik.errors.arms_service}
+                            touched={formik.touched.arms_service}
+                        />
+                    </div>
+                    <div className="col-sm-6 mb-3">
                         <FormInput
                             label="Name"
                             name="name"
@@ -105,6 +126,42 @@ const AddParameters = () => {
                             onBlur={formik.handleBlur}
                             errors={formik.errors.category}
                             touched={formik.touched.category}
+                        />
+                    </div>
+                    <div className="col-sm-6 mb-3">
+                        <FormInput
+                            label="Sub Category"
+                            name="subcategory"
+                            placeholder="Enter sub category"
+                            value={formik.values.subcategory}
+                            onChange={formik.handleChange}
+                            onBlur={formik.handleBlur}
+                            errors={formik.errors.subcategory}
+                            touched={formik.touched.subcategory}
+                        />
+                    </div>
+                    <div className="col-sm-6 mb-3">
+                        <FormInput
+                            label="Sub Sub Category"
+                            name="subsubcategory"
+                            placeholder="Enter sub sub category"
+                            value={formik.values.subsubcategory}
+                            onChange={formik.handleChange}
+                            onBlur={formik.handleBlur}
+                            errors={formik.errors.subsubcategory}
+                            touched={formik.touched.subsubcategory}
+                        />
+                    </div>
+                    <div className="col-sm-6 mb-3">
+                        <FormInput
+                            label="Location"
+                            name="location"
+                            placeholder="Enter location"
+                            value={formik.values.location}
+                            onChange={formik.handleChange}
+                            onBlur={formik.handleBlur}
+                            errors={formik.errors.location}
+                            touched={formik.touched.location}
                         />
                     </div>
                     <div className="col-sm-6 mb-3">
@@ -237,7 +294,7 @@ const AddParameters = () => {
                             touched={formik.touched.description}
                         />
                     </div>
-                    <div className="col-12 mt-2">
+                    <div className="col-12 mt-2 mb-3">
                         <div className="d-flex align-items-center">
                             <button type="submit" className="_btn _btn-lg primary" disabled={formik.isSubmitting}>
                                 {formik.isSubmitting ? (

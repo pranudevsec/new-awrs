@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
+import * as XLSX from "xlsx";
 import Breadcrumb from "../../../components/ui/breadcrumb/Breadcrumb";
 import FormSelect from "../../../components/form/FormSelect";
 import EmptyTable from "../../../components/ui/empty-table/EmptyTable";
@@ -10,7 +11,6 @@ import { awardTypeOptions, commandOptions } from "../../../data/options";
 import { SVGICON } from "../../../constants/iconsList";
 import { useAppDispatch, useAppSelector } from "../../../reduxToolkit/hooks";
 import { fetchApplicationsForHQ, fetchApplicationUnits, fetchSubordinates } from "../../../reduxToolkit/services/application/applicationService";
-import * as XLSX from "xlsx";
 
 const ApplicationsList = () => {
   const navigate = useNavigate();
@@ -20,9 +20,6 @@ const ApplicationsList = () => {
   const profile = useAppSelector((state) => state.admin.profile);
   const { units, loading, meta } = useAppSelector((state) => state.application);
   const role = profile?.user?.user_role?.toLowerCase() ?? "";
-
-  console.log("units -> ", units);
-
 
   // States
   const [awardType, setAwardType] = useState<string | null>(null);

@@ -15,7 +15,7 @@ export const SignUpSchema = Yup.object().shape({
   name: Yup.string().required('Name is required'),
   user_role: Yup.string().required('Role is required'),
   username: Yup.string()
-  .matches(/^[a-z0-9]+$/, 'Username must contain only lowercase letters and numbers, no spaces or special characters')
+    .matches(/^[a-z0-9]+$/, 'Username must contain only lowercase letters and numbers, no spaces or special characters')
     .min(3, 'User name must be at least 3 characters')
     .required('User name is required'),
   password: Yup.string()
@@ -32,6 +32,10 @@ export const ParametersSchema = Yup.object().shape({
   applicability: Yup.string().required('Applicability is required'),
   name: Yup.string().required('Name is required'),
   category: Yup.string().required('Category is required'),
+  subcategory: Yup.string().required('Sub Category is required'),
+  subsubcategory: Yup.string().required('Sub Sub Category is required'),
+  arms_service: Yup.string().required('Arm Service is required'),
+  location: Yup.string().required('Location is required'),
   description: Yup.string().required('Description is required'),
   negative: Yup.boolean().nullable().required('Negative selection is required'),
   per_unit_mark: Yup.number()

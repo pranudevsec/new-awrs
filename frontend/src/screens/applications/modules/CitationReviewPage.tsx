@@ -316,7 +316,6 @@ const CitationReviewPage = () => {
   for (const param of parameters) {
     const paramId: any = param.param_id;
     const markValue = marks[paramId];
-    console.log(param)
     if (markValue !== undefined) {
       if (param.negative) {
         negativeMarks += markValue;

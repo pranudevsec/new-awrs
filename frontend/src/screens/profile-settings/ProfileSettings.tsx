@@ -12,17 +12,7 @@ import FormInput from "../../components/form/FormInput";
 import type { UpdateUnitProfileRequest } from "../../reduxToolkit/services/auth/authInterface";
 import { useAppSelector, useAppDispatch } from "../../reduxToolkit/hooks";
 import { getProfile, reqToUpdateUnitProfile } from "../../reduxToolkit/services/auth/authService";
-import {
-  unitOptions,
-  brigadeOptions,
-  divisionOptions,
-  corpsOptions,
-  commandOptions,
-  hierarchicalStructure,
-  unitTypeOptions,
-  matrixUnitOptions,
-  rank
-} from "../../data/options";
+import { unitOptions, brigadeOptions, divisionOptions, corpsOptions, commandOptions, hierarchicalStructure, unitTypeOptions, matrixUnitOptions, rank } from "../../data/options";
 
 interface Officer {
   id?: string;
@@ -78,6 +68,8 @@ const ProfileSettings = () => {
     // digitalSign: "",
   }]);
   const [isDeclarationChecked, setIsDeclarationChecked] = useState(false);
+  const [errors, setErrors] = useState<any>([]);
+
   const handleCheckboxChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setIsDeclarationChecked(e.target.checked);
   };
@@ -244,6 +236,51 @@ const ProfileSettings = () => {
     ]);
   };
 
+  const validateAwards = () => {
+    let hasError = false;
+    const newErrors = awards.map(() => ({
+      award_type: "",
+      award_title: "",
+      award_year: ""
+    }));
+
+    awards.forEach((award, idx) => {
+      if (!award.award_type) {
+        newErrors[idx].award_type = "Award type is required.";
+        hasError = true;
+      }
+
+      if (!award.award_title) {
+        newErrors[idx].award_title = "Award title is required.";
+        hasError = true;
+      }
+
+      if (!award.award_year) {
+        newErrors[idx].award_year = "Award year is required.";
+        hasError = true;
+      }
+
+      // Duplicate check only if title and year are both provided
+      if (award.award_title && award.award_year) {
+        const isDuplicate = awards.some(
+          (a, i) =>
+            i !== idx &&
+            a.award_year === award.award_year &&
+            a.award_title === award.award_title
+        );
+
+        if (isDuplicate) {
+          newErrors[idx].award_year = `Year ${award.award_year} is already selected for award "${award.award_title}".`;
+          hasError = true;
+        }
+      }
+    });
+
+    setErrors(newErrors);
+    return !hasError;
+  };
+
+
   const formik: any = useFormik({
     initialValues: {
       unit: profile?.unit?.name ?? "",
@@ -376,7 +413,14 @@ const ProfileSettings = () => {
       </div>
 
       {/* Profile Settings */}
-      <form onSubmit={formik.handleSubmit} className="mb-5">
+      <form
+        onSubmit={(e) => {
+          e.preventDefault();
+          const awardsValid = validateAwards();
+          if (!awardsValid) return;
+          formik.handleSubmit();
+        }}
+        className="mb-5">
         <div className="row">
           {visibleFields.map((field) => {
             const optionsForField =
@@ -445,9 +489,9 @@ const ProfileSettings = () => {
                     disabled={isDisabled}
                   />
                   {formik.touched[field] && formik.errors[field] && (
-                    <div className="invalid-feedback">
+                    <p className="error-text">
                       {formik.errors[field]}
-                    </div>
+                    </p>
                   )}
                 </div>
               );
@@ -509,7 +553,7 @@ const ProfileSettings = () => {
                     <tr key={award.award_id ?? idx}>
                       <td>
                         <select
-                          className="form-select"
+                          className={`form-select ${errors[idx]?.award_type ? "invalid" : ""}`}
                           value={award.award_type}
                           onChange={(e) => {
                             const updated = [...awards];
@@ -528,10 +572,13 @@ const ProfileSettings = () => {
                           <option value="VCOAS">VCOAS</option>
                           <option value="CINCAN">CINCAN</option>
                         </select>
+                        {errors[idx]?.award_type && (
+                          <p className="error-text">{errors[idx].award_type}</p>
+                        )}
                       </td>
                       <td>
                         <select
-                          className="form-select"
+                          className={`form-select ${errors[idx]?.award_title ? "invalid" : ""}`}
                           value={award.award_title}
                           onChange={(e) => {
                             const updated = [...awards];
@@ -545,10 +592,13 @@ const ProfileSettings = () => {
                           <option value="citation">Citation</option>
                           <option value="appreciation">Appreciation</option>
                         </select>
+                        {errors[idx]?.award_title && (
+                          <p className="error-text">{errors[idx].award_title}</p>
+                        )}
                       </td>
                       <td>
-                      <select
-                          className="form-select"
+                        <select
+                          className={`form-select ${errors[idx]?.award_year ? "invalid" : ""}`}
                           value={award.award_year}
                           onChange={(e) => {
                             const updated = [...awards];
@@ -557,18 +607,15 @@ const ProfileSettings = () => {
                           }}
                         >
                           <option value="">Select Year</option>
-                          {yearOptions
-                            .filter(
-                              (year) =>
-                                !awards.some((a, i) => i !== idx && a.award_year === year) ||
-                                award.award_year === year
-                            )
-                            .map((year) => (
-                              <option key={year} value={year}>
-                                {year}
-                              </option>
-                            ))}
+                          {yearOptions.map((year) => (
+                            <option key={year} value={year}>
+                              {year}
+                            </option>
+                          ))}
                         </select>
+                        {errors[idx]?.award_year && (
+                          <p className="error-text">{errors[idx].award_year}</p>
+                        )}
                       </td>
                       <td>
                         <button
@@ -596,7 +643,6 @@ const ProfileSettings = () => {
               </table>
               <button
                 type="button"
-
                 style={{
                   background: "#9c9c9cff",
                   color: "#fff",

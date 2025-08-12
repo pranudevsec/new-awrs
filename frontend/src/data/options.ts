@@ -1,6 +1,5 @@
-
 export const awardTypeOptions: OptionType[] = [
-  {value:"All", label:"All"},
+  { value: "All", label: "All" },
   { value: "citation", label: "Citation" },
   { value: "appreciation", label: "Appreciation" },
 ];
@@ -100,7 +99,7 @@ export const commandOptions: OptionType[] = [
   { value: "Central Command", label: "Central Command" },
   { value: "Northern Command", label: "Northern Command" },
   { value: "Artrac Command", label: "Artrac Command" },
-  { value: "South Western Command", label: "South Western Command" }
+  { value: "South Western Command", label: "South Western Command" },
 ];
 
 export const hierarchicalStructure = [
@@ -351,16 +350,22 @@ export const unitTypeOptions = [
   { label: "REGT/TRG", value: "REGT/TRG" },
   { label: "REGTL CENTRES & RECORDS", value: "REGTL CENTRES & RECORDS" },
   { label: "RVC", value: "RVC" },
-  { label: "RVC (REMOUNT TRG SCHOOL & DEPOTS)", value: "RVC (REMOUNT TRG SCHOOL & DEPOTS)" },
+  {
+    label: "RVC (REMOUNT TRG SCHOOL & DEPOTS)",
+    value: "RVC (REMOUNT TRG SCHOOL & DEPOTS)",
+  },
   { label: "RVC : MIL VET HOSP", value: "RVC : MIL VET HOSP" },
   { label: "RVC UNITS CMVL", value: "RVC UNITS CMVL" },
-  { label: "RVC UNITS(EQUINE BREEDING STUD)", value: "RVC UNITS(EQUINE BREEDING STUD)" },
+  {
+    label: "RVC UNITS(EQUINE BREEDING STUD)",
+    value: "RVC UNITS(EQUINE BREEDING STUD)",
+  },
   { label: "SATA", value: "SATA" },
   { label: "SIGNAL", value: "SIGNAL" },
   { label: "TA", value: "TA" },
   { label: "OTHERS", value: "OTHERS" },
 ];
- 
+
 export const matrixUnitOptions = [
   { label: "CI/CT", value: "HINTERLAND" },
   { label: "LC", value: "LC" },
@@ -384,6 +389,65 @@ export const rank = [
   { label: "Lt", value: "Lt" },
 ];
 
+export const parameterArmService = [
+  { label: "CI/CT", value: "HINTERLAND" },
+  { label: "LC", value: "LC" },
+  { label: "AIOS", value: "AIOS" },
+  { label: "LAC", value: "LAC" },
+  { label: "HAA", value: "HAA" },
+  { label: "AGPL", value: "AGPL" },
+  { label: "Internal Security (IS)", value: "IS" },
+  { label: "Non Metrics (NM)", value: "NM" },
+  { label: "Peace/Mod Fd", value: "Peace" },
+  { label: "AAD", value: "AAD" },
+  { label: "ARMD/MECH INF", value: "ARMD/MECH INF" },
+  { label: "ARMY AVN", value: "ARMY AVN" },
+  { label: "ARMY DOG UNIT", value: "ARMY DOG UNIT" },
+  { label: "ARTY", value: "ARTY" },
+  { label: "ASC", value: "ASC" },
+  { label: "ASC (AT)", value: "ASC (AT)" },
+  { label: "ASC (MT)", value: "ASC (MT)" },
+  { label: "ASC (SUP)", value: "ASC (SUP)" },
+  { label: "ASC (SUP/FOL)", value: "ASC (SUP/FOL)" },
+  { label: "ASC 2nd & 3rd LINE TPT", value: "ASC 2nd & 3rd LINE TPT" },
+  { label: "AVN", value: "AVN" },
+  { label: "CMP", value: "CMP" },
+  { label: "DENTAL", value: "DENTAL" },
+  { label: "DSC", value: "DSC" },
+  { label: "EME", value: "EME" },
+  { label: "ENGRS", value: "ENGRS" },
+  { label: "EW/SI", value: "EW/SI" },
+  { label: "FD HOSP", value: "FD HOSP" },
+  { label: "FFU", value: "FFU" },
+  { label: "INFANTRY", value: "INFANTRY" },
+  { label: "INT", value: "INT" },
+  { label: "MED", value: "MED" },
+  { label: "MED LESS FD HOSP", value: "MED LESS FD HOSP" },
+  { label: "ORD", value: "ORD" },
+  { label: "ORD (DOU)", value: "ORD (DOU)" },
+  { label: "ORD (FAD)", value: "ORD (FAD)" },
+  { label: "ORD (FOD)", value: "ORD (FOD)" },
+  { label: "ORD (NCVD/VEH COY)", value: "ORD (NCVD/VEH COY)" },
+  { label: "ORD AMN", value: "ORD AMN" },
+  { label: "REGT/TRG", value: "REGT/TRG" },
+  { label: "REGTL CENTRES & RECORDS", value: "REGTL CENTRES & RECORDS" },
+  { label: "RVC", value: "RVC" },
+  {
+    label: "RVC (REMOUNT TRG SCHOOL & DEPOTS)",
+    value: "RVC (REMOUNT TRG SCHOOL & DEPOTS)",
+  },
+  { label: "RVC : MIL VET HOSP", value: "RVC : MIL VET HOSP" },
+  { label: "RVC UNITS CMVL", value: "RVC UNITS CMVL" },
+  {
+    label: "RVC UNITS(EQUINE BREEDING STUD)",
+    value: "RVC UNITS(EQUINE BREEDING STUD)",
+  },
+  { label: "SATA", value: "SATA" },
+  { label: "SIGNAL", value: "SIGNAL" },
+  { label: "TA", value: "TA" },
+  { label: "OTHERS", value: "OTHERS" },
+];
+
 export const cyclePeriodOptions: OptionType[] = [
   { value: "2024 - H1", label: "2024 - H1" },
   { value: "2024 - H2", label: "2024 - H2" },
@@ -403,8 +467,7 @@ export const getParamDisplay = (param: any) => {
     };
   }
 
-  const main =
-    subsubcategory ?? subcategory ?? category ?? null;
+  const main = subsubcategory ?? subcategory ?? category ?? null;
 
   return {
     main,
@@ -415,9 +478,9 @@ export const getParamDisplay = (param: any) => {
 };
 
 export const DisclaimerText = {
-  "unit": `I hereby confirm that the information provided by me is accurate and up-to-date. 
+  unit: `I hereby confirm that the information provided by me is accurate and up-to-date. 
   I understand that it is my sole responsibility to ensure the correctness of the information and I accept 
   any consequences arising by providing false or outdated details.`,
-  "All": `I hereby declare that, I have thoroughly reviewed the application, channel of reporting and supporting documents. 
+  All: `I hereby declare that, I have thoroughly reviewed the application, channel of reporting and supporting documents. 
   My recommendation/decision is based solely on the information presented.`,
 };
