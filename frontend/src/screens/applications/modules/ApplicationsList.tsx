@@ -232,6 +232,7 @@ const ApplicationsList = () => {
               <th style={{ width: 150, minWidth: 150, maxWidth: 150 }}>Total Marks</th>
               <th style={{ width: 150, minWidth: 150, maxWidth: 150 }}>command</th>
               <th style={{ width: 150, minWidth: 150, maxWidth: 150 }}>Arm / Service</th>
+              <th style={{ width: 150, minWidth: 150, maxWidth: 150 }}>Role / Deployment              </th>
               <th style={{ width: 150, minWidth: 150, maxWidth: 150 }}>Location</th>
               {role === "unit" && (<th style={{ width: 150, minWidth: 150, maxWidth: 150 }}>Status</th>)}
               <th style={{ width: 100, minWidth: 100, maxWidth: 100 }}></th>
@@ -289,7 +290,10 @@ const ApplicationsList = () => {
                     <p className="fw-4">{unit.fds.command ?? "-"}</p>
                   </td>
                   <td style={{ width: 150, minWidth: 150, maxWidth: 150 }}>
-                    <p className="fw-4">{unit.fds.unit_type ?? "-"}</p>
+                    <p className="fw-4">{unit.fds.arms_service ?? "-"}</p>
+                  </td>
+                  <td style={{ width: 150, minWidth: 150, maxWidth: 150 }}>
+                    <p className="fw-4">{unit.fds.matrix_unit ?? "-"}</p>
                   </td>
                   <td style={{ width: 150, minWidth: 150, maxWidth: 150 }}>
                     <p className="fw-4">{unit.fds.location ?? "-"}</p>

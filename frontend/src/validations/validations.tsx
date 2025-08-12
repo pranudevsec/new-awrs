@@ -15,7 +15,7 @@ export const SignUpSchema = Yup.object().shape({
   name: Yup.string().required('Name is required'),
   user_role: Yup.string().required('Role is required'),
   username: Yup.string()
-    .matches(/^[a-z]+$/, 'Username must contain only lowercase letters, no spaces or special characters')
+  .matches(/^[a-z0-9]+$/, 'Username must contain only lowercase letters and numbers, no spaces or special characters')
     .min(3, 'User name must be at least 3 characters')
     .required('User name is required'),
   password: Yup.string()

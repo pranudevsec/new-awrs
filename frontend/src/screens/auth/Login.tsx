@@ -20,7 +20,7 @@ const cw2TypeOptions = [
 ];
 const roleCredentials: Record<string, { username: string; password: string }> =
 {
-  unit: { username: "unit", password: "12345678" },
+  unit: { username: "unit1", password: "12345678" },
   special_unit: { username: "testspecialunit", password: "12345678" },
   brigade: { username: "bde1", password: "12345678" },
   brigade_member: { username: "bde1_member", password: "12345678" },

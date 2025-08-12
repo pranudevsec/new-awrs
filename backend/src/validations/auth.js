@@ -16,9 +16,7 @@ exports.validateLogin = [
 exports.validateRegister = [
   body("rank")
     .notEmpty()
-    .withMessage("Rank is required")
-    .isLength({ max: 8 })
-    .withMessage("Rank must not exceed 8 characters"),
+    .withMessage("Rank is required"),
 
   body("name")
     .notEmpty()

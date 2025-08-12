@@ -291,6 +291,11 @@ const filterSidebarStructure = (userRole: string, alwaysVisible: string[]) => {
     if (alwaysVisible.includes(item.label)) return true;
 
     if (["command", "cw2"].includes(userRole)) {
+      if (userRole === "cw2") {
+        return commandExtraLabels
+          .filter(label => label !== "Profile Settings")
+          .includes(item.label);
+      }
       return commandExtraLabels.includes(item.label);
     }
 

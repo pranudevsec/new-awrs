@@ -113,10 +113,10 @@ INSERT INTO User_tab VALUES (22, '4994927 ', 'CO      ', 'CO', 'unit', 'unit4', 
 INSERT INTO User_tab VALUES (23, '1923615 ', 'CO      ', 'CO', 'unit', 'unit5', '$2b$10$FCHwKvPqS2IrJY2OZtJ2OemtfeFiz1Cj/ez8bv6NwTk5.Se.YaFwq', 13, NULL, false, false, NULL, false, false, true, '2025-07-27 12:07:48.326667', '2025-07-27 13:11:01.542334');
 INSERT INTO User_tab VALUES (24, '1052614 ', 'CO      ', 'CO', 'unit', 'unit6', '$2b$10$FCHwKvPqS2IrJY2OZtJ2OemtfeFiz1Cj/ez8bv6NwTk5.Se.YaFwq', 14, NULL, false, false, NULL, false, false, true, '2025-07-27 12:08:11.156901', '2025-07-27 13:12:53.019649');
 INSERT INTO User_tab VALUES (25, '7109625 ', 'CO      ', 'CO', 'unit', 'unit7', '$2b$10$FCHwKvPqS2IrJY2OZtJ2OemtfeFiz1Cj/ez8bv6NwTk5.Se.YaFwq', 15, NULL, false, false, NULL, false, false, true, '2025-07-27 12:08:37.337739', '2025-07-27 13:14:37.294499');
-INSERT INTO User_tab VALUES (31, '5628146 ', 'CDR     ', 'CDR', 'brigade', 'bde1', '$2b$10$FCHwKvPqS2IrJY2OZtJ2OemtfeFiz1Cj/ez8bv6NwTk5.Se.YaFwq', 16, NULL, false, false, NULL, false, false, true, '2025-07-27 12:11:59.989562', '2025-07-27 13:15:52.415612');
-INSERT INTO User_tab VALUES (33, '9890959 ', 'CDR     ', 'CDR', 'brigade', 'bde2', '$2b$10$FCHwKvPqS2IrJY2OZtJ2OemtfeFiz1Cj/ez8bv6NwTk5.Se.YaFwq', 17, NULL, false, false, NULL, false, false, true, '2025-07-27 12:14:03.882564', '2025-07-27 13:22:56.674804');
-INSERT INTO User_tab VALUES (39, '1428481 ', 'DIV GOS ', 'DIV GOC', 'division', 'div1', '$2b$10$FCHwKvPqS2IrJY2OZtJ2OemtfeFiz1Cj/ez8bv6NwTk5.Se.YaFwq', 18, NULL, false, false, NULL, false, false, true, '2025-07-27 12:17:08.36756', '2025-07-27 13:28:57.523669');
-INSERT INTO User_tab VALUES (45, '2724902 ', 'CORPS C ', 'CORPS CDR', 'corps', 'corps1', '$2b$10$FCHwKvPqS2IrJY2OZtJ2OemtfeFiz1Cj/ez8bv6NwTk5.Se.YaFwq', 19, NULL, false, false, NULL, false, false, true, '2025-07-27 12:20:28.494464', '2025-07-27 13:32:19.262108');
+INSERT INTO User_tab VALUES (31, '5628146 ', 'CDR     ', 'CDR', 'brigade', 'bde1', '$2b$10$FCHwKvPqS2IrJY2OZtJ2OemtfeFiz1Cj/ez8bv6NwTk5.Se.YaFwq', 16, NULL, false, false, NULL, false, true, true, '2025-07-27 12:11:59.989562', '2025-07-27 13:15:52.415612');
+INSERT INTO User_tab VALUES (33, '9890959 ', 'CDR     ', 'CDR', 'brigade', 'bde2', '$2b$10$FCHwKvPqS2IrJY2OZtJ2OemtfeFiz1Cj/ez8bv6NwTk5.Se.YaFwq', 17, NULL, false, false, NULL, false, true, true, '2025-07-27 12:14:03.882564', '2025-07-27 13:22:56.674804');
+INSERT INTO User_tab VALUES (39, '1428481 ', 'DIV GOS ', 'DIV GOC', 'division', 'div1', '$2b$10$FCHwKvPqS2IrJY2OZtJ2OemtfeFiz1Cj/ez8bv6NwTk5.Se.YaFwq', 18, NULL, false, false, NULL, false, true, true, '2025-07-27 12:17:08.36756', '2025-07-27 13:28:57.523669');
+INSERT INTO User_tab VALUES (45, '2724902 ', 'CORPS C ', 'CORPS CDR', 'corps', 'corps1', '$2b$10$FCHwKvPqS2IrJY2OZtJ2OemtfeFiz1Cj/ez8bv6NwTk5.Se.YaFwq', 19, NULL, false, false, NULL, false, true, true, '2025-07-27 12:20:28.494464', '2025-07-27 13:32:19.262108');
 INSERT INTO User_tab VALUES (32, '5273174 ', 'AAG  ', 'AAG', 'brigade', 'bde1_member', '$2b$10$FCHwKvPqS2IrJY2OZtJ2OemtfeFiz1Cj/ez8bv6NwTk5.Se.YaFwq', NULL, NULL, false, true, 31, false, false, true, '2025-07-27 12:13:42.930595', '2025-07-27 14:07:03.581031');
 INSERT INTO User_tab VALUES (51, '8557716 ', 'GOC-in-C', 'GOC-in-C', 'command', 'scomd', '$2b$10$FCHwKvPqS2IrJY2OZtJ2OemtfeFiz1Cj/ez8bv6NwTk5.Se.YaFwq', NULL, NULL, false, false, NULL, false, false, true, '2025-07-27 12:24:01.547788', '2025-07-27 12:24:01.547788');
 INSERT INTO User_tab VALUES (53, '9010503 ', 'GOC-in-C', 'GOC-in-C', 'command', 'ccomd', '$2b$10$FCHwKvPqS2IrJY2OZtJ2OemtfeFiz1Cj/ez8bv6NwTk5.Se.YaFwq', NULL, NULL, false, false, NULL, false, false, true, '2025-07-27 12:24:57.718066', '2025-07-27 12:24:57.718066');
@@ -126,7 +126,7 @@ INSERT INTO User_tab VALUES (55, '6991544 ', 'GOC-in-C', 'GOC-in-C', 'command', 
 INSERT INTO User_tab VALUES (58, '7615185 ', 'COS     ', 'Col A (Comd)', 'command', 'ecomd_member', '$2b$10$FCHwKvPqS2IrJY2OZtJ2OemtfeFiz1Cj/ez8bv6NwTk5.Se.YaFwq', NULL, NULL, false, true, 57, false, false, true, '2025-07-27 12:27:27.146325', '2025-07-27 14:07:50.017999');
 INSERT INTO User_tab VALUES (19, '1174267 ', 'CO      ', 'Unit1', 'unit', 'unit1', '$2b$10$FCHwKvPqS2IrJY2OZtJ2OemtfeFiz1Cj/ez8bv6NwTk5.Se.YaFwq', 9, NULL, false, false, NULL, false, false, true, '2025-07-27 12:04:09.368201', '2025-07-27 12:36:28.144734');
 INSERT INTO User_tab VALUES (21, '7955613 ', 'CO      ', 'CO', 'unit', 'unit3', '$2b$10$FCHwKvPqS2IrJY2OZtJ2OemtfeFiz1Cj/ez8bv6NwTk5.Se.YaFwq', 11, NULL, false, false, NULL, false, false, true, '2025-07-27 12:06:59.385931', '2025-07-27 13:07:11.224607');
-INSERT INTO User_tab VALUES (49, '8317727 ', 'GOC-in-C', 'GOC-in-C', 'command', 'ncomd', '$2b$10$FCHwKvPqS2IrJY2OZtJ2OemtfeFiz1Cj/ez8bv6NwTk5.Se.YaFwq', 20, NULL, false, false, NULL, false, false, true, '2025-07-27 12:22:58.429063', '2025-07-27 14:00:56.718786');
+INSERT INTO User_tab VALUES (49, '8317727 ', 'GOC-in-C', 'GOC-in-C', 'command', 'ncomd', '$2b$10$FCHwKvPqS2IrJY2OZtJ2OemtfeFiz1Cj/ez8bv6NwTk5.Se.YaFwq', 20, NULL, false, false, NULL, false, true, true, '2025-07-27 12:22:58.429063', '2025-07-27 14:00:56.718786');
 INSERT INTO User_tab VALUES (36, '6011499 ', 'DY CDR  ', 'CY CDR', 'brigade', 'bde3_member', '$2b$10$FCHwKvPqS2IrJY2OZtJ2OemtfeFiz1Cj/ez8bv6NwTk5.Se.YaFwq', NULL, NULL, false, true, 35, false, false, true, '2025-07-27 12:15:22.229005', '2025-07-27 14:07:03.581031');
 INSERT INTO User_tab VALUES (38, '9231217 ', 'AAG  ', 'AAG', 'brigade', 'bde4_member', '$2b$10$FCHwKvPqS2IrJY2OZtJ2OemtfeFiz1Cj/ez8bv6NwTk5.Se.YaFwq', NULL, NULL, false, true, 37, false, false, true, '2025-07-27 12:16:11.261116', '2025-07-27 14:07:03.581031');
 INSERT INTO User_tab VALUES (40, '7886192 ', 'Col A (Div)  ', 'Col A (Div)', 'division', 'div1_member', '$2b$10$FCHwKvPqS2IrJY2OZtJ2OemtfeFiz1Cj/ez8bv6NwTk5.Se.YaFwq', NULL, NULL, false, true, 39, false, false, true, '2025-07-27 12:17:37.99353', '2025-07-27 14:07:03.581031');
@@ -167,3 +167,132 @@ INSERT INTO public.unit_tab VALUES (16, NULL, 'brigade1', '', '', NULL, 'divison
 INSERT INTO public.unit_tab VALUES (17, NULL, 'brigade2', '', '', NULL, 'divison1', 'corps1', 'Northern Command', '', '{"{\"{\\\"{\\\\\\\"\\\\\\\"}\\\"}\"}"}', '', '[]', '[{"id": "162e0916-a7be-4c1e-a5fa-8f0574d89943", "name": "Shubham Singh", "rank": "Lt Col", "ic_number": "12435454", "appointment": "DY CDR, bde2, Northern Command", "member_type": "presiding_officer", "member_order": ""}, {"id": "954b3925-e9fa-440f-98f7-3e7848e85824", "name": "P K Sharma", "rank": "Maj", "ic_number": "41422", "appointment": "2IC, bde2, Northern Command", "member_type": "member_officer", "member_order": "1"}]', false, false, false, '2025-07-27 13:22:56.674804', '2025-07-27 14:14:35.977853');
 
 INSERT INTO public.config_tab VALUES (1, '2025-12-31', '/mnt/data/documents', '{"2024 - H1","2024 - H2"}', '2024 - H1');
+
+
+
+
+
+
+-- Drop if exists
+DROP TABLE IF EXISTS Citation_tab;
+
+-- Create the Citation_tab table
+CREATE TABLE Citation_tab (
+    citation_id SERIAL PRIMARY KEY,
+    unit_id INTEGER NOT NULL REFERENCES Unit_tab(unit_id),
+    date_init DATE NOT NULL,
+    citation_fds JSON NOT NULL,  -- Assumed to be stored in encrypted format at the app layer
+    last_approved_by_role VARCHAR(50),
+last_approved_at TIMESTAMP,
+    status_flag VARCHAR(20) NOT NULL CHECK (
+        status_flag IN ( 'in_review', 'in_clarification', 'approved', 'rejected','draft','shortlisted_approved','withdrawed')
+    ),
+    isShortlisted BOOLEAN DEFAULT FALSE,
+    is_mo_approved BOOLEAN DEFAULT FALSE,
+    mo_approved_at TIMESTAMP,
+    is_ol_approved BOOLEAN DEFAULT FALSE,
+    ol_approved_at TIMESTAMP,
+    last_shortlisted_approved_role VARCHAR(50),
+    unitRemarks TEXT, 
+     remarks JSON ,
+  is_hr_review BOOLEAN DEFAULT FALSE,
+is_dv_review BOOLEAN DEFAULT FALSE,
+is_mp_review BOOLEAN DEFAULT FALSE,
+last_rejected_by_role VARCHAR,
+last_rejected_at TIMESTAMP,
+    is_withdraw_requested BOOLEAN DEFAULT FALSE,
+    withdraw_requested_by VARCHAR(50),
+    withdraw_requested_at TIMESTAMP,
+    withdraw_status VARCHAR(20),
+    withdraw_requested_by_user_id INTEGER,
+    withdraw_approved_by_role VARCHAR(50),
+    withdraw_approved_by_user_id INTEGER,
+    withdraw_approved_at TIMESTAMP
+);
+--------------------------------------------------------------------------------------------Appre_tab-------------------------------------------------------------------------------------------------------------------------------
+-- Drop if exists
+DROP TABLE IF EXISTS Appre_tab;
+
+-- Create the Appre_tab table
+CREATE TABLE Appre_tab (
+    appreciation_id SERIAL PRIMARY KEY,
+    unit_id INTEGER NOT NULL REFERENCES Unit_tab(unit_id),
+    date_init DATE NOT NULL,
+    appre_fds JSON NOT NULL, -- JSON and encrypted
+    last_approved_by_role VARCHAR(50),
+last_approved_at TIMESTAMP,
+     status_flag VARCHAR(20) NOT NULL CHECK (
+        status_flag IN ('in_review','in_clarification', 'approved', 'rejected','draft','shortlisted_approved','withdrawed')
+    ),
+    is_mo_approved BOOLEAN DEFAULT FALSE,
+    mo_approved_at TIMESTAMP,
+    is_ol_approved BOOLEAN DEFAULT FALSE,
+    ol_approved_at TIMESTAMP,
+    isShortlisted BOOLEAN DEFAULT FALSE ,
+    last_shortlisted_approved_role VARCHAR(50),
+    unitRemarks TEXT, 
+     remarks JSON ,
+      is_hr_review BOOLEAN DEFAULT FALSE,
+is_dv_review BOOLEAN DEFAULT FALSE,
+is_mp_review BOOLEAN DEFAULT FALSE,
+last_rejected_by_role VARCHAR,
+last_rejected_at TIMESTAMP,
+    is_withdraw_requested BOOLEAN DEFAULT FALSE,
+    withdraw_requested_by VARCHAR(50),
+    withdraw_requested_at TIMESTAMP,
+    withdraw_status VARCHAR(20) ,
+    withdraw_requested_by_user_id INTEGER,
+    withdraw_approved_by_role VARCHAR(50),
+    withdraw_approved_by_user_id INTEGER,
+    withdraw_approved_at TIMESTAMP
+);
+
+--------------------------------------------------------------------------------------------Clarification_tab-------------------------------------------------------------------------------------------------------------------------------
+-- Drop the Clarification_tab table if it exists
+DROP TABLE IF EXISTS Clarification_tab;
+
+-- Create the Clarification_tab table
+CREATE TABLE Clarification_tab (
+    clarification_id SERIAL PRIMARY KEY,
+    application_type VARCHAR(20) NOT NULL CHECK (application_type IN ('citation', 'appreciation')),
+    application_id INTEGER NOT NULL,
+    parameter_id INTEGER NOT NULL,
+    parameter_name TEXT NOT NULL,
+
+    clarification_by_id INTEGER NOT NULL,
+    clarification_by_role VARCHAR(50) NOT NULL,
+    
+    clarification_status VARCHAR(20) NOT NULL DEFAULT 'pending', -- 'pending', 'clarified', 'rejected'
+    reviewer_comment TEXT,
+    clarification TEXT,
+    clarification_doc TEXT,
+    clarified_history JSONB DEFAULT '[]',
+
+    clarification_sent_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    clarified_at TIMESTAMP
+);
+
+-- Drop the signature_logs table if it exists
+DROP TABLE IF EXISTS signature_logs;
+-- Create the signature_logs table
+CREATE TABLE signature_logs (
+    id SERIAL PRIMARY KEY,
+    application_id INTEGER NOT NULL,
+    ic_number VARCHAR(100) NOT NULL,
+    member_level VARCHAR(50) NOT NULL,
+    status_flag VARCHAR(20) NOT NULL CHECK (
+        status_flag IN ('approved', 'rejected')
+    ),
+    sign_digest TEXT NOT NULL,
+    created_at TIMESTAMP default current_timestamp
+);
+
+CREATE EXTENSION IF NOT EXISTS vector;
+DROP TABLE IF EXISTS documents;
+
+CREATE TABLE documents (
+  id SERIAL PRIMARY KEY,
+  embedding vector(768),
+  text TEXT,
+  metadata JSONB
+);
