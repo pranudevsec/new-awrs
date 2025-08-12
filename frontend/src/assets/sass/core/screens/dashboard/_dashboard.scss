@@ -1,34 +1,49 @@
 .dashboard-section {
-    .assets-details-cards .card {
-        padding: 24px;
-        background-color: var(--gray-0);
-        border: 1px solid var(--muted);
-        border-radius: 8px;
-        transition: all 0.3s ease;
-
-        &:hover {
-            box-shadow: rgba(0, 0, 0, 0.1) 0px 4px 6px -1px, rgba(0, 0, 0, 0.06) 0px 2px 4px -1px;
+    .assets-details-cards {
+        .card {
+            padding: 24px;
+            background-color: var(--gray-0);
+            border: 1px solid var(--muted);
+            border-radius: 8px;
+            transition: all 0.3s ease;
+    
+            &:hover {
+                box-shadow: rgba(0, 0, 0, 0.1) 0px 4px 6px -1px,
+                            rgba(0, 0, 0, 0.06) 0px 2px 4px -1px;
+            }
+    
+            .left-content {
+                .icon {
+                    width: 60px;
+                    height: 60px;
+                }
+    
+                .text {
+                    h6 {
+                        font-size: 14px;
+                        color: var(--gray-500);
+                    }
+    
+                    h4 {
+                        font-size: 22px;
+                        color: var(--gray-900);
+                    }
+                }
+            }
         }
-
-        .left-content {
-            .icon {
-                width: 60px;
-                height: 60px;
-            }
-
-            .text {
-                h6 {
-                    font-size: 14px;
-                    color: var(--gray-500);
-                }
-
-                h4 {
-                    font-size: 22px;
-                    color: var(--gray-900);
-                }
-            }
+        
+        .card.total-application {
+            background-color: #e3f2fd; 
+            border-color: #90caf9;
+        }
+    
+        .card.finalized-application {
+            background-color: #e8f5e9; 
+            border-color: #a5d6a7;
         }
     }
+    
+    
 
     .unit-score-chart {
         border-radius: 8px;

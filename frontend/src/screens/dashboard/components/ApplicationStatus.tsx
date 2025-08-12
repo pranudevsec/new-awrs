@@ -48,9 +48,9 @@ const LegendFormatter: React.FC<LegendFormatterProps> = ({ value }) => (
 
 const ApplicationStatus: React.FC<ProductDetailProps> = ({ dashboardStats }) => {
     const data = [
-        { name: 'Pending', value: dashboardStats?.totalPendingApplications ?? 0 },
-        { name: 'Approved', value: dashboardStats?.approved ?? 0 },
-        { name: 'Rejected', value: dashboardStats?.rejected ?? 0 },
+        { name: 'Pending', value: 3 ?? 0 },
+        { name: 'Approved', value: 6 ?? 0 },
+        { name: 'Rejected', value: 4 ?? 0 },
     ];
 
     const renderLegendLabel = (value: string) => {
@@ -60,7 +60,7 @@ const ApplicationStatus: React.FC<ProductDetailProps> = ({ dashboardStats }) => 
     return (
         <div className="application-status-chart h-100">
             <div className="d-flex flex-wrap gap-2 justify-content-between mb-3">
-                <h2 className="fw-6">Top Units by Total Score</h2>
+                <h2 className="fw-6">Applications By Status</h2>
             </div>
             <div style={{ height: 250, overflowX: "auto" }}>
                 <ResponsiveContainer width="100%" height="100%" minWidth={400}>

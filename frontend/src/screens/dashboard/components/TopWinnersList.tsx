@@ -1,136 +1,68 @@
 const TopWinnersList = () => {
+    const handleRowClick = (id: string) => {
+        console.log("Row clicked:", id);
+        // You can navigate or open modal here
+    };
+
     return (
         <div className="top-winners-list mb-4">
-            <h3 className="fw-6 mb-3">Winners</h3>
             <div className="table-responsive">
                 <table className="table-style-2 w-100">
                     <thead>
                         <tr>
-                            <th style={{ width: 200, minWidth: 200, maxWidth: 200 }}>
-                                <div className="d-flex align-items-start">Application Id</div>
-                            </th>
-                            <th style={{ width: 150, minWidth: 150, maxWidth: 150 }}>
-                                <div className="d-flex align-items-start">Unit ID</div>
-                            </th>
-                            <th style={{ width: 150, minWidth: 150, maxWidth: 150 }}>
-                                <div className="d-flex align-items-start">Final Score</div>
-                            </th>
-                            <th style={{ width: 150, minWidth: 150, maxWidth: 150 }}>
-                                <div className="d-flex align-items-start">Rank</div>
-                            </th>
-                            <th style={{ width: 200, minWidth: 200, maxWidth: 200 }}>
-                                <div className="d-flex align-items-start">Award Type</div>
-                            </th>
+                            <th style={{ width: 200 }}>Application Id</th>
+                            <th style={{ width: 150 }}>Unit ID</th>
+                            <th style={{ width: 180 }}>Submission Date</th>
+                            <th style={{ width: 150 }}>Type</th>
+                            <th style={{ width: 150 }}>Total Marks</th>
+                            <th style={{ width: 150 }}>Command</th>
+                            <th style={{ width: 200 }}>Arm / Service</th>
+                            <th style={{ width: 200 }}>Role / Deployment</th>
+                            <th style={{ width: 200 }}>Location</th>
                         </tr>
                     </thead>
                     <tbody>
-                        <tr className="cursor-auto">
-                            <td style={{ width: 200, minWidth: 200, maxWidth: 200 }}>
-                                <p className="fw-4">#123456</p>
-                            </td>
-                            <td style={{ width: 150, minWidth: 150, maxWidth: 150 }}>
-                                <p className="fw-4">#123456</p>
-                            </td>
-                            <td style={{ width: 150, minWidth: 150, maxWidth: 150 }}>
-                                <p className="fw-4">97</p>
-                            </td>
-                            <td style={{ width: 150, minWidth: 150, maxWidth: 150 }}>
-                                <p className="fw-4">1</p>
-                            </td>
-                            <td style={{ width: 200, minWidth: 200, maxWidth: 200 }}>
-                                <p className="fw-4">Citation</p>
-                            </td>
-                        </tr>
-                        <tr className="cursor-auto">
-                            <td style={{ width: 200, minWidth: 200, maxWidth: 200 }}>
-                                <p className="fw-4">#123456</p>
-                            </td>
-                            <td style={{ width: 150, minWidth: 150, maxWidth: 150 }}>
-                                <p className="fw-4">#123456</p>
-                            </td>
-                            <td style={{ width: 150, minWidth: 150, maxWidth: 150 }}>
-                                <p className="fw-4">97</p>
-                            </td>
-                            <td style={{ width: 150, minWidth: 150, maxWidth: 150 }}>
-                                <p className="fw-4">1</p>
-                            </td>
-                            <td style={{ width: 200, minWidth: 200, maxWidth: 200 }}>
-                                <p className="fw-4">Citation</p>
-                            </td>
-                        </tr>
-                        <tr className="cursor-auto">
-                            <td style={{ width: 200, minWidth: 200, maxWidth: 200 }}>
-                                <p className="fw-4">#123456</p>
-                            </td>
-                            <td style={{ width: 150, minWidth: 150, maxWidth: 150 }}>
-                                <p className="fw-4">#123456</p>
-                            </td>
-                            <td style={{ width: 150, minWidth: 150, maxWidth: 150 }}>
-                                <p className="fw-4">97</p>
-                            </td>
-                            <td style={{ width: 150, minWidth: 150, maxWidth: 150 }}>
-                                <p className="fw-4">1</p>
-                            </td>
-                            <td style={{ width: 200, minWidth: 200, maxWidth: 200 }}>
-                                <p className="fw-4">Citation</p>
-                            </td>
-                        </tr>
-                        <tr className="cursor-auto">
-                            <td style={{ width: 200, minWidth: 200, maxWidth: 200 }}>
-                                <p className="fw-4">#123456</p>
-                            </td>
-                            <td style={{ width: 150, minWidth: 150, maxWidth: 150 }}>
-                                <p className="fw-4">#123456</p>
-                            </td>
-                            <td style={{ width: 150, minWidth: 150, maxWidth: 150 }}>
-                                <p className="fw-4">97</p>
-                            </td>
-                            <td style={{ width: 150, minWidth: 150, maxWidth: 150 }}>
-                                <p className="fw-4">1</p>
-                            </td>
-                            <td style={{ width: 200, minWidth: 200, maxWidth: 200 }}>
-                                <p className="fw-4">Citation</p>
-                            </td>
-                        </tr>
-                        <tr className="cursor-auto">
-                            <td style={{ width: 200, minWidth: 200, maxWidth: 200 }}>
-                                <p className="fw-4">#123456</p>
-                            </td>
-                            <td style={{ width: 150, minWidth: 150, maxWidth: 150 }}>
-                                <p className="fw-4">#123456</p>
-                            </td>
-                            <td style={{ width: 150, minWidth: 150, maxWidth: 150 }}>
-                                <p className="fw-4">97</p>
-                            </td>
-                            <td style={{ width: 150, minWidth: 150, maxWidth: 150 }}>
-                                <p className="fw-4">1</p>
-                            </td>
-                            <td style={{ width: 200, minWidth: 200, maxWidth: 200 }}>
-                                <p className="fw-4">Citation</p>
-                            </td>
-                        </tr>
-                        <tr className="cursor-auto">
-                            <td style={{ width: 200, minWidth: 200, maxWidth: 200 }}>
-                                <p className="fw-4">#123456</p>
-                            </td>
-                            <td style={{ width: 150, minWidth: 150, maxWidth: 150 }}>
-                                <p className="fw-4">#123456</p>
-                            </td>
-                            <td style={{ width: 150, minWidth: 150, maxWidth: 150 }}>
-                                <p className="fw-4">97</p>
-                            </td>
-                            <td style={{ width: 150, minWidth: 150, maxWidth: 150 }}>
-                                <p className="fw-4">1</p>
-                            </td>
-                            <td style={{ width: 200, minWidth: 200, maxWidth: 200 }}>
-                                <p className="fw-4">Citation</p>
-                            </td>
-                        </tr>
+                        {[...Array(6)].map((_, i) => {
+                            const appId = `#12345${i + 1}`;
+                            return (
+                                <tr
+                                    key={i}
+                                    className="clickable-row"
+                                    onClick={() => handleRowClick(appId)}
+                                >
+                                    <td>{appId}</td>
+                                    <td>UNIT-{i + 1}</td>
+                                    <td>2025-08-12</td>
+                                    <td>Citation</td>
+                                    <td>97</td>
+                                    <td>Command-{i + 1}</td>
+                                    <td>{unitTypeOptions[i % unitTypeOptions.length].label}</td>
+                                    <td>{matrixUnitOptions[i % matrixUnitOptions.length].label}</td>
+                                    <td>Location-{i + 1}</td>
+                                </tr>
+                            );
+                        })}
                     </tbody>
                 </table>
             </div>
         </div>
-    )
-}
+    );
+};
 
-export default TopWinnersList
+// Options
+export const unitTypeOptions = [
+    { label: "AAD", value: "AAD" },
+    { label: "ARMD/MECH INF", value: "ARMD/MECH INF" },
+    { label: "ARMY AVN", value: "ARMY AVN" },
+    { label: "ARMY DOG UNIT", value: "ARMY DOG UNIT" }
+];
+
+export const matrixUnitOptions = [
+    { label: "CI/CT", value: "HINTERLAND" },
+    { label: "LC", value: "LC" },
+    { label: "AIOS", value: "AIOS" },
+    { label: "LAC", value: "LAC" },
+    { label: "HAA", value: "HAA" }
+];
+
+export default TopWinnersList;
