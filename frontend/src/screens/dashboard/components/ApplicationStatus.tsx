@@ -46,11 +46,11 @@ const LegendFormatter: React.FC<LegendFormatterProps> = ({ value }) => (
     </span>
 );
 
-const ApplicationStatus: React.FC<ProductDetailProps> = ({ dashboardStats }) => {
+const ApplicationStatus: React.FC<ProductDetailProps> = ({  }) => {
     const data = [
-        { name: 'Pending', value: 3 ?? 0 },
-        { name: 'Approved', value: 6 ?? 0 },
-        { name: 'Rejected', value: 4 ?? 0 },
+        { name: 'Pending', value: 3 },
+        { name: 'Approved', value: 4 },
+        { name: 'Rejected', value: 1 },
     ];
 
     const renderLegendLabel = (value: string) => {
