@@ -6,7 +6,7 @@ import ReCAPTCHA from "react-google-recaptcha";
 import FormInput from "../../components/form/FormInput";
 import FormSelect from "../../components/form/FormSelect";
 import bgimg from "../../assets/Picture7.png";
-import { matrixUnitOptions, roleOptions } from "../../data/options";
+import {  roleOptions,rank } from "../../data/options";
 import { SignUpSchema } from "../../validations/validations";
 import { reqToSignUp } from "../../reduxToolkit/services/auth/authService";
 import { useAppDispatch } from "../../reduxToolkit/hooks";
@@ -87,8 +87,8 @@ const SignUp = () => {
                                         <FormSelect
                                             label="Rank"
                                             name="rank"
-                                            options={matrixUnitOptions}
-                                            value={matrixUnitOptions.find((opt) => opt.value === formik.values.rank) ?? null}
+                                            options={rank}
+                                            value={rank.find((opt) => opt.value === formik.values.rank) ?? null}
                                             onChange={(selectedOption) =>
                                                 formik.setFieldValue(
                                                     "rank",

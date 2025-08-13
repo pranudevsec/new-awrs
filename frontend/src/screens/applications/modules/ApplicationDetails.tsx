@@ -28,7 +28,7 @@ import * as XLSX from "xlsx";
 import { saveAs } from "file-saver";
 import DisclaimerModal from "../../../modals/DisclaimerModal";
 import { DisclaimerText } from "../../../data/options";
-
+import { TokenValidation,getSignedData } from "../../../reduxToolkit/services/application/applicationService";
 function areAllClarificationsResolved(unitDetail: any): boolean {
   const parameters = unitDetail?.fds?.parameters;
 
@@ -82,7 +82,8 @@ const ApplicationDetails = () => {
   const [approvedCountState, setApprovedCountState] = useState<Record<string, string>>({});
   const [remarksError, setRemarksError] = useState<string | null>(null);
   const [graceMarks, setGraceMarks] = useState("");
-  const [decisions,] = useState<{ [memberId: string]: string }>({});
+  const [decisions, setDecisions] = useState<{ [memberId: string]: string }>({});
+
   const [priority, setPriority] = useState(userPriority);
   const [commentsState, setCommentsState] = useState<Record<string, string>>({});
   const [localComment, setLocalComment] = useState(commentsState?.__application__ ?? "");
@@ -568,70 +569,32 @@ const ApplicationDetails = () => {
       };
     }
   };
-  // with token
-  // const handleAddsignature = async (member: any, memberdecision: string) => {
-  //   const newDecisions: { [memberId: string]: string } = {
-  //     ...decisions,
-  //     [member.id]: memberdecision,
-  //   };
-  //   setDecisions(newDecisions);
+ 
 
-  //   const result = await dispatch(
-  //     TokenValidation({ inputPersID: member.ic_number })
-  //   );
-  //   if (TokenValidation.fulfilled.match(result)) {
-  //     const isValid = result.payload.vaildId;
-  //     if (!isValid) {
-  //       return;
-  //     }
-  //     const SignPayload = {
-  //       data: {
-  //         application_id,
-  //         member,
-  //         type: unitDetail?.type,
-  //       },
-  //     };
-  //     const response = await dispatch(getSignedData(SignPayload));
+const handleAddsignature = async (member: any, memberdecision: string) => {
+  const newDecisions: { [memberId: string]: string } = {
+    ...decisions,
+    [member.id]: memberdecision,
+  };
+  setDecisions(newDecisions);
 
-  //     const updatePayload = {
-  //       id: unitDetail?.id,
-  //       type: unitDetail?.type,
-  //       member: {
-  //         name: member.name,
-  //         ic_number: member.ic_number,
-  //         member_type: member.member_type,
-  //         member_id: member.id,
-  //         is_signature_added: true,
-  //         sign_digest: response.payload,
-  //       },
-  //       level: profile?.user?.user_role,
-  //     };
-  //     if (memberdecision === "accepted") {
-  //       dispatch(updateApplication(updatePayload)).then(() => {
-  //         dispatch(fetchApplicationUnitDetail({ award_type, numericAppId }));
-  //         const allOthersAccepted = profile?.unit?.members
-  //           .filter((m: any) => m.id !== member.id)
-  //           .every((m: any) => decisions[m.id] === "accepted");
+  const result = await dispatch(
+    TokenValidation({ inputPersID: member.ic_number })
+  );
+  if (TokenValidation.fulfilled.match(result)) {
+    const isValid = result.payload.vaildId;
+    if (!isValid) {
+      return;
+    }
+    const SignPayload = {
+      data: {
+        application_id,
+        member,
+        type: unitDetail?.type,
+      },
+    };
+    const response = await dispatch(getSignedData(SignPayload));
 
-  //         if (allOthersAccepted && memberdecision === "accepted") {
-  //           navigate("/applications/list");
-  //         }
-  //       });
-  //     } else if (memberdecision === "rejected") {
-  //       dispatch(
-  //         updateApplication({
-  //           ...updatePayload,
-  //           status: "rejected",
-  //         })
-  //       ).then(() => {
-  //         navigate("/applications/list");
-  //       });
-  //     }
-  //   }
-  // };
-
-  // without token
-  const handleAddsignature = async (member: any, memberdecision: string) => {
     const updatePayload = {
       id: unitDetail?.id,
       type: unitDetail?.type,
@@ -641,7 +604,7 @@ const ApplicationDetails = () => {
         member_type: member.member_type,
         member_id: member.id,
         is_signature_added: true,
-        sign_digest: "something while developing",
+        sign_digest: response.payload,
       },
       level: profile?.user?.user_role,
     };
@@ -651,6 +614,7 @@ const ApplicationDetails = () => {
         const allOthersAccepted = profile?.unit?.members
           .filter((m: any) => m.id !== member.id)
           .every((m: any) => decisions[m.id] === "accepted");
+
         if (allOthersAccepted && memberdecision === "accepted") {
           navigate("/applications/list");
         }
@@ -665,7 +629,46 @@ const ApplicationDetails = () => {
         navigate("/applications/list");
       });
     }
-  };
+  }
+};
+
+
+  // without token
+  // const handleAddsignature = async (member: any, memberdecision: string) => {
+  //   const updatePayload = {
+  //     id: unitDetail?.id,
+  //     type: unitDetail?.type,
+  //     member: {
+  //       name: member.name,
+  //       ic_number: member.ic_number,
+  //       member_type: member.member_type,
+  //       member_id: member.id,
+  //       is_signature_added: true,
+  //       sign_digest: "something while developing",
+  //     },
+  //     level: profile?.user?.user_role,
+  //   };
+  //   if (memberdecision === "accepted") {
+  //     dispatch(updateApplication(updatePayload)).then(() => {
+  //       dispatch(fetchApplicationUnitDetail({ award_type, numericAppId }));
+  //       const allOthersAccepted = profile?.unit?.members
+  //         .filter((m: any) => m.id !== member.id)
+  //         .every((m: any) => decisions[m.id] === "accepted");
+  //       if (allOthersAccepted && memberdecision === "accepted") {
+  //         navigate("/applications/list");
+  //       }
+  //     });
+  //   } else if (memberdecision === "rejected") {
+  //     dispatch(
+  //       updateApplication({
+  //         ...updatePayload,
+  //         status: "rejected",
+  //       })
+  //     ).then(() => {
+  //       navigate("/applications/list");
+  //     });
+  //   }
+  // };
 
   const handleConfirmDecision = async () => {
     if (pendingDecision) {
@@ -907,7 +910,7 @@ const ApplicationDetails = () => {
               <input
                 type="text"
                 className="form-control"
-                placeholder="Enter approved marks reason"
+                placeholder="Enter Auth"
                 autoComplete="off"
                 value={approvedMarksReasonState[param.id] ?? ""}
                 onChange={(e) => handleApprovedMarksReasonChange(param.id, e.target.value)}
