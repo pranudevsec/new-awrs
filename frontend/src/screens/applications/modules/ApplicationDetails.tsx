@@ -1737,6 +1737,7 @@ const handleAddsignature = async (member: any, memberdecision: string) => {
         onClose={() => setShowDisclaimerModal(false)}
         onConfirm={handleConfirmDecision}
         message={DisclaimerText["All"]}
+        pendingDecision={pendingDecision}
       />
     </>
   );

@@ -44,6 +44,7 @@ const CommandDashboard = lazy(() => import("../screens/dashboard/CommandDashboar
 
 const History = lazy(() => import("../screens/history/History"));
 const AllApplications = lazy(() => import("../screens/all-applications/AllApplications"));
+const TrackApplications = lazy(() => import("../screens/tracking-applications/TrackApplications"));
 const AllApplicationDetails = lazy(() => import("../screens/all-applications/AllApplicationDetails"));
 
 const Withdraw = lazy(() => import("../screens/withdraw/Withdraw"));
@@ -124,6 +125,9 @@ export const authProtectedRoutes: RouteConfig[] = [
   // All Applications
   { path: "/all-applications", element: <AllApplications /> },
   { path: "/all-applications/:application_id", element: <AllApplicationDetails /> },
+
+  // Tracking Applications
+  { path: "/track-applications", element: <TrackApplications /> },
 
   // Withdraw Requests Applications
   { path: "/withdraw-quests", element: <Withdraw /> },

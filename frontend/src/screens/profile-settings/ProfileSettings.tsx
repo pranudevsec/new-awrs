@@ -21,6 +21,7 @@ interface Officer {
   rank: string;
   name: string;
   appointment: string;
+  member_type: string;
   // digitalSign: string;
 }
 interface Award {
@@ -56,6 +57,7 @@ const ProfileSettings = () => {
     rank: "",
     name: "",
     appointment: "",
+    member_type: "",
     // digitalSign: "",
   });
   const [officers, setOfficers] = useState<Officer[]>([{
@@ -65,6 +67,7 @@ const ProfileSettings = () => {
     rank: "",
     name: "",
     appointment: "",
+    member_type: "",
     // digitalSign: "",
   }]);
   const [isDeclarationChecked, setIsDeclarationChecked] = useState(false);
@@ -102,12 +105,12 @@ const ProfileSettings = () => {
           rank: presiding.rank ?? "",
           name: presiding.name ?? "",
           appointment: presiding.appointment ?? "",
+          member_type: presiding.member_type ?? "",
           // digitalSign: presiding.digital_sign ?? "",
         });
       }
 
       const otherOfficers = profile.unit.members
-        .filter((member) => member.member_type !== "presiding_officer")
         .map((member) => ({
           id: member.id ?? undefined,
           serialNumber: member.member_order ?? "",
@@ -115,6 +118,7 @@ const ProfileSettings = () => {
           rank: member.rank ?? "",
           name: member.name ?? "",
           appointment: member.appointment ?? "",
+          member_type: member.member_type ?? "",
           // digitalSign: member.digital_sign ?? "",
         }));
 
@@ -128,6 +132,7 @@ const ProfileSettings = () => {
           rank: "",
           name: "",
           appointment: "",
+          member_type: "",
           // digitalSign: "",
         }]);
       }
@@ -231,6 +236,7 @@ const ProfileSettings = () => {
         rank: "",
         name: "",
         appointment: "",
+        member_type: "",
         // digitalSign: "",
       },
     ]);
@@ -930,34 +936,45 @@ const ProfileSettings = () => {
               </form>
 
               {officers.length > 0 && (
-                <div className="my-4">
-                  <div className="d-flex flex-sm-row flex-column align-items-sm-center justify-content-between mb-3">
-                    <Breadcrumb title="Member Officers List" />
-                  </div>
-                  <div className="table-responsive mt-4">
-                    <table className="table-style-1 w-100">
-                      <thead>
-                        <tr>
-                          <th>#</th>
-                          <th>Rank</th>
-                          <th>Name</th>
-                          <th>Appointment</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {officers.map((officer, index) => (
-                          <tr key={officer.id ?? index}>
-                            <td>{index + 1}</td>
-                            <td>{officer.rank}</td>
-                            <td>{officer.name}</td>
-                            <td>{officer.appointment}</td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                </div>
-              )}
+  <div className="my-4">
+    <div className="d-flex flex-sm-row flex-column align-items-sm-center justify-content-between mb-3">
+      <Breadcrumb title="Member Officers List" />
+    </div>
+    <div className="table-responsive mt-4">
+      <table className="table-style-1 w-100">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Officer Type</th>
+            <th>Rank</th>
+            <th>Name</th>
+            <th>Appointment</th>
+
+          </tr>
+        </thead>
+        <tbody>
+          {officers.map((officer, index) => (
+            <tr key={officer.id ?? index}>
+              <td>{index + 1}</td>
+              <td>
+  {officer.member_type === "presiding_officer"
+    ? "Presiding Officer"
+    : officer.member_type === "member_officer"
+    ? "Member Officer"
+    : "-"}
+</td>
+              <td>{officer.rank}</td>
+              <td>{officer.name}</td>
+              <td>{officer.appointment}</td>
+    
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  </div>
+)}
+
             </>
           )}
         </>
