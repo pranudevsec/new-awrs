@@ -28,7 +28,7 @@ import * as XLSX from "xlsx";
 import { saveAs } from "file-saver";
 import DisclaimerModal from "../../../modals/DisclaimerModal";
 import { DisclaimerText } from "../../../data/options";
-import { TokenValidation,getSignedData } from "../../../reduxToolkit/services/application/applicationService";
+// import { TokenValidation,getSignedData } from "../../../reduxToolkit/services/application/applicationService";
 function areAllClarificationsResolved(unitDetail: any): boolean {
   const parameters = unitDetail?.fds?.parameters;
 
@@ -82,7 +82,8 @@ const ApplicationDetails = () => {
   const [approvedCountState, setApprovedCountState] = useState<Record<string, string>>({});
   const [remarksError, setRemarksError] = useState<string | null>(null);
   const [graceMarks, setGraceMarks] = useState("");
-  const [decisions, setDecisions] = useState<{ [memberId: string]: string }>({});
+  const [decisions, _setDecisions] = useState<{ [memberId: string]: string }>({});
+  // const [decisions, setDecisions] = useState<{ [memberId: string]: string }>({});
 
   const [priority, setPriority] = useState(userPriority);
   const [commentsState, setCommentsState] = useState<Record<string, string>>({});
