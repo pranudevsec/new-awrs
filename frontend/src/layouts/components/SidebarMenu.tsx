@@ -87,6 +87,11 @@ const SidebarMenu = ({ onToggleCollapse }: SidebarMenuProps) => {
   if (["brigade", "division", "corps", "command"].includes(userRole)) {
     filteredStructure = filteredStructure.filter(item => item.label !== "Home");
     filteredStructure.push(createSidebarItem("All Applications", SVGICON.sidebar.allApplications, "/all-applications"));
+    if (userRole === "command") {
+      filteredStructure.push(
+        createSidebarItem("Track Applications", SVGICON.sidebar.trackApplications, "/track-applications")
+      );
+    }
     if (userRole !== "brigade") {
       filteredStructure.push(createSidebarItem("Withdraws", SVGICON.sidebar.withdraws, "/withdraw-quests"));
     }
@@ -100,6 +105,9 @@ const SidebarMenu = ({ onToggleCollapse }: SidebarMenuProps) => {
 
   if (userRole === "headquarter") {
     filteredStructure.push(createSidebarItem("All Applications", SVGICON.sidebar.allApplications, "/all-applications"));
+    filteredStructure.push(
+      createSidebarItem("Track Applications", SVGICON.sidebar.trackApplications, "/track-applications")
+    );
     filteredStructure = filteredStructure.filter(item => item.label !== "Profile Settings");
     const dashboardItem = sidebarStructure.find(item => item.label === "Dashboard");
     if (dashboardItem) {

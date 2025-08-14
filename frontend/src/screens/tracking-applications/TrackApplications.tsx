@@ -13,7 +13,7 @@ import { fetchAllApplications } from "../../reduxToolkit/services/application/ap
 import * as XLSX from "xlsx";
 
 
-const History = () => {
+const TrackApplications = () => {
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
 
@@ -374,10 +374,10 @@ const History = () => {
     <div className="clarification-section">
       <div className="d-flex flex-sm-row flex-column align-items-sm-center justify-content-between mb-4">
         <Breadcrumb
-          title="All Application"
+          title="Track Application"
           paths={[
             { label: "Home", href: "/applications" },
-            { label: "All Application", href: "/all-applications" },
+            { label: "Track Applications", href: "/track-applications" },
           ]}
         />
         <div className="d-flex gap-2">
@@ -511,7 +511,7 @@ const History = () => {
                 }
 
                 return (
-                  <tr key={unit.id} onClick={() => navigate(`/all-applications/${unit.id}?award_type=${unit.type}`)}>
+                  <tr key={unit.id} onClick={() => navigate(`/track-applications/${unit.id}?award_type=${unit.type}`)}>
                     <td style={{ width: 150, minWidth: 150, maxWidth: 150 }}>
                       <p className="fw-4">#{unit.id}</p>
                     </td>
@@ -585,4 +585,4 @@ const History = () => {
   );
 };
 
-export default History;
+export default TrackApplications;
