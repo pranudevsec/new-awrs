@@ -571,30 +571,70 @@ const ApplicationDetails = () => {
   };
  
 
-const handleAddsignature = async (member: any, memberdecision: string) => {
-  const newDecisions: { [memberId: string]: string } = {
-    ...decisions,
-    [member.id]: memberdecision,
-  };
-  setDecisions(newDecisions);
+// const handleAddsignature = async (member: any, memberdecision: string) => {
+//   const newDecisions: { [memberId: string]: string } = {
+//     ...decisions,
+//     [member.id]: memberdecision,
+//   };
+//   setDecisions(newDecisions);
 
-  const result = await dispatch(
-    TokenValidation({ inputPersID: member.ic_number })
-  );
-  if (TokenValidation.fulfilled.match(result)) {
-    const isValid = result.payload.vaildId;
-    if (!isValid) {
-      return;
-    }
-    const SignPayload = {
-      data: {
-        application_id,
-        member,
-        type: unitDetail?.type,
-      },
-    };
-    const response = await dispatch(getSignedData(SignPayload));
+//   const result = await dispatch(
+//     TokenValidation({ inputPersID: member.ic_number })
+//   );
+//   if (TokenValidation.fulfilled.match(result)) {
+//     const isValid = result.payload.vaildId;
+//     if (!isValid) {
+//       return;
+//     }
+//     const SignPayload = {
+//       data: {
+//         application_id,
+//         member,
+//         type: unitDetail?.type,
+//       },
+//     };
+//     const response = await dispatch(getSignedData(SignPayload));
 
+//     const updatePayload = {
+//       id: unitDetail?.id,
+//       type: unitDetail?.type,
+//       member: {
+//         name: member.name,
+//         ic_number: member.ic_number,
+//         member_type: member.member_type,
+//         member_id: member.id,
+//         is_signature_added: true,
+//         sign_digest: response.payload,
+//       },
+//       level: profile?.user?.user_role,
+//     };
+//     if (memberdecision === "accepted") {
+//       dispatch(updateApplication(updatePayload)).then(() => {
+//         dispatch(fetchApplicationUnitDetail({ award_type, numericAppId }));
+//         const allOthersAccepted = profile?.unit?.members
+//           .filter((m: any) => m.id !== member.id)
+//           .every((m: any) => decisions[m.id] === "accepted");
+
+//         if (allOthersAccepted && memberdecision === "accepted") {
+//           navigate("/applications/list");
+//         }
+//       });
+//     } else if (memberdecision === "rejected") {
+//       dispatch(
+//         updateApplication({
+//           ...updatePayload,
+//           status: "rejected",
+//         })
+//       ).then(() => {
+//         navigate("/applications/list");
+//       });
+//     }
+//   }
+// };
+
+
+  // without token
+  const handleAddsignature = async (member: any, memberdecision: string) => {
     const updatePayload = {
       id: unitDetail?.id,
       type: unitDetail?.type,
@@ -604,7 +644,7 @@ const handleAddsignature = async (member: any, memberdecision: string) => {
         member_type: member.member_type,
         member_id: member.id,
         is_signature_added: true,
-        sign_digest: response.payload,
+        sign_digest: "something while developing",
       },
       level: profile?.user?.user_role,
     };
@@ -614,7 +654,6 @@ const handleAddsignature = async (member: any, memberdecision: string) => {
         const allOthersAccepted = profile?.unit?.members
           .filter((m: any) => m.id !== member.id)
           .every((m: any) => decisions[m.id] === "accepted");
-
         if (allOthersAccepted && memberdecision === "accepted") {
           navigate("/applications/list");
         }
@@ -629,46 +668,7 @@ const handleAddsignature = async (member: any, memberdecision: string) => {
         navigate("/applications/list");
       });
     }
-  }
-};
-
-
-  // without token
-  // const handleAddsignature = async (member: any, memberdecision: string) => {
-  //   const updatePayload = {
-  //     id: unitDetail?.id,
-  //     type: unitDetail?.type,
-  //     member: {
-  //       name: member.name,
-  //       ic_number: member.ic_number,
-  //       member_type: member.member_type,
-  //       member_id: member.id,
-  //       is_signature_added: true,
-  //       sign_digest: "something while developing",
-  //     },
-  //     level: profile?.user?.user_role,
-  //   };
-  //   if (memberdecision === "accepted") {
-  //     dispatch(updateApplication(updatePayload)).then(() => {
-  //       dispatch(fetchApplicationUnitDetail({ award_type, numericAppId }));
-  //       const allOthersAccepted = profile?.unit?.members
-  //         .filter((m: any) => m.id !== member.id)
-  //         .every((m: any) => decisions[m.id] === "accepted");
-  //       if (allOthersAccepted && memberdecision === "accepted") {
-  //         navigate("/applications/list");
-  //       }
-  //     });
-  //   } else if (memberdecision === "rejected") {
-  //     dispatch(
-  //       updateApplication({
-  //         ...updatePayload,
-  //         status: "rejected",
-  //       })
-  //     ).then(() => {
-  //       navigate("/applications/list");
-  //     });
-  //   }
-  // };
+  };
 
   const handleConfirmDecision = async () => {
     if (pendingDecision) {
