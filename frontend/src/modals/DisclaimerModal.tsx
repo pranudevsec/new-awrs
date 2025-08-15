@@ -29,7 +29,11 @@ const DisclaimerModal: React.FC<DisclaimerModalProps> = ({
   }, [show]);
 
   const handleAcknowledge = () => {
-    setStep(2);
+    if(pendingDecision){
+      setStep(2); 
+    }else{
+      onConfirm();
+    }
   };
 
   const handleAuthConfirm = () => {
