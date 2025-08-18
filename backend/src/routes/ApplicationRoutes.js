@@ -19,5 +19,12 @@ router.post("/add-comment", ApplicationController.addApplicationComment);
 router.post("/upload-doc",upload.any(),  ApplicationController.uploadDoc);
 router.get("/history",  ApplicationController.getApplicationsHistory);
 router.get("/all",  ApplicationController.getAllApplications);
+router.get("/all-app-list",  ApplicationController.getAllApplicationsList);
+router.get("/all-app-pending",  ApplicationController.getAllApplicationsPending);
+router.get("/all-app-reject",  ApplicationController.getAllApplicationsRejected);
+router.get("/all-app-approve",  ApplicationController.getAllApplicationsApproved);
+router.get("/all-app-final",  ApplicationController.getAllApplicationsFinalised);
+router.get("/all-app-count",  ApplicationController.getAllApplicationsStatusCount);
+router.get("/graph",  ApplicationController.getAllApplicationsGraph);
 
 module.exports = router;

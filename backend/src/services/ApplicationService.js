@@ -2458,3 +2458,522 @@ exports.getAllApplications = async (user, query) => {
     client.release();
   }
 };
+
+
+
+
+// In the same file where both APIs live (service module)
+
+exports.getApplicationStats = async (user, _query) => {
+  const client = await dbService.getClient();
+  try {
+    const { user_role } = user || {};
+    const roleLc = (user_role || '').toLowerCase();
+
+    // Base aggregates (unchanged)
+    const { rows } = await client.query(`
+      SELECT 
+        -- total
+        (SELECT COUNT(*) FROM Citation_tab) +
+        (SELECT COUNT(*) FROM Appre_tab) AS totalApplications,
+
+        -- pending: not command-approved AND status != rejected (NULL-safe)
+        (SELECT COUNT(*) FROM Citation_tab 
+           WHERE last_approved_by_role IS DISTINCT FROM 'command'
+             AND status_flag IS DISTINCT FROM 'rejected') +
+        (SELECT COUNT(*) FROM Appre_tab 
+           WHERE last_approved_by_role IS DISTINCT FROM 'command'
+             AND status_flag IS DISTINCT FROM 'rejected') AS pendingApplications,
+
+        -- rejected
+        (SELECT COUNT(*) FROM Citation_tab WHERE status_flag = 'rejected') +
+        (SELECT COUNT(*) FROM Appre_tab   WHERE status_flag = 'rejected') AS rejectedApplications,
+
+        -- finalised
+        (SELECT COUNT(*) FROM Citation_tab WHERE is_ol_approved = true) +
+        (SELECT COUNT(*) FROM Appre_tab   WHERE is_ol_approved = true) AS finalisedApplications,
+
+        -- approved by command
+        (SELECT COUNT(*) FROM Citation_tab WHERE last_approved_by_role = 'command') +
+        (SELECT COUNT(*) FROM Appre_tab   WHERE last_approved_by_role = 'command') AS approvedApplications
+    `);
+
+    const s = rows[0];
+    let totalFromApi = parseInt(s.totalapplications, 10);
+    try {
+      const totalRes = await exports.getAllApplications(user, { ..._query, page: 1, limit: 1000 });
+      const ok = totalRes && ((totalRes.statusCode || totalRes.status) === 200);
+      if (ok) {
+        totalFromApi = totalRes.data.length
+          
+      }
+    } catch (_) {
+      // fallback to DB total already in totalFromApi
+    }
+    // --- recommendedApplications ---
+    let recommendedApplications = 0;
+    if (roleLc === 'headquarter') {
+      // HQ: recommended == approved by command
+      recommendedApplications = parseInt(s.approvedapplications, 10);
+    } else if (roleLc) {
+      // Non-HQ: use subordinate listing as source of truth
+      const subRes = await exports.getApplicationsOfSubordinates(user, {
+        page: 1,
+        limit: 100,           // use meta.totalItems to avoid fetching everything
+        isShortlisted: true // matches your "recommended" listing logic
+      });
+
+      const ok = (subRes.data !=[] && ((subRes.statusCode || subRes.status) === 200));
+      if (ok) {
+        recommendedApplications = subRes.data.length
+      }
+    }
+
+    // --- pending ---
+    // HQ: keep SQL pending
+    // Non-HQ: total - rejected - recommended
+    let totalPendingApplications = parseInt(s.pendingapplications, 10);
+    if (roleLc && roleLc !== 'headquarter') {
+      const pendRes = await exports.getApplicationsOfSubordinates(user, {
+        page: 1,
+        limit: 100,                 // use meta.totalItems
+        isGetNotClarifications: true
+      });
+      const ok = pendRes && ((pendRes.statusCode || pendRes.status) === 200);
+      if (ok) {
+        totalPendingApplications = pendRes.data.length
+       
+      }}
+    
+  
+
+    // --- acceptedApplications ---
+    // Non-HQ: acceptedApplications = recommendedApplications (your request)
+    // HQ: acceptedApplications = approved by command (unchanged)
+    const acceptedApplications = (roleLc && roleLc !== 'headquarter')
+      ? recommendedApplications
+      : parseInt(s.approvedapplications, 10);
+if(totalFromApi==0){
+  s.rejectedapplications =0
+}
+    return ResponseHelper.success(200, 'Application stats', {
+      clarificationRaised:     totalFromApi,       // total
+      totalPendingApplications,                                          // pending (role-aware)
+      rejected:                 parseInt(s.rejectedapplications, 10),    // rejected
+      approved:                 parseInt(s.finalisedapplications, 10),   // finalised (unchanged)
+      acceptedApplications,                                             // now role-aware                                         // new/role-aware
+    });
+  } catch (err) {
+    return ResponseHelper.error(500, 'Failed to compute application stats', err.message);
+  } finally {
+    client.release();
+  }
+};
+
+
+
+async function loadApplications(whereSql = '', params = []) {
+  const client = await dbService.getClient();
+  try {
+    const citationQuery = `
+      SELECT 
+        c.citation_id AS id,
+        'citation' AS type,
+        c.unit_id,
+        row_to_json(u) AS unit_details,
+        c.date_init,
+        c.citation_fds AS fds,
+        c.status_flag,
+        c.is_mo_approved,
+        c.mo_approved_at,
+        c.is_ol_approved,
+        c.ol_approved_at,
+        c.last_approved_by_role,
+        c.last_approved_at
+      FROM Citation_tab c
+      LEFT JOIN (
+        SELECT 
+          unit_id, sos_no, name, adm_channel, tech_channel, bde, div, corps, comd,
+          unit_type, matrix_unit, location, awards, members, is_hr_review, is_dv_review,
+          is_mp_review, created_at, updated_at
+        FROM Unit_tab
+      ) u ON c.unit_id = u.unit_id
+      ${whereSql ? `WHERE ${whereSql.replace(/^\s*AND\s*/i, '')}` : ''}
+    `;
+
+    const appreQuery = `
+      SELECT 
+        a.appreciation_id AS id,
+        'appreciation' AS type,
+        a.unit_id,
+        row_to_json(u) AS unit_details,
+        a.date_init,
+        a.appre_fds AS fds,
+        a.status_flag,
+        a.is_mo_approved,
+        a.mo_approved_at,
+        a.is_ol_approved,
+        a.ol_approved_at,
+        a.last_approved_by_role,
+        a.last_approved_at
+      FROM Appre_tab a
+      LEFT JOIN (
+        SELECT 
+          unit_id, sos_no, name, adm_channel, tech_channel, bde, div, corps, comd,
+          unit_type, matrix_unit, location, awards, members, is_hr_review, is_dv_review,
+          is_mp_review, created_at, updated_at
+        FROM Unit_tab
+      ) u ON a.unit_id = u.unit_id
+      ${whereSql ? `WHERE ${whereSql.replace(/^\s*AND\s*/i, '')}` : ''}
+    `;
+
+    const [citations, appreciations] = await Promise.all([
+      client.query(citationQuery, params),
+      client.query(appreQuery, params),
+    ]);
+
+    let allApps = [...citations.rows, ...appreciations.rows];
+
+    // ----- Clarification linking -----
+    const clarificationIds = [];
+    for (const app of allApps) {
+      for (const p of (app.fds?.parameters || [])) {
+        if (p.clarification_id) clarificationIds.push(p.clarification_id);
+      }
+    }
+
+    let clarificationMap = {};
+    if (clarificationIds.length > 0) {
+      const clarRes = await client.query(
+        `SELECT * FROM Clarification_tab WHERE clarification_id = ANY($1)`,
+        [clarificationIds]
+      );
+      clarificationMap = clarRes.rows.reduce((acc, cur) => {
+        acc[cur.clarification_id] = cur;
+        return acc;
+      }, {});
+    }
+
+    allApps = allApps.map((app) => {
+      const updatedParams = (app.fds?.parameters || []).map((param) => {
+        if (param.clarification_id) {
+          return {
+            ...param,
+            clarification: clarificationMap[param.clarification_id] || null,
+          };
+        }
+        return param;
+      });
+      return { ...app, fds: { ...app.fds, parameters: updatedParams } };
+    });
+
+    // ----- Marks calculation -----
+    const allParamNames = Array.from(
+      new Set(
+        allApps.flatMap(
+          (app) => (app.fds?.parameters || []).map((p) => p.name?.trim().toLowerCase())
+        )
+      )
+    );
+
+    let negativeParamMap = {};
+    if (allParamNames.length > 0) {
+      const pmRes = await client.query(
+        `SELECT name, negative FROM Parameter_Master WHERE LOWER(TRIM(name)) = ANY($1)`,
+        [allParamNames]
+      );
+      negativeParamMap = pmRes.rows.reduce((acc, row) => {
+        acc[row.name.trim().toLowerCase()] = row.negative;
+        return acc;
+      }, {});
+    }
+
+    allApps = allApps.map((app) => {
+      const parameters = app.fds?.parameters || [];
+      const totalMarks = parameters.reduce((sum, p) => sum + (p.marks || 0), 0);
+      const totalNegativeMarks = parameters.reduce((sum, p) => {
+        const isNeg = negativeParamMap[p.name?.trim().toLowerCase()];
+        return isNeg ? sum + (p.marks || 0) : sum;
+      }, 0);
+      const netMarks = totalMarks - totalNegativeMarks;
+
+      // remove embedded clarification blob in final output (optional—kept here)
+      const cleanedParams = parameters.map((p) => {
+        const { clarification, ...rest } = p;
+        return rest;
+      });
+
+      return {
+        ...app,
+        totalMarks,
+        totalNegativeMarks,
+        netMarks,
+        fds: { ...app.fds, parameters: cleanedParams },
+      };
+    });
+
+    // Sort newest first
+    allApps.sort((a, b) => new Date(b.date_init) - new Date(a.date_init));
+    return allApps;
+  } finally {
+    client.release();
+  }
+}
+
+// ---------------------------
+// Pagination helper
+// ---------------------------
+function paginate(items, page = 1, limit = 10) {
+  const p = Math.max(parseInt(page) || 1, 1);
+  const l = Math.max(parseInt(limit) || 10, 1);
+  const start = (p - 1) * l;
+  const end = start + l;
+  const slice = items.slice(start, end);
+  return {
+    data: slice,
+    meta: {
+      totalItems: items.length,
+      totalPages: Math.ceil(items.length / l),
+      currentPage: p,
+      itemsPerPage: l,
+    },
+  };
+}
+
+exports.listAllApplications = async (query = {}) => {
+  try {
+    const allApps = await loadApplications();
+    const { data, meta } = paginate(allApps, query.page, query.limit);
+    return ResponseHelper.success(200, 'All applications', data, meta);
+  } catch (err) {
+    return ResponseHelper.error(500, 'Failed to list all applications', err.message);
+  }
+};
+
+// 2) Pending applications: NOT command-approved AND status != rejected
+exports.listPendingApplications = async (query = {}) => {
+  try {
+    const whereSql = `
+      (last_approved_by_role IS DISTINCT FROM 'command')
+      AND (status_flag IS DISTINCT FROM 'rejected')
+    `;
+    const allApps = await loadApplications(whereSql);
+    const { data, meta } = paginate(allApps, query.page, query.limit);
+    return ResponseHelper.success(200, 'Pending applications', data, meta);
+  } catch (err) {
+    return ResponseHelper.error(500, 'Failed to list pending applications', err.message);
+  }
+};
+
+// 3) Rejected applications
+exports.listRejectedApplications = async (query = {}) => {
+  try {
+    const whereSql = `status_flag = 'rejected'`;
+    const allApps = await loadApplications(whereSql);
+    const { data, meta } = paginate(allApps, query.page, query.limit);
+    return ResponseHelper.success(200, 'Rejected applications', data, meta);
+  } catch (err) {
+    return ResponseHelper.error(500, 'Failed to list rejected applications', err.message);
+  }
+};
+
+// 4) Finalised applications (is_ol_approved = true)
+exports.listFinalisedApplications = async (query = {}) => {
+  try {
+    const whereSql = `is_ol_approved = true`;
+    const allApps = await loadApplications(whereSql);
+    const { data, meta } = paginate(allApps, query.page, query.limit);
+    return ResponseHelper.success(200, 'Finalised applications', data, meta);
+  } catch (err) {
+    return ResponseHelper.error(500, 'Failed to list finalised applications', err.message);
+  }
+};
+
+// 5) Approved applications (approved by command)
+exports.listApprovedApplications = async (query = {}) => {
+  try {
+    const whereSql = `last_approved_by_role = 'command'`;
+    const allApps = await loadApplications(whereSql);
+    const { data, meta } = paginate(allApps, query.page, query.limit);
+    return ResponseHelper.success(200, 'Approved applications', data, meta);
+  } catch (err) {
+    return ResponseHelper.error(500, 'Failed to list approved applications', err.message);
+  }
+};
+
+
+exports.getApplicationsSummary = async (user, query) => {
+  const client = await dbService.getClient();
+  try {
+    const { user_role } = user;
+    const {
+      award_type,
+      command_type,
+      corps_type,
+      division_type,
+      brigade_type,
+      search,
+      group_by = "comd", // comd | corps | div | bde | arms_service
+    } = query || {};
+
+    const profile = await AuthService.getProfile(user);
+    const unit = profile?.data?.unit;
+
+    const roleFieldRequirements = {
+      unit: ["bde", "div", "corps", "comd", "name"],
+      brigade: ["div", "corps", "comd", "name"],
+      division: ["corps", "comd", "name"],
+      corps: ["comd", "name"],
+      command: ["name"],
+    };
+    const requiredFields = roleFieldRequirements[user_role.toLowerCase()] || [];
+    const missingFields = requiredFields.filter((f) => !unit?.[f] || unit[f] === "");
+    if (missingFields.length > 0) {
+      return ResponseHelper.error(400, "Please complete your unit profile before proceeding.",
+        "Missing fields: " + missingFields.join(", "));
+    }
+
+    const ROLE_HIERARCHY = ["unit", "brigade", "division", "corps", "command"];
+    const currentRole = user_role.toLowerCase();
+
+    let unitIds = [];
+    let allowedRoles = [];
+
+    if (currentRole === "headquarter") {
+      const allUnitsRes = await client.query(`SELECT unit_id FROM Unit_tab`);
+      unitIds = allUnitsRes.rows.map((u) => u.unit_id);
+      allowedRoles = ROLE_HIERARCHY;
+    } else {
+      const currentIndex = ROLE_HIERARCHY.indexOf(currentRole);
+      if (currentIndex === -1) throw new Error("Invalid user role");
+
+      const subordinateFieldMap = { brigade: "bde", division: "div", corps: "corps", command: "comd" };
+      if (currentRole === "unit") {
+        unitIds = [unit.unit_id];
+      } else {
+        const matchField = subordinateFieldMap[currentRole];
+        const subUnitsRes = await client.query(`SELECT unit_id FROM Unit_tab WHERE ${matchField} = $1`, [unit.name]);
+        unitIds = subUnitsRes.rows.map((u) => u.unit_id);
+      }
+      if (unitIds.length === 0) {
+        return ResponseHelper.success(200, "Applications grouped", { x: [], y: [] });
+      }
+      allowedRoles = ROLE_HIERARCHY.slice(0, currentIndex + 1);
+    }
+
+    // ---------- KEY CHANGE: build params conditionally ----------
+    const params = [unitIds];         // $1 always exists
+    let baseAccess;
+    if (currentRole === "headquarter") {
+      baseAccess = `apps.unit_id = ANY($1)`;                  // uses only $1
+    } else {
+      params.push(allowedRoles);                               // now $2 exists
+      baseAccess = `
+        (
+          (
+            apps.unit_id = ANY($1) AND
+            apps.status_flag IN ('approved','rejected','shortlisted_approved') AND
+            apps.last_approved_by_role = ANY($2)
+          )
+          OR
+          (
+            apps.unit_id = ANY($1) AND
+            apps.status_flag = 'in_review' AND
+            apps.last_approved_by_role IS NULL AND
+            apps.last_approved_at IS NULL
+          )
+          OR
+          (
+            apps.unit_id = ANY($1) AND
+            apps.status_flag = 'rejected' AND
+            apps.last_approved_by_role IS NULL AND
+            apps.last_approved_at IS NULL
+          )
+        )
+      `;
+    }
+
+    // keep numbering correct based on what's already in params
+    let p = params.length; // 1 for HQ, 2 for others
+
+    const extra = [];
+    if (award_type) {
+      params.push(award_type); p++;
+      extra.push(`LOWER(apps.fds->>'award_type') = LOWER($${p})`);
+    }
+    if (command_type) {
+      params.push(command_type); p++;
+      extra.push(`LOWER(COALESCE(NULLIF(apps.fds->>'command',''), u.comd)) = LOWER($${p})`);
+    }
+    if (corps_type) {
+      params.push(corps_type); p++;
+      extra.push(`LOWER(COALESCE(NULLIF(apps.fds->>'corps',''), u.corps)) = LOWER($${p})`);
+    }
+    if (division_type) {
+      params.push(division_type); p++;
+      extra.push(`LOWER(COALESCE(NULLIF(apps.fds->>'division',''), u.div)) = LOWER($${p})`);
+    }
+    if (brigade_type) {
+      params.push(brigade_type); p++;
+      extra.push(`LOWER(COALESCE(NULLIF(apps.fds->>'brigade',''), u.bde)) = LOWER($${p})`);
+    }
+    if (search) {
+      params.push(`%${search}%`); p++;
+      extra.push(`(
+        CAST(apps.id AS TEXT) ILIKE $${p} OR
+        apps.fds->>'cycle_period' ILIKE $${p} OR
+        apps.fds->>'unit_name' ILIKE $${p} OR
+        u.bde ILIKE $${p} OR u.div ILIKE $${p} OR u.corps ILIKE $${p} OR u.comd ILIKE $${p}
+      )`);
+    }
+
+    const key = String(group_by || "comd").toLowerCase();
+    const normKey = key === "brigade" || key === "brig" ? "bde" : key === "corp" ? "corps" : key;
+
+    const groupExprMap = {
+      comd: "u.comd",
+      corps: "u.corps",
+      div: "u.div",
+      bde: "u.bde",
+      arms_service: "NULLIF(apps.fds->>'arms_service','')"
+    };
+    const groupExpr = groupExprMap[normKey];
+    if (!groupExpr) {
+      return ResponseHelper.error(400, "Invalid group_by. Use: comd | corps | div | bde | arms_service");
+    }
+
+    const whereAll = [baseAccess, ...extra].filter(Boolean).join(" AND ");
+
+    const sql = `
+      WITH apps AS (
+        SELECT c.citation_id AS id,'citation'::text AS type,c.unit_id,c.date_init,c.status_flag,
+               c.last_approved_by_role,c.last_approved_at,c.citation_fds AS fds
+        FROM Citation_tab c
+        UNION ALL
+        SELECT a.appreciation_id AS id,'appreciation'::text AS type,a.unit_id,a.date_init,a.status_flag,
+               a.last_approved_by_role,a.last_approved_at,a.appre_fds AS fds
+        FROM Appre_tab a
+      )
+      SELECT COALESCE(${groupExpr}, 'Unspecified') AS label, COUNT(*) AS total
+      FROM apps
+      JOIN Unit_tab u ON u.unit_id = apps.unit_id
+      WHERE ${whereAll}
+      GROUP BY label
+      ORDER BY label ASC
+    `;
+
+    const { rows } = await client.query(sql, params);
+    const x = rows.map(r => r.label);
+    const y = rows.map(r => Number(r.total));
+
+    return ResponseHelper.success(200, "Applications grouped", { x, y }, {
+      group_by: normKey,
+      totalGroups: x.length,
+      totalApplications: y.reduce((a,b)=>a+b,0),
+    });
+  } catch (err) {
+    return ResponseHelper.error(500, "Failed to group applications", err.message);
+  } finally {
+    client.release();
+  }
+};

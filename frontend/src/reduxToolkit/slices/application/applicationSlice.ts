@@ -6,10 +6,13 @@ import {
   fetchApplicationUnitDetail,
   fetchApplicationUnits,
   fetchSubordinates,
+  fetchDashboardStats,
+  fetchApplicationsGraph,
 } from "../../services/application/applicationService";
 import type {
   ApplicationDetail,
   ApplicationUnit,
+  DashboardStats,
   FetchApplicationUnitDetailResponse,
   FetchApplicationUnitsResponse,
   Subordinate,
@@ -22,6 +25,19 @@ interface ApplicationState {
   units: ApplicationUnit[];
   unitDetail: ApplicationDetail | null;
   subordinates: Subordinate[];
+  dashboardStats: DashboardStats | null;
+  graphData: Array<{
+    name: string;
+    totalApplications: number;
+    approvedApplications: number;
+    rejectedApplications: number;
+    pendingApplications: number;
+    totalMarks: number;
+    averageMarks: number;
+  }> | {
+    x: string[];
+    y: number[];
+  };
   meta: Meta;
 }
 
@@ -32,6 +48,8 @@ const initialState: ApplicationState = {
   units: [],
   unitDetail: null,
   subordinates: [],
+  dashboardStats: null,
+  graphData: [],
   meta: {
     totalItems: 1,
     totalPages: 1,
@@ -186,6 +204,50 @@ const applicationSlice = createSlice({
         state.loading = false;
         state.success = false;
         state.error = action.payload ?? "Failed to fetch application history";
+      }
+    );
+
+    builder.addCase(fetchDashboardStats.pending, (state) => {
+      state.loading = true;
+      state.success = false;
+      state.error = null;
+    });
+    builder.addCase(
+      fetchDashboardStats.fulfilled,
+      (state, action: PayloadAction<any>) => {
+        state.loading = false;
+        state.success = action.payload.success;
+        state.dashboardStats = action.payload.data;
+      }
+    );
+    builder.addCase(
+      fetchDashboardStats.rejected,
+      (state, action: PayloadAction<any>) => {
+        state.loading = false;
+        state.success = false;
+        state.error = action.payload ?? "Failed to fetch dashboard stats";
+      }
+    );
+
+    builder.addCase(fetchApplicationsGraph.pending, (state) => {
+      state.loading = true;
+      state.success = false;
+      state.error = null;
+    });
+    builder.addCase(
+      fetchApplicationsGraph.fulfilled,
+      (state, action: PayloadAction<any>) => {
+        state.loading = false;
+        state.success = action.payload.success;
+        state.graphData = action.payload.data;
+      }
+    );
+    builder.addCase(
+      fetchApplicationsGraph.rejected,
+      (state, action: PayloadAction<any>) => {
+        state.loading = false;
+        state.success = false;
+        state.error = action.payload ?? "Failed to fetch applications graph";
       }
     );
   },

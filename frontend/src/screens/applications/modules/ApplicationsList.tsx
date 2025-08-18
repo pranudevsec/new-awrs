@@ -10,11 +10,7 @@ import Pagination from "../../../components/ui/pagination/Pagination";
 import { awardTypeOptions, commandOptions } from "../../../data/options";
 import { SVGICON } from "../../../constants/iconsList";
 import { useAppDispatch, useAppSelector } from "../../../reduxToolkit/hooks";
-import {
-  fetchApplicationsForHQ,
-  fetchApplicationUnits,
-  fetchSubordinates,
-} from "../../../reduxToolkit/services/application/applicationService";
+import { fetchApplicationsForHQ, fetchApplicationUnits, fetchSubordinates } from "../../../reduxToolkit/services/application/applicationService";
 
 const ApplicationsList = () => {
   const navigate = useNavigate();
@@ -37,6 +33,7 @@ const ApplicationsList = () => {
     const handler = setTimeout(() => {
       setDebouncedSearch(searchTerm);
     }, 500);
+
     return () => {
       clearTimeout(handler);
     };
@@ -49,29 +46,26 @@ const ApplicationsList = () => {
       const role = profile.user.user_role;
       const params = {
         ...(awardType && awardType !== "All" ? { award_type: awardType } : {}),
-        command_type:
-          commandType === "All" ? undefined : commandType ?? undefined,
+        command_type: commandType === "All" ? undefined : commandType ?? undefined,
         search: debouncedSearch,
         page,
         limit,
       };
 
-      if (role === "cw2" || role === "headquarter") {
+      if (role === 'cw2' || role === 'headquarter') {
         dispatch(fetchApplicationsForHQ(params));
-      } else if (role !== "unit") {
+      } else if (role !== 'unit') {
         const updatedParams = {
           ...params,
           isGetNotClarifications: true,
         };
+
         try {
           await dispatch(fetchSubordinates(updatedParams)).unwrap();
         } catch (error: any) {
-          const errorMessage =
-            error?.errors ?? error?.message ?? "An error occurred.";
-          if (
-            error?.errors ===
-            "Please complete your unit profile before proceeding."
-          ) {
+          const errorMessage = error?.errors ?? error?.message ?? "An error occurred.";
+
+          if (error?.errors === "Please complete your unit profile before proceeding.") {
             navigate("/profile-settings");
             toast.error(errorMessage);
           } else {
@@ -86,6 +80,8 @@ const ApplicationsList = () => {
     fetchData();
   }, [awardType, commandType, debouncedSearch, profile, page, limit]);
 
+  const hierarchy = ["unit", "brigade", "division", "corps", "command"];
+
   const getTotalMarks = (unit: any): number => {
     const parameters = unit?.fds?.parameters ?? [];
     const graceMarks =
@@ -94,66 +90,72 @@ const ApplicationsList = () => {
         0
       ) ?? 0;
     let totalNegativeMarks = 0;
-    const totalParameterMarks = parameters.reduce(
-      (acc: number, param: any) => {
-        const isRejected =
-          param?.clarification_details?.clarification_status === "rejected";
-        if (isRejected) return acc;
-        const hasValidApproved =
-          param?.approved_marks !== undefined &&
-          param?.approved_marks !== null &&
-          param?.approved_marks !== "" &&
-          !isNaN(Number(param?.approved_marks));
-        const approved = hasValidApproved
-          ? Number(param.approved_marks)
-          : null;
-        let original = 0;
-        if (param?.negative) {
-          totalNegativeMarks += Number(param?.marks ?? 0);
-        } else {
-          original = Number(param?.marks ?? 0);
-        }
-        return acc + (approved ?? original);
-      },
-      0
-    );
+    const totalParameterMarks = parameters.reduce((acc: number, param: any) => {
+      const isRejected =
+        param?.clarification_details?.clarification_status === "rejected";
+      if (isRejected) return acc;
+      const hasValidApproved =
+        param?.approved_marks !== undefined &&
+        param?.approved_marks !== null &&
+        param?.approved_marks !== "" &&
+        !isNaN(Number(param?.approved_marks));
+      const approved = hasValidApproved ? Number(param.approved_marks) : null;
+      let original = 0;
+      if (param?.negative) {
+        totalNegativeMarks += Number(param?.marks ?? 0);
+      } else {
+        original = Number(param?.marks ?? 0);
+      }
+      return acc + (approved ?? original);
+    }, 0);
     return totalParameterMarks + graceMarks - totalNegativeMarks;
+  };
+
+  const getTotalNegativeMarks = (unit: any): number => {
+    const parameters = unit?.fds?.parameters ?? [];
+    return parameters.reduce((acc: number, param: any) => {
+      if (param?.negative) {
+        return acc + Number(param?.marks ?? 0);
+      }
+      return acc;
+    }, 0);
+  };
+
+  const getLowerRolePriority = (unit: any) => {
+    const role = profile?.user?.user_role?.toLowerCase() ?? "";
+    const lowerRole = hierarchy[hierarchy.indexOf(role) - 1] ?? null;
+    if (!lowerRole || !unit?.fds?.applicationPriority) return "-";
+    const priorityEntry = unit?.fds.applicationPriority.find(
+      (p: any) => p.role?.toLowerCase() === lowerRole
+    );
+    return priorityEntry?.priority ?? "-";
   };
 
   const handleDownloadExcel = () => {
     let col = [
       "Application Id",
       "Unit ID",
-      "Arm / Service",
-      "Role / Deployment",
-      "Location",
-      "Command",
-      "Total Marks",
+      ...(role === "headquarter" ? ["Command"] : []),
       "Submission Date",
+      "Dead Line",
+      "Type",
+      "Total Marks",
+      "Negative Marks",
+      ...(role !== "brigade" && role !== "unit" ? ["Lower Role Priority"] : []),
       ...(role === "unit" ? ["Status"] : []),
     ];
-
     let rows = units.map((unit: any) => [
       `#${unit.id}`,
       `#${unit.unit_id}`,
-      unit.fds.arms_service ?? "-",
-      unit.fds.matrix_unit ?? "-",
-      unit.fds.location ?? "-",
-      unit?.fds?.command ?? "-",
+      ...(role === "headquarter" ? [unit?.fds?.command ?? "-"] : []),
+      new Date(unit.date_init).toLocaleDateString(),
+      unit.fds?.last_date ? new Date(unit.fds.last_date).toLocaleDateString() : "-",
+      unit.type.charAt(0).toUpperCase() + unit.type.slice(1),
       getTotalMarks(unit),
-      unit.fds?.last_date
-        ? new Date(unit.fds.last_date).toLocaleDateString()
-        : "-",
-      ...(role === "unit"
-        ? [
-            unit?.status_flag
-              ? unit.status_flag.charAt(0).toUpperCase() +
-                unit.status_flag.slice(1)
-              : "Submitted",
-          ]
-        : []),
+      getTotalNegativeMarks(unit),
+      ...(role !== "brigade" && role !== "unit" ? [getLowerRolePriority(unit)] : []),
+      ...(role === "unit" ? [unit?.status_flag ? unit.status_flag.charAt(0).toUpperCase() + unit.status_flag.slice(1) : "Submitted"] : []),
     ]);
-
     const worksheet = XLSX.utils.aoa_to_sheet([col, ...rows]);
     const workbook = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(workbook, worksheet, "Applications");
@@ -171,7 +173,7 @@ const ApplicationsList = () => {
           ]}
         />
         <button className="btn btn-primary" onClick={handleDownloadExcel}>
-          Download
+          Download Excel
         </button>
       </div>
 
@@ -192,144 +194,145 @@ const ApplicationsList = () => {
           <FormSelect
             name="awardType"
             options={awardTypeOptions}
-            value={
-              awardTypeOptions.find((opt) => opt.value === awardType) ?? null
-            }
+            value={awardTypeOptions.find((opt) => opt.value === awardType) ?? null}
             onChange={(option) => setAwardType(option?.value ?? null)}
             placeholder="Select Type"
           />
-          {profile?.user?.user_role === "headquarter" && (
+          {profile?.user?.user_role === "headquarter" &&
             <FormSelect
               name="commandType"
               options={commandOptions}
-              value={
-                commandOptions.find((opt) => opt.value === commandType) ?? null
-              }
+              value={commandOptions.find((opt) => opt.value === commandType) ?? null}
               onChange={(option) => setCommandType(option?.value ?? null)}
               placeholder="Select Command Type"
             />
-          )}
+          }
         </div>
       </div>
 
       <div className="table-responsive">
         <table className="table-style-2 w-100">
-   <thead style={{ backgroundColor: "#007bff", color: "#fff" }}>
-<tr>
-  <th style={{ color: "#fff" }}>Application Id</th>
-  <th style={{ color: "#fff" }}>Unit ID</th>
-  <th style={{ color: "#fff" }}>Arm / Service</th>
-  <th style={{ color: "#fff" }}>Role / Deployment</th>
-  <th style={{ color: "#fff" }}>Location</th>
-  <th style={{ color: "#fff" }}>Command</th>
-  <th style={{ color: "#fff" }}>Total Marks</th>
-  <th style={{ color: "#fff" }}>Submission Date</th>
-  {role === "unit" && <th style={{ color: "#fff" }}>Status</th>}
-  <th style={{ color: "#fff" }}></th>
-</tr>
-
-</thead>
-
+          <thead style={{ backgroundColor: "#007bff" }}>
+            <tr>
+              <th style={{ width: 150, minWidth: 150, maxWidth: 150, color: "white" }}>
+                Application Id
+              </th>
+              <th style={{ width: 150, minWidth: 150, maxWidth: 150, color: "white" }}>Unit ID</th>
+              {role === "headquarter" && (
+                <th style={{ width: 150, minWidth: 150, maxWidth: 150, color: "white" }}>Command</th>
+              )}
+              <th style={{ width: 200, minWidth: 200, maxWidth: 200, color: "white" }}>
+                Submission Date
+              </th>
+              <th style={{ width: 150, minWidth: 150, maxWidth: 150, color: "white" }}>Type</th>
+              {/* New columns */}
+              <th style={{ width: 150, minWidth: 150, maxWidth: 150, color: "white" }}>Total Marks</th>
+              <th style={{ width: 150, minWidth: 150, maxWidth: 150, color: "white" }}>command</th>
+              <th style={{ width: 150, minWidth: 150, maxWidth: 150, color: "white" }}>Arm / Service</th>
+              <th style={{ width: 150, minWidth: 150, maxWidth: 150, color: "white" }}>Role / Deployment              </th>
+              <th style={{ width: 150, minWidth: 150, maxWidth: 150, color: "white" }}>Location</th>
+              {role === "unit" && (<th style={{ width: 150, minWidth: 150, maxWidth: 150, color: "white" }}>Status</th>)}
+              <th style={{ width: 100, minWidth: 100, maxWidth: 100, color: "white" }}></th>
+            </tr>
+          </thead>
 
           <tbody>
-            {loading ? (
+            {loading ?
               <tr>
-                <td colSpan={9}>
+                <td colSpan={8}>
                   <div className="d-flex justify-content-center py-5">
                     <Loader inline size={40} />
                   </div>
                 </td>
               </tr>
-            ) : (
-              units.length > 0 &&
-              units.map((unit: any) => (
+              : units.length > 0 && units.map((unit: any) => (
                 <tr
                   key={unit.id}
                   onClick={() => {
                     if (unit.status_flag === "draft") return;
+
                     if (location.pathname === "/submitted-forms/list") {
-                      navigate(
-                        `/submitted-forms/list/${unit.id}?award_type=${unit.type}`
-                      );
+                      navigate(`/submitted-forms/list/${unit.id}?award_type=${unit.type}`);
                     } else {
-                      navigate(
-                        `/applications/list/${unit.id}?award_type=${unit.type}`
-                      );
+                      navigate(`/applications/list/${unit.id}?award_type=${unit.type}`);
                     }
                   }}
+
                   style={{ cursor: "pointer" }}
                 >
-                  <td>
+                  <td style={{ width: 150, minWidth: 150, maxWidth: 150 }}>
                     <p className="fw-4">#{unit.id}</p>
                   </td>
-                  <td>
+                  <td style={{ width: 150, minWidth: 150, maxWidth: 150 }}>
                     <p className="fw-4">#{unit.unit_id}</p>
                   </td>
-                  <td>
-                    <p className="fw-4">{unit.fds.arms_service ?? "-"}</p>
-                  </td>
-                  <td>
-                    <p className="fw-4">{unit.fds.matrix_unit ?? "-"}</p>
-                  </td>
-                  <td>
-                    <p className="fw-4">{unit.fds.location ?? "-"}</p>
-                  </td>
-                  <td>
-                    <p className="fw-4">{unit.fds.command ?? "-"}</p>
-                  </td>
-                  <td>
-                    <p className="fw-4">{getTotalMarks(unit).toFixed(2)}</p>
-                  </td>
-                  <td>
+                  {role === "headquarter" && <td style={{ width: 150, minWidth: 150, maxWidth: 150 }}>
+                    <p className="fw-4">{unit?.fds?.command}</p>
+                  </td>}
+                  <td style={{ width: 200, minWidth: 200, maxWidth: 200 }}>
                     <p className="fw-4">
-                      {unit.date_init
-
-                        ? new Date(unit.date_init
-).toLocaleDateString()
+                      {unit.fds?.last_date
+                        ? new Date(unit.fds.last_date).toLocaleDateString()
                         : "-"}
                     </p>
                   </td>
+                  <td style={{ width: 150, minWidth: 150, maxWidth: 150 }}>
+                    <p className="fw-4">{unit.type.charAt(0).toUpperCase() + unit.type.slice(1)}</p>
+                  </td>
+                  {/* New columns */}
+                  <td style={{ width: 150, minWidth: 150, maxWidth: 150 }}>
+                    <p className="fw-4">{getTotalMarks(unit).toFixed(2)}</p>
+                  </td>
+                  <td style={{ width: 150, minWidth: 150, maxWidth: 150 }}>
+                    <p className="fw-4">{unit.fds.command ?? "-"}</p>
+                  </td>
+                  <td style={{ width: 150, minWidth: 150, maxWidth: 150 }}>
+                    <p className="fw-4">{unit.fds.arms_service ?? "-"}</p>
+                  </td>
+                  <td style={{ width: 150, minWidth: 150, maxWidth: 150 }}>
+                    <p className="fw-4">{unit.fds.matrix_unit ?? "-"}</p>
+                  </td>
+                  <td style={{ width: 150, minWidth: 150, maxWidth: 150 }}>
+                    <p className="fw-4">{unit.fds.location ?? "-"}</p>
+                  </td>
                   {role === "unit" && (
-                    <td>
+                    <td style={{ width: 150, minWidth: 150, maxWidth: 150 }}>
                       <p className="fw-4">
                         {unit?.status_flag
-                          ? unit.status_flag.charAt(0).toUpperCase() +
-                            unit.status_flag.slice(1)
+                          ? unit.status_flag.charAt(0).toUpperCase() + unit.status_flag.slice(1)
                           : "Submitted"}
                       </p>
                     </td>
                   )}
-                 <td>
-  {unit?.status_flag === "draft" ? (
-    <Link
-      to={`/applications/${unit.type}?id=${unit?.id}`}
-      className="action-btn bg-transparent d-inline-flex align-items-center justify-content-center"
-      onClick={(e) => e.stopPropagation()}
-      title="Edit"
-    >
-      {SVGICON.app.edit}
-    </Link>
-  ) : (
-    <Link
-      to={`/applications/list/${unit.id}?award_type=${unit.type}`}
-      className="action-btn bg-transparent d-inline-flex align-items-center justify-content-center"
-      onClick={(e) => e.stopPropagation()}
-      title="View"
-    >
-      {SVGICON.app.eye}
-    </Link>
-  )}
-</td>
-
+                  <td style={{ width: 100, minWidth: 100, maxWidth: 100 }}>
+                    {unit?.status_flag === "draft" ? (
+                      <Link
+                        to={`/applications/${unit.type}?id=${unit?.id}`}
+                        className="action-btn bg-transparent d-inline-flex align-items-center justify-content-center"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        {SVGICON.app.edit}
+                      </Link>
+                    ) : (
+                      <Link
+                        to={`/applications/list/${unit.id}?award_type=${unit.type}`}
+                        className="action-btn bg-transparent d-inline-flex align-items-center justify-content-center"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        {SVGICON.app.eye}
+                      </Link>
+                    )}
+                  </td>
                 </tr>
-              ))
-            )}
+              ))}
           </tbody>
         </table>
       </div>
 
+      {/* Empty Data */}
       {!loading && units.length === 0 && <EmptyTable />}
 
+      {/* Pagination */}
       {units.length > 0 && (
         <Pagination
           meta={meta}

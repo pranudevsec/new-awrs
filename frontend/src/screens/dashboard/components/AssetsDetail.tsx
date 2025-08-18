@@ -50,43 +50,146 @@
 //                 </div>
 //             </div>
 //         </div>
-        
+
 //     )
 // }
 
 // export default AssetsDetail
 import type { DashboardStats } from "../../../reduxToolkit/services/command-panel/commandPanelInterface";
+import { useNavigate } from "react-router-dom";
 
 interface ProductDetailProps {
-    dashboardStats: DashboardStats | null;
+  dashboardStats: DashboardStats | null;
+  unitType?: string;
 }
 
-const AssetsDetail: React.FC<ProductDetailProps> = ({ dashboardStats }) => {
-    return (
-        <div className="assets-details-cards mb-4">
-        <div className="row g-3 five-col-row">
-          {[
-            { title: "Total Application Received", value: 8, className: "bg-total total-application" },
-            { title: "Pending Applications", value: dashboardStats?.totalPendingApplications ?? 0, className: "bg-pending color-pending" },
-            { title: "Rejected Applications", value: dashboardStats?.rejected ?? 0, className: "bg-rejected color-rejected" },
-            { title: "Recommended Applications", value: dashboardStats?.acceptedApplications ?? 0, className: "bg-request color-request" },
-            { title: "Finalized Applications", value: 4, className: "bg-finalized finalized-application" },
-          ].map((card, idx) => (
-            <div className="col custom-col" key={idx}>
-              <div className={`card ${card.className} d-flex flex-row align-items-center justify-content-between h-100`}>
-                <div className="left-content d-flex flex-column align-items-start gap-2">
-                  <div className="text">
-                    <h6 className="fw-4 mb-2">{card.title}</h6>
-                    <h4 className="fw-6 font-lexend">{card.value}</h4>
-                  </div>
-                </div>
+const AssetsDetail: React.FC<ProductDetailProps> = ({
+  dashboardStats,
+  unitType = "unit",
+}) => {
+  const navigate = useNavigate();
+
+  // Create base cards array
+  const baseCards = [
+    {
+      title: "Total Applications",
+      value: dashboardStats?.clarificationRaised ?? 0,
+      bgColor: "#b4b4e2ff",
+      textColor: "#495057",
+      borderColor: "#dee2e6",
+      route: "/all-applications", // unitType === "cw2" ? "/applications/all-applications" : 
+    },
+    {
+      title: "Pending Applications",
+      value: dashboardStats?.totalPendingApplications ?? 0,
+      bgColor: "#f5e1a2ff",
+      textColor: "#856404",
+      borderColor: "#ffeaa7",
+      route:  unitType === "cw2" ? "/applications/pending" : "/applications/list",
+    },
+    {
+      title: "Rejected Applications",
+      value: dashboardStats?.rejected ?? 0,
+      bgColor: "#f8aeb4ff",
+      textColor: "#721c24",
+      borderColor: "#f5c6cb",
+      route: "/applications/rejected",
+    },
+    {
+      title:  "Recommended Applications",
+      value: dashboardStats?.acceptedApplications ?? 0,
+      bgColor: "#9bf0ffff",
+      textColor: "#0c5460",
+      borderColor: "#bee5eb",
+      route: unitType === "cw2" ? "/applications/approved" : "/application/accepted",
+    },
+  ];
+
+  // Add "Finalized Applications" only if unitType is "cw2"
+  const cards = unitType === "cw2" 
+    ? [
+        ...baseCards,
+        {
+          title: "Finalized Applications",
+          value: dashboardStats?.approved ?? 0,
+          bgColor: "#a6fdbaff",
+          textColor: "#155724",
+          borderColor: "#c3e6cb",
+          route: "/applications/finalized",
+        },
+      ]
+    : baseCards;
+
+  const handleCardClick = (route: string) => {
+    navigate(route);
+  };
+
+  return (
+    <div className="assets-details-cards mb-4">
+      <div className="row g-3" style={{ display: "flex", flexWrap: "wrap" }}>
+        {cards.map((card, idx) => (
+          <div
+            className="col"
+            key={idx}
+            style={{
+              flex: "1 1 0",
+              minWidth: "200px",
+              marginBottom: "12px",
+            }}
+          >
+            <div
+              className="stats-card"
+              style={{
+                background: card.bgColor,
+                border: `1px solid ${card.borderColor}`,
+                borderRadius: "8px",
+                padding: "20px",
+                height: "120px",
+                transition: "all 0.2s ease",
+                cursor: "pointer",
+              }}
+              onClick={() => handleCardClick(card.route)}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.transform = "translateY(-2px)";
+                e.currentTarget.style.boxShadow =
+                  "0 4px 12px rgba(0, 0, 0, 0.1)";
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.transform = "translateY(0)";
+                e.currentTarget.style.boxShadow = "none";
+              }}
+            >
+              <div className="d-flex flex-column h-100 justify-content-between">
+                <h6
+                  style={{
+                    fontSize: "14px",
+                    fontWeight: "500",
+                    color: card.textColor,
+                    margin: "0",
+                    opacity: "0.8",
+                  }}
+                >
+                  {card.title}
+                </h6>
+
+                <h3
+                  style={{
+                    fontSize: "28px",
+                    fontWeight: "600",
+                    color: card.textColor,
+                    margin: "0",
+                    fontFamily: "var(--font-lexend-deca), sans-serif",
+                  }}
+                >
+                  {card.value}
+                </h3>
               </div>
             </div>
-          ))}
-        </div>
+          </div>
+        ))}
       </div>
-      
-    )
-}
+    </div>
+  );
+};
 
 export default AssetsDetail;

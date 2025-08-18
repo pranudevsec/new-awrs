@@ -70,6 +70,10 @@ export interface ProfileUnit {
   location?: string | null;
   members?: any;
   awards?: any;
+  start_month?: string | null;
+  start_year?: string | null;
+  end_month?: string | null;
+  end_year?: string | null;
 }
 
 export interface ProfileResponse {
@@ -95,6 +99,10 @@ export interface UpdateUnitProfileRequest {
   awards?: any;
   memberUsername?: any;
   memberPassword?: any;
+  start_month?: string | null;
+  start_year?: string | null;
+  end_month?: string | null;
+  end_year?: string | null;
 }
 
 export interface UpdateUnitProfileResponse {

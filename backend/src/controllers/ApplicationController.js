@@ -200,3 +200,74 @@ exports.getApplicationsScoreboard = async (req, res) => {
       );
     }
   };
+
+  exports.getAllApplicationsStatusCount = async (req, res) => {
+    try {
+      const result = await ApplicationService.getApplicationStats(req.user, req.query);
+      res.status(StatusCodes.OK).send(result);
+    } catch (error) {
+      res.status(StatusCodes.INTERNAL_SERVER_ERROR).send(
+        ResponseHelper.error(StatusCodes.INTERNAL_SERVER_ERROR, "Internal Server Error", error.message)
+      );
+    }
+  };
+  exports.getAllApplicationsList = async (req, res) => {
+    try {
+      const result = await ApplicationService.listAllApplications(req.user, req.query);
+      res.status(StatusCodes.OK).send(result);
+    } catch (error) {
+      res.status(StatusCodes.INTERNAL_SERVER_ERROR).send(
+        ResponseHelper.error(StatusCodes.INTERNAL_SERVER_ERROR, "Internal Server Error", error.message)
+      );
+    }
+  };
+  exports.getAllApplicationsPending = async (req, res) => {
+    try {
+      const result = await ApplicationService.listPendingApplications(req.user, req.query);
+      res.status(StatusCodes.OK).send(result);
+    } catch (error) {
+      res.status(StatusCodes.INTERNAL_SERVER_ERROR).send(
+        ResponseHelper.error(StatusCodes.INTERNAL_SERVER_ERROR, "Internal Server Error", error.message)
+      );
+    }
+  };
+  exports.getAllApplicationsRejected = async (req, res) => {
+    try {
+      const result = await ApplicationService.listRejectedApplications(req.user, req.query);
+      res.status(StatusCodes.OK).send(result);
+    } catch (error) {
+      res.status(StatusCodes.INTERNAL_SERVER_ERROR).send(
+        ResponseHelper.error(StatusCodes.INTERNAL_SERVER_ERROR, "Internal Server Error", error.message)
+      );
+    }
+  };
+  exports.getAllApplicationsApproved = async (req, res) => {
+    try {
+      const result = await ApplicationService.listApprovedApplications(req.user, req.query);
+      res.status(StatusCodes.OK).send(result);
+    } catch (error) {
+      res.status(StatusCodes.INTERNAL_SERVER_ERROR).send(
+        ResponseHelper.error(StatusCodes.INTERNAL_SERVER_ERROR, "Internal Server Error", error.message)
+      );
+    }
+  };
+  exports.getAllApplicationsFinalised = async (req, res) => {
+    try {
+      const result = await ApplicationService.listFinalisedApplications(req.user, req.query);
+      res.status(StatusCodes.OK).send(result);
+    } catch (error) {
+      res.status(StatusCodes.INTERNAL_SERVER_ERROR).send(
+        ResponseHelper.error(StatusCodes.INTERNAL_SERVER_ERROR, "Internal Server Error", error.message)
+      );
+    }
+  };
+  exports.getAllApplicationsGraph= async (req, res) => {
+    try {
+      const result = await ApplicationService.getApplicationsSummary(req.user, req.query);
+      res.status(StatusCodes.OK).send(result);
+    } catch (error) {
+      res.status(StatusCodes.INTERNAL_SERVER_ERROR).send(
+        ResponseHelper.error(StatusCodes.INTERNAL_SERVER_ERROR, "Internal Server Error", error.message)
+      );
+    }
+  };

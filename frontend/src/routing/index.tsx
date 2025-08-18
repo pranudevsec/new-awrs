@@ -18,7 +18,12 @@ const ApplicationDetails = lazy(() => import("../screens/applications/modules/Ap
 const ClarificationList = lazy(() => import("../screens/applications/modules/ClarificationList"));
 const ClarificationDetails = lazy(() => import("../screens/applications/modules/ClarificationDetails"));
 const Thanks = lazy(() => import("../screens/applications/modules/Thanks"));
-
+// New application list components
+const PendingApplicationsList = lazy(() => import("../screens/applications/modules/PendingApplicationsList"));
+const RejectedApplicationsList = lazy(() => import("../screens/applications/modules/RejectedApplicationsList"));
+const ApprovedApplicationsList = lazy(() => import("../screens/applications/modules/ApprovedApplicationsList"));
+const AllApplicationsList = lazy(() => import("../screens/applications/modules/AllApplicationsList"));
+const FinalizedApplicationsList = lazy(() => import("../screens/applications/modules/FinalizedApplicationsList"));
 const ProfileSettings = lazy(() => import("../screens/profile-settings/ProfileSettings"));
 
 const Clarification = lazy(() => import("../screens/clarification/Clarification"));
@@ -85,7 +90,11 @@ export const authProtectedRoutes: RouteConfig[] = [
   { path: "/application/accepted", element: <AcceptedApplicationsList /> },
   { path: "/submitted-forms/list", element: <ApplicationsList /> },
   { path: "/submitted-forms/list/:application_id", element: <SubmittedFormDetail /> },
-
+  { path: "/applications/pending", element: <PendingApplicationsList /> },
+  { path: "/applications/rejected", element: <RejectedApplicationsList /> },
+  { path: "/applications/approved", element: <ApprovedApplicationsList /> },
+  { path: "/applications/finalized", element: <FinalizedApplicationsList /> },
+  { path: "/applications/all-applications", element: <AllApplicationsList /> },
   { path: "/applications/list/:application_id", element: <ApplicationDetails /> },
   { path: "/applications/clarification/list", element: <ClarificationList /> },
   { path: "/applications/clarification/list/:id", element: <ClarificationDetails /> },

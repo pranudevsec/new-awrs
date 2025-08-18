@@ -426,33 +426,33 @@ const History = () => {
 
       <div className="table-responsive">
         <table className="table-style-2 w-100">
-          <thead>
+          <thead style={{ backgroundColor: "#007bff" }}>
             <tr>
-              <th style={{ width: 150, minWidth: 150, maxWidth: 150 }}>
+              <th style={{ width: 150, minWidth: 150, maxWidth: 150, color: "white" }}>
                 Application Id
               </th>
-              <th style={{ width: 150, minWidth: 150, maxWidth: 150 }}>
+              <th style={{ width: 150, minWidth: 150, maxWidth: 150, color: "white" }}>
                 Unit ID
               </th>
               {role === "headquarter" && (
-                <th style={{ width: 150, minWidth: 150, maxWidth: 150 }}>
+                <th style={{ width: 150, minWidth: 150, maxWidth: 150, color: "white" }}>
                   Command
                 </th>
               )}
-              <th style={{ width: 200, minWidth: 200, maxWidth: 200 }}>
+              <th style={{ width: 200, minWidth: 200, maxWidth: 200, color: "white" }}>
                 Submission Date
               </th>
-              <th style={{ width: 200, minWidth: 200, maxWidth: 200 }}>
+              <th style={{ width: 200, minWidth: 200, maxWidth: 200, color: "white" }}>
                 Dead Line
               </th>
-              <th style={{ width: 150, minWidth: 150, maxWidth: 150 }}>Type</th>
-              <th style={{ width: 150, minWidth: 150, maxWidth: 150 }}>
+              <th style={{ width: 150, minWidth: 150, maxWidth: 150, color: "white" }}>Type</th>
+              <th style={{ width: 150, minWidth: 150, maxWidth: 150, color: "white" }}>
                 Status
               </th>
-              <th style={{ width: 150, minWidth: 150, maxWidth: 150 }}>
+              <th style={{ width: 150, minWidth: 150, maxWidth: 150, color: "white" }}>
                 Approved By Stage
               </th>
-              {role !== 'cw2' && <th style={{ width: 150, minWidth: 150, maxWidth: 150 }}>
+              {role !== 'cw2' && <th style={{ width: 150, minWidth: 150, maxWidth: 150, color: "white" }}>
                 Action
               </th>}
             </tr>

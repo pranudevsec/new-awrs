@@ -12,6 +12,7 @@ import type {
   ApproveMarksResponse,
   FetchApplicationUnitDetailResponse,
   FetchApplicationUnitsResponse,
+  FetchDashboardStatsResponse,
   UpdateApplicationParams,
   UpdateApplicationResponse,
   TokenValidationParam,
@@ -504,3 +505,115 @@ export const getSignedData = createAsyncThunk<any, any>(
     }
   }
 );
+
+interface FetchDashboardStatsParams {
+  page?: number;
+  limit?: number;
+  award_type?: string;
+}
+
+export const fetchDashboardStats = createAsyncThunk<
+  FetchDashboardStatsResponse,
+  FetchDashboardStatsParams | undefined
+>("applications/fetchDashboardStats", async (params, { rejectWithValue }) => {
+  try {
+    const queryParams = new URLSearchParams();
+
+    if (params?.page) {
+      queryParams.append("page", String(params.page));
+    }
+    if (params?.limit) {
+      queryParams.append("limit", String(params.limit));
+    }
+    if (params?.award_type) {
+      queryParams.append("award_type", params.award_type);
+    }
+
+    const response = await Axios.get(
+      `${apiEndPoints.applicationAllCount}?${queryParams.toString()}`
+    );
+
+    if (response.data.success) {
+      return response.data;
+    } else {
+      return rejectWithValue({
+        message: response.data.message ?? "Failed to fetch dashboard stats",
+        errors: response.data.errors,
+      });
+    }
+  } catch (error: any) {
+    return rejectWithValue({
+      message:
+        error.response?.data?.message ?? "Failed to fetch dashboard stats",
+      errors: error.response?.data?.errors,
+    });
+  }
+});
+
+// Graph API interface
+interface ApplicationsGraphResponse {
+  success: boolean;
+  message: string;
+  data: Array<{
+    name: string;
+    totalApplications: number;
+    approvedApplications: number;
+    rejectedApplications: number;
+    pendingApplications: number;
+    totalMarks: number;
+    averageMarks: number;
+  }> | {
+    x: string[];
+    y: number[];
+  };
+  meta?: {
+    totalItems: number;
+    totalPages: number;
+    currentPage: number;
+    itemsPerPage: number;
+  };
+}
+
+interface FetchApplicationsGraphParams {
+  page?: number;
+  limit?: number;
+  group_by?: string;
+}
+
+export const fetchApplicationsGraph = createAsyncThunk<
+  ApplicationsGraphResponse,
+  FetchApplicationsGraphParams | undefined
+>("applications/fetchApplicationsGraph", async (params, { rejectWithValue }) => {
+  try {
+    const queryParams = new URLSearchParams();
+
+    if (params?.page) {
+      queryParams.append("page", String(params.page));
+    }
+    if (params?.limit) {
+      queryParams.append("limit", String(params.limit));
+    }
+    if (params?.group_by) {
+      queryParams.append("group_by", params.group_by);
+    }
+
+    const response = await Axios.get(
+      `${apiEndPoints.application}/graph?${queryParams.toString()}`
+    );
+
+    if (response.data.success) {
+      return response.data;
+    } else {
+      return rejectWithValue({
+        message: response.data.message ?? "Failed to fetch applications graph data",
+        errors: response.data.errors,
+      });
+    }
+  } catch (error: any) {
+    return rejectWithValue({
+      message:
+        error.response?.data?.message ?? "Failed to fetch applications graph data",
+      errors: error.response?.data?.errors,
+    });
+  }
+});

@@ -213,6 +213,10 @@ async function createUnitAndLinkToUser(client, data, userId) {
     location,
     members = [],
     awards = [],
+    start_month,
+    start_year,
+    end_month,
+    end_year,
   } = data;
 
   const processedMembers = members.map((m) => ({
@@ -227,8 +231,10 @@ async function createUnitAndLinkToUser(client, data, userId) {
   const res = await client.query(
     `INSERT INTO Unit_tab (
       sos_no, name, adm_channel, tech_channel, bde, div, corps, comd,
-      unit_type, matrix_unit, location, members, awards
-    ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13) RETURNING unit_id`,
+      unit_type, matrix_unit, location, members, awards,
+      start_month, start_year, end_month, end_year
+    ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17) 
+    RETURNING unit_id`,
     [
       sos_no,
       name,
@@ -243,6 +249,10 @@ async function createUnitAndLinkToUser(client, data, userId) {
       location,
       JSON.stringify(processedMembers),
       JSON.stringify(processedAwards),
+      start_month,
+      start_year,
+      end_month,
+      end_year,
     ]
   );
 
@@ -268,6 +278,10 @@ async function updateUnitDetails(client, unitId, data) {
     "unit_type",
     "matrix_unit",
     "location",
+    "start_month",
+    "start_year",
+    "end_month",
+    "end_year",
   ];
 
   const updateFields = [];

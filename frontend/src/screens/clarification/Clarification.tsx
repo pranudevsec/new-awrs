@@ -73,15 +73,15 @@ const Clarification = () => {
       </div>
       <div className="table-responsive">
         <table className="table-style-2 w-100">
-          <thead>
+          <thead style={{ backgroundColor: "#007bff" }}>
             <tr>
-              <th style={{ width: 150 }}>Application Id</th>
-              <th style={{ width: 150 }}>Unit ID</th>
-              <th style={{ width: 200 }}>Submission Date</th>
-              <th style={{ width: 200 }}>Dead Line</th>
-              <th style={{ width: 150 }}>Type</th>
-              <th style={{ width: 200 }}>Clarifications</th>
-              <th style={{ width: 100 }}></th>
+              <th style={{ width: 150, color: "white" }}>Application Id</th>
+              <th style={{ width: 150, color: "white" }}>Unit ID</th>
+              <th style={{ width: 200, color: "white" }}>Submission Date</th>
+              <th style={{ width: 200, color: "white" }}>Dead Line</th>
+              <th style={{ width: 150, color: "white" }}>Type</th>
+              <th style={{ width: 200, color: "white" }}>Clarifications</th>
+              <th style={{ width: 100, color: "white" }}></th>
             </tr>
           </thead>
           <tbody>

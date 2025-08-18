@@ -151,7 +151,10 @@ exports.getProfile = async ({ user_id }) => {
         `
         SELECT 
           unit_id, sos_no, name, adm_channel, tech_channel, bde, div, corps, comd,
-          unit_type, matrix_unit, location, awards, members
+          unit_type, matrix_unit, location, awards, members,start_month,
+    start_year,
+    end_month,
+    end_year
         FROM Unit_tab
         WHERE unit_id = $1
         `,
@@ -175,6 +178,10 @@ exports.getProfile = async ({ user_id }) => {
           location: unit.location,
           awards: unit.awards,
           members: unit.members,
+          start_month: unit.start_month,
+          start_year: unit.start_year,
+          end_month: unit.end_month,
+          end_year: unit.end_year,
         };
       }
     }

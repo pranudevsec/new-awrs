@@ -6,12 +6,18 @@ import FormSelect from "../../components/form/FormSelect";
 import EmptyTable from "../../components/ui/empty-table/EmptyTable";
 import Loader from "../../components/ui/loader/Loader";
 import Pagination from "../../components/ui/pagination/Pagination";
-import { awardTypeOptions, brigadeOptions, commandOptions, corpsOptions, divisionOptions, matrixUnitOptions } from "../../data/options";
+import jsPDF from "jspdf";
+import autoTable from "jspdf-autotable";
+import {
+  awardTypeOptions,
+  brigadeOptions,
+  commandOptions,
+  corpsOptions,
+  divisionOptions,
+} from "../../data/options";
 import { SVGICON } from "../../constants/iconsList";
 import { useAppDispatch, useAppSelector } from "../../reduxToolkit/hooks";
 import { fetchAllApplications } from "../../reduxToolkit/services/application/applicationService";
-import * as XLSX from "xlsx";
-
 
 const History = () => {
   const dispatch = useAppDispatch();
@@ -31,13 +37,16 @@ const History = () => {
   const [debouncedSearch, setDebouncedSearch] = useState<string>("");
   const [page, setPage] = useState<number>(1);
   const [limit, setLimit] = useState<number>(10);
+  
 
   useEffect(() => {
     const handler = setTimeout(() => {
       setDebouncedSearch(searchTerm);
     }, 500);
 
-    return () => { clearTimeout(handler) };
+    return () => {
+      clearTimeout(handler);
+    };
   }, [searchTerm]);
 
   useEffect(() => {
@@ -45,10 +54,13 @@ const History = () => {
     const fetchData = async () => {
       const params = {
         ...(awardType && awardType !== "All" ? { award_type: awardType } : {}),
-        command_type: commandType === "All" ? undefined : commandType ?? undefined,
-        division_type: divisionType === "All" ? undefined : divisionType ?? undefined,
+        command_type:
+          commandType === "All" ? undefined : commandType ?? undefined,
+        division_type:
+          divisionType === "All" ? undefined : divisionType ?? undefined,
         corps_type: corpsType === "All" ? undefined : corpsType ?? undefined,
-        brigade_type: brigadeType === "All" ? undefined : brigadeType ?? undefined,
+        brigade_type:
+          brigadeType === "All" ? undefined : brigadeType ?? undefined,
         search: debouncedSearch,
         page,
         limit,
@@ -56,9 +68,13 @@ const History = () => {
       try {
         await dispatch(fetchAllApplications(params)).unwrap();
       } catch (error: any) {
-        const errorMessage = error?.errors ?? error?.message ?? "An error occurred.";
+        const errorMessage =
+          error?.errors ?? error?.message ?? "An error occurred.";
 
-        if (error?.errors === "Please complete your unit profile before proceeding.") {
+        if (
+          error?.errors ===
+          "Please complete your unit profile before proceeding."
+        ) {
           navigate("/profile-settings");
           toast.error(errorMessage);
         } else {
@@ -68,186 +84,471 @@ const History = () => {
     };
 
     fetchData();
-  }, [awardType, commandType, corpsType, divisionType, brigadeType, debouncedSearch, profile, page, limit]);
-
-  const handleExportExcel = () => {
-    const allParameterKeys: string[] = [];
-    const paramNameMap: Record<string, string> = {};
-    const matricUnits = [
-      "CI/CT", "LC", "AIOS", "LAC", "HAA", "AGPL", "Internal Security (IS)"
-    ];
-
-    const nonMatricUnits = [
-      "Non Metrics (NM)", "Peace/Mod Fd"
-    ];
-    const allGraceRoles: string[] = [];
-
-    const allPriorityRoles: string[] = [];
-
-    units.forEach((unit: any) => {
-      const params = unit.fds?.parameters ?? [];
-      params.forEach((p: any) => {
-        const key = `${p.name} (${p.id})`;
-        if (!allParameterKeys.includes(key)) {
-          allParameterKeys.push(key);
-          paramNameMap[key] = p.name;
-        }
-      });
-
-      (unit.fds?.applicationGraceMarks ?? []).forEach((g: any) => {
-        if (!allGraceRoles.includes(g.role)) {
-          allGraceRoles.push(g.role);
-        }
-      });
-
-      (unit.fds?.applicationPriority ?? []).forEach((pr: any) => {
-        if (!allPriorityRoles.includes(pr.role)) {
-          allPriorityRoles.push(pr.role);
-        }
-      });
-    });
-
-    const appDetailCols = 8;
-    const paramCols = allParameterKeys.length;
-    const graceCols = allGraceRoles.length;
-    const priorityCols = allPriorityRoles.length;
-
-    const headerRow1 = [
-      "Application Details",
-      ...Array(appDetailCols - 1).fill(""),
-      "Matric Units",
-      ...Array(matricUnits.length - 1).fill(""),
-      "Non-Matric Units",
-      ...Array(nonMatricUnits.length - 1).fill(""),
-      "Parameters",
-      ...Array(paramCols - 1).fill(""),
-      "Discretionary Points",
-      ...Array(graceCols - 1).fill(""),
-      "Priority",
-      ...Array(priorityCols - 1).fill(""),
-      "Total Marks"
-    ];
-
-    const headerRow2 = [
-      "S. No",
-      "Award Type",
-      "Unit Name",
-      "Location",
-      "Brigade",
-      "Division",
-      "Corps",
-      "Command",
-      ...matricUnits,
-      ...nonMatricUnits,
-      ...allParameterKeys.map((key) => paramNameMap[key]),
-      ...allGraceRoles.map((role) => role),
-      ...allPriorityRoles.map((role) => role),
-      ""
-    ];
+  }, [
+    awardType,
+    commandType,
+    corpsType,
+    divisionType,
+    brigadeType,
+    debouncedSearch,
+    profile,
+    page,
+    limit,
+  ]);
 
 
-    const rows = units.map((unit: any, index: number) => {
-      const paramMap: Record<string, number | string> = {};
-      const graceMap: Record<string, number | string> = {};
-      const priorityMap: Record<string, number | string> = {};
-      let totalMarks = 0;
+ // helper: public IP (fallback-friendly)
+// helper: public IP (fallback-friendly)
+// helper: public IP (fallback-friendly)
+const getPublicIP = async (): Promise<string> => {
+  try {
+    const r = await fetch("https://api.ipify.org?format=json", { cache: "no-store" });
+    const j = await r.json();
+    if (j?.ip) return j.ip;
+  } catch {}
+  try {
+    const r2 = await fetch("https://ipinfo.io/json", { cache: "no-store" });
+    const j2 = await r2.json();
+    if (j2?.ip) return j2.ip;
+  } catch {}
+  // last resort: host (not true public IP, but better than blank)
+  return window.location?.hostname || "Unknown IP";
+};
 
-      const matricCounts: Record<string, number> = {};
-      const nonMatricCounts: Record<string, number> = {};
+// helper: IST timestamp
+const formatNowIST = (): string => {
+  const dt = new Date();
+  const p = new Intl.DateTimeFormat("en-GB", {
+    timeZone: "Asia/Kolkata",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false,
+  }).formatToParts(dt);
+  const get = (t: string) => p.find((x) => x.type === t)?.value || "";
+  return `${get("day")}/${get("month")}/${get("year")} ${get("hour")}:${get("minute")}`;
+};
 
-      matricUnits.forEach((label) => (matricCounts[label] = 0));
-      nonMatricUnits.forEach((label) => (nonMatricCounts[label] = 0));
+// helper: draw a light, diagonal watermark centered on the page (UNDER the table)
+const drawWatermark = (doc: jsPDF, text: string) => {
+  const { width, height } = doc.internal.pageSize;
+  const cx = width / 2;
+  const cy = height / 2;
 
-      (unit.fds?.parameters ?? []).forEach((p: any) => {
-        const key = `${p.name} (${p.id})`;
-        const marksVal = p.approved_marks ?? p.marks ?? 0;
-        const numVal = Number(marksVal) || 0;
-        if (p.negative) {
-          totalMarks -= numVal;
-          paramMap[key] = `-${numVal}`;
-        } else {
-          totalMarks += numVal;
-          paramMap[key] = numVal;
-        }
+  (doc as any).saveGraphicsState?.();
 
-        const armsServiceValue = p.arms_service ?? "";
+  // Slightly darker grey + opacity
+  doc.setFont("helvetica", "bold");
+  doc.setTextColor(120, 120, 120);
+  let fontSize = 28;
+  doc.setFontSize(fontSize);
 
-        const matchedMatric = matrixUnitOptions.find(
-          (opt) => opt.value === armsServiceValue && matricUnits.includes(opt.label)
-        );
-        if (matchedMatric) {
-          matricCounts[matchedMatric.label] += 1;
-        } else {
-          const matchedNonMatric = matrixUnitOptions.find(
-            (opt) => opt.value === armsServiceValue && nonMatricUnits.includes(opt.label)
-          );
-          if (matchedNonMatric) {
-            nonMatricCounts[matchedNonMatric.label] += 1;
-          }
-        }
-      });
+  // Use graphics state opacity if available (fallback safe)
+  try {
+    const GS = (doc as any).GState;
+    if (GS) (doc as any).setGState(new GS({ opacity: 0.18 })); // tweak 0.15–0.22
+  } catch {}
 
-      (unit.fds?.applicationGraceMarks ?? []).forEach((g: any) => {
-        graceMap[g.role] = g.marks ?? "-";
-      });
+  // Fit text to page diagonal so it won’t clip
+  const txt = String(text ?? "");
+  const textWidth = doc.getTextWidth(txt);
+  const diagonalUsable = Math.hypot(width, height) - 72; // ~1" margin
+  if (textWidth > diagonalUsable) {
+    fontSize = Math.max(14, (diagonalUsable / textWidth) * fontSize);
+    doc.setFontSize(fontSize);
+  }
 
-      const roleOrder = ["brigade", "division", "corps", "command"];
-      for (let i = roleOrder.length - 1; i >= 0; i--) {
-        const role = roleOrder[i];
-        if (graceMap[role] !== undefined && graceMap[role] !== "-") {
-          totalMarks += Number(graceMap[role]) || 0;
-          break;
-        }
-      }
+  // Single draw (no fake-bold double draw)
+  (doc as any).text(txt, cx, cy, { align: "center", angle: -30 as any });
 
-      (unit.fds?.applicationPriority ?? []).forEach((pr: any) => {
-        priorityMap[pr.role] = pr.priority ?? "-";
-      });
+  (doc as any).restoreGraphicsState?.();
+};
 
-      const matricValues = matricUnits.map((label) => matricCounts[label] || "-");
-      const nonMatricValues = nonMatricUnits.map((label) => nonMatricCounts[label] || "-");
+const handleExportPDF = async () => {
+  const ip = await getPublicIP();
+  const stamp = `IP: ${ip} • ${formatNowIST()} IST`;
 
-      return [
-        index + 1,
-        unit.type ?? "-",
-        unit.unit_details?.name ?? "-",
-        unit.unit_details?.location ?? "-",
-        unit.unit_details?.bde ?? "-",
-        unit.unit_details?.div ?? "-",
-        unit.unit_details?.corps ?? "-",
-        unit.unit_details?.comd ?? "-",
-        ...matricValues,
-        ...nonMatricValues,
-        ...allParameterKeys.map((key) => paramMap[key] ?? "-"),
-        ...allGraceRoles.map((role) => graceMap[role] ?? "-"),
-        ...allPriorityRoles.map((role) => priorityMap[role] ?? "-"),
-        totalMarks,
-      ];
-    });
+  const doc = new jsPDF({ orientation: "landscape", unit: "pt", format: "a4" });
 
-
-    const worksheetData = [headerRow1, headerRow2, ...rows];
-
-    const worksheet = XLSX.utils.aoa_to_sheet(worksheetData);
-
-    worksheet['!merges'] = [
-      { s: { r: 0, c: 0 }, e: { r: 0, c: appDetailCols - 1 } },
-      { s: { r: 0, c: appDetailCols }, e: { r: 0, c: appDetailCols + matricUnits.length - 1 } },
-      { s: { r: 0, c: appDetailCols + matricUnits.length }, e: { r: 0, c: appDetailCols + matricUnits.length + nonMatricUnits.length - 1 } },
-      { s: { r: 0, c: appDetailCols + matricUnits.length + nonMatricUnits.length }, e: { r: 0, c: appDetailCols + matricUnits.length + nonMatricUnits.length + paramCols - 1 } },
-      { s: { r: 0, c: appDetailCols + matricUnits.length + nonMatricUnits.length + paramCols }, e: { r: 0, c: appDetailCols + matricUnits.length + nonMatricUnits.length + paramCols + graceCols - 1 } },
-      { s: { r: 0, c: appDetailCols + matricUnits.length + nonMatricUnits.length + paramCols + graceCols }, e: { r: 0, c: appDetailCols + matricUnits.length + nonMatricUnits.length + paramCols + graceCols + priorityCols - 1 } },
-
-      {
-        s: { r: 0, c: appDetailCols + matricUnits.length + nonMatricUnits.length + paramCols + graceCols + priorityCols },
-        e: { r: 1, c: appDetailCols + matricUnits.length + nonMatricUnits.length + paramCols + graceCols + priorityCols }
-      }
-    ];
-
-    const workbook = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(workbook, worksheet, "Units Report");
-    XLSX.writeFile(workbook, "applications.xlsx");
+  // Paint watermark exactly once per page (including first)
+  const paintedPages = new Set<number>();
+  const paintThisPage = () => {
+    const pageNum =
+      (doc as any).internal?.getCurrentPageInfo?.().pageNumber ??
+      (doc as any).internal?.pages?.length - 1 ??
+      1;
+    if (paintedPages.has(pageNum)) return;
+    drawWatermark(doc, stamp);
+    paintedPages.add(pageNum);
   };
+  (doc as any).internal?.events?.subscribe?.("addPage", paintThisPage);
+  paintThisPage(); // first page
+
+  const MARK_ROLES = ["brigade", "division", "corps", "command"] as const;
+  const PRIORITY_ROLES = ["brigade", "division", "corps", "command", "cw2"] as const;
+  const cap = (s: string) => (s ? s[0].toUpperCase() + s.slice(1) : s);
+
+  // headers: details → Application Marks → per-role Marks → Total Marks → Priorities
+  const headers: string[] = [
+    "S. No",
+    "Award Type",
+    "Unit Name",
+    "Location",
+    "Brigade",
+    "Division",
+    "Corps",
+    "Command",
+    "Application Marks",
+    ...MARK_ROLES.map((r) => `Marks by ${cap(r)}`),
+    "Total Marks",
+    ...PRIORITY_ROLES.map((r) => `Priority by ${r.toUpperCase() === "CW2" ? "CW2" : cap(r)}`),
+  ];
+
+  const rows = units.map((unit: any, index: number) => {
+    // Application Marks (± parameters)
+    let applicationMarks = 0;
+    (unit.fds?.parameters ?? []).forEach((p: any) => {
+      const val = Number(p?.approved_marks ?? p?.marks ?? 0) || 0;
+      applicationMarks += p?.negative ? -val : val;
+    });
+
+    // Marks by role (grace)
+    const graceMap: Record<string, number | string> = {};
+    (unit.fds?.applicationGraceMarks ?? []).forEach((g: any) => {
+      const role = String(g?.role ?? "").toLowerCase();
+      graceMap[role] = g?.marks ?? "-";
+    });
+    const marksByRole = MARK_ROLES.map((r) => graceMap[r] ?? "-");
+
+    // Total = Application Marks + sum of all numeric grace marks (all roles)
+    const totalMarks =
+      applicationMarks +
+      MARK_ROLES.reduce((sum, r) => {
+        const v = graceMap[r];
+        const n = typeof v === "number" ? v : Number(v);
+        return sum + (isNaN(n) ? 0 : n);
+      }, 0);
+
+    // Priorities (incl. CW2)
+    const priorityMap: Record<string, number | string> = {};
+    (unit.fds?.applicationPriority ?? []).forEach((pr: any) => {
+      const role = String(pr?.role ?? "").toLowerCase();
+      priorityMap[role] = pr?.priority ?? "-";
+    });
+    const priorities = PRIORITY_ROLES.map((r) => priorityMap[r] ?? "-");
+
+    return [
+      index + 1,
+      unit?.type ?? "-",
+      unit?.unit_details?.name ?? "-",
+      unit?.unit_details?.location ?? "-",
+      unit?.unit_details?.bde ?? "-",
+      unit?.unit_details?.div ?? "-",
+      unit?.unit_details?.corps ?? "-",
+      unit?.unit_details?.comd ?? "-",
+      applicationMarks,
+      ...marksByRole,
+      totalMarks,
+      ...priorities,
+    ];
+  });
+
+  // shrink the two numeric summary columns
+  const appMarksIdx = headers.indexOf("Application Marks");
+  const totalMarksIdx = headers.indexOf("Total Marks");
+
+  autoTable(doc, {
+    head: [headers],
+    body: rows,
+    startY: 40,
+    theme: "grid",
+    headStyles: { fillColor: [41, 128, 185] },
+    styles: { fontSize: 8, cellPadding: 4, overflow: "linebreak" },
+    columnStyles: {
+      [appMarksIdx]: { cellWidth: 60, halign: "right" },
+      [totalMarksIdx]: { cellWidth: 60, halign: "right" },
+    },
+    // IMPORTANT: no didDrawPage here — watermark is already underneath
+  });
+
+  doc.save("applications.pdf");
+};
+
+
+
+  
+  
+  
+  // const handleExportExcel = () => {
+  //   const allParameterKeys: string[] = [];
+  //   const paramNameMap: Record<string, string> = {};
+  //   const matricUnits = [
+  //     "CI/CT",
+  //     "LC",
+  //     "AIOS",
+  //     "LAC",
+  //     "HAA",
+  //     "AGPL",
+  //     "Internal Security (IS)",
+  //   ];
+
+  //   const nonMatricUnits = ["Non Metrics (NM)", "Peace/Mod Fd"];
+  //   const allGraceRoles: string[] = [];
+
+  //   const allPriorityRoles: string[] = [];
+
+  //   units.forEach((unit: any) => {
+  //     const params = unit.fds?.parameters ?? [];
+  //     params.forEach((p: any) => {
+  //       const key = `${p.name} (${p.id})`;
+  //       if (!allParameterKeys.includes(key)) {
+  //         allParameterKeys.push(key);
+  //         paramNameMap[key] = p.name;
+  //       }
+  //     });
+
+  //     (unit.fds?.applicationGraceMarks ?? []).forEach((g: any) => {
+  //       if (!allGraceRoles.includes(g.role)) {
+  //         allGraceRoles.push(g.role);
+  //       }
+  //     });
+
+  //     (unit.fds?.applicationPriority ?? []).forEach((pr: any) => {
+  //       if (!allPriorityRoles.includes(pr.role)) {
+  //         allPriorityRoles.push(pr.role);
+  //       }
+  //     });
+  //   });
+
+  //   const appDetailCols = 8;
+  //   const paramCols = allParameterKeys.length;
+  //   const graceCols = allGraceRoles.length;
+  //   const priorityCols = allPriorityRoles.length;
+
+  //   const headerRow1 = [
+  //     "Application Details",
+  //     ...Array(appDetailCols - 1).fill(""),
+  //     // "Matric Units",
+  //     // ...Array(matricUnits.length - 1).fill(""),
+  //     // "Non-Matric Units",
+  //     // ...Array(nonMatricUnits.length - 1).fill(""),
+  //     // "Parameters",
+  //     // ...Array(paramCols - 1).fill(""),
+  //     "Discretionary Points",
+  //     ...Array(graceCols - 1).fill(""),
+  //     "Priority",
+  //     ...Array(priorityCols - 1).fill(""),
+  //     "Total Marks",
+  //   ];
+
+  //   const headerRow2 = [
+  //     "S. No",
+  //     "Award Type",
+  //     "Unit Name",
+  //     "Location",
+  //     "Brigade",
+  //     "Division",
+  //     "Corps",
+  //     "Command",
+  //     // ...matricUnits,
+  //     // ...nonMatricUnits,
+  //     // ...allParameterKeys.map((key) => paramNameMap[key]), 
+  //     ...allGraceRoles.map((role) => role),
+  //     ...allPriorityRoles.map((role) => role),
+  //     "",
+  //   ];
+
+  //   const rows = units.map((unit: any, index: number) => {
+  //     const paramMap: Record<string, number | string> = {};
+  //     const graceMap: Record<string, number | string> = {};
+  //     const priorityMap: Record<string, number | string> = {};
+  //     let totalMarks = 0;
+
+  //     const matricCounts: Record<string, number> = {};
+  //     const nonMatricCounts: Record<string, number> = {};
+
+  //     matricUnits.forEach((label) => (matricCounts[label] = 0));
+  //     nonMatricUnits.forEach((label) => (nonMatricCounts[label] = 0));
+
+  //     (unit.fds?.parameters ?? []).forEach((p: any) => {
+  //       const key = `${p.name} (${p.id})`;
+  //       const marksVal = p.approved_marks ?? p.marks ?? 0;
+  //       const numVal = Number(marksVal) || 0;
+  //       if (p.negative) {
+  //         totalMarks -= numVal;
+  //         paramMap[key] = `-${numVal}`;
+  //       } else {
+  //         totalMarks += numVal;
+  //         paramMap[key] = numVal;
+  //       }
+
+  //       const armsServiceValue = p.arms_service ?? "";
+
+  //       const matchedMatric = matrixUnitOptions.find(
+  //         (opt) =>
+  //           opt.value === armsServiceValue && matricUnits.includes(opt.label)
+  //       );
+  //       if (matchedMatric) {
+  //         matricCounts[matchedMatric.label] += 1;
+  //       } else {
+  //         const matchedNonMatric = matrixUnitOptions.find(
+  //           (opt) =>
+  //             opt.value === armsServiceValue &&
+  //             nonMatricUnits.includes(opt.label)
+  //         );
+  //         if (matchedNonMatric) {
+  //           nonMatricCounts[matchedNonMatric.label] += 1;
+  //         }
+  //       }
+  //     });
+
+  //     (unit.fds?.applicationGraceMarks ?? []).forEach((g: any) => {
+  //       graceMap[g.role] = g.marks ?? "-";
+  //     });
+
+  //     const roleOrder = ["brigade", "division", "corps", "command"];
+  //     for (let i = roleOrder.length - 1; i >= 0; i--) {
+  //       const role = roleOrder[i];
+  //       if (graceMap[role] !== undefined && graceMap[role] !== "-") {
+  //         totalMarks += Number(graceMap[role]) || 0;
+  //         break;
+  //       }
+  //     }
+
+  //     (unit.fds?.applicationPriority ?? []).forEach((pr: any) => {
+  //       priorityMap[pr.role] = pr.priority ?? "-";
+  //     });
+
+  //     const matricValues = matricUnits.map(
+  //       (label) => matricCounts[label] || "-"
+  //     );
+  //     const nonMatricValues = nonMatricUnits.map(
+  //       (label) => nonMatricCounts[label] || "-"
+  //     );
+
+  //     return [
+  //       index + 1,
+  //       unit.type ?? "-",
+  //       unit.unit_details?.name ?? "-",
+  //       unit.unit_details?.location ?? "-",
+  //       unit.unit_details?.bde ?? "-",
+  //       unit.unit_details?.div ?? "-",
+  //       unit.unit_details?.corps ?? "-",
+  //       unit.unit_details?.comd ?? "-",
+  //       // ...matricValues,
+  //       // ...nonMatricValues,
+  //       // ...allParameterKeys.map((key) => paramMap[key] ?? "-"),
+  //       ...allGraceRoles.map((role) => graceMap[role] ?? "-"),
+  //       ...allPriorityRoles.map((role) => priorityMap[role] ?? "-"),
+  //       totalMarks,
+  //     ];
+  //   });
+
+  //   const worksheetData = [headerRow1, headerRow2, ...rows];
+
+  //   const worksheet = XLSX.utils.aoa_to_sheet(worksheetData);
+
+  //   worksheet["!merges"] = [
+  //     { s: { r: 0, c: 0 }, e: { r: 0, c: appDetailCols - 1 } },
+  //     {
+  //       s: { r: 0, c: appDetailCols },
+  //       e: { r: 0, c: appDetailCols + matricUnits.length - 1 },
+  //     },
+  //     {
+  //       s: { r: 0, c: appDetailCols + matricUnits.length },
+  //       e: {
+  //         r: 0,
+  //         c: appDetailCols + matricUnits.length + nonMatricUnits.length - 1,
+  //       },
+  //     },
+  //     {
+  //       s: {
+  //         r: 0,
+  //         c: appDetailCols + matricUnits.length + nonMatricUnits.length,
+  //       },
+  //       e: {
+  //         r: 0,
+  //         c:
+  //           appDetailCols +
+  //           matricUnits.length +
+  //           nonMatricUnits.length +
+  //           paramCols -
+  //           1,
+  //       },
+  //     },
+  //     {
+  //       s: {
+  //         r: 0,
+  //         c:
+  //           appDetailCols +
+  //           matricUnits.length +
+  //           nonMatricUnits.length +
+  //           paramCols,
+  //       },
+  //       e: {
+  //         r: 0,
+  //         c:
+  //           appDetailCols +
+  //           matricUnits.length +
+  //           nonMatricUnits.length +
+  //           paramCols +
+  //           graceCols -
+  //           1,
+  //       },
+  //     },
+  //     {
+  //       s: {
+  //         r: 0,
+  //         c:
+  //           appDetailCols +
+  //           matricUnits.length +
+  //           nonMatricUnits.length +
+  //           paramCols +
+  //           graceCols,
+  //       },
+  //       e: {
+  //         r: 0,
+  //         c:
+  //           appDetailCols +
+  //           matricUnits.length +
+  //           nonMatricUnits.length +
+  //           paramCols +
+  //           graceCols +
+  //           priorityCols -
+  //           1,
+  //       },
+  //     },
+
+  //     {
+  //       s: {
+  //         r: 0,
+  //         c:
+  //           appDetailCols +
+  //           matricUnits.length +
+  //           nonMatricUnits.length +
+  //           paramCols +
+  //           graceCols +
+  //           priorityCols,
+  //       },
+  //       e: {
+  //         r: 1,
+  //         c:
+  //           appDetailCols +
+  //           matricUnits.length +
+  //           nonMatricUnits.length +
+  //           paramCols +
+  //           graceCols +
+  //           priorityCols,
+  //       },
+  //     },
+  //   ];
+
+  //   const workbook = XLSX.utils.book_new();
+  //   XLSX.utils.book_append_sheet(workbook, worksheet, "Units Report");
+  //   XLSX.writeFile(workbook, "applications.xlsx");
+  // };
 
   // const handleExportFMNExcel = () => {
   //   // Updated matric units
@@ -332,8 +633,8 @@ const History = () => {
 
   //   const headerRow2 = [
   //     "",
-  //     "CI/CT", "LC", "AIOS", "LAC", "HAA", "AGPL", "Internal Security (IS)", 
-  //     "Non Metrics (NM)", "Peace/Mod Fd", 
+  //     "CI/CT", "LC", "AIOS", "LAC", "HAA", "AGPL", "Internal Security (IS)",
+  //     "Non Metrics (NM)", "Peace/Mod Fd",
   //     "", "", "",
   //   ];
 
@@ -381,7 +682,10 @@ const History = () => {
           ]}
         />
         <div className="d-flex gap-2">
-          <button className="_btn primary mb-3 d-flex align-items-center gap-2" onClick={handleExportExcel}>
+          <button
+            className="_btn primary mb-3 d-flex align-items-center gap-2"
+            onClick={handleExportPDF}
+          >
             {/* <FaDownload /> */}
             <span>Generate Applications Report</span>
           </button>
@@ -412,80 +716,173 @@ const History = () => {
             <FormSelect
               name="awardType"
               options={awardTypeOptions}
-              value={awardTypeOptions.find((opt) => opt.value === awardType) ?? null}
+              value={
+                awardTypeOptions.find((opt) => opt.value === awardType) ?? null
+              }
               placeholder="Select Award Type"
               onChange={(option) => setAwardType(option?.value ?? null)}
             />
           </div>
           <div className="d-flex gap-2">
-            {profile?.user?.user_role === "headquarter" &&
+            {profile?.user?.user_role === "headquarter" && (
               <FormSelect
                 name="commandType"
                 options={commandOptions}
-                value={commandOptions.find((opt) => opt.value === commandType) ?? null}
+                value={
+                  commandOptions.find((opt) => opt.value === commandType) ??
+                  null
+                }
                 placeholder="Select Command"
                 onChange={(option) => setCommandType(option?.value ?? null)}
               />
-            }
-            {profile?.user?.user_role === "headquarter" &&
+            )}
+            {profile?.user?.user_role === "headquarter" && (
               <FormSelect
                 name="corpsType"
                 options={corpsOptions}
-                value={corpsOptions.find((opt) => opt.value === corpsType) ?? null}
+                value={
+                  corpsOptions.find((opt) => opt.value === corpsType) ?? null
+                }
                 placeholder="Select Corps"
                 onChange={(option) => setCorpsType(option?.value ?? null)}
               />
-            }
-            {profile?.user?.user_role === "headquarter" &&
+            )}
+            {profile?.user?.user_role === "headquarter" && (
               <FormSelect
                 name="divisionType"
                 options={divisionOptions}
-                value={divisionOptions.find((opt) => opt.value === divisionType) ?? null}
+                value={
+                  divisionOptions.find((opt) => opt.value === divisionType) ??
+                  null
+                }
                 placeholder="Select Division"
                 onChange={(option) => setDivisionType(option?.value ?? null)}
               />
-            }
-            {profile?.user?.user_role === "headquarter" &&
+            )}
+            {profile?.user?.user_role === "headquarter" && (
               <FormSelect
                 name="brigadeType"
                 options={brigadeOptions}
-                value={brigadeOptions.find((opt) => opt.value === brigadeType) ?? null}
+                value={
+                  brigadeOptions.find((opt) => opt.value === brigadeType) ??
+                  null
+                }
                 placeholder="Select Brigade"
                 onChange={(option) => setBrigadeType(option?.value ?? null)}
               />
-            }
+            )}
           </div>
         </div>
       </div>
 
       <div className="table-responsive">
         <table className="table-style-2 w-100">
-          <thead>
+          <thead style={{ backgroundColor: "#007bff" }}>
             <tr>
-              <th style={{ width: 150, minWidth: 150, maxWidth: 150 }}>
+              <th
+                style={{
+                  width: 150,
+                  minWidth: 150,
+                  maxWidth: 150,
+                  color: "white",
+                }}
+              >
                 Application Id
               </th>
-              <th style={{ width: 150, minWidth: 150, maxWidth: 150 }}>
+              <th
+                style={{
+                  width: 150,
+                  minWidth: 150,
+                  maxWidth: 150,
+                  color: "white",
+                }}
+              >
                 Unit ID
               </th>
+              <th
+                style={{
+                  width: 150,
+                  minWidth: 150,
+                  maxWidth: 150,
+                  color: "white",
+                }}
+              >
+                Arm Service
+              </th>
+              <th
+                style={{
+                  width: 150,
+                  minWidth: 150,
+                  maxWidth: 150,
+                  color: "white",
+                }}
+              >
+                Role
+              </th>
               {role === "headquarter" && (
-                <th style={{ width: 150, minWidth: 150, maxWidth: 150 }}>
+                <th
+                  style={{
+                    width: 150,
+                    minWidth: 150,
+                    maxWidth: 150,
+                    color: "white",
+                  }}
+                >
                   Command
                 </th>
               )}
-              <th style={{ width: 200, minWidth: 200, maxWidth: 200 }}>
-                Submission Date
+                <th
+                style={{
+                  width: 150,
+                  minWidth: 150,
+                  maxWidth: 150,
+                  color: "white",
+                }}
+              >
+                Type
               </th>
-              <th style={{ width: 200, minWidth: 200, maxWidth: 200 }}>
-                Dead Line
-              </th>
-              <th style={{ width: 150, minWidth: 150, maxWidth: 150 }}>Type</th>
-              <th style={{ width: 150, minWidth: 150, maxWidth: 150 }}>
+              <th
+                style={{
+                  width: 150,
+                  minWidth: 150,
+                  maxWidth: 150,
+                  color: "white",
+                }}
+              >
                 Status
               </th>
-              <th style={{ width: 150, minWidth: 150, maxWidth: 150 }}>
+              <th
+                style={{
+                  width: 150,
+                  minWidth: 150,
+                  maxWidth: 150,
+                  color: "white",
+                }}
+              >
                 Current Stage
               </th>
+              <th
+                style={{
+                  width: 200,
+                  minWidth: 200,
+                  maxWidth: 200,
+                  color: "white",
+                }}
+              >
+                Submission Date
+              </th>
+            
+              <th
+                style={{
+                  width: 150,
+                  minWidth: 150,
+                  maxWidth: 150,
+                  color: "white",
+                }}
+              >
+                Dead Line
+              </th>
+             
             </tr>
           </thead>
           <tbody>
@@ -500,29 +897,85 @@ const History = () => {
             ) : (
               units.length > 0 &&
               units.map((unit: any) => {
-
                 let approverRole = "Unit";
-                if (unit?.status_flag === "rejected" && unit?.last_rejected_by_role) {
-                  approverRole = unit.last_rejected_by_role.charAt(0).toUpperCase() + unit.last_rejected_by_role.slice(1);
-                } else if (unit?.status_flag === "shortlisted_approved" && unit?.last_shortlisted_approved_role) {
-                  approverRole = unit.last_shortlisted_approved_role.charAt(0).toUpperCase() + unit.last_shortlisted_approved_role.slice(1);
+                if (
+                  unit?.status_flag === "rejected" &&
+                  unit?.last_rejected_by_role
+                ) {
+                  approverRole =
+                    unit.last_rejected_by_role.charAt(0).toUpperCase() +
+                    unit.last_rejected_by_role.slice(1);
+                } else if (
+                  unit?.status_flag === "shortlisted_approved" &&
+                  unit?.last_shortlisted_approved_role
+                ) {
+                  approverRole =
+                    unit.last_shortlisted_approved_role
+                      .charAt(0)
+                      .toUpperCase() +
+                    unit.last_shortlisted_approved_role.slice(1);
                 } else if (unit?.last_approved_by_role) {
-                  approverRole = unit.last_approved_by_role.charAt(0).toUpperCase() + unit.last_approved_by_role.slice(1);
+                  approverRole =
+                    unit.last_approved_by_role.charAt(0).toUpperCase() +
+                    unit.last_approved_by_role.slice(1);
                 }
 
                 return (
-                  <tr key={unit.id} onClick={() => navigate(`/all-applications/${unit.id}?award_type=${unit.type}`)}>
+                  <tr
+                    key={unit.id}
+                    onClick={() =>
+                      navigate(
+                        `/all-applications/${unit.id}?award_type=${unit.type}`
+                      )
+                    }
+                  >
                     <td style={{ width: 150, minWidth: 150, maxWidth: 150 }}>
                       <p className="fw-4">#{unit.id}</p>
                     </td>
                     <td style={{ width: 150, minWidth: 150, maxWidth: 150 }}>
                       <p className="fw-4">#{unit.unit_id}</p>
                     </td>
+                    <td style={{ width: 150, minWidth: 150, maxWidth: 150 }}>
+                      <p className="fw-4">{unit.fds?.arms_service}</p>
+                    </td>
+                    <td style={{ width: 150, minWidth: 150, maxWidth: 150 }}>
+                      <p className="fw-4">{unit.fds?.matrix_unit}</p>
+                    </td>
                     {role === "headquarter" && (
                       <td style={{ width: 150, minWidth: 150, maxWidth: 150 }}>
                         <p className="fw-4">{unit?.fds?.command}</p>
                       </td>
                     )}
+
+                    <td style={{ width: 150, minWidth: 150, maxWidth: 150 }}>
+                      <p className="fw-4">
+                        {unit.type.charAt(0).toUpperCase() + unit.type.slice(1)}
+                      </p>
+                    </td>
+
+                    <td style={{ width: 150, minWidth: 150, maxWidth: 150 }}>
+                      <p
+                        className="fw-4"
+                        style={{
+                          color: [
+                            "approved",
+                            "shortlisted_approved",
+                            "in_review",
+                          ].includes(unit?.status_flag)
+                            ? "green"
+                            : "red",
+                        }}
+                      >
+                        {unit.status_flag === "shortlisted_approved" ||
+                        unit?.status_flag === "in_review"
+                          ? "Approved"
+                          : unit.status_flag.charAt(0).toUpperCase() +
+                            unit.status_flag.slice(1)}
+                      </p>
+                    </td>
+                    <td style={{ width: 150, minWidth: 150, maxWidth: 150 }}>
+                      <p className="fw-4">{approverRole}</p>
+                    </td>
                     <td style={{ width: 200, minWidth: 200, maxWidth: 200 }}>
                       <p className="fw-4">
                         {new Date(unit.date_init).toLocaleDateString()}
@@ -535,33 +988,8 @@ const History = () => {
                           : "-"}
                       </p>
                     </td>
-                    <td style={{ width: 150, minWidth: 150, maxWidth: 150 }}>
-                      <p className="fw-4">
-                        {unit.type.charAt(0).toUpperCase() + unit.type.slice(1)}
-                      </p>
-                    </td>
-
-                    <td style={{ width: 150, minWidth: 150, maxWidth: 150 }}>
-                      <p
-                        className="fw-4"
-                        style={{
-                          color: ["approved", "shortlisted_approved", "in_review"].includes(unit?.status_flag)
-                            ? "green"
-                            : "red",
-                        }}
-
-                      >
-                        {unit.status_flag === "shortlisted_approved" || unit?.status_flag === "in_review"
-                          ? "Approved"
-                          : unit.status_flag.charAt(0).toUpperCase() + unit.status_flag.slice(1)
-                        }
-                      </p>
-                    </td>
-                    <td style={{ width: 150, minWidth: 150, maxWidth: 150 }}>
-                      <p className="fw-4">{approverRole}</p>
-                    </td>
                   </tr>
-                )
+                );
               })
             )}
           </tbody>

@@ -21,7 +21,6 @@ interface Officer {
   rank: string;
   name: string;
   appointment: string;
-  member_type: string;
   // digitalSign: string;
 }
 interface Award {
@@ -57,7 +56,6 @@ const ProfileSettings = () => {
     rank: "",
     name: "",
     appointment: "",
-    member_type: "",
     // digitalSign: "",
   });
   const [officers, setOfficers] = useState<Officer[]>([{
@@ -67,7 +65,6 @@ const ProfileSettings = () => {
     rank: "",
     name: "",
     appointment: "",
-    member_type: "",
     // digitalSign: "",
   }]);
   const [isDeclarationChecked, setIsDeclarationChecked] = useState(false);
@@ -105,12 +102,12 @@ const ProfileSettings = () => {
           rank: presiding.rank ?? "",
           name: presiding.name ?? "",
           appointment: presiding.appointment ?? "",
-          member_type: presiding.member_type ?? "",
           // digitalSign: presiding.digital_sign ?? "",
         });
       }
 
       const otherOfficers = profile.unit.members
+        .filter((member) => member.member_type !== "presiding_officer")
         .map((member) => ({
           id: member.id ?? undefined,
           serialNumber: member.member_order ?? "",
@@ -118,7 +115,6 @@ const ProfileSettings = () => {
           rank: member.rank ?? "",
           name: member.name ?? "",
           appointment: member.appointment ?? "",
-          member_type: member.member_type ?? "",
           // digitalSign: member.digital_sign ?? "",
         }));
 
@@ -132,7 +128,6 @@ const ProfileSettings = () => {
           rank: "",
           name: "",
           appointment: "",
-          member_type: "",
           // digitalSign: "",
         }]);
       }
@@ -236,7 +231,6 @@ const ProfileSettings = () => {
         rank: "",
         name: "",
         appointment: "",
-        member_type: "",
         // digitalSign: "",
       },
     ]);
@@ -299,6 +293,10 @@ const ProfileSettings = () => {
       unit_type: profile?.unit?.unit_type ?? "",
       matrix_unit: profile?.unit?.matrix_unit ?? "",
       location: profile?.unit?.location ?? "",
+      start_month: profile?.unit?.start_month ?? "",
+      start_year: profile?.unit?.start_year ?? "",
+      end_month: profile?.unit?.end_month ?? "",
+      end_year: profile?.unit?.end_year ?? "",
     },
     enableReinitialize: true,
     onSubmit: async (values: any, { resetForm }) => {
@@ -340,6 +338,14 @@ const ProfileSettings = () => {
         payload["matrix_unit"] = matrixUnit;
         payload["location"] = values.location;
         payload["awards"] = awards;
+        
+        // Add period fields for unit role
+        if (role === "unit") {
+          payload["start_month"] = values.start_month;
+          payload["start_year"] = values.start_year;
+          payload["end_month"] = values.end_month;
+          payload["end_year"] = values.end_year;
+        }
 
         const resultAction = await dispatch(reqToUpdateUnitProfile(payload));
         const result = unwrapResult(resultAction);
@@ -550,14 +556,166 @@ const ProfileSettings = () => {
               </div>
             );
           })}
+          {role=='unit' && (
+            <div className="col-12 mb-3">
+              <div className="mb-2">
+                <label className="form-label fw-semibold">Period Covered</label>
+              </div>
+              <div className="row">
+                <div className="col-md-3 mb-2">
+                  <FormSelect
+                    label="Start Month"
+                    name="start_month"
+                    options={[
+                      { value: "01", label: "January" },
+                      { value: "02", label: "February" },
+                      { value: "03", label: "March" },
+                      { value: "04", label: "April" },
+                      { value: "05", label: "May" },
+                      { value: "06", label: "June" },
+                      { value: "07", label: "July" },
+                      { value: "08", label: "August" },
+                      { value: "09", label: "September" },
+                      { value: "10", label: "October" },
+                      { value: "11", label: "November" },
+                      { value: "12", label: "December" },
+                    ]}
+                    value={
+                      [
+                        { value: "01", label: "January" },
+                        { value: "02", label: "February" },
+                        { value: "03", label: "March" },
+                        { value: "04", label: "April" },
+                        { value: "05", label: "May" },
+                        { value: "06", label: "June" },
+                        { value: "07", label: "July" },
+                        { value: "08", label: "August" },
+                        { value: "09", label: "September" },
+                        { value: "10", label: "October" },
+                        { value: "11", label: "November" },
+                        { value: "12", label: "December" },
+                      ].find((opt) => opt.value === formik.values.start_month) ?? null
+                    }
+                    onChange={(selectedOption) => {
+                      formik.setFieldValue("start_month", selectedOption?.value ?? "");
+                    }}
+                    placeholder="Select Month"
+                  />
+                  {formik.touched.start_month && formik.errors.start_month && (
+                    <p className="error-text">{formik.errors.start_month}</p>
+                  )}
+                </div>
+                <div className="col-md-3 mb-2">
+                  <FormSelect
+                    label="Start Year"
+                    name="start_year"
+                    options={[
+                      { value: String(currentYear), label: String(currentYear) },
+                      { value: String(currentYear - 1), label: String(currentYear - 1) },
+                      { value: String(currentYear - 2), label: String(currentYear - 2) },
+                      { value: String(currentYear - 3), label: String(currentYear - 3) },
+                    ]}
+                    value={
+                      [
+                        { value: String(currentYear), label: String(currentYear) },
+                        { value: String(currentYear - 1), label: String(currentYear - 1) },
+                        { value: String(currentYear - 2), label: String(currentYear - 2) },
+                        { value: String(currentYear - 3), label: String(currentYear - 3) },
+                      ].find((opt) => opt.value === formik.values.start_year) ?? null
+                    }
+                    onChange={(selectedOption) => {
+                      formik.setFieldValue("start_year", selectedOption?.value ?? "");
+                    }}
+                    placeholder="Select Year"
+                  />
+                  {formik.touched.start_year && formik.errors.start_year && (
+                    <p className="error-text">{formik.errors.start_year}</p>
+                  )}
+                </div>
+                <div className="col-md-1 mb-2 d-flex align-items-end justify-content-center">
+                  <span className="fw-semibold text-muted">to</span>
+                </div>
+                <div className="col-md-2 mb-2">
+                  <FormSelect
+                    label="End Month"
+                    name="end_month"
+                    options={[
+                      { value: "01", label: "January" },
+                      { value: "02", label: "February" },
+                      { value: "03", label: "March" },
+                      { value: "04", label: "April" },
+                      { value: "05", label: "May" },
+                      { value: "06", label: "June" },
+                      { value: "07", label: "July" },
+                      { value: "08", label: "August" },
+                      { value: "09", label: "September" },
+                      { value: "10", label: "October" },
+                      { value: "11", label: "November" },
+                      { value: "12", label: "December" },
+                    ]}
+                    value={
+                      [
+                        { value: "01", label: "January" },
+                        { value: "02", label: "February" },
+                        { value: "03", label: "March" },
+                        { value: "04", label: "April" },
+                        { value: "05", label: "May" },
+                        { value: "06", label: "June" },
+                        { value: "07", label: "July" },
+                        { value: "08", label: "August" },
+                        { value: "09", label: "September" },
+                        { value: "10", label: "October" },
+                        { value: "11", label: "November" },
+                        { value: "12", label: "December" },
+                      ].find((opt) => opt.value === formik.values.end_month) ?? null
+                    }
+                    onChange={(selectedOption) => {
+                      formik.setFieldValue("end_month", selectedOption?.value ?? "");
+                    }}
+                    placeholder="Select Month"
+                  />
+                  {formik.touched.end_month && formik.errors.end_month && (
+                    <p className="error-text">{formik.errors.end_month}</p>
+                  )}
+                </div>
+                <div className="col-md-3 mb-2">
+                  <FormSelect
+                    label="End Year"
+                    name="end_year"
+                    options={[
+                      { value: String(currentYear), label: String(currentYear) },
+                      { value: String(currentYear - 1), label: String(currentYear - 1) },
+                      { value: String(currentYear - 2), label: String(currentYear - 2) },
+                      { value: String(currentYear - 3), label: String(currentYear - 3) },
+                    ]}
+                    value={
+                      [
+                        { value: String(currentYear), label: String(currentYear) },
+                        { value: String(currentYear - 1), label: String(currentYear - 1) },
+                        { value: String(currentYear - 2), label: String(currentYear - 2) },
+                        { value: String(currentYear - 3), label: String(currentYear - 3) },
+                      ].find((opt) => opt.value === formik.values.end_year) ?? null
+                    }
+                    onChange={(selectedOption) => {
+                      formik.setFieldValue("end_year", selectedOption?.value ?? "");
+                    }}
+                    placeholder="Select Year"
+                  />
+                  {formik.touched.end_year && formik.errors.end_year && (
+                    <p className="error-text">{formik.errors.end_year}</p>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
           {role === "unit" && (
             <div className="col-12 mb-3">
               <span className="form-label fw-6">Awards Received</span>
               <table className="table table-bordered">
-                <tbody>
+                <tbody style={{ backgroundColor: "#007bff" }}>
                   {awards.map((award, idx) => (
-                    <tr key={award.award_id ?? idx}>
-                      <td>
+                    <tr key={award.award_id ?? idx} >
+                      <td style={{ color: "white" }}>
                         <select
                           className={`form-select ${errors[idx]?.award_type ? "invalid" : ""}`}
                           value={award.award_type}
@@ -582,7 +740,7 @@ const ProfileSettings = () => {
                           <p className="error-text">{errors[idx].award_type}</p>
                         )}
                       </td>
-                      <td>
+                      <td style={{ color: "white" }}>
                         <select
                           className={`form-select ${errors[idx]?.award_title ? "invalid" : ""}`}
                           value={award.award_title}
@@ -602,7 +760,7 @@ const ProfileSettings = () => {
                           <p className="error-text">{errors[idx].award_title}</p>
                         )}
                       </td>
-                      <td>
+                      <td style={{ color: "white" }}>
                         <select
                           className={`form-select ${errors[idx]?.award_year ? "invalid" : ""}`}
                           value={award.award_year}
@@ -623,7 +781,7 @@ const ProfileSettings = () => {
                           <p className="error-text">{errors[idx].award_year}</p>
                         )}
                       </td>
-                      <td>
+                      <td style={{ color: "white" }}>
                         <button
                           type="button"
                           className="_btn danger btn-sm"
@@ -936,45 +1094,34 @@ const ProfileSettings = () => {
               </form>
 
               {officers.length > 0 && (
-  <div className="my-4">
-    <div className="d-flex flex-sm-row flex-column align-items-sm-center justify-content-between mb-3">
-      <Breadcrumb title="Member Officers List" />
-    </div>
-    <div className="table-responsive mt-4">
-      <table className="table-style-1 w-100">
-        <thead>
-          <tr>
-            <th>#</th>
-            <th>Officer Type</th>
-            <th>Rank</th>
-            <th>Name</th>
-            <th>Appointment</th>
-
-          </tr>
-        </thead>
-        <tbody>
-          {officers.map((officer, index) => (
-            <tr key={officer.id ?? index}>
-              <td>{index + 1}</td>
-              <td>
-  {officer.member_type === "presiding_officer"
-    ? "Presiding Officer"
-    : officer.member_type === "member_officer"
-    ? "Member Officer"
-    : "-"}
-</td>
-              <td>{officer.rank}</td>
-              <td>{officer.name}</td>
-              <td>{officer.appointment}</td>
-    
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
-  </div>
-)}
-
+                <div className="my-4">
+                  <div className="d-flex flex-sm-row flex-column align-items-sm-center justify-content-between mb-3">
+                    <Breadcrumb title="Member Officers List" />
+                  </div>
+                  <div className="table-responsive mt-4">
+                    <table className="table-style-1 w-100">
+                      <thead style={{ backgroundColor: "#007bff" }}>
+                        <tr>
+                          <th style={{ color: "white" }}>#</th>
+                          <th style={{ color: "white" }}>Rank</th>
+                          <th style={{ color: "white" }}>Name</th>
+                          <th style={{ color: "white" }}>Appointment</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {officers.map((officer, index) => (
+                          <tr key={officer.id ?? index}>
+                            <td>{index + 1}</td>
+                            <td>{officer.rank}</td>
+                            <td>{officer.name}</td>
+                            <td>{officer.appointment}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              )}
             </>
           )}
         </>

@@ -461,70 +461,70 @@ const AcceptedApplicationsList = () => {
 
       <div className="table-responsive">
         <table className="table-style-2 w-100">
-          <thead>
+          <thead style={{ backgroundColor: "#007bff" }}>
             <tr>
-              <th style={{ width: 150, minWidth: 150, maxWidth: 150 }}>
+              <th style={{ width: 150, minWidth: 150, maxWidth: 150, color: "white" }}>
                 S. No
               </th>
-              <th style={{ width: 150, minWidth: 150, maxWidth: 150 }}>Type</th>
-              <th style={{ width: 150, minWidth: 150, maxWidth: 150 }}>
+              <th style={{ width: 150, minWidth: 150, maxWidth: 150, color: "white" }}>Type</th>
+              <th style={{ width: 150, minWidth: 150, maxWidth: 150, color: "white" }}>
                 Unit ID
               </th>
-              <th style={{ width: 200, minWidth: 200, maxWidth: 200 }}>
+              <th style={{ width: 200, minWidth: 200, maxWidth: 200, color: "white" }}>
                 Unit Name
               </th>
-              <th style={{ width: 200, minWidth: 200, maxWidth: 200 }}>
+              <th style={{ width: 200, minWidth: 200, maxWidth: 200, color: "white" }}>
                 Location
               </th>
-              <th style={{ width: 150, minWidth: 150, maxWidth: 150 }}>
+              <th style={{ width: 150, minWidth: 150, maxWidth: 150, color: "white" }}>
                 Brigade
               </th>
-              <th style={{ width: 150, minWidth: 150, maxWidth: 150 }}>
+              <th style={{ width: 150, minWidth: 150, maxWidth: 150, color: "white" }}>
                 Division
               </th>
-              <th style={{ width: 150, minWidth: 150, maxWidth: 150 }}>
+              <th style={{ width: 150, minWidth: 150, maxWidth: 150, color: "white" }}>
                 Corps
               </th>
-              <th style={{ width: 150, minWidth: 150, maxWidth: 150 }}>
+              <th style={{ width: 150, minWidth: 150, maxWidth: 150, color: "white" }}>
                 Command
               </th>
-              <th style={{ width: 150, minWidth: 150, maxWidth: 150 }}>
+              <th style={{ width: 150, minWidth: 150, maxWidth: 150, color: "white" }}>
                 Tenure
               </th>
-              <th style={{ width: 150, minWidth: 150, maxWidth: 150 }}>
+              <th style={{ width: 150, minWidth: 150, maxWidth: 150, color: "white" }}>
                 Kills
               </th>
-              <th style={{ width: 200, minWidth: 200, maxWidth: 200 }}>
+                <th style={{ width: 200, minWidth: 200, maxWidth: 200, color: "white" }}>
                 Apprehended/Surrendered
               </th>
-              <th style={{ width: 200, minWidth: 200, maxWidth: 200 }}>
+              <th style={{ width: 200, minWidth: 200, maxWidth: 200, color: "white" }}>
                 Other Para Marks
               </th>
-              <th style={{ width: 200, minWidth: 200, maxWidth: 200 }}>
+              <th style={{ width: 200, minWidth: 200, maxWidth: 200, color: "white" }}>
                 -ve Marks
               </th>
               {allowedRoles.map((role) => (
                 <th
                   key={role}
-                  style={{ width: 150, minWidth: 150, maxWidth: 150 }}
+                  style={{ width: 150, minWidth: 150, maxWidth: 150, color: "white" }}
                 >
                   Points By {role.charAt(0).toUpperCase() + role.slice(1)}
                 </th>
               ))}
-              <th style={{ width: 200, minWidth: 200, maxWidth: 200 }}>
+              <th style={{ width: 200, minWidth: 200, maxWidth: 200, color: "white" }}>
                 Discretionary Points
               </th>
               {role === "headquarter" && (
-                <th style={{ width: 150, minWidth: 150, maxWidth: 150 }}>
+                <th style={{ width: 150, minWidth: 150, maxWidth: 150, color: "white" }}>
                   Command
                 </th>
               )}
 
-              <th style={{ width: 200, minWidth: 200, maxWidth: 200 }}>
+              <th style={{ width: 200, minWidth: 200, maxWidth: 200, color: "white" }}>
                 Total Marks
               </th>
               {role.toLowerCase() !== "brigade" && (
-                <th style={{ width: 150, minWidth: 150, maxWidth: 150 }}>
+                <th style={{ width: 150, minWidth: 150, maxWidth: 150, color: "white" }}>
                   {lowerRole
                     ? lowerRole.charAt(0).toUpperCase() + lowerRole.slice(1)
                     : "-"}{" "}
@@ -532,15 +532,15 @@ const AcceptedApplicationsList = () => {
                 </th>
               )}
               {role === "command" && (
-                <th style={{ width: 200, minWidth: 200, maxWidth: 200 }}>
+                <th style={{ width: 200, minWidth: 200, maxWidth: 200, color: "white" }}>
                   Status
                 </th>
               )}
-              <th style={{ width: 150, minWidth: 150, maxWidth: 150 }}>
+              <th style={{ width: 150, minWidth: 150, maxWidth: 150, color: "white" }}>
                 {role ? role.charAt(0).toUpperCase() + role.slice(1) : "-"}{" "}
                 Priority
               </th>
-              <th style={{ width: 150, minWidth: 150, maxWidth: 150 }}>
+              <th style={{ width: 150, minWidth: 150, maxWidth: 150, color: "white" }}>
                 Action
               </th>
             </tr>

@@ -84,27 +84,27 @@ const ParametersList = () => {
                 </div>
                 <div className="table-responsive">
                     <table className="table-style-2 w-100">
-                        <thead>
+                        <thead style={{ backgroundColor: "#007bff" }}>
                             <tr>
-                                <th style={{ width: 150, minWidth: 150, maxWidth: 150 }}>
+                                <th style={{ width: 150, minWidth: 150, maxWidth: 150, color: "white" }}>
                                     <div className="d-flex align-items-start">Name</div>
                                 </th>
-                                <th style={{ width: 150, minWidth: 150, maxWidth: 150 }}>
+                                <th style={{ width: 150, minWidth: 150, maxWidth: 150, color: "white" }}>
                                     <div className="d-flex align-items-start">Category</div>
                                 </th>
-                                <th style={{ width: 150, minWidth: 150, maxWidth: 150 }}>
+                                <th style={{ width: 150, minWidth: 150, maxWidth: 150, color: "white" }}>
                                     <div className="d-flex align-items-start">Award Type</div>
                                 </th>
-                                <th style={{ width: 200, minWidth: 200, maxWidth: 200 }}>
+                                <th style={{ width: 200, minWidth: 200, maxWidth: 200, color: "white" }}>
                                     <div className="d-flex align-items-start">Per unit mark</div>
                                 </th>
-                                <th style={{ width: 200, minWidth: 200, maxWidth: 200 }}>
+                                <th style={{ width: 200, minWidth: 200, maxWidth: 200, color: "white" }}>
                                     <div className="d-flex align-items-start">Max marks</div>
                                 </th>
-                                <th style={{ width: 150, minWidth: 150, maxWidth: 150 }}>
+                                <th style={{ width: 150, minWidth: 150, maxWidth: 150, color: "white" }}>
                                     <div className="d-flex align-items-start">Is Proof required</div>
                                 </th>
-                                <th style={{ width: 100, minWidth: 100, maxWidth: 100 }}>
+                                <th style={{ width: 100, minWidth: 100, maxWidth: 100, color: "white" }}>
                                     <div className="d-flex align-items-start"></div>
                                 </th>
                             </tr>

@@ -1,68 +1,233 @@
+import { useNavigate } from "react-router-dom";
+import { useAppSelector } from "../../../reduxToolkit/hooks";
+import Loader from "../../../components/ui/loader/Loader";
+import { useEffect } from "react";
+
 const TopWinnersList = () => {
-    const handleRowClick = (id: string) => {
-        console.log("Row clicked:", id);
-        // You can navigate or open modal here
-    };
+  const profile = useAppSelector((state) => state.admin.profile);
+  const { units, loading } = useAppSelector((state) => state.application);
+  const role = profile?.user?.user_role?.toLowerCase() ?? "";
+  const navigate = useNavigate();
+  // const dispatch = useAppDispatch();
+  // const [awardType, setAwardType] = useState<string | null>(null);
 
-    return (
-        <div className="top-winners-list mb-4">
-            <div className="table-responsive">
-                <table className="table-style-2 w-100">
-                    <thead>
-                        <tr>
-                            <th style={{ width: 200 }}>Application Id</th>
-                            <th style={{ width: 150 }}>Unit ID</th>
-                            <th style={{ width: 180 }}>Submission Date</th>
-                            <th style={{ width: 150 }}>Type</th>
-                            <th style={{ width: 150 }}>Total Marks</th>
-                            <th style={{ width: 150 }}>Command</th>
-                            <th style={{ width: 200 }}>Arm / Service</th>
-                            <th style={{ width: 200 }}>Role / Deployment</th>
-                            <th style={{ width: 200 }}>Location</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {[...Array(6)].map((_, i) => {
-                            const appId = `#12345${i + 1}`;
-                            return (
-                                <tr
-                                    key={i}
-                                    className="clickable-row"
-                                    onClick={() => handleRowClick(appId)}
-                                >
-                                    <td>{appId}</td>
-                                    <td>UNIT-{i + 1}</td>
-                                    <td>2025-08-12</td>
-                                    <td>Citation</td>
-                                    <td>97</td>
-                                    <td>Command-{i + 1}</td>
-                                    <td>{unitTypeOptions[i % unitTypeOptions.length].label}</td>
-                                    <td>{matrixUnitOptions[i % matrixUnitOptions.length].label}</td>
-                                    <td>Location-{i + 1}</td>
-                                </tr>
-                            );
-                        })}
-                    </tbody>
-                </table>
-            </div>
-        </div>
-    );
+  useEffect(() => {
+    if (!profile?.user?.user_role) return;
+    // const fetchData = async () => {
+    //   const params = {
+    //     ...(awardType && awardType !== "All" ? { award_type: awardType } : {}),
+    //   };
+    //   try {
+    //     await dispatch(fetchAllApplications(params)).unwrap();
+    //   } catch (error: any) {
+    //     const errorMessage =
+    //       error?.errors ?? error?.message ?? "An error occurred.";
+    //     if (
+    //       error?.errors ===
+    //       "Please complete your unit profile before proceeding."
+    //     ) {
+    //       navigate("/profile-settings");
+    //       toast.error(errorMessage);
+    //     } else {
+    //       toast.error(errorMessage);
+    //     }
+    //   }
+    // };
+
+    // fetchData();
+  }, []);
+
+  return (
+    <div className="table-responsive">
+      <table className="table-style-2 w-100">
+        <thead style={{ backgroundColor: "#007bff" }}>
+          <tr>
+            <th
+              style={{
+                width: 150,
+                minWidth: 150,
+                maxWidth: 150,
+                color: "white",
+              }}
+            >
+              Application Id
+            </th>
+            <th
+              style={{
+                width: 150,
+                minWidth: 150,
+                maxWidth: 150,
+                color: "white",
+              }}
+            >
+              Unit ID
+            </th>
+            {role === "headquarter" && (
+              <th
+                style={{
+                  width: 150,
+                  minWidth: 150,
+                  maxWidth: 150,
+                  color: "white",
+                }}
+              >
+                Command
+              </th>
+            )}
+            <th
+              style={{
+                width: 200,
+                minWidth: 200,
+                maxWidth: 200,
+                color: "white",
+              }}
+            >
+              Submission Date
+            </th>
+            <th
+              style={{
+                width: 200,
+                minWidth: 200,
+                maxWidth: 200,
+                color: "white",
+              }}
+            >
+              Dead Line
+            </th>
+            <th
+              style={{
+                width: 150,
+                minWidth: 150,
+                maxWidth: 150,
+                color: "white",
+              }}
+            >
+              Type
+            </th>
+            <th
+              style={{
+                width: 150,
+                minWidth: 150,
+                maxWidth: 150,
+                color: "white",
+              }}
+            >
+              Status
+            </th>
+            <th
+              style={{
+                width: 150,
+                minWidth: 150,
+                maxWidth: 150,
+                color: "white",
+              }}
+            >
+              Current Stage
+            </th>
+          </tr>
+        </thead>
+        <tbody>
+          {loading ? (
+            <tr>
+              <td colSpan={8}>
+                <div className="d-flex justify-content-center py-5">
+                  <Loader inline size={40} />
+                </div>
+              </td>
+            </tr>
+          ) : (
+            units.length > 0 &&
+            units.map((unit: any) => {
+              let approverRole = "Unit";
+              if (
+                unit?.status_flag === "rejected" &&
+                unit?.last_rejected_by_role
+              ) {
+                approverRole =
+                  unit.last_rejected_by_role.charAt(0).toUpperCase() +
+                  unit.last_rejected_by_role.slice(1);
+              } else if (
+                unit?.status_flag === "shortlisted_approved" &&
+                unit?.last_shortlisted_approved_role
+              ) {
+                approverRole =
+                  unit.last_shortlisted_approved_role.charAt(0).toUpperCase() +
+                  unit.last_shortlisted_approved_role.slice(1);
+              } else if (unit?.last_approved_by_role) {
+                approverRole =
+                  unit.last_approved_by_role.charAt(0).toUpperCase() +
+                  unit.last_approved_by_role.slice(1);
+              }
+
+              return (
+                <tr
+                  key={unit.id}
+                  onClick={() =>
+                    navigate(
+                      `/all-applications/${unit.id}?award_type=${unit.type}`
+                    )
+                  }
+                >
+                  <td style={{ width: 150, minWidth: 150, maxWidth: 150 }}>
+                    <p className="fw-4">#{unit.id}</p>
+                  </td>
+                  <td style={{ width: 150, minWidth: 150, maxWidth: 150 }}>
+                    <p className="fw-4">#{unit.unit_id}</p>
+                  </td>
+                  {role === "headquarter" && (
+                    <td style={{ width: 150, minWidth: 150, maxWidth: 150 }}>
+                      <p className="fw-4">{unit?.fds?.command}</p>
+                    </td>
+                  )}
+                  <td style={{ width: 200, minWidth: 200, maxWidth: 200 }}>
+                    <p className="fw-4">
+                      {new Date(unit.date_init).toLocaleDateString()}
+                    </p>
+                  </td>
+                  <td style={{ width: 200, minWidth: 200, maxWidth: 200 }}>
+                    <p className="fw-4">
+                      {unit.fds?.last_date
+                        ? new Date(unit.fds.last_date).toLocaleDateString()
+                        : "-"}
+                    </p>
+                  </td>
+                  <td style={{ width: 150, minWidth: 150, maxWidth: 150 }}>
+                    <p className="fw-4">
+                      {unit.type.charAt(0).toUpperCase() + unit.type.slice(1)}
+                    </p>
+                  </td>
+
+                  <td style={{ width: 150, minWidth: 150, maxWidth: 150 }}>
+                    <p
+                      className="fw-4"
+                      style={{
+                        color: [
+                          "approved",
+                          "shortlisted_approved",
+                          "in_review",
+                        ].includes(unit?.status_flag)
+                          ? "green"
+                          : "red",
+                      }}
+                    >
+                      {unit.status_flag === "shortlisted_approved" ||
+                      unit?.status_flag === "in_review"
+                        ? "Approved"
+                        : unit.status_flag.charAt(0).toUpperCase() +
+                          unit.status_flag.slice(1)}
+                    </p>
+                  </td>
+                  <td style={{ width: 150, minWidth: 150, maxWidth: 150 }}>
+                    <p className="fw-4">{approverRole}</p>
+                  </td>
+                </tr>
+              );
+            })
+          )}
+        </tbody>
+      </table>
+    </div>
+  );
 };
-
-// Options
-export const unitTypeOptions = [
-    { label: "AAD", value: "AAD" },
-    { label: "ARMD/MECH INF", value: "ARMD/MECH INF" },
-    { label: "ARMY AVN", value: "ARMY AVN" },
-    { label: "ARMY DOG UNIT", value: "ARMY DOG UNIT" }
-];
-
-export const matrixUnitOptions = [
-    { label: "CI/CT", value: "HINTERLAND" },
-    { label: "LC", value: "LC" },
-    { label: "AIOS", value: "AIOS" },
-    { label: "LAC", value: "LAC" },
-    { label: "HAA", value: "HAA" }
-];
 
 export default TopWinnersList;

@@ -7,7 +7,7 @@ import UnitScoreChart from "./components/UnitScoreChart";
 import Loader from "../../components/ui/loader/Loader";
 import FormSelect from "../../components/form/FormSelect";
 import { getHomeCountStats } from "../../reduxToolkit/services/command-panel/commandPanelService";
-import { fetchApplicationHistory, fetchSubordinates } from "../../reduxToolkit/services/application/applicationService";
+import { fetchApplicationHistory, fetchSubordinates, fetchDashboardStats } from "../../reduxToolkit/services/application/applicationService";
 import { awardTypeOptions } from "../../data/options";
 import * as XLSX from 'xlsx';
 import { saveAs } from 'file-saver';
@@ -16,59 +16,57 @@ const UnitDashboard = ({ level }: { level: "brigade" | "division" | "corps" | "c
   const dispatch = useAppDispatch();
   const [pendingUnits, setPendingUnits] = useState<any[]>([]);
   const [historyUnits, setHistoryUnits] = useState<any[]>([]);
-  const [acceptedApplicationsCount, setAcceptedApplicationsCount] = useState<number>(0);
   const [awardTypeFilter, setAwardTypeFilter] = useState<string>("All");
 
   // Get data from redux
   const loading = useAppSelector(state => state.application.loading);
+  const dashboardStats = useAppSelector(state => state.application.dashboardStats);
   // const profile = useAppSelector(state => state.admin.profile);
 
   // Fetch data on mount
   useEffect(() => {
     dispatch(getHomeCountStats());
+    
+    // Fetch dashboard stats from API
+    const dashboardParams = {
+      page: 1,
+      limit: 10,
+      ...(awardTypeFilter !== "All" ? { award_type: awardTypeFilter } : {})
+    };
+    dispatch(fetchDashboardStats(dashboardParams));
+    
     const params = {
       isGetNotClarifications: true,
       ...(awardTypeFilter !== "All" ? { award_type: awardTypeFilter } : {})
     };
     dispatch(fetchSubordinates(params)).then((action: any) => {
-      action.payload?.data && setPendingUnits(action.payload.data);
+      if (action.payload?.data) {
+        setPendingUnits(action.payload.data);
+      }
     });
 
     const historyParams = {
       ...(awardTypeFilter !== "All" ? { award_type: awardTypeFilter } : {})
     };
     dispatch(fetchApplicationHistory(historyParams)).then((action: any) => {
-      action.payload?.data && setHistoryUnits(action.payload.data);
-    });
-    // Fetch accepted applications count
-    const acceptedParams = {
-      isShortlisted: true,
-      limit: 1000,
-      ...(awardTypeFilter !== "All" ? { award_type: awardTypeFilter } : {})
-    };
-    dispatch(fetchSubordinates(acceptedParams)).then((action: any) => {
-      action.payload?.data && setAcceptedApplicationsCount(action.payload.data.length);
+      if (action.payload?.data) {
+        setHistoryUnits(action.payload.data);
+      }
     });
   }, [dispatch, level, awardTypeFilter]);
 
-  // Calculate stats from history
-  // Calculate pending from filtered data instead of unfiltered Redux state
-  const pending = pendingUnits.length;
-  const approved = historyUnits.filter((u: any) =>
-    (u.status_flag ?? '').toLowerCase() === "approved"
-  ).length;
-  const rejected = historyUnits.filter((u: any) => {
-    const status = (u.status_flag ?? '').toLowerCase();
-    return status === "rejected";
-  }).length;
-
-  // Compose dashboardStats object for components
-  const dashboardStats = {
-    totalPendingApplications: pending,
-    approved,
-    rejected,
-    acceptedApplications: acceptedApplicationsCount,
-    clarificationRaised: 0 // Add missing property to fix linter error
+  // Use dashboard stats from API if available, otherwise calculate from local data
+  const stats = dashboardStats || {
+    totalPendingApplications: pendingUnits.length,
+    approved: historyUnits.filter((u: any) =>
+      (u.status_flag ?? '').toLowerCase() === "approved"
+    ).length,
+    rejected: historyUnits.filter((u: any) => {
+      const status = (u.status_flag ?? '').toLowerCase();
+      return status === "rejected";
+    }).length,
+    acceptedApplications: 0,
+    clarificationRaised: 0
   };
 
   // Helper to calculate total marks for a unit (from AcceptedApplicationsList)
@@ -182,7 +180,7 @@ const UnitDashboard = ({ level }: { level: "brigade" | "division" | "corps" | "c
           </div>
         )}
       </div>
-      <AssetsDetail dashboardStats={dashboardStats} />
+      <AssetsDetail dashboardStats={stats} />
       <div className="row mb-4 row-gap-4">
         {unitMetrics.length === 0 ? (
           <div className="text-center text-muted" style={{height: 180, display: 'flex', alignItems: 'center', justifyContent: 'center', width: '100%'}}>No pending units to display.</div>
@@ -195,7 +193,7 @@ const UnitDashboard = ({ level }: { level: "brigade" | "division" | "corps" | "c
               <UnitScoreChart data={unitMetrics} dataKey="totalNegativeMarks" title="Total Negative Marks" barColor="#e57373" yAxisDomain={totalNegativeMarksDomain} height={180} />
             </div>
             <div className="col-lg-4 col-md-6 col-12 mb-3">
-              <ApplicationStatus dashboardStats={dashboardStats} />
+              <ApplicationStatus dashboardStats={stats} />
             </div>
           </>
         )}

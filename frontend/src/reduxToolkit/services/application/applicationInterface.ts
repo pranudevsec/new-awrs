@@ -4,6 +4,8 @@ export interface ApplicationUnit {
   description: string;
   fds?: any;
   type: string;
+  arm_service: string;
+  role: string;
   clarifications_count?: number; // Added for sidebar and list usage
 }
 
@@ -125,4 +127,18 @@ export interface TokenValidationResponse {
   Remark?: string;
   Expired?: boolean;
   Status: string;
+}
+
+export interface DashboardStats {
+  totalPendingApplications: number;
+  approved: number;
+  rejected: number;
+  acceptedApplications: number;
+  clarificationRaised: number;
+}
+
+export interface FetchDashboardStatsResponse {
+  success: boolean;
+  message: string;
+  data: DashboardStats;
 }
