@@ -74,31 +74,31 @@ const AssetsDetail: React.FC<ProductDetailProps> = ({
     {
       title: "Total Applications",
       value: dashboardStats?.clarificationRaised ?? 0,
-      bgColor: "#b4b4e2ff",
-      textColor: "#495057",
-      borderColor: "#dee2e6",
+      bgColor: "#d34431ff",
+      textColor: "#01060eff",
+      borderColor: "#f2f3f5ff",
       route: "/all-applications", // unitType === "cw2" ? "/applications/all-applications" : 
     },
     {
       title: "Pending Applications",
       value: dashboardStats?.totalPendingApplications ?? 0,
-      bgColor: "#f5e1a2ff",
-      textColor: "#856404",
+      bgColor: "#23aed1ff",
+      textColor: "#1b1502ff",
       borderColor: "#ffeaa7",
       route:  unitType === "cw2" ? "/applications/pending" : "/applications/list",
     },
     {
       title: "Rejected Applications",
       value: dashboardStats?.rejected ?? 0,
-      bgColor: "#f8aeb4ff",
-      textColor: "#721c24",
+      bgColor: "#ee0000ff",
+      textColor: "#110203ff",
       borderColor: "#f5c6cb",
       route: "/applications/rejected",
     },
     {
       title:  "Recommended Applications",
       value: dashboardStats?.acceptedApplications ?? 0,
-      bgColor: "#9bf0ffff",
+      bgColor: "#b6c4c7ff",
       textColor: "#0c5460",
       borderColor: "#bee5eb",
       route: unitType === "cw2" ? "/applications/approved" : "/application/accepted",
@@ -112,8 +112,8 @@ const AssetsDetail: React.FC<ProductDetailProps> = ({
         {
           title: "Finalized Applications",
           value: dashboardStats?.approved ?? 0,
-          bgColor: "#a6fdbaff",
-          textColor: "#155724",
+          bgColor: "#0a6e21ff",
+          textColor: "#000501ff",
           borderColor: "#c3e6cb",
           route: "/applications/finalized",
         },
@@ -162,7 +162,7 @@ const AssetsDetail: React.FC<ProductDetailProps> = ({
               <div className="d-flex flex-column h-100 justify-content-between">
                 <h6
                   style={{
-                    fontSize: "14px",
+                    fontSize: "20px",
                     fontWeight: "500",
                     color: card.textColor,
                     margin: "0",

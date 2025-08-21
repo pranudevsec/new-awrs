@@ -478,7 +478,7 @@ const TrackApplicationDetails = () => {
               <div className="fw-bold">{paramStats.marks}</div>
             </div>
             <div className="col-6 col-sm-2">
-              <span className="fw-medium text-muted">Nagative Marks:</span>
+              <span className="fw-medium text-muted">Negative Marks:</span>
               <div className="fw-bold text-danger">-{paramStats.negativeMarks}</div>
             </div>
             <div className="col-6 col-sm-2">
