@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import axios from 'axios';
-import dgis from '../../assets/dgislogo.png';
+// import dgis from '../../assets/dgislogo.png';
 
 export function Chatbot() {
   const bottomRef = useRef<HTMLDivElement>(null);

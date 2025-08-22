@@ -49,37 +49,50 @@ if (!isCommand) {
   }
 
   // CW2 always last
-  steps.push({ label: "Chief Warrant 2 (CW2)", date: unitDetail?.cw2_approved_at });
+  steps.push({ label: "Chief Warrant 2 (CW2)", date: unitDetail?.cw2_approved_at } as any);
 }
 
 
-  const getCurrentStep = () => {
-    if (!unitDetail) return 0;
+const getCurrentStep = () => {
+  if (!unitDetail) return 0;
 
-    const roleToStepIndex: Record<string, number> = {
-      brigade: 0,
-      division: 1,
-      corps: 2,
-      command: 3,
-    };
+  //  If status is rejected
+  if (unitDetail?.status_flag === "rejected") {
+    const rejectedRole = unitDetail?.last_rejected_by_role?.toLowerCase();
+    const rejectedIndex = steps.findIndex(step =>
+      step.label.toLowerCase().includes(rejectedRole)
+    );
 
-    const lastApprovedRole = unitDetail.last_approved_by_role?.toLowerCase();
-    let step = (roleToStepIndex[lastApprovedRole] ?? -1) + 1;
-
-    // Move step pointer through dynamic MO/OL
-    if (unitDetail.is_mo_approved || unitDetail.is_ol_approved) {
-      const moApproved = !!unitDetail.is_mo_approved;
-      const olApproved = !!unitDetail.is_ol_approved;
-
-      if (moApproved && !olApproved) step = 5; // MO done
-      else if (!moApproved && olApproved) step = 5; // OL done (first in order)
-      else if (moApproved && olApproved) step = 6; // both done → CW2 next
+    if (rejectedIndex >= 0) {
+      return rejectedIndex; 
     }
+  }
 
-    if (unitDetail.cw2_approved_at) step = steps.length; // CW2 done
-
-    return step;
+  // 🔹 Normal flow if not rejected
+  const roleToStepIndex: Record<string, number> = {
+    brigade: 0,
+    division: 1,
+    corps: 2,
+    command: 3,
   };
+
+  const lastApprovedRole = unitDetail.last_approved_by_role?.toLowerCase();
+  let step = (roleToStepIndex[lastApprovedRole] ?? -1) + 1;
+
+  // Handle MO/OL dynamic logic
+  if (unitDetail.is_mo_approved || unitDetail.is_ol_approved) {
+    const moApproved = !!unitDetail.is_mo_approved;
+    const olApproved = !!unitDetail.is_ol_approved;
+
+    if (moApproved && !olApproved) step = 5;
+    else if (!moApproved && olApproved) step = 5;
+    else if (moApproved && olApproved) step = 6;
+  }
+
+  if (unitDetail.cw2_approved_at) step = steps.length;
+
+  return step;
+};
 
   const getStepDate = (label: string): string | null => {
     if (!unitDetail) return null;
@@ -116,38 +129,56 @@ if (!isCommand) {
 
   return (
     <div className="step-progress-container d-flex align-items-center justify-content-center position-relative">
-      {steps.map((step, index) => {
-        const isCompleted = index < currentStep;
-        const isCurrent = index === currentStep;
+{steps.map((step, index) => {
+  // Normalize rejected role
+  let rejectedRole = unitDetail?.last_rejected_by_role?.toLowerCase();
+  if (rejectedRole === "cw2_mo") rejectedRole = "medical officer (mo)";
+  if (rejectedRole === "cw2_ol") rejectedRole = "operational leader (ol)";
 
-        let stepStatusClass = "";
-        if (isCompleted) stepStatusClass = "completed";
-        else if (isCurrent) stepStatusClass = "current";
+  const isRejected =
+    unitDetail?.status_flag === "rejected" &&
+    rejectedRole &&
+    step.label.toLowerCase().includes(rejectedRole);
 
-        const stepCircleClass = `step-circle d-flex align-items-center justify-content-center fw-6 ${stepStatusClass}`;
+  const isCompleted = !isRejected && index < currentStep;
+  const isCurrent = !isRejected && index === currentStep;
 
-        return (
-          <div className="step-item position-relative text-center" key={step.label}>
-            <div className={stepCircleClass}>
-              {isCompleted ? "✔" : index + 1}
-            </div>
+  let stepStatusClass = "";
+  if (isRejected) stepStatusClass = "rejected";
+  else if (isCompleted) stepStatusClass = "completed";
+  else if (isCurrent) stepStatusClass = "current";
 
-            {index < steps.length - 1 && (
-              <div className={`step-line ${isCompleted ? "completed" : ""}`}></div>
-            )}
+  const stepCircleClass = `step-circle d-flex align-items-center justify-content-center fw-6 ${stepStatusClass}`;
 
-            <div className="step-label">
-              <div>{step.label}</div>
-              <div className="text-muted small">
-                {getStepDate(step.label) ?? "Pending"}
-              </div>
-            </div>
-          </div>
-        );
-      })}
+  return (
+    <div className="step-item position-relative text-center" key={step.label}>
+      <div className={stepCircleClass}>
+        {isRejected ? "✘" : isCompleted ? "✔" : index + 1}
+      </div>
+
+      {index < steps.length - 1 && (
+        <div
+          className={`step-line ${
+            isCompleted ? "completed" : isRejected ? "rejected" : ""
+          }`}
+        ></div>
+      )}
+
+      <div className="step-label">
+        <div>{step.label}</div>
+        <div className={`small ${isRejected ? "text-danger" : "text-muted"}`}>
+          {isRejected ? "Rejected" : getStepDate(step.label) ?? "Pending"}
+        </div>
+      </div>
+    </div>
+  );
+})}
+
+
     </div>
   );
 };
 
 
 export default StepProgressBar;
+

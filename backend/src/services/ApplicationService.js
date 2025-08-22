@@ -386,6 +386,7 @@ exports.getSingleApplicationForUnit = async (
           c.is_hr_review,
           c.is_dv_review,
           c.is_mp_review,
+          c.last_rejected_by_role,
           c.remarks
         FROM Citation_tab c
         JOIN Unit_tab u ON c.unit_id = u.unit_id
@@ -411,6 +412,7 @@ exports.getSingleApplicationForUnit = async (
           a.is_hr_review,
           a.is_dv_review,
           a.is_mp_review,
+             a.last_rejected_by_role,
           a.remarks
         FROM Appre_tab a
         JOIN Unit_tab u ON a.unit_id = u.unit_id
@@ -1237,7 +1239,7 @@ exports.updateApplicationStatus = async (
             if (user.user_role === "cw2") {
               const now = new Date().toISOString();
               let approvedAt = now;
-              if (user.cw2_type === "mo") {
+              if (user.cw2_type === "mo" ) {
                 await client.query(
                   `UPDATE ${config.table}
                    SET is_mo_approved = $2, mo_approved_at = $3, last_approved_at = $4
@@ -1300,6 +1302,12 @@ exports.updateApplicationStatus = async (
         `;
         values = [statusLower, id, user.user_role];
       } else if (statusLower === "rejected") {
+        // preprocess role
+        let role = user.user_role;
+        if (role === "cw2" && (user.cw2_type === "mo" || user.cw2_type === "ol")) {
+          role = `${role}_${user.cw2_type}`;
+        }
+      
         query = `
           UPDATE ${config.table}
           SET status_flag = $1,
@@ -1308,7 +1316,8 @@ exports.updateApplicationStatus = async (
           WHERE ${config.column} = $2
           RETURNING *;
         `;
-        values = [statusLower, id, user.user_role, now];
+      
+        values = [statusLower, id, role, now];
       } else if (statusLower) {
         query = `
           UPDATE ${config.table}

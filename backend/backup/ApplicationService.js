@@ -1332,16 +1332,24 @@ async function updateStatusFlag(client, config, id, statusLower, user) {
         RETURNING *;`;
       values = [statusLower, id, user.user_role];
       break;
-    case "rejected":
-      query = `
-        UPDATE ${config.table}
-        SET status_flag = $1,
-            last_rejected_by_role = $3,
-            last_rejected_at = $4
-        WHERE ${config.column} = $2
-        RETURNING *;`;
-      values = [statusLower, id, user.user_role, now];
-      break;
+      case "rejected": {
+        // preprocess role
+        let role = user.user_role;
+        if (role === "cw2" && (user.cw2_type === "mo" || user.cw2_type === "ol")) {
+          role = `${role}_${user.cw2_type}`;
+        }
+      
+        query = `
+          UPDATE ${config.table}
+          SET status_flag = $1,
+              last_rejected_by_role = $3,
+              last_rejected_at = $4
+          WHERE ${config.column} = $2
+          RETURNING *;`;
+      
+        values = [statusLower, id, role, now];
+        break;
+      }
     default:
       query = `
         UPDATE ${config.table}

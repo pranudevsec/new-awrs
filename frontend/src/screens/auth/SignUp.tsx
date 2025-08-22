@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom"
 import { useFormik } from "formik";
 import { unwrapResult } from "@reduxjs/toolkit";
-import ReCAPTCHA from "react-google-recaptcha";
+// import ReCAPTCHA from "react-google-recaptcha";
 import FormInput from "../../components/form/FormInput";
 import FormSelect from "../../components/form/FormSelect";
 import bgimg from "../../assets/Picture7.png";
@@ -17,7 +17,7 @@ const SignUp = () => {
 
     // States 
     const [passwordType, setPasswordType] = useState<string>("password");
-    const [captchaToken, setCaptchaToken] = useState<string | null>(null);
+    // const [captchaToken, setCaptchaToken] = useState<string | null>(null);
 
     // Formik
     const formik = useFormik({
@@ -28,11 +28,11 @@ const SignUp = () => {
             username: "",
             password: "",
             confirmPassword: "",
-            captchaToken: ""
+            // captchaToken: ""
         },
         validationSchema: SignUpSchema,
         onSubmit: async (values, { resetForm }) => {
-            if (!values.captchaToken) return;
+            // if (!values.captchaToken) return;
             const resultAction = await dispatch(reqToSignUp(values));
             const result = unwrapResult(resultAction);
             if (result.success) {
@@ -42,10 +42,10 @@ const SignUp = () => {
         },
     });
 
-    const handleCaptchaChange = (value: string | null) => {
-        setCaptchaToken(value);
-        formik.setFieldValue("captchaToken", value);
-    };
+    // const handleCaptchaChange = (value: string | null) => {
+    //     setCaptchaToken(value);
+    //     formik.setFieldValue("captchaToken", value);
+    // };
 
     return (
         <div className="auth-section">
@@ -188,7 +188,7 @@ const SignUp = () => {
                                             <p className="error-text">{formik.errors.confirmPassword}</p>
                                         )}
                                     </div>
-                                    <div className="mb-4">
+                                    {/* <div className="mb-4">
                                         <ReCAPTCHA
                                             sitekey="6LeIxAcTAAAAAJcZVRqyHh71UMIEGNQ_MXjiZKhI"
                                             onChange={handleCaptchaChange}
@@ -196,7 +196,7 @@ const SignUp = () => {
                                         {!captchaToken && formik.submitCount > 0 && (
                                             <p className="error-text mt-1">Please verify the captcha</p>
                                         )}
-                                    </div>
+                                    </div> */}
                                     <button type="submit" className="border-0 w-100 submit-btn" disabled={formik.isSubmitting}>
                                         {formik.isSubmitting ? (
                                             <>
