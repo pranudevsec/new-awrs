@@ -107,7 +107,7 @@ export function Chatbot() {
       )}
 
       {/* Floating Button */}
-      <button
+      {/* <button
         className="btn text-white  position-fixed bottom-0  m-5 rounded-pill shadow"
         onClick={() => setChatOpen(!chatOpen)}
         style={{ zIndex: 1050, backgroundColor: 'var(--blue-primary-clr)', left: '1.5rem' }}
@@ -120,7 +120,7 @@ export function Chatbot() {
           />
           DGIS Assist
         </span>
-      </button>
+      </button> */}
     </>
   );
 }

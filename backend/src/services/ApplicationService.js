@@ -1050,7 +1050,7 @@ exports.getApplicationsScoreboard = async (user, query) => {
     // Pagination
     const totalItems = allApps.length;
     const paginatedData = allApps.slice(0, limitInt);
-
+    
     const pagination = {
       totalItems,
       totalPages: Math.ceil(totalItems / limitInt),
@@ -2426,9 +2426,47 @@ exports.getAllApplications = async (user, query) => {
         },
       };
     });
+// Fix last_approved_by_role logic
+allApps = allApps.map((app) => {
+  // Skip if status is draft
+ 
+  let updatedRole = app.last_approved_by_role;
+   console.log(updatedRole)
+     if (app.is_ol_approved && app.is_mo_approved) {
+    updatedRole = "CW2";
+  }
+  else if (app.is_mo_approved) {
+    updatedRole = "Mo";
+  } else if (app.is_ol_approved) {
+    updatedRole = "OL";
+  } else if (app.status_flag !== "draft" && !updatedRole) {
+    updatedRole = "brigade";
+  }
+else if (app.updatedRole == "brigade") {
+    updatedRole = "division";
+  }
+  else if (app.updatedRole == "division") {
+    updatedRole = "corps";
+  }
+   else if (app.updatedRole == "corps") {
+    updatedRole = "command";
+  }
+   else if (app.updatedRole == "command") {
+    updatedRole = "MO/OL";
+  }
+  else if (app.is_ol_approved && app.is_mo_approved) {
+    updatedRole = "CW2";
+  }
+  return {
+    ...app,
+    last_approved_by_role: updatedRole,
+  };
+});
 
     // Sort and paginate
     allApps.sort((a, b) => new Date(b.date_init) - new Date(a.date_init));
+
+   
     const pageInt = parseInt(page);
     const limitInt = parseInt(limit);
     const startIndex = (pageInt - 1) * limitInt;

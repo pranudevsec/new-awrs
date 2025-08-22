@@ -246,7 +246,7 @@ const Login = () => {
                       <p className="error-text">{formik.errors.password}</p>
                     )}
                   </div>
-                  <div className="mb-4 d-flex flex-wrap align-items-center justify-content-between gap-2">
+                  {/* <div className="mb-4 d-flex flex-wrap align-items-center justify-content-between gap-2">
                     <label
                       className="ios-checkbox text-nowrap"
                       aria-hidden="true"
@@ -274,7 +274,7 @@ const Login = () => {
                     <Link to="/forgot-password" className="nav-link fw-6">
                       Forgot Password?
                     </Link>
-                  </div>
+                  </div> */}
                   <button
                     type="submit"
                     className="border-0 w-100 submit-btn"
