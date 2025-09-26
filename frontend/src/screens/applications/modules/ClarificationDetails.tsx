@@ -18,7 +18,6 @@ const ClarificationDetails = () => {
             toast.error("File size should be less than 5MB");
             e.target.value = "";
         } else if (file) {
-            console.log("File selected:", file);
         }
     };
 

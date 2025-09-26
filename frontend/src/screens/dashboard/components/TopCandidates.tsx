@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
-import * as XLSX from 'xlsx';
-import { saveAs } from 'file-saver';
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
 import FormSelect from '../../../components/form/FormSelect';
 import { useAppSelector } from '../../../reduxToolkit/hooks';
 
@@ -48,7 +48,7 @@ const getPriorities = (priorities: any[]) => {
   };
 };
 
-const prepareExcelData = (scoreboard: any[], topN: number) => {
+const preparePDFData = (scoreboard: any[], topN: number) => {
   const sorted = [...scoreboard].sort((a, b) => b.total_marks - a.total_marks);
   const topCandidates = sorted.slice(0, topN);
 
@@ -97,17 +97,30 @@ const TopCandidates: React.FC<TopCandidatesProps> = ({ setReportCount, reportCou
   const handleDownload = () => {
     const topN = selectedTop?.value ?? 5;
     try {
-      const excelData = prepareExcelData(scoreboard, topN);
-      const worksheet = XLSX.utils.json_to_sheet(excelData);
-      const workbook = XLSX.utils.book_new();
-      XLSX.utils.book_append_sheet(workbook, worksheet, 'Top Candidates');
+      const pdfData = preparePDFData(scoreboard, topN);
+      
+      const doc = new jsPDF({ orientation: "landscape", unit: "pt", format: "a4" });
+      
+      // Add title
+      doc.setFontSize(16);
+      doc.text(`Top ${topN} Candidates Scoreboard`, 14, 22);
 
-      const excelBuffer = XLSX.write(workbook, { bookType: 'xlsx', type: 'array' });
-      const data = new Blob([excelBuffer], { type: 'application/octet-stream' });
+      // Convert data to table format
+      const headers = Object.keys(pdfData[0] || {});
+      const rows = pdfData.map((row:any) => headers.map(header => row[header] || ''));
 
-      saveAs(data, `Top_${topN}_Candidates_Scoreboard.xlsx`);
+      // Create table
+      autoTable(doc, {
+        head: [headers],
+        body: rows,
+        startY: 30,
+        theme: "grid",
+        headStyles: { fillColor: [41, 128, 185] },
+        styles: { fontSize: 8, cellPadding: 4, overflow: "linebreak" },
+      });
+
+      doc.save(`Top_${topN}_Candidates_Scoreboard.pdf`);
     } catch (error) {
-      console.error('Excel generation failed:', error);
     }
   };
 
@@ -133,7 +146,7 @@ const TopCandidates: React.FC<TopCandidatesProps> = ({ setReportCount, reportCou
             className="_btn _btn-lg primary w-100"
             onClick={handleDownload}
           >
-            Download Report
+            Download PDF Report
           </button>
         </div>
       </div>

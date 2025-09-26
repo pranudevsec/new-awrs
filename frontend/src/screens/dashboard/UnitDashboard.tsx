@@ -9,8 +9,8 @@ import FormSelect from "../../components/form/FormSelect";
 import { getHomeCountStats } from "../../reduxToolkit/services/command-panel/commandPanelService";
 import { fetchApplicationHistory, fetchSubordinates, fetchDashboardStats } from "../../reduxToolkit/services/application/applicationService";
 import { awardTypeOptions } from "../../data/options";
-import * as XLSX from 'xlsx';
-import { saveAs } from 'file-saver';
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
 
 const UnitDashboard = ({ level }: { level: "brigade" | "division" | "corps" | "command"}) => {
   const dispatch = useAppDispatch();
@@ -118,40 +118,44 @@ const UnitDashboard = ({ level }: { level: "brigade" | "division" | "corps" | "c
     };
   });
 
-  // Calculate dynamic y-axis domains for each metric
-  const getDynamicDomain = (arr: number[]): [number, number] => {
-    if (!arr || arr.length === 0) return [0, 10];
-    const max = Math.max(...arr, 0);
-    // Round up to the next multiple of 10 for a cleaner axis
-    const roundedMax = isNaN(max) ?? max <= 10 ? 10 : Math.ceil(max / 10) * 10;
-    return [0, roundedMax];
-  };
-
-  const totalMarksDomain = getDynamicDomain(unitMetrics.map(u => u.totalMarks));
-  const totalNegativeMarksDomain = getDynamicDomain(unitMetrics.map(u => u.totalNegativeMarks));
-
-  // Export to Excel handler
-  const handleExportExcel = () => {
-    const excelData = pendingUnits.map((unit: any) => {
+  // Export to PDF handler
+  const handleExportPDF = () => {
+    const pdfData = pendingUnits.map((unit: any) => {
       const parameters = unit?.fds?.parameters ?? [];
       const totalNegativeMarks = parameters
         .filter((param: any) => param?.negative)
         .reduce((acc: number, param: any) => acc + Number(param?.marks ?? 0), 0);
-      return {
-        'Application Id': unit.id,
-        'Unit ID': unit.unit_id,
-        'Arm/Service': unit.fds.unit_type ?? '',
-        'Total Marks': getTotalMarks(unit),
-        'Total Negative Marks': totalNegativeMarks,
-        'Application Type': unit.type ? unit.type.charAt(0).toUpperCase() + unit.type.slice(1) : '-',
-      };
+      return [
+        unit.id,
+        unit.unit_id,
+        unit.fds.unit_type ?? '',
+        getTotalMarks(unit),
+        totalNegativeMarks,
+        unit.type ? unit.type.charAt(0).toUpperCase() + unit.type.slice(1) : '-',
+      ];
     });
-    const worksheet = XLSX.utils.json_to_sheet(excelData);
-    const workbook = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(workbook, worksheet, 'Applications');
-    const excelBuffer = XLSX.write(workbook, { bookType: 'xlsx', type: 'array' });
-    const data = new Blob([excelBuffer], { type: 'application/octet-stream' });
-    saveAs(data, 'Pending_Applications.xlsx');
+
+    const doc = new jsPDF({ orientation: "landscape", unit: "pt", format: "a4" });
+    
+    // Add title
+    doc.setFontSize(16);
+    doc.text("Pending Applications Report", 14, 22);
+
+    // Create table
+    autoTable(doc, {
+      head: [['Application Id', 'Unit ID', 'Arm/Service', 'Total Marks', 'Total Negative Marks', 'Application Type']],
+      body: pdfData,
+      startY: 30,
+      theme: "grid",
+      headStyles: { fillColor: [41, 128, 185] },
+      styles: { fontSize: 8, cellPadding: 4, overflow: "linebreak" },
+      columnStyles: {
+        3: { cellWidth: 60, halign: "right" }, // Total Marks column
+        4: { cellWidth: 60, halign: "right" }, // Total Negative Marks column
+      },
+    });
+
+    doc.save('Pending_Applications.pdf');
   };
 
   if (loading) return <Loader />;
@@ -174,8 +178,8 @@ const UnitDashboard = ({ level }: { level: "brigade" | "division" | "corps" | "c
         </div>
         {pendingUnits.length > 0 && (
           <div className="col-lg-6 col-md-6 col-12 mb-3 d-flex align-items-end justify-content-end">
-            <button className="_btn _btn-lg primary" onClick={handleExportExcel}>
-              Export to Excel
+            <button className="_btn _btn-lg primary" onClick={handleExportPDF}>
+              Download PDF Report
             </button>
           </div>
         )}
@@ -187,10 +191,10 @@ const UnitDashboard = ({ level }: { level: "brigade" | "division" | "corps" | "c
         ) : (
           <>
             <div className="col-lg-4 col-md-6 col-12 mb-3">
-              <UnitScoreChart data={unitMetrics} dataKey="totalMarks" title="Total Marks" yAxisDomain={totalMarksDomain} height={180} />
+              <UnitScoreChart  dataKey="totalMarks" title="Total Marks"  height={180} />
             </div>
             <div className="col-lg-4 col-md-6 col-12 mb-3">
-              <UnitScoreChart data={unitMetrics} dataKey="totalNegativeMarks" title="Total Negative Marks" barColor="#e57373" yAxisDomain={totalNegativeMarksDomain} height={180} />
+              <UnitScoreChart  dataKey="totalNegativeMarks" title="Total Negative Marks" barColor="#e57373"  height={180} />
             </div>
             <div className="col-lg-4 col-md-6 col-12 mb-3">
               <ApplicationStatus dashboardStats={stats} />

@@ -1,9 +1,11 @@
 import { useState } from "react";
 import Modal from "react-bootstrap/Modal";
+import toast from "react-hot-toast";
 import FormInput from "../components/form/FormInput";
 import { SVGICON } from "../constants/iconsList";
 import { createClarification } from "../reduxToolkit/services/clarification/clarificationService";
 import { useAppDispatch } from "../reduxToolkit/hooks";
+import { validateReviewerComment, countWords } from "../utils/wordCountUtils";
 
 interface ClarificationModalProps {
   show: boolean;
@@ -33,12 +35,20 @@ const UnitClarificationModal: React.FC<ClarificationModalProps> = ({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
+    // Validate reviewer comment using utility function
+    const validation :any= validateReviewerComment(comment);
+    if (!validation.isValid) {
+      toast.dismiss();
+      toast.error(validation.message);
+      return;
+    }
+
     const payload = {
       type,
       application_id,
       parameter_name,
       parameter_id,
-      reviewer_comment: comment,
+      reviewer_comment: comment.trim(),
     };
 
     try {
@@ -47,7 +57,6 @@ const UnitClarificationModal: React.FC<ClarificationModalProps> = ({
       handleClose();
       setComment("");
     } catch (err) {
-      console.error("Clarification creation failed", err);
     }
   };
 
@@ -75,15 +84,14 @@ const UnitClarificationModal: React.FC<ClarificationModalProps> = ({
               rows={4}
               value={comment}
               onChange={(e: any) => {
-                const words = e.target.value.trim().split(/\s+/);
-                if (words.length <= 200) {
-                  setComment(e.target.value);
-                } else {
-                  const trimmed = words.slice(0, 200).join(" ");
-                  setComment(trimmed);
-                }
+                setComment(e.target.value);
               }}
             />
+            <div className="mt-2">
+              <small className={`text-muted ${countWords(comment) > 200 ? 'text-danger' : ''}`}>
+                Word count: {countWords(comment)}/200
+              </small>
+            </div>
           </div>
           <div className="d-flex align-items-center justify-content-end gap-3">
             <button type="submit" className="_btn primary">

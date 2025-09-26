@@ -221,7 +221,6 @@ const SubmittedFormDetail = () => {
             const updatedStats = calculateParameterStats(unitDetail?.fds?.parameters);
             setParamStats(updatedStats);
         } catch (err) {
-            console.error("Failed to save approved marks:", err);
         }
     };
 
@@ -293,7 +292,6 @@ const SubmittedFormDetail = () => {
             try {
                 await dispatch(approveMarks(body)).unwrap();
             } catch (err) {
-                console.error("Failed to update remarks", err);
             }
         }, 500);
     }, [unitRemarks]);

@@ -139,7 +139,6 @@ orConditions.push(`TRIM(LOWER(arms_service)) = 'all'`);
 
     return ResponseHelper.success(200, "Fetched parameters", dataResult.rows, pagination);
   } catch (err) {
-    console.error("Error in getAllParameters:", err.message);
     return ResponseHelper.error(500, "Failed to fetch parameters", err.message);
   } finally {
     client.release();

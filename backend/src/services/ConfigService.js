@@ -47,7 +47,6 @@ exports.updateFirstConfig = async (data) => {
 
     return ResponseHelper.success(200, "Config saved", result.rows[0]);
   } catch (error) {
-    console.error("Error updating or inserting config:", error);
     return ResponseHelper.error(500, "Internal server error");
   } finally {
     client.release();

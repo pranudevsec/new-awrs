@@ -125,7 +125,23 @@ exports.updateClarification = async (user, data, clarification_id) => {
       return ResponseHelper.error(404, "Clarification not found");
     }
 
-    const { application_type, application_id } = clarificationRow;
+    const { application_type, application_id, parameter_id } = clarificationRow;
+    
+    // Validate approved count and marks if provided - uses same logic as citation/appreciation
+    if (data.approved_count !== undefined || data.approved_marks !== undefined) {
+      const validationResult = await validateApprovedCountAndMarks(
+        client,
+        application_type,
+        application_id,
+        parameter_id,
+        data.approved_count,
+        data.approved_marks
+      );
+      if (!validationResult.isValid) {
+        return ResponseHelper.error(400, validationResult.message);
+      }
+    }
+    
     const updateFields = buildUpdateFields(user, data);
 
     if (updateFields.updates.length === 0) {
@@ -180,7 +196,7 @@ async function fetchClarificationRow(client, clarification_id) {
 }
 
 function buildUpdateFields(user, data) {
-  const { clarification, clarification_doc, clarification_status } = data;
+  const { clarification, clarification_doc, clarification_status, approved_marks, approved_count } = data;
   const updates = [];
   const values = [];
   let i = 1;
@@ -202,6 +218,19 @@ function buildUpdateFields(user, data) {
   } else if (clarification_status !== undefined) {
     updates.push(`clarification_status = $${i++}`);
     values.push(clarification_status);
+  }
+
+  // Handle approved count and marks for officers (brigade, division, corps, command)
+  // Uses the same validation logic as citation/appreciation
+  if (["brigade", "division", "corps", "command"].includes(user.user_role)) {
+    if (approved_count !== undefined) {
+      updates.push(`approved_count = $${i++}`);
+      values.push(approved_count);
+    }
+    if (approved_marks !== undefined) {
+      updates.push(`approved_marks = $${i++}`);
+      values.push(approved_marks);
+    }
   }
 
   updates.push(`clarified_at = NOW()`);
@@ -348,6 +377,88 @@ async function logClarificationAction(client, clarification_id) {
   );
 }
 // END HELPER OF updateClarification
+
+/**
+ * Validates approved count and marks against the original parameter data
+ * Uses the same Math.min logic as citation/appreciation validation
+ * @param {Object} client - Database client
+ * @param {string} application_type - Type of application (citation/appreciation)
+ * @param {number} application_id - ID of the application
+ * @param {string} parameter_id - ID of the parameter
+ * @param {string|number} approved_count - The approved count value
+ * @param {string|number} approved_marks - The approved marks value
+ * @returns {Object} - Validation result with isValid and message
+ */
+async function validateApprovedCountAndMarks(client, application_type, application_id, parameter_id, approved_count, approved_marks) {
+  try {
+    // Get the application data
+    const table = application_type === "citation" ? "Citation_tab" : "Appre_tab";
+    const jsonColumn = application_type === "citation" ? "citation_fds" : "appre_fds";
+    const idField = application_type === "citation" ? "citation_id" : "appreciation_id";
+    
+    const appQuery = `SELECT ${jsonColumn} FROM ${table} WHERE ${idField} = $1`;
+    const appRes = await client.query(appQuery, [application_id]);
+    
+    if (appRes.rowCount === 0) {
+      return { isValid: false, message: "Application not found" };
+    }
+    
+    const fds = appRes.rows[0][jsonColumn];
+    if (!Array.isArray(fds?.parameters)) {
+      return { isValid: false, message: "Application parameters not found" };
+    }
+    
+    // Find the specific parameter
+    const parameter = fds.parameters.find(param => param.id === parameter_id);
+    if (!parameter) {
+      return { isValid: false, message: "Parameter not found" };
+    }
+    
+    // Validate approved count and marks using the same logic as citation/appreciation
+    const approvedCountNum = Number(approved_count) || 0;
+    const approvedMarksNum = Number(approved_marks) || 0;
+    const originalCount = Number(parameter.count) || 0;
+    const originalMarks = Number(parameter.marks) || 0;
+    const maxMarks = Number(parameter.max_marks) || 0;
+    const perUnitMark = Number(parameter.per_unit_mark) || 0;
+    
+    // Check if approved count is a valid number
+    if (approved_count !== undefined && (isNaN(approvedCountNum) || approvedCountNum < 0)) {
+      return { isValid: false, message: "Approved count must be a valid non-negative number" };
+    }
+    
+    // Check if approved marks is a valid number
+    if (approved_marks !== undefined && (isNaN(approvedMarksNum) || approvedMarksNum < 0)) {
+      return { isValid: false, message: "Approved marks must be a valid non-negative number" };
+    }
+    
+    // If both count and marks are provided, validate the relationship
+    if (approved_count !== undefined && approved_marks !== undefined) {
+      // Calculate what the marks should be based on count (same logic as citation)
+      const calculatedMarks = Math.min(approvedCountNum * perUnitMark, maxMarks);
+      
+      // Check if the provided marks match the calculated marks
+      if (Math.abs(approvedMarksNum - calculatedMarks) > 0.01) { // Allow small floating point differences
+        return { isValid: false, message: `Approved marks (${approvedMarksNum}) should be ${calculatedMarks} based on approved count (${approvedCountNum})` };
+      }
+    }
+    
+    // Check if approved count exceeds original count
+    if (approved_count !== undefined && approvedCountNum > originalCount) {
+      return { isValid: false, message: `Approved count (${approvedCountNum}) cannot exceed original count (${originalCount})` };
+    }
+    
+    // Check if approved marks exceed max marks
+    if (approved_marks !== undefined && approvedMarksNum > maxMarks) {
+      return { isValid: false, message: `Approved marks (${approvedMarksNum}) cannot exceed maximum marks (${maxMarks})` };
+    }
+    
+    return { isValid: true, message: "Approved marks are valid" };
+    
+  } catch (error) {
+    return { isValid: false, message: "Error validating approved marks" };
+  }
+}
 
 exports.getAllApplicationsWithClarificationsForUnit = async (user, query) => {
   const client = await dbService.getClient();
@@ -537,7 +648,6 @@ exports.getAllApplicationsWithClarificationsForSubordinates = async (user, query
       pagination
     );
   } catch (err) {
-    console.error(`[Clarification API] Error: ${err.message}`);
     return ResponseHelper.error(500, "Failed to fetch clarifications", err.message);
   } finally {
     client.release();

@@ -33,21 +33,46 @@ const ReqClarificationModal: React.FC<ClarificationModalProps> = ({
       </div>
       <div className="modal-body bg-white rounded-3 pt-0">
         {clarification_doc && (
-          <p className="sign-up-text mt-4">
-            Clarification document:-{" "}
-            <a
-              target="_blank"
-              href={`${baseURL}/${clarification_doc}`}
-              className="fw-6"
-            >
-              {`${baseURL}/${clarification_doc}`}
-            </a>
-          </p>
+          <div className="mb-4">
+            <h6 className="fw-6 mb-2">Clarification Document:</h6>
+            <div className="p-3 bg-light rounded border">
+              <a
+                target="_blank"
+                href={`${baseURL}/${clarification_doc}`}
+                className="fw-6 text-primary text-decoration-none"
+                style={{ 
+                  wordBreak: 'break-all',
+                  fontSize: '14px',
+                  lineHeight: '1.4'
+                }}
+              >
+                {`${baseURL}/${clarification_doc}`}
+              </a>
+            </div>
+          </div>
         )}
         {clarification && (
-          <p className="sign-up-text mt-4">
-            Clarification:- {clarification}
-          </p>
+          <div className="mb-4">
+            <h6 className="fw-6 mb-2">Clarification:</h6>
+            <div 
+              className="p-3 bg-light rounded border"
+              style={{ 
+                maxHeight: '300px',
+                overflowY: 'auto',
+                wordWrap: 'break-word',
+                whiteSpace: 'pre-wrap'
+              }}
+            >
+              <p className="mb-0" style={{ fontSize: '14px', lineHeight: '1.5' }}>
+                {clarification}
+              </p>
+            </div>
+          </div>
+        )}
+        {!clarification_doc && !clarification && (
+          <div className="text-center py-4">
+            <p className="text-muted mb-0">No clarification content available</p>
+          </div>
         )}
       </div>
     </Modal>

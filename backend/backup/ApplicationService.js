@@ -1133,7 +1133,6 @@ exports.updateApplicationStatus = async (
 
     throw new Error("Invalid status value and no member provided");
   } catch (err) {
-    console.error("Error updating status:", err);
     throw new Error(err.message);
   } finally {
     client.release();
@@ -1426,7 +1425,6 @@ exports.approveApplicationMarks = async (user, body) => {
 
     return ResponseHelper.success(200, "Marks approved successfully");
   } catch (error) {
-    console.error("Error in approveApplicationMarks:", error);
     return ResponseHelper.error(500, "Failed to approve marks", error.message);
   } finally {
     client.release();
@@ -1835,7 +1833,6 @@ exports.saveOrUpdateDraft = async (user, body) => {
 
     return ResponseHelper.success(200, "Draft saved successfully");
   } catch (err) {
-    console.error("Save draft error:", err);
     return ResponseHelper.error(500, "Failed to save draft", err.message);
   } finally {
     client.release();
@@ -1860,7 +1857,6 @@ exports.getDraft = async (user, type) => {
       res.rows[0].draft_fds
     );
   } catch (err) {
-    console.error("Get draft error:", err);
     return ResponseHelper.error(500, "Failed to fetch draft", err.message);
   } finally {
     client.release();
@@ -1877,7 +1873,6 @@ exports.deleteDraft = async (user, type) => {
 
     return ResponseHelper.success(200, "Draft deleted successfully");
   } catch (err) {
-    console.error("Delete draft error:", err);
     return ResponseHelper.error(500, "Failed to delete draft", err.message);
   } finally {
     client.release();

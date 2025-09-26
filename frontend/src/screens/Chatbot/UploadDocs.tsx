@@ -28,7 +28,6 @@ export function UploadDocs() {
         toast.error("❌ Upload failed: " + (data.error ?? "Unknown error"));
       }
     } catch (err) {
-      console.error(err);
       toast.error("❌ Upload error occurred.");
     } finally {
       setIsUploading(false); // stop loading

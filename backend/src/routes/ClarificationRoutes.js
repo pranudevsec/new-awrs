@@ -4,11 +4,12 @@ const ClarificationController = require("../controllers/ClarificationController.
 const authMiddleware = require("../middlewares/authMiddleware");
 const checkRole = require("../middlewares/checkRole.js");
 const upload = require("../utils/upload.js");
+const { validateCreateClarification, validateUpdateClarification } = require("../validations/clarificationValidator");
 
 router.use(authMiddleware);
 
-router.post("/", ClarificationController.addClarification);
-router.put("/:id",upload.any(), ClarificationController.updateClarification);
+router.post("/", validateCreateClarification, ClarificationController.addClarification);
+router.put("/:id", upload.any(), validateUpdateClarification, ClarificationController.updateClarification);
 router.get("/",  ClarificationController.getAllApplicationsWithClarificationsForUnit);
 router.get("/for-subordinates",  ClarificationController.getAllApplicationsWithClarificationsForSubordinates);
 

@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate, } from "react-router-dom";
-import { saveAs } from "file-saver";
-import * as XLSX from "xlsx";
+import jsPDF from "jspdf";
+import autoTable from "jspdf-autotable";
 import Breadcrumb from "../../components/ui/breadcrumb/Breadcrumb";
 import FormSelect from "../../components/form/FormSelect";
 import Pagination from "../../components/ui/pagination/Pagination";
@@ -92,7 +92,7 @@ const CommandPanel = () => {
       .sort((a, b) => b.total_marks - a.total_marks)
       .slice(0, topN);
 
-    const excelData = topCandidates.map((candidate: any, index: number) => {
+    const pdfData = topCandidates.map((candidate: any, index: number) => {
       const parameters = candidate.fds?.parameters ?? [];
       const graceMarks = candidate.fds?.applicationGraceMarks ?? [];
       const priorities = candidate.fds?.applicationPriority ?? [];
@@ -101,41 +101,66 @@ const CommandPanel = () => {
       const graceMarksByRole = getMarksByRole(roles, graceMarks);
       const prioritiesByRole = getPrioritiesByRole(roles, priorities);
 
-      return {
-        "S. No.": index + 1,
-        "Unit": candidate.unit_name ?? "",
-        "Location": candidate.location ?? "",
-        "Brigade": candidate.bde ?? "",
-        "Division": candidate.div ?? "",
-        "Corps": candidate.corps ?? "",
-        "Command": candidate.comd ?? "",
-        "Unit Type": candidate.unit_type ?? "",
-        "Tenure": getParamMarks(parameters, "tenure"),
-        "Kills": getParamMarks(parameters, "kills"),
-        "Surrendered": getParamMarks(parameters, "surrendered"),
-        "Radioset Recovery": getParamMarks(parameters, "radioset"),
-        "Pistol Recovery": getParamMarks(parameters, "pistol"),
-        "(-ve Marks)": candidate.totalNegativeMarks ?? 0,
-        ...graceMarksByRole,
-        "Total Marks": candidate.total_marks ?? 0,
-        ...prioritiesByRole,
-      };
+      return [
+        index + 1,
+        candidate.unit_name ?? "",
+        candidate.location ?? "",
+        candidate.bde ?? "",
+        candidate.div ?? "",
+        candidate.corps ?? "",
+        candidate.comd ?? "",
+        candidate.unit_type ?? "",
+        getParamMarks(parameters, "tenure"),
+        getParamMarks(parameters, "kills"),
+        getParamMarks(parameters, "surrendered"),
+        getParamMarks(parameters, "radioset"),
+        getParamMarks(parameters, "pistol"),
+        candidate.totalNegativeMarks ?? 0,
+        ...Object.values(graceMarksByRole),
+        candidate.total_marks ?? 0,
+        ...Object.values(prioritiesByRole),
+      ];
     });
 
-    const worksheet = XLSX.utils.json_to_sheet(excelData);
-    const workbook = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(workbook, worksheet, "Top Candidates");
+    const doc = new jsPDF({ orientation: "landscape", unit: "pt", format: "a4" });
+    
+    // Add title
+    doc.setFontSize(16);
+    doc.text("Top 5 Candidates Scoreboard", 14, 22);
 
-    const excelBuffer = XLSX.write(workbook, {
-      bookType: "xlsx",
-      type: "array",
+    // Create headers
+    const roles = ["brigade", "division", "corps", "command"];
+    const headers = [
+      "S. No.",
+      "Unit",
+      "Location", 
+      "Brigade",
+      "Division",
+      "Corps",
+      "Command",
+      "Unit Type",
+      "Tenure",
+      "Kills",
+      "Surrendered",
+      "Radioset Recovery",
+      "Pistol Recovery",
+      "(-ve Marks)",
+      ...roles.map(role => `Points by ${capitalize(role)}`),
+      "Total Marks",
+      ...roles.map(role => `${capitalize(role)} Priority`),
+    ];
+
+    // Create table
+    autoTable(doc, {
+      head: [headers],
+      body: pdfData,
+      startY: 30,
+      theme: "grid",
+      headStyles: { fillColor: [41, 128, 185] },
+      styles: { fontSize: 6, cellPadding: 3, overflow: "linebreak" },
     });
 
-    const data = new Blob([excelBuffer], {
-      type: "application/octet-stream",
-    });
-
-    saveAs(data, `Top_5_Candidates_Scoreboard.xlsx`);
+    doc.save(`Top_5_Candidates_Scoreboard.pdf`);
   };
 
   return (
@@ -147,7 +172,7 @@ const CommandPanel = () => {
             className="_btn outline d-flex align-items-center justify-content-center gap-2"
             onClick={handleDownload}
           >
-            <span>{SVGICON.app.export}</span>Export
+            <span>{SVGICON.app.export}</span>Download PDF
           </button>
 
           <button className="_btn primary">Publish Winner</button>

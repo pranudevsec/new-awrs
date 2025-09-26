@@ -84,7 +84,6 @@ const CitationReviewPage = () => {
         if (parsed.counts) setCounts(parsed.counts);
         if (parsed.marks) setMarks(parsed.marks);
       } catch (err) {
-        console.error("Failed to parse draft from localStorage", err);
       }
     }
   }, []);
@@ -119,7 +118,6 @@ const CitationReviewPage = () => {
         throw new Error("Invalid upload response");
       }
     } catch (error) {
-      console.error("Upload failed:", error);
       return null;
     }
   };
@@ -260,7 +258,6 @@ const CitationReviewPage = () => {
           toast.error("Failed to create citation.");
         }
       } catch (err) {
-        console.error("create failed", err);
       }
     },
   });
@@ -292,7 +289,6 @@ const CitationReviewPage = () => {
           setParameters(revParams);
         }
       } catch (err) {
-        console.error("Failed to fetch data", err);
       }
     };
 

@@ -30,9 +30,27 @@ const ViewCreatedClarificationModal: React.FC<ClarificationModalProps> = ({
       </div>
       <div className="modal-body bg-white rounded-3 pt-0">
         {reviewer_comment && (
-          <p className="sign-up-text mt-4">
-            Reviewer Clarification Comment:- {reviewer_comment}
-          </p>
+          <div className="mb-4">
+            <h6 className="fw-6 mb-2">Reviewer Clarification Comment:</h6>
+            <div 
+              className="p-3 bg-light rounded border"
+              style={{ 
+                maxHeight: '300px',
+                overflowY: 'auto',
+                wordWrap: 'break-word',
+                whiteSpace: 'pre-wrap'
+              }}
+            >
+              <p className="mb-0" style={{ fontSize: '14px', lineHeight: '1.5' }}>
+                {reviewer_comment}
+              </p>
+            </div>
+          </div>
+        )}
+        {!reviewer_comment && (
+          <div className="text-center py-4">
+            <p className="text-muted mb-0">No reviewer comment available</p>
+          </div>
         )}
       </div>
     </Modal>

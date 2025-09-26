@@ -82,8 +82,6 @@ export const getBrigadeDashboardUnitScores =
           );
         }
       } catch (error: any) {
-        console.error("Dashboard score fetch error:", error);
-
         toast.error(
           error?.response?.data?.message ??
           error.message ??

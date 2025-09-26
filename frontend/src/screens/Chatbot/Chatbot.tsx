@@ -26,7 +26,6 @@ export function Chatbot() {
       );
       setMessages((prev) => [...prev, { from: 'bot', text: response.data.answer }]);
     } catch (error) {
-      console.error('Error generating text:', error);
     } finally {
       setIsLoading(false);
     }

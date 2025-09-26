@@ -1,354 +1,225 @@
-import { useEffect} from "react";
+import { useEffect, useState } from "react";
 import { useParams, useSearchParams } from "react-router-dom";
 import { SVGICON } from "../../constants/iconsList";
-import { useAppDispatch } from "../../reduxToolkit/hooks";
-import { awardTypeOptions, cyclePeriodOptions } from "../../data/options";
+import { useAppDispatch, useAppSelector } from "../../reduxToolkit/hooks";
 import { fetchApplicationUnitDetail } from "../../reduxToolkit/services/application/applicationService";
 import Breadcrumb from "../../components/ui/breadcrumb/Breadcrumb";
-import FormSelect from "../../components/form/FormSelect";
 
 const ClarificationDetail = () => {
   const dispatch = useAppDispatch();
   const [searchParams] = useSearchParams();
   const { application_id } = useParams();
+  const { profile } = useAppSelector((state) => state.admin);
 
   // States
   const award_type = searchParams.get("award_type") ?? "";
   const numericAppId = Number(application_id);
+  const [unitDetail, setUnitDetail] = useState<any>(null);
+  const [approvedCount, setApprovedCount] = useState<Record<string, string>>({});
+  const [approvedMarks, setApprovedMarks] = useState<Record<string, string>>({});
 
   useEffect(() => {
     if (award_type && numericAppId) {
       dispatch(fetchApplicationUnitDetail({ award_type, numericAppId }))
         .unwrap()
-        .then(() => {
+        .then((res: any) => {
+          setUnitDetail(res.data);
+          // Initialize approved count and marks from existing data
+          const initialCount: Record<string, string> = {};
+          const initialMarks: Record<string, string> = {};
+          res.data?.fds?.parameters?.forEach((param: any) => {
+            initialCount[param.id] = param.approved_count?.toString() || "";
+            initialMarks[param.id] = param.approved_marks?.toString() || "";
+          });
+          setApprovedCount(initialCount);
+          setApprovedMarks(initialMarks);
         })
-        .catch((err) => {
-          console.error("Fetch failed:", err);
+        .catch(() => {
         });
     }
   }, [award_type, numericAppId]);
+
+  // Handle approved count change - same logic as citation
+  const handleApprovedCountChange = (paramId: string, value: string) => {
+    // Only allow numbers (same validation as citation)
+    if (!/^\d*$/.test(value)) return;
+    
+    setApprovedCount(prev => ({
+      ...prev,
+      [paramId]: value
+    }));
+    
+    // Calculate approved marks automatically (same logic as citation)
+    const countNum = value === "" ? 0 : Number(value);
+    const param = unitDetail?.fds?.parameters?.find((p: any) => p.id === paramId);
+    if (param) {
+      const calculatedMarks = Math.min(
+        countNum * param.per_unit_mark,
+        param.max_marks
+      );
+      setApprovedMarks(prev => ({
+        ...prev,
+        [paramId]: calculatedMarks.toString()
+      }));
+    }
+  };
+
+  // Handle approved marks change
+  const handleApprovedMarksChange = (paramId: string, value: string) => {
+    setApprovedMarks(prev => ({
+      ...prev,
+      [paramId]: value
+    }));
+  };
+
+  // Check if user can edit approved marks (officers only)
+  const canEditApprovedMarks = profile?.user?.user_role && 
+    ["brigade", "division", "corps", "command"].includes(profile.user.user_role);
 
   return (
     <div className="apply-citation-section">
       <div className="d-flex flex-sm-row flex-column align-items-sm-center justify-content-between mb-4">
         <Breadcrumb
-          title="Application ID: #12345"
+          title={`Application ID: #${unitDetail?.id || application_id}`}
           paths={[
+            { label: "Home", href: "/applications" },
             { label: "Clarification", href: "/clarification" },
             { label: "Application Details", href: "/clarification/1" },
           ]}
         />
       </div>
       <div className="table-filter-area mb-4">
-        <div className="row">
-          <div className="col-lg-3 col-sm-4 mb-sm-0 mb-2">
-            <FormSelect
-              label="Award Type"
-              name="awardType"
-              options={awardTypeOptions}
-              value={
-                awardTypeOptions.find((opt) => opt.value === "citation") ??
-                null
-              }
-              placeholder="Select"
-              isDisabled={true}
-            />
+        <div className="d-flex flex-wrap justify-content-between align-items-center gap-3">
+          <div className="text-center flex-grow-1 flex-sm-grow-0 flex-basis-100 flex-sm-basis-auto" style={{ minWidth: '150px' }}>
+            <div className="form-label fw-semibold">Award Type</div>
+            <p className="fw-5 mb-0">
+              {unitDetail?.type
+                ? unitDetail.type.charAt(0).toUpperCase() + unitDetail.type.slice(1)
+                : "--"}
+            </p>
           </div>
-          <div className="col-lg-3 col-sm-4 mb-sm-0 mb-2">
-            <FormSelect
-              label="Cycle Period"
-              name="cyclePeriod"
-              options={cyclePeriodOptions}
-              value={
-                cyclePeriodOptions.find((opt) => opt.value === "citation") ??
-                null
-              }
-              placeholder="Select"
-            />
+
+          <div className="text-center flex-grow-1 flex-sm-grow-0 flex-basis-100 flex-sm-basis-auto" style={{ minWidth: '150px' }}>
+            <div className="form-label fw-semibold">Cycle Period</div>
+            <p className="fw-5 mb-0">{unitDetail?.fds?.cycle_period ?? "--"}</p>
+          </div>
+
+          <div className="text-center flex-grow-1 flex-sm-grow-0 flex-basis-100 flex-sm-basis-auto" style={{ minWidth: '150px' }}>
+            <div className="form-label fw-semibold">Last Date</div>
+            <p className="fw-5 mb-0">{unitDetail?.fds?.last_date ?? "--"}</p>
+          </div>
+
+          <div className="text-center flex-grow-1 flex-sm-grow-0 flex-basis-100 flex-sm-basis-auto" style={{ minWidth: '150px' }}>
+            <div className="form-label fw-semibold">Command</div>
+            <p className="fw-5 mb-0">{unitDetail?.fds?.command ?? "--"}</p>
+          </div>
+
+          <div className="text-center flex-grow-1 flex-sm-grow-0 flex-basis-100 flex-sm-basis-auto" style={{ minWidth: '150px' }}>
+            <div className="form-label fw-semibold">Unit Name</div>
+            <p className="fw-5 mb-0">{unitDetail?.unit_name ?? "--"}</p>
           </div>
         </div>
       </div>
       <div className="table-responsive">
         <table className="table-style-1 w-100">
           <thead>
-            <tr>
-              <th style={{ width: 150, minWidth: 150, maxWidth: 150 }}>
-                <div className="d-flex align-items-start">Parameter</div>
+            <tr style={{ backgroundColor: "#007bff" }}>
+              <th style={{ width: 150, fontSize: "17", color: "white" }}>Parameter</th>
+              <th style={{ width: 100, fontSize: "17", color: "white" }}>Count</th>
+              <th style={{ width: 100, fontSize: "17", color: "white" }}>Marks</th>
+              <th style={{ width: 200, fontSize: "17", color: "white" }}>Document</th>
+              <th style={{ width: 150, fontSize: "17", color: "white" }}>
+                <div className="d-flex align-items-start">Approved Count</div>
               </th>
-              <th style={{ width: 100, minWidth: 100, maxWidth: 100 }}>
-                <div className="d-flex align-items-start">Count</div>
-              </th>
-              <th style={{ width: 100, minWidth: 100, maxWidth: 100 }}>
-                <div className="d-flex align-items-start">Marks</div>
-              </th>
-              <th style={{ width: 100, minWidth: 100, maxWidth: 100 }}>
-                <div className="d-flex align-items-start">Document</div>
-              </th>
-              <th style={{ width: 200, minWidth: 200, maxWidth: 200 }}>
+              <th style={{ width: 150, fontSize: "17", color: "white" }}>
                 <div className="d-flex align-items-start">Approved Marks</div>
               </th>
-              <th style={{ width: 120, minWidth: 120, maxWidth: 120 }}>
+              <th style={{ width: 120, fontSize: "17", color: "white" }}>
                 <div className="d-flex align-items-start">Clarification</div>
               </th>
             </tr>
           </thead>
-          <tbody>
-            <tr>
-              <td style={{ width: 150, minWidth: 150, maxWidth: 150 }}>
-                <p className="fw-5">Parameter 1</p>
-              </td>
-              <td style={{ width: 100, minWidth: 100, maxWidth: 100 }}>
-                <p className="fw-5">2</p>
-              </td>
-              <td style={{ width: 100, minWidth: 100, maxWidth: 100 }}>
-                <p className="fw-5">8</p>
-              </td>
-              <td style={{ width: 100, minWidth: 100, maxWidth: 100 }}>
-                <div style={{ fontSize: 18 }}>{SVGICON.app.pdf}</div>
-              </td>
-              <td style={{ width: 200, minWidth: 200, maxWidth: 200 }}>
-                <input
-                  type="text"
-                  className="form-control"
-                  placeholder="Enter approved marks"
-                  autoComplete="off"
-                  value="0"
-                  readOnly
-                />
-              </td>
-              <td style={{ width: 120, minWidth: 120, maxWidth: 120 }}>
-                <button
-                  className="border-0 bg-transparent"
-                  style={{ color: "var(--secondary-default)" }}
-                >
-                  {SVGICON.app.clarification}
-                </button>
-              </td>
-            </tr>
-            <tr>
-              <td style={{ width: 150, minWidth: 150, maxWidth: 150 }}>
-                <p className="fw-5">Parameter 1</p>
-              </td>
-              <td style={{ width: 100, minWidth: 100, maxWidth: 100 }}>
-                <p className="fw-5">2</p>
-              </td>
-              <td style={{ width: 100, minWidth: 100, maxWidth: 100 }}>
-                <p className="fw-5">8</p>
-              </td>
-              <td style={{ width: 100, minWidth: 100, maxWidth: 100 }}>
-                <div style={{ fontSize: 18 }}>{SVGICON.app.pdf}</div>
-              </td>
-              <td style={{ width: 200, minWidth: 200, maxWidth: 200 }}>
-                <input
-                  type="text"
-                  className="form-control"
-                  placeholder="Enter approved marks"
-                  autoComplete="off"
-                  value="0"
-                  readOnly
-                />
-              </td>
-              <td style={{ width: 120, minWidth: 120, maxWidth: 120 }}>
-                <button
-                  className="border-0 bg-transparent"
-                  style={{ color: "var(--secondary-default)" }}
-                >
-                  {SVGICON.app.clarification}
-                </button>
-              </td>
-            </tr>
-            <tr>
-              <td style={{ width: 150, minWidth: 150, maxWidth: 150 }}>
-                <p className="fw-5">Parameter 1</p>
-              </td>
-              <td style={{ width: 100, minWidth: 100, maxWidth: 100 }}>
-                <p className="fw-5">2</p>
-              </td>
-              <td style={{ width: 100, minWidth: 100, maxWidth: 100 }}>
-                <p className="fw-5">8</p>
-              </td>
-              <td style={{ width: 100, minWidth: 100, maxWidth: 100 }}>
-                <div style={{ fontSize: 18 }}>{SVGICON.app.pdf}</div>
-              </td>
-              <td style={{ width: 200, minWidth: 200, maxWidth: 200 }}>
-                <input
-                  type="text"
-                  className="form-control"
-                  placeholder="Enter approved marks"
-                  autoComplete="off"
-                  value="0"
-                  readOnly
-                />
-              </td>
-              <td style={{ width: 120, minWidth: 120, maxWidth: 120 }}>
-                <button
-                  className="border-0 bg-transparent"
-                  style={{ color: "var(--secondary-default)" }}
-                >
-                  {SVGICON.app.clarification}
-                </button>
-              </td>
-            </tr>
-            <tr>
-              <td style={{ width: 150, minWidth: 150, maxWidth: 150 }}>
-                <p className="fw-5">Parameter 1</p>
-              </td>
-              <td style={{ width: 100, minWidth: 100, maxWidth: 100 }}>
-                <p className="fw-5">2</p>
-              </td>
-              <td style={{ width: 100, minWidth: 100, maxWidth: 100 }}>
-                <p className="fw-5">8</p>
-              </td>
-              <td style={{ width: 100, minWidth: 100, maxWidth: 100 }}>
-                <div style={{ fontSize: 18 }}>{SVGICON.app.pdf}</div>
-              </td>
-              <td style={{ width: 200, minWidth: 200, maxWidth: 200 }}>
-                <input
-                  type="text"
-                  className="form-control"
-                  placeholder="Enter approved marks"
-                  autoComplete="off"
-                  value="0"
-                  readOnly
-                />
-              </td>
-              <td style={{ width: 120, minWidth: 120, maxWidth: 120 }}>
-                <button
-                  className="border-0 bg-transparent"
-                  style={{ color: "var(--secondary-default)" }}
-                >
-                  {SVGICON.app.clarification}
-                </button>
-              </td>
-            </tr>
-            <tr>
-              <td style={{ width: 150, minWidth: 150, maxWidth: 150 }}>
-                <p className="fw-5">Parameter 1</p>
-              </td>
-              <td style={{ width: 100, minWidth: 100, maxWidth: 100 }}>
-                <p className="fw-5">2</p>
-              </td>
-              <td style={{ width: 100, minWidth: 100, maxWidth: 100 }}>
-                <p className="fw-5">8</p>
-              </td>
-              <td style={{ width: 100, minWidth: 100, maxWidth: 100 }}>
-                <div style={{ fontSize: 18 }}>{SVGICON.app.pdf}</div>
-              </td>
-              <td style={{ width: 200, minWidth: 200, maxWidth: 200 }}>
-                <input
-                  type="text"
-                  className="form-control"
-                  placeholder="Enter approved marks"
-                  autoComplete="off"
-                  value="0"
-                  readOnly
-                />
-              </td>
-              <td style={{ width: 120, minWidth: 120, maxWidth: 120 }}>
-                <button
-                  className="border-0 bg-transparent"
-                  style={{ color: "var(--secondary-default)" }}
-                >
-                  {SVGICON.app.clarification}
-                </button>
-              </td>
-            </tr>
-            <tr>
-              <td style={{ width: 150, minWidth: 150, maxWidth: 150 }}>
-                <p className="fw-5">Parameter 1</p>
-              </td>
-              <td style={{ width: 100, minWidth: 100, maxWidth: 100 }}>
-                <p className="fw-5">2</p>
-              </td>
-              <td style={{ width: 100, minWidth: 100, maxWidth: 100 }}>
-                <p className="fw-5">8</p>
-              </td>
-              <td style={{ width: 100, minWidth: 100, maxWidth: 100 }}>
-                <div style={{ fontSize: 18 }}>{SVGICON.app.pdf}</div>
-              </td>
-              <td style={{ width: 200, minWidth: 200, maxWidth: 200 }}>
-                <input
-                  type="text"
-                  className="form-control"
-                  placeholder="Enter approved marks"
-                  autoComplete="off"
-                  value="0"
-                  readOnly
-                />
-              </td>
-              <td style={{ width: 120, minWidth: 120, maxWidth: 120 }}>
-                <button
-                  className="border-0 bg-transparent"
-                  style={{ color: "var(--secondary-default)" }}
-                >
-                  {SVGICON.app.clarification}
-                </button>
-              </td>
-            </tr>
-            <tr>
-              <td style={{ width: 150, minWidth: 150, maxWidth: 150 }}>
-                <p className="fw-5">Parameter 1</p>
-              </td>
-              <td style={{ width: 100, minWidth: 100, maxWidth: 100 }}>
-                <p className="fw-5">2</p>
-              </td>
-              <td style={{ width: 100, minWidth: 100, maxWidth: 100 }}>
-                <p className="fw-5">8</p>
-              </td>
-              <td style={{ width: 100, minWidth: 100, maxWidth: 100 }}>
-                <div style={{ fontSize: 18 }}>{SVGICON.app.pdf}</div>
-              </td>
-              <td style={{ width: 200, minWidth: 200, maxWidth: 200 }}>
-                <input
-                  type="text"
-                  className="form-control"
-                  placeholder="Enter approved marks"
-                  autoComplete="off"
-                  value="0"
-                  readOnly
-                />
-              </td>
-              <td style={{ width: 120, minWidth: 120, maxWidth: 120 }}>
-                <button
-                  className="border-0 bg-transparent"
-                  style={{ color: "var(--secondary-default)" }}
-                >
-                  {SVGICON.app.clarification}
-                </button>
-              </td>
-            </tr>
-            <tr>
-              <td style={{ width: 150, minWidth: 150, maxWidth: 150 }}>
-                <p className="fw-5">Parameter 1</p>
-              </td>
-              <td style={{ width: 100, minWidth: 100, maxWidth: 100 }}>
-                <p className="fw-5">2</p>
-              </td>
-              <td style={{ width: 100, minWidth: 100, maxWidth: 100 }}>
-                <p className="fw-5">8</p>
-              </td>
-              <td style={{ width: 100, minWidth: 100, maxWidth: 100 }}>
-                <div style={{ fontSize: 18 }}>{SVGICON.app.pdf}</div>
-              </td>
-              <td style={{ width: 200, minWidth: 200, maxWidth: 200 }}>
-                <input
-                  type="text"
-                  className="form-control"
-                  placeholder="Enter approved marks"
-                  autoComplete="off"
-                  value="0"
-                  readOnly
-                />
-              </td>
-              <td style={{ width: 120, minWidth: 120, maxWidth: 120 }}>
-                <button
-                  className="border-0 bg-transparent"
-                  style={{ color: "var(--secondary-default)" }}
-                >
-                  {SVGICON.app.clarification}
-                </button>
-              </td>
-            </tr>
+            <tbody>
+            {unitDetail?.fds?.parameters?.map((param: any, index: number) => (
+              <tr key={param.id || index}>
+                <td style={{ width: 150, minWidth: 150, maxWidth: 150 }}>
+                  <p className="fw-5">{param.name || "Parameter"}</p>
+                </td>
+                <td style={{ width: 100, minWidth: 100, maxWidth: 100 }}>
+                  <p className="fw-5">{param.count || "0"}</p>
+                </td>
+                <td style={{ width: 100, minWidth: 100, maxWidth: 100 }}>
+                  <p className="fw-5">{param.marks || "0"}</p>
+                </td>
+                <td style={{ width: 100, minWidth: 100, maxWidth: 100 }}>
+                  {param.upload ? (
+                    <div style={{ fontSize: 18 }}>{SVGICON.app.pdf}</div>
+                  ) : (
+                    <span>—</span>
+                  )}
+                </td>
+                <td style={{ width: 150, minWidth: 150, maxWidth: 150 }}>
+                  {canEditApprovedMarks ? (
+                    <input
+                      type="number"
+                      className="form-control"
+                      placeholder="Enter approved count"
+                      autoComplete="off"
+                      value={approvedCount[param.id] || ""}
+                      onChange={(e) => handleApprovedCountChange(param.id, e.target.value)}
+                      min="0"
+                    />
+                  ) : (
+                    <input
+                      type="text"
+                      className="form-control"
+                      placeholder="Approved count"
+                      autoComplete="off"
+                      value={approvedCount[param.id] || ""}
+                      readOnly
+                    />
+                  )}
+                </td>
+                <td style={{ width: 150, minWidth: 150, maxWidth: 150 }}>
+                  {canEditApprovedMarks ? (
+                    <input
+                      type="number"
+                      className="form-control"
+                      placeholder="Approved marks (auto-calculated)"
+                      autoComplete="off"
+                      value={approvedMarks[param.id] || ""}
+                      onChange={(e) => handleApprovedMarksChange(param.id, e.target.value)}
+                      min="0"
+                      max={param.max_marks || 0}
+                      step="0.01"
+                    />
+                  ) : (
+                    <input
+                      type="text"
+                      className="form-control"
+                      placeholder="Approved marks"
+                      autoComplete="off"
+                      value={approvedMarks[param.id] || ""}
+                      readOnly
+                    />
+                  )}
+                </td>
+                <td style={{ width: 120, minWidth: 120, maxWidth: 120 }}>
+                  <button
+                    className="border-0 bg-transparent"
+                    style={{ color: "var(--secondary-default)" }}
+                  >
+                    {SVGICON.app.clarification}
+                  </button>
+                </td>
+              </tr>
+            )) || (
+              <tr>
+                <td colSpan={6} className="text-center py-4">
+                  <p className="text-muted mb-0">No parameters found</p>
+                </td>
+              </tr>
+            )}
           </tbody>
         </table>
       </div>

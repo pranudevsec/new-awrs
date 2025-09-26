@@ -59,27 +59,35 @@ const CustomTooltip: React.FC<TooltipProps> = ({ active, payload }) => {
 };
 
 interface ProductDetailProps {
-  dashboardStats: DashboardStats | null;
+  dashboardStats: DashboardStats | null | any;
 }
 
 const ApplicationStatus: React.FC<ProductDetailProps> = ({ dashboardStats }) => {
-  // Hooks must always run in the same order, every render.
   const profile = useAppSelector((state) => state.admin.profile);
   const roleRaw = profile?.user?.user_role;
-
-  // Compute flags/data via hooks BEFORE any early return
   const isHQ = isHQRole(roleRaw);
+
+  // Raw values
+  const rawPending = Number(dashboardStats?.totalPendingApplications ?? 0);
+  const approved = Number(dashboardStats?.finalizedApproved ?? 0);
+  const rejected = Number(dashboardStats?.rejected ?? 0);
+  const totalReported = Number(dashboardStats?.clarificationRaised ?? 0);
+
+  // Adjust pending if mismatch
+  let pending = rawPending;
+  const sumParts = rawPending + approved + rejected;
+  if (totalReported > sumParts) {
+    const diff = totalReported - sumParts;
+    pending = Math.max(0, rawPending - diff);
+  }
 
   const data = useMemo(
     () => [
-      {
-        name: "Pending",
-        value: Number(dashboardStats?.totalPendingApplications ?? 0),
-      },
-      { name: "Approved", value: Number(dashboardStats?.approved ?? 0) },
-      { name: "Rejected", value: Number(dashboardStats?.rejected ?? 0) },
+      { name: "Pending", value: pending },
+      { name: "Approved", value: approved },
+      { name: "Rejected", value: rejected },
     ],
-    [dashboardStats]
+    [pending, approved, rejected]
   );
 
   const total = useMemo(
@@ -91,7 +99,7 @@ const ApplicationStatus: React.FC<ProductDetailProps> = ({ dashboardStats }) => 
     [data]
   );
 
-  // Now it’s safe to gate the render
+  // Gate render only for HQ roles
   if (!profile || !isHQ) return null;
 
   return (
@@ -113,7 +121,7 @@ const ApplicationStatus: React.FC<ProductDetailProps> = ({ dashboardStats }) => 
           Applications By Status
         </h2>
         <div style={{ fontSize: "14px", color: "#6c757d", fontWeight: 500 }}>
-          Total: {total}
+          Total: {totalReported}
         </div>
       </div>
 

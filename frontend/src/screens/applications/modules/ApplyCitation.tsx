@@ -61,24 +61,15 @@ const ApplyCitation = () => {
   const [activeTab, setActiveTab] = useState(
     Object.keys(groupedParams)[0] || ""
   );
-  const [uploadedFiles, setUploadedFiles] = useState<Record<number, string[]>>(
-    () => {
-      try {
-        return JSON.parse(localStorage.getItem(DRAFT_FILE_UPLOAD_KEY) ?? "{}");
-      } catch {
-        return {};
-      }
-    }
-  );
-  const [unitRemarks, setUnitRemarks] = useState(() => {
-    return localStorage.getItem("applyCitationUnitRemarks") ?? "";
-  });
+  const [uploadedFiles, setUploadedFiles] = useState<Record<number, string[]>>({});
+  const [unitRemarks, setUnitRemarks] = useState("");
 
   useEffect(() => {
     if (id) {
       dispatch(fetchCitationById(Number(id)));
     } else {
-      restoreDraftFromLocalStorage();
+      // Clear any existing draft data when starting a new citation
+      clearDraftData();
     }
 
     return () => {
@@ -86,37 +77,15 @@ const ApplyCitation = () => {
     };
   }, [id]);
 
-  // 🔹 Helper to restore draft from localStorage
-  const restoreDraftFromLocalStorage = () => {
-    restoreCountsAndMarks();
-    restoreUploadedFiles();
-  };
-
-  // 🔹 Restore counts/marks
-  const restoreCountsAndMarks = () => {
-    const savedDraft = localStorage.getItem(DRAFT_STORAGE_KEY);
-    if (!savedDraft) return;
-
-    try {
-      const parsed = JSON.parse(savedDraft);
-      if (parsed.counts) setCounts(parsed.counts);
-      if (parsed.marks) setMarks(parsed.marks);
-    } catch (err) {
-      console.error("Failed to parse draft counts/marks", err);
-    }
-  };
-
-  // 🔹 Restore uploaded files
-  const restoreUploadedFiles = () => {
-    const savedUploads = localStorage.getItem(DRAFT_FILE_UPLOAD_KEY);
-    if (!savedUploads) return;
-
-    try {
-      const parsedUploads = JSON.parse(savedUploads);
-      setUploadedFiles(parsedUploads);
-    } catch (err) {
-      console.error("Failed to parse uploaded file draft", err);
-    }
+  // 🔹 Helper to clear draft data when starting new citation
+  const clearDraftData = () => {
+    setCounts({});
+    setMarks({});
+    setUploadedFiles({});
+    setUnitRemarks("");
+    localStorage.removeItem(DRAFT_STORAGE_KEY);
+    localStorage.removeItem(DRAFT_FILE_UPLOAD_KEY);
+    localStorage.removeItem("applyCitationUnitRemarks");
   };
 
   useEffect(() => {
@@ -307,7 +276,6 @@ const ApplyCitation = () => {
         throw new Error("Invalid upload response");
       }
     } catch (error) {
-      console.error("Upload failed:", error);
       return null;
     }
   };
@@ -450,7 +418,6 @@ const ApplyCitation = () => {
           toast.error("Failed to submit citation.");
         }
       } catch (err) {
-        console.error("Submit failed:", err);
         toast.error("An error occurred while submitting.");
       }
     },
@@ -496,7 +463,6 @@ const ApplyCitation = () => {
           setParameters(revParams);
         }
       } catch (err) {
-        console.error("Failed to fetch data", err);
       }
     };
 
@@ -508,7 +474,6 @@ const ApplyCitation = () => {
           await fetchAllData(profileRes.data);
         }
       } catch (err) {
-        console.error("Failed to fetch profile", err);
       } finally {
         setIsLoadingParameters(false);
       }
@@ -609,23 +574,13 @@ const ApplyCitation = () => {
     if (id) {
       try {
         await dispatch(deleteCitation(Number(id))).unwrap();
-        localStorage.removeItem(DRAFT_STORAGE_KEY);
-        localStorage.removeItem(DRAFT_FILE_UPLOAD_KEY);
-        localStorage.removeItem("applyCitationUnitRemarks");
-        setCounts({});
-        setMarks({});
-        setUploadedFiles({});
+        clearDraftData();
         navigate("/submitted-forms/list");
       } catch (error) {
         toast.error("Failed to delete draft");
       }
     } else {
-      localStorage.removeItem(DRAFT_STORAGE_KEY);
-      localStorage.removeItem(DRAFT_FILE_UPLOAD_KEY);
-      localStorage.removeItem("applyCitationUnitRemarks");
-      setCounts({});
-      setMarks({});
-      setUploadedFiles({});
+      clearDraftData();
     }
   };
 

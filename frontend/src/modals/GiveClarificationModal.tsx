@@ -5,6 +5,7 @@ import FormInput from "../components/form/FormInput";
 import { SVGICON } from "../constants/iconsList";
 import { updateClarification } from "../reduxToolkit/services/clarification/clarificationService";
 import { useAppDispatch } from "../reduxToolkit/hooks";
+import { validateClarificationText, countWords } from "../utils/wordCountUtils";
 
 interface ClarificationModalProps {
   show: boolean;
@@ -40,23 +41,29 @@ const GiveClarificationModal: React.FC<ClarificationModalProps> = ({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!clarification.trim()) {
-      toast.error("Please enter clarification");
+    // Validate clarification text using utility function
+    const validation:any = validateClarificationText(clarification);
+    if (!validation.isValid) {
+      toast.dismiss();
+      toast.error(validation.message);
       return;
     }
 
-    await dispatch(
-      updateClarification({
-        id: clarificationId,
-        clarification,
-        clarification_doc: file ?? undefined,
-      })
-    );
+    try {
+      await dispatch(
+        updateClarification({
+          id: clarificationId,
+          clarification: clarification.trim(),
+          clarification_doc: file ?? undefined,
+        })
+      );
 
-    setIsRefreshData(!isRefreshData);
-    handleClose();
-    setClarification("");
-    setFile(null);
+      setIsRefreshData(!isRefreshData);
+      handleClose();
+      setClarification("");
+      setFile(null);
+    } catch (error) {
+    }
   };
 
   return (
@@ -100,10 +107,15 @@ const GiveClarificationModal: React.FC<ClarificationModalProps> = ({
               value={clarification}
               onChange={(e) => setClarification(e.target.value)}
             />
+            <div className="mt-2">
+              <small className={`text-muted ${countWords(clarification) > 200 ? 'text-danger' : ''}`}>
+                Word count: {countWords(clarification)}/200
+              </small>
+            </div>
           </div>
           <div className="d-flex align-items-center justify-content-end gap-3">
             <button type="submit" className="_btn primary">
-              Add
+              Add Clarification
             </button>
           </div>
         </form>

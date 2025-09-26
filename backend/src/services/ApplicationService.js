@@ -186,7 +186,10 @@ exports.getAllApplicationsForHQ = async (user, query) => {
         last_approved_by_role,
         is_hr_review,
         is_dv_review,
-        is_mp_review
+        is_mp_review,
+        is_mo_approved,
+        is_ol_approved,
+        isFinalized
       FROM Citation_tab
       WHERE 
         status_flag = 'approved' 
@@ -204,7 +207,10 @@ exports.getAllApplicationsForHQ = async (user, query) => {
         last_approved_by_role,
         is_hr_review,
         is_dv_review,
-        is_mp_review
+        is_mp_review,
+         is_mo_approved,
+        is_ol_approved,
+        isFinalized
       FROM Appre_tab
       WHERE 
         status_flag = 'approved' 
@@ -386,6 +392,7 @@ exports.getSingleApplicationForUnit = async (
           c.is_hr_review,
           c.is_dv_review,
           c.is_mp_review,
+          c.isfinalized,
           c.last_rejected_by_role,
           c.remarks
         FROM Citation_tab c
@@ -409,6 +416,7 @@ exports.getSingleApplicationForUnit = async (
           a.mo_approved_at,
           a.is_ol_approved,
           a.ol_approved_at,
+                 a.isfinalized,
           a.is_hr_review,
           a.is_dv_review,
           a.is_mp_review,
@@ -1239,7 +1247,7 @@ exports.updateApplicationStatus = async (
             if (user.user_role === "cw2") {
               const now = new Date().toISOString();
               let approvedAt = now;
-              if (user.cw2_type === "mo" ) {
+              if (user.cw2_type === "mo") {
                 await client.query(
                   `UPDATE ${config.table}
                    SET is_mo_approved = $2, mo_approved_at = $3, last_approved_at = $4
@@ -1302,12 +1310,6 @@ exports.updateApplicationStatus = async (
         `;
         values = [statusLower, id, user.user_role];
       } else if (statusLower === "rejected") {
-        // preprocess role
-        let role = user.user_role;
-        if (role === "cw2" && (user.cw2_type === "mo" || user.cw2_type === "ol")) {
-          role = `${role}_${user.cw2_type}`;
-        }
-      
         query = `
           UPDATE ${config.table}
           SET status_flag = $1,
@@ -1316,8 +1318,7 @@ exports.updateApplicationStatus = async (
           WHERE ${config.column} = $2
           RETURNING *;
         `;
-      
-        values = [statusLower, id, role, now];
+        values = [statusLower, id, user.user_role, now];
       } else if (statusLower) {
         query = `
           UPDATE ${config.table}
@@ -1349,12 +1350,12 @@ exports.updateApplicationStatus = async (
       throw new Error("Invalid status value and no member provided");
     }
   } catch (err) {
-    console.error("Error updating status:", err);
     throw new Error(err.message);
   } finally {
     client.release();
   }
 };
+
 
 exports.approveApplicationMarks = async (user, body) => {
   const client = await dbService.getClient();
@@ -1812,7 +1813,6 @@ exports.saveOrUpdateDraft = async (user, body) => {
 
     return ResponseHelper.success(200, "Draft saved successfully");
   } catch (err) {
-    console.error("Save draft error:", err);
     return ResponseHelper.error(500, "Failed to save draft", err.message);
   } finally {
     client.release();
@@ -1837,7 +1837,6 @@ exports.getDraft = async (user, type) => {
       res.rows[0].draft_fds
     );
   } catch (err) {
-    console.error("Get draft error:", err);
     return ResponseHelper.error(500, "Failed to fetch draft", err.message);
   } finally {
     client.release();
@@ -1854,7 +1853,6 @@ exports.deleteDraft = async (user, type) => {
 
     return ResponseHelper.success(200, "Draft deleted successfully");
   } catch (err) {
-    console.error("Delete draft error:", err);
     return ResponseHelper.error(500, "Failed to delete draft", err.message);
   } finally {
     client.release();
@@ -2181,8 +2179,10 @@ exports.getAllApplications = async (user, query) => {
     let queryParams = [unitIds];
 
     if (currentRole === "headquarter") {
-      baseFilters = `unit_id = ANY($1)`;
+      // Exclude draft for HQ
+      baseFilters = `unit_id = ANY($1) AND status_flag != 'draft'`;
     } else {
+      // Exclude draft for non-HQ
       baseFilters = `
         (
           (
@@ -2205,6 +2205,7 @@ exports.getAllApplications = async (user, query) => {
             last_approved_at IS NULL
           )
         )
+        AND status_flag != 'draft'
       `;
       queryParams.push(allowedRoles);
     }
@@ -2331,18 +2332,21 @@ exports.getAllApplications = async (user, query) => {
     }
 
     if (search) {
-      const searchNorm = normalize(search);
-      allApps = allApps.filter(
-        (app) =>
-          app.id.toString().toLowerCase().includes(searchNorm) ||
-          normalize(app.fds?.cycle_period || "").includes(searchNorm) ||
-          normalize(app.fds?.unit_name || "").includes(searchNorm) ||
-          normalize(app.fds?.brigade || "").includes(searchNorm) ||
-          normalize(app.fds?.division || "").includes(searchNorm) ||
-          normalize(app.fds?.corps || "").includes(searchNorm) ||
-          normalize(app.fds?.command || "").includes(searchNorm)
-      );
-    }
+  const searchNorm = normalize(search);
+  allApps = allApps.filter(
+    (app) => 
+      app.id.toString().toLowerCase().includes(searchNorm) ||
+      normalize(app.fds?.cycle_period || "").includes(searchNorm) ||
+      normalize(app.fds?.unit_name || "").includes(searchNorm) ||
+      normalize(app.fds?.brigade || "").includes(searchNorm) ||
+      normalize(app.fds?.division || "").includes(searchNorm) ||
+      normalize(app.fds?.corps || "").includes(searchNorm) ||
+      normalize(app.fds?.command || "").includes(searchNorm) ||
+      normalize(app.fds?.unit_type || "").includes(searchNorm) ||
+      normalize(app.fds?.matrix_unit || "").includes(searchNorm)
+  );
+}
+
 
     // Clarifications linking
     const clarificationIds = [];
@@ -2435,47 +2439,38 @@ exports.getAllApplications = async (user, query) => {
         },
       };
     });
-// Fix last_approved_by_role logic
-allApps = allApps.map((app) => {
-  // Skip if status is draft
- 
-  let updatedRole = app.last_approved_by_role;
-   console.log(updatedRole)
-     if (app.is_ol_approved && app.is_mo_approved) {
-    updatedRole = "CW2";
-  }
-  else if (app.is_mo_approved) {
-    updatedRole = "Mo";
-  } else if (app.is_ol_approved) {
-    updatedRole = "OL";
-  } else if (app.status_flag !== "draft" && !updatedRole) {
-    updatedRole = "brigade";
-  }
-else if (app.updatedRole == "brigade") {
-    updatedRole = "division";
-  }
-  else if (app.updatedRole == "division") {
-    updatedRole = "corps";
-  }
-   else if (app.updatedRole == "corps") {
-    updatedRole = "command";
-  }
-   else if (app.updatedRole == "command") {
-    updatedRole = "MO/OL";
-  }
-  else if (app.is_ol_approved && app.is_mo_approved) {
-    updatedRole = "CW2";
-  }
-  return {
-    ...app,
-    last_approved_by_role: updatedRole,
-  };
-});
+
+    // Fix last_approved_by_role logic
+    allApps = allApps.map((app) => {
+      let updatedRole = app.last_approved_by_role;
+      if (app.is_ol_approved && app.is_mo_approved) {
+        updatedRole = "CW2";
+      } else if (app.is_mo_approved) {
+        updatedRole = "Mo";
+      } else if (app.is_ol_approved) {
+        updatedRole = "OL";
+      } else if (app.status_flag !== "draft" && !updatedRole) {
+        updatedRole = "brigade";
+      } else if (app.updatedRole == "brigade") {
+        updatedRole = "division";
+      } else if (app.updatedRole == "division") {
+        updatedRole = "corps";
+      } else if (app.updatedRole == "corps") {
+        updatedRole = "command";
+      } else if (app.updatedRole == "command") {
+        updatedRole = "MO/OL";
+      } else if (app.is_ol_approved && app.is_mo_approved) {
+        updatedRole = "CW2";
+      }
+      return {
+        ...app,
+        last_approved_by_role: updatedRole,
+      };
+    });
 
     // Sort and paginate
     allApps.sort((a, b) => new Date(b.date_init) - new Date(a.date_init));
 
-   
     const pageInt = parseInt(page);
     const limitInt = parseInt(limit);
     const startIndex = (pageInt - 1) * limitInt;
@@ -2509,6 +2504,7 @@ else if (app.updatedRole == "brigade") {
 
 
 
+
 // In the same file where both APIs live (service module)
 
 exports.getApplicationStats = async (user, _query) => {
@@ -2517,98 +2513,116 @@ exports.getApplicationStats = async (user, _query) => {
     const { user_role } = user || {};
     const roleLc = (user_role || '').toLowerCase();
 
-    // Base aggregates (unchanged)
+    // Base aggregates (with approved split)
     const { rows } = await client.query(`
       SELECT 
         -- total
         (SELECT COUNT(*) FROM Citation_tab) +
         (SELECT COUNT(*) FROM Appre_tab) AS totalApplications,
-
-        -- pending: not command-approved AND status != rejected (NULL-safe)
-        (SELECT COUNT(*) FROM Citation_tab 
-           WHERE last_approved_by_role IS DISTINCT FROM 'command'
-             AND status_flag IS DISTINCT FROM 'rejected') +
-        (SELECT COUNT(*) FROM Appre_tab 
-           WHERE last_approved_by_role IS DISTINCT FROM 'command'
-             AND status_flag IS DISTINCT FROM 'rejected') AS pendingApplications,
+    
+      
+    -- pending: status not rejected AND mo/ol = false
+    (SELECT COUNT(*) FROM Citation_tab 
+       WHERE status_flag IS DISTINCT FROM 'rejected'
+         AND is_mo_approved = false
+         AND is_ol_approved = false) +
+    (SELECT COUNT(*) FROM Appre_tab 
+       WHERE status_flag IS DISTINCT FROM 'rejected'
+         AND is_mo_approved = false
+         AND is_ol_approved = false) AS pendingApplications,
 
         -- rejected
         (SELECT COUNT(*) FROM Citation_tab WHERE status_flag = 'rejected') +
         (SELECT COUNT(*) FROM Appre_tab   WHERE status_flag = 'rejected') AS rejectedApplications,
-
-        -- finalised
+    
+        -- finalised (ol approved = true)
         (SELECT COUNT(*) FROM Citation_tab WHERE is_ol_approved = true) +
         (SELECT COUNT(*) FROM Appre_tab   WHERE is_ol_approved = true) AS finalisedApplications,
-
-        -- approved by command
-        (SELECT COUNT(*) FROM Citation_tab WHERE last_approved_by_role = 'command') +
-        (SELECT COUNT(*) FROM Appre_tab   WHERE last_approved_by_role = 'command') AS approvedApplications
+    
+        -- approved but not finalized: mo+ol true AND finalized false
+        (SELECT COUNT(*) FROM Citation_tab 
+           WHERE is_mo_approved = true
+             AND is_ol_approved = true
+             AND isfinalized = false) +
+        (SELECT COUNT(*) FROM Appre_tab 
+           WHERE is_mo_approved = true
+             AND is_ol_approved = true
+             AND isfinalized = false) AS approvedApplications,
+    
+        -- approved AND finalized: mo+ol true AND finalized true
+        (SELECT COUNT(*) FROM Citation_tab 
+           WHERE is_mo_approved = true
+             AND is_ol_approved = true
+             AND isfinalized = true) +
+        (SELECT COUNT(*) FROM Appre_tab 
+           WHERE is_mo_approved = true
+             AND is_ol_approved = true
+             AND isfinalized = true) AS finalizedApprovedApplications
     `);
+    
+    
 
     const s = rows[0];
     let totalFromApi = parseInt(s.totalapplications, 10);
+
     try {
       const totalRes = await exports.getAllApplications(user, { ..._query, page: 1, limit: 1000 });
       const ok = totalRes && ((totalRes.statusCode || totalRes.status) === 200);
       if (ok) {
-        totalFromApi = totalRes.data.length
-          
+        totalFromApi = totalRes.data.length;
       }
     } catch (_) {
-      // fallback to DB total already in totalFromApi
+      // fallback to DB total
     }
+
     // --- recommendedApplications ---
     let recommendedApplications = 0;
     if (roleLc === 'headquarter') {
-      // HQ: recommended == approved by command
-      recommendedApplications = parseInt(s.approvedapplications, 10);
+      recommendedApplications = parseInt(s.approvedApplications, 10);
     } else if (roleLc) {
-      // Non-HQ: use subordinate listing as source of truth
       const subRes = await exports.getApplicationsOfSubordinates(user, {
         page: 1,
-        limit: 100,           // use meta.totalItems to avoid fetching everything
-        isShortlisted: true // matches your "recommended" listing logic
+        limit: 100,
+        isShortlisted: true
       });
 
-      const ok = (subRes.data !=[] && ((subRes.statusCode || subRes.status) === 200));
+      const ok = subRes && ((subRes.statusCode || subRes.status) === 200 && subRes.data.length > 0);
       if (ok) {
-        recommendedApplications = subRes.data.length
+        recommendedApplications = subRes.data.length;
       }
     }
 
     // --- pending ---
-    // HQ: keep SQL pending
-    // Non-HQ: total - rejected - recommended
     let totalPendingApplications = parseInt(s.pendingapplications, 10);
     if (roleLc && roleLc !== 'headquarter') {
       const pendRes = await exports.getApplicationsOfSubordinates(user, {
         page: 1,
-        limit: 100,                 // use meta.totalItems
+        limit: 100,
         isGetNotClarifications: true
       });
       const ok = pendRes && ((pendRes.statusCode || pendRes.status) === 200);
       if (ok) {
-        totalPendingApplications = pendRes.data.length
-       
-      }}
-    
-  
+        totalPendingApplications = pendRes.data.length;
+      }
+    }
 
     // --- acceptedApplications ---
-    // Non-HQ: acceptedApplications = recommendedApplications (your request)
-    // HQ: acceptedApplications = approved by command (unchanged)
-    const acceptedApplications = (roleLc && roleLc !== 'headquarter')
-      ? recommendedApplications
-      : parseInt(s.approvedapplications, 10);
-if(totalFromApi==0){
-  s.rejectedapplications =0
-}
+    const acceptedApplications =
+      (roleLc && roleLc !== 'headquarter')
+        ? recommendedApplications
+        : parseInt(s.approvedapplications, 10);
+
+    if (totalFromApi == 0) {
+      s.rejectedapplications = 0;
+    }
+
     return ResponseHelper.success(200, 'Application stats', {
-      clarificationRaised:     totalFromApi,       // total
-      totalPendingApplications,                                          // pending (role-aware)
-      rejected:                 parseInt(s.rejectedapplications, 10),    // rejected
-      approved:                 parseInt(s.finalisedapplications, 10),   // finalised (unchanged)
-      acceptedApplications,                                             // now role-aware                                         // new/role-aware
+      clarificationRaised: totalFromApi,                   // total
+      totalPendingApplications,                            // pending
+      rejected: parseInt(s.rejectedapplications, 10),      // rejected
+      approved: parseInt(s.approvedapplications, 10),      // approved but NOT finalized
+      finalizedApproved: parseInt(s.finalizedapprovedapplications, 10), // approved + finalized
+      acceptedApplications,                                // role-aware accepted
     });
   } catch (err) {
     return ResponseHelper.error(500, 'Failed to compute application stats', err.message);
@@ -2616,6 +2630,7 @@ if(totalFromApi==0){
     client.release();
   }
 };
+
 
 
 
@@ -2635,6 +2650,7 @@ async function loadApplications(whereSql = '', params = []) {
         c.mo_approved_at,
         c.is_ol_approved,
         c.ol_approved_at,
+        c.isFinalized,
         c.last_approved_by_role,
         c.last_approved_at
       FROM Citation_tab c
@@ -2661,6 +2677,7 @@ async function loadApplications(whereSql = '', params = []) {
         a.mo_approved_at,
         a.is_ol_approved,
         a.ol_approved_at,
+            a.isFinalized,
         a.last_approved_by_role,
         a.last_approved_at
       FROM Appre_tab a
@@ -2824,15 +2841,29 @@ exports.listRejectedApplications = async (query = {}) => {
   }
 };
 
-// 4) Finalised applications (is_ol_approved = true)
-exports.listFinalisedApplications = async (query = {}) => {
+exports.listFinalisedApplications = async (user,query = {}) => {
   try {
-    const whereSql = `is_ol_approved = true`;
+    let whereSql = `is_ol_approved = true`;
+
+    if (query.isFinalized !== undefined) {
+      const finalized =
+        query.isFinalized === "true" || query.isFinalized === true;
+      whereSql += ` AND isFinalized = ${finalized}`;
+    } else {
+      whereSql += ` AND isFinalized = false`;
+    }
+
     const allApps = await loadApplications(whereSql);
+
     const { data, meta } = paginate(allApps, query.page, query.limit);
-    return ResponseHelper.success(200, 'Finalised applications', data, meta);
+
+    return ResponseHelper.success(200, "Finalised applications", data, meta);
   } catch (err) {
-    return ResponseHelper.error(500, 'Failed to list finalised applications', err.message);
+    return ResponseHelper.error(
+      500,
+      "Failed to list finalised applications",
+      err.message
+    );
   }
 };
 
@@ -3020,6 +3051,44 @@ exports.getApplicationsSummary = async (user, query) => {
     });
   } catch (err) {
     return ResponseHelper.error(500, "Failed to group applications", err.message);
+  } finally {
+    client.release();
+  }
+};
+
+exports.applicationFinalize = async (user, body) => {
+  const client = await dbService.getClient();
+  try {
+    await client.query("BEGIN");
+
+    const { applicationsForFinalized } = body;
+
+    for (const app of applicationsForFinalized) {
+      if (app.type === "citation") {
+        await client.query(
+          `UPDATE Citation_tab 
+           SET isFinalized = NOT isFinalized 
+           WHERE citation_id = $1`,
+          [app.id]
+        );
+      } else if (app.type === "appre" || app.type === "appreciation") {
+        await client.query(
+          `UPDATE Appre_tab 
+           SET isFinalized = NOT isFinalized 
+           WHERE appreciation_id = $1`,
+          [app.id]
+        );
+      }
+    }
+
+    await client.query("COMMIT");
+
+    return ResponseHelper.success(200, "Applications finalized toggled successfully", {
+      updated: applicationsForFinalized.length,
+    });
+  } catch (err) {
+    await client.query("ROLLBACK");
+    return ResponseHelper.error(500, "Failed to toggle applications finalized state", err.message);
   } finally {
     client.release();
   }

@@ -4,6 +4,7 @@ import { useAppSelector } from "../reduxToolkit/hooks";
 
 import Login from "../screens/auth/Login";
 import SignUp from "../screens/auth/SignUp";
+import FinalizedApprovedApplicationsList from "../screens/applications/modules/FinalizedApprovedApplicationsList";
 
 const Applications = lazy(() => import("../screens/applications/Applications"));
 const AcceptedApplicationsList = lazy(() => import("../screens/applications/modules/AcceptedApplicationsList"));
@@ -94,6 +95,7 @@ export const authProtectedRoutes: RouteConfig[] = [
   { path: "/applications/rejected", element: <RejectedApplicationsList /> },
   { path: "/applications/approved", element: <ApprovedApplicationsList /> },
   { path: "/applications/finalized", element: <FinalizedApplicationsList /> },
+  { path: "/applications/finalized-approved", element: <FinalizedApprovedApplicationsList /> },
   { path: "/applications/all-applications", element: <AllApplicationsList /> },
   { path: "/applications/list/:application_id", element: <ApplicationDetails /> },
   { path: "/applications/clarification/list", element: <ClarificationList /> },

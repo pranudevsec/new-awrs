@@ -358,7 +358,6 @@ const ProfileSettings = () => {
           }
         }
       } catch (err) {
-        console.error("Update failed", err);
       }
     },
   });
@@ -924,7 +923,6 @@ const ProfileSettings = () => {
                     }
                   } catch (error) {
                     toast.error("Failed to add Presiding Officer.");
-                    console.error(error);
                   }
                 }}
               >
@@ -1019,7 +1017,6 @@ const ProfileSettings = () => {
                     }
                   } catch (error) {
                     toast.error("Failed to add Member Officers.");
-                    console.error(error);
                   }
                 }}
               >

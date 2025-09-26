@@ -8,7 +8,7 @@ import { useAppDispatch } from "../../reduxToolkit/hooks";
 import { reqToLogin } from "../../reduxToolkit/services/auth/authService";
 import FormInput from "../../components/form/FormInput";
 import FormSelect from "../../components/form/FormSelect";
-import bgimg from "../../assets/Picture7.png";
+import bgimg from "../../assets/Picture7.jpg";
 
 // cw2_type options
 const cw2TypeOptions = [

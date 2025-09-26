@@ -80,15 +80,12 @@ const groupByOptions = [
 ];
 
 const UnitScoreChart: React.FC<UnitScoreChartProps> = ({
-  data,
   title = "Application Received",
   barColor = "#4f46e5",
   height = 260,
-  showFilter = true,
-  yAxisDomain
+  showFilter = true
 }) => {
   const dispatch = useAppDispatch();
-console.log(data,yAxisDomain)
   // ---- Read profile & gate to HQ only ----
   const profile = useAppSelector((state) => state.admin.profile);
   const roleRaw = profile?.user?.user_role;

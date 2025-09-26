@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
-import * as XLSX from "xlsx";
+import jsPDF from "jspdf";
+import autoTable from "jspdf-autotable";
 import Breadcrumb from "../../../components/ui/breadcrumb/Breadcrumb";
 import FormSelect from "../../../components/form/FormSelect";
 import EmptyTable from "../../../components/ui/empty-table/EmptyTable";
@@ -28,6 +29,28 @@ const ApplicationsList = () => {
   const [debouncedSearch, setDebouncedSearch] = useState<string>("");
   const [page, setPage] = useState<number>(1);
   const [limit, setLimit] = useState<number>(10);
+  const [selectedUnits, setSelectedUnits] = useState<any[]>([]);
+  const [selectAll, setSelectAll] = useState(false);
+
+  const handleSelectUnit = (unit: any) => {
+    setSelectedUnits((prev) => {
+      if (prev.find((u) => u.id === unit.id)) {
+        return prev.filter((u) => u.id !== unit.id);
+      } else {
+        return [...prev, unit];
+      }
+    });
+  };
+
+  const handleSelectAll = () => {
+    if (selectAll) {
+      setSelectedUnits([]);
+      setSelectAll(false);
+    } else {
+      setSelectedUnits(units);
+      setSelectAll(true);
+    }
+  };
 
   useEffect(() => {
     const handler = setTimeout(() => {
@@ -73,6 +96,7 @@ const ApplicationsList = () => {
           }
         }
       } else {
+        
         dispatch(fetchApplicationUnits(params));
       }
     };
@@ -84,6 +108,29 @@ const ApplicationsList = () => {
 
   const getTotalMarks = (unit: any): number => {
     const parameters = unit?.fds?.parameters ?? [];
+    
+    // For unit role: only show original parameter marks, excluding grace marks and approved marks
+    if (role === "unit") {
+      let totalNegativeMarks = 0;
+      const totalParameterMarks = parameters.reduce((acc: number, param: any) => {
+        const isRejected =
+          param?.clarification_details?.clarification_status === "rejected";
+        if (isRejected) return acc;
+        
+        // Handle negative parameters - subtract their marks
+        if (param?.negative) {
+          totalNegativeMarks += Number(param?.marks ?? 0);
+          return acc; // Don't add to positive marks
+        }
+        
+        // Only count original marks, not approved marks
+        const originalMarks = Number(param?.marks ?? 0);
+        return acc + originalMarks;
+      }, 0);
+      return totalParameterMarks - totalNegativeMarks;
+    }
+    
+    // For other roles: use the original logic with grace marks and approved marks
     const graceMarks =
       unit?.fds?.applicationGraceMarks?.reduce(
         (acc: number, item: any) => acc + (item?.marks ?? 0),
@@ -131,8 +178,15 @@ const ApplicationsList = () => {
     return priorityEntry?.priority ?? "-";
   };
 
-  const handleDownloadExcel = () => {
-    let col = [
+  const handleDownloadPDF = () => {
+    const doc = new jsPDF({ orientation: "landscape", unit: "pt", format: "a4" });
+    
+    // Add title
+    doc.setFontSize(16);
+    doc.text("Applications List Report", 14, 22);
+
+    // Create headers
+    const headers = [
       "Application Id",
       "Unit ID",
       ...(role === "headquarter" ? ["Command"] : []),
@@ -144,7 +198,9 @@ const ApplicationsList = () => {
       ...(role !== "brigade" && role !== "unit" ? ["Lower Role Priority"] : []),
       ...(role === "unit" ? ["Status"] : []),
     ];
-    let rows = units.map((unit: any) => [
+
+    // Create rows
+    const rows = units.map((unit: any) => [
       `#${unit.id}`,
       `#${unit.unit_id}`,
       ...(role === "headquarter" ? [unit?.fds?.command ?? "-"] : []),
@@ -156,10 +212,22 @@ const ApplicationsList = () => {
       ...(role !== "brigade" && role !== "unit" ? [getLowerRolePriority(unit)] : []),
       ...(role === "unit" ? [unit?.status_flag ? unit.status_flag.charAt(0).toUpperCase() + unit.status_flag.slice(1) : "Submitted"] : []),
     ]);
-    const worksheet = XLSX.utils.aoa_to_sheet([col, ...rows]);
-    const workbook = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(workbook, worksheet, "Applications");
-    XLSX.writeFile(workbook, "applications-list.xlsx");
+
+    // Create table
+    autoTable(doc, {
+      head: [headers],
+      body: rows,
+      startY: 30,
+      theme: "grid",
+      headStyles: { fillColor: [41, 128, 185] },
+      styles: { fontSize: 8, cellPadding: 4, overflow: "linebreak" },
+      columnStyles: {
+        6: { cellWidth: 60, halign: "right" }, // Total Marks column
+        7: { cellWidth: 60, halign: "right" }, // Negative Marks column
+      },
+    });
+
+    doc.save("applications-list.pdf");
   };
 
   return (
@@ -172,24 +240,29 @@ const ApplicationsList = () => {
             { label: "Applications", href: "/applications/list" },
           ]}
         />
-        <button className="btn btn-primary" onClick={handleDownloadExcel}>
-          Download Excel
+        <button className="btn btn-primary" onClick={handleDownloadPDF}>
+          Download PDF Report
         </button>
       </div>
 
       <div className="filter-wrapper d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
-        <div className="search-wrapper position-relative">
-          <button className="border-0 bg-transparent position-absolute translate-middle-y top-50">
-            {SVGICON.app.search}
-          </button>
-          <input
-            type="text"
-            placeholder="search..."
-            className="form-control"
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-          />
-        </div>
+      <div className="search-wrapper position-relative d-flex align-items-center gap-2">
+  <div className="position-relative flex-grow-1">
+    <button className="border-0 bg-transparent position-absolute translate-middle-y top-50">
+      {SVGICON.app.search}
+    </button>
+    <input
+      type="text"
+      placeholder="search..."
+      className="form-control ps-5"
+      value={searchTerm}
+      onChange={(e) => setSearchTerm(e.target.value)}
+    />
+  </div>
+
+
+</div>
+
         <div className="d-flex flex-wrap align-items-center gap-2">
           <FormSelect
             name="awardType"
@@ -211,122 +284,172 @@ const ApplicationsList = () => {
       </div>
 
       <div className="table-responsive">
-        <table className="table-style-2 w-100">
-          <thead style={{ backgroundColor: "#007bff" }}>
-            <tr>
-              <th style={{ width: 150, minWidth: 150, maxWidth: 150, color: "white" }}>
-                Application Id
-              </th>
-              <th style={{ width: 150, minWidth: 150, maxWidth: 150, color: "white" }}>Unit ID</th>
-              {role === "headquarter" && (
-                <th style={{ width: 150, minWidth: 150, maxWidth: 150, color: "white" }}>Command</th>
-              )}
-              <th style={{ width: 200, minWidth: 200, maxWidth: 200, color: "white" }}>
-                Submission Date
-              </th>
-              <th style={{ width: 150, minWidth: 150, maxWidth: 150, color: "white" }}>Type</th>
-              {/* New columns */}
-              <th style={{ width: 150, minWidth: 150, maxWidth: 150, color: "white" }}>Total Marks</th>
-              <th style={{ width: 150, minWidth: 150, maxWidth: 150, color: "white" }}>command</th>
-              <th style={{ width: 150, minWidth: 150, maxWidth: 150, color: "white" }}>Arm / Service</th>
-              <th style={{ width: 150, minWidth: 150, maxWidth: 150, color: "white" }}>Role / Deployment              </th>
-              <th style={{ width: 150, minWidth: 150, maxWidth: 150, color: "white" }}>Location</th>
-              {role === "unit" && (<th style={{ width: 150, minWidth: 150, maxWidth: 150, color: "white" }}>Status</th>)}
-              <th style={{ width: 100, minWidth: 100, maxWidth: 100, color: "white" }}></th>
-            </tr>
-          </thead>
+ <table className="table-style-2 w-100">
+      <thead style={{ backgroundColor: "#007bff" }}>
+        <tr>
+          {role === "headquarter" && (
+            <th style={{ width: 50, textAlign: "center", color: "white" }}>
+              <input
+                type="checkbox"
+                checked={selectAll}
+                onChange={handleSelectAll}
+              />
+            </th>
+          )}
+          <th style={{ width: 150, minWidth: 150, maxWidth: 150, color: "white" }}>
+            Application Id
+          </th>
+          <th style={{ width: 150, minWidth: 150, maxWidth: 150, color: "white" }}>Unit ID</th>
+          {role === "headquarter" && (
+            <th style={{ width: 150, minWidth: 150, maxWidth: 150, color: "white" }}>Command</th>
+          )}
+          <th style={{ width: 200, minWidth: 200, maxWidth: 200, color: "white" }}>
+            Submission Date
+          </th>
+          <th style={{ width: 150, minWidth: 150, maxWidth: 150, color: "white" }}>Type</th>
+          <th style={{ width: 150, minWidth: 150, maxWidth: 150, color: "white" }}>Total Marks</th>
+          <th style={{ width: 150, minWidth: 150, maxWidth: 150, color: "white" }}>Command</th>
+          <th style={{ width: 150, minWidth: 150, maxWidth: 150, color: "white" }}>Arm / Service</th>
+          <th style={{ width: 150, minWidth: 150, maxWidth: 150, color: "white" }}>Role / Deployment</th>
+          <th style={{ width: 150, minWidth: 150, maxWidth: 150, color: "white" }}>Location</th>
+          {role === "unit" && (
+            <th style={{ width: 150, minWidth: 150, maxWidth: 150, color: "white" }}>Status</th>
+          )}
+          <th style={{ width: 100, minWidth: 100, maxWidth: 100, color: "white" }}></th>
+        </tr>
+      </thead>
 
-          <tbody>
-            {loading ?
-              <tr>
-                <td colSpan={8}>
-                  <div className="d-flex justify-content-center py-5">
-                    <Loader inline size={40} />
-                  </div>
-                </td>
-              </tr>
-              : units.length > 0 && units.map((unit: any) => (
-                <tr
-                  key={unit.id}
-                  onClick={() => {
-                    if (unit.status_flag === "draft") return;
+  <tbody>
+  {loading ? (
+    <tr>
+      <td colSpan={role === "headquarter" ? 11 : 10}>
+        <div className="d-flex justify-content-center py-5">
+          <Loader inline size={40} />
+        </div>
+      </td>
+    </tr>
+  ) : (
+    units.length > 0 &&
+    units.map((unit: any) => {
+      const canShowCheckbox =
+        role === "headquarter" &&
+        unit?.last_approved_by_role === "command" &&
+        unit?.status_flag === "approved" &&
+        unit?.is_mo_approved === true &&
+        unit?.is_ol_approved === true;
 
-                    if (location.pathname === "/submitted-forms/list") {
-                      navigate(`/submitted-forms/list/${unit.id}?award_type=${unit.type}`);
-                    } else {
-                      navigate(`/applications/list/${unit.id}?award_type=${unit.type}`);
-                    }
-                  }}
+      return (
+        <tr
+          key={unit.id}
+          onClick={() => {
+            if (unit.status_flag === "draft") return;
 
-                  style={{ cursor: "pointer" }}
-                >
-                  <td style={{ width: 150, minWidth: 150, maxWidth: 150 }}>
-                    <p className="fw-4">#{unit.id}</p>
-                  </td>
-                  <td style={{ width: 150, minWidth: 150, maxWidth: 150 }}>
-                    <p className="fw-4">#{unit.unit_id}</p>
-                  </td>
-                  {role === "headquarter" && <td style={{ width: 150, minWidth: 150, maxWidth: 150 }}>
-                    <p className="fw-4">{unit?.fds?.command}</p>
-                  </td>}
-                  <td style={{ width: 200, minWidth: 200, maxWidth: 200 }}>
-                    <p className="fw-4">
-                      {unit.fds?.last_date
-                        ? new Date(unit.fds.last_date).toLocaleDateString()
-                        : "-"}
-                    </p>
-                  </td>
-                  <td style={{ width: 150, minWidth: 150, maxWidth: 150 }}>
-                    <p className="fw-4">{unit.type.charAt(0).toUpperCase() + unit.type.slice(1)}</p>
-                  </td>
-                  {/* New columns */}
-                  <td style={{ width: 150, minWidth: 150, maxWidth: 150 }}>
-                    <p className="fw-4">{getTotalMarks(unit).toFixed(2)}</p>
-                  </td>
-                  <td style={{ width: 150, minWidth: 150, maxWidth: 150 }}>
-                    <p className="fw-4">{unit.fds.command ?? "-"}</p>
-                  </td>
-                  <td style={{ width: 150, minWidth: 150, maxWidth: 150 }}>
-                    <p className="fw-4">{unit.fds.arms_service ?? "-"}</p>
-                  </td>
-                  <td style={{ width: 150, minWidth: 150, maxWidth: 150 }}>
-                    <p className="fw-4">{unit.fds.matrix_unit ?? "-"}</p>
-                  </td>
-                  <td style={{ width: 150, minWidth: 150, maxWidth: 150 }}>
-                    <p className="fw-4">{unit.fds.location ?? "-"}</p>
-                  </td>
-                  {role === "unit" && (
-                    <td style={{ width: 150, minWidth: 150, maxWidth: 150 }}>
-                      <p className="fw-4">
-                        {unit?.status_flag
-                          ? unit.status_flag.charAt(0).toUpperCase() + unit.status_flag.slice(1)
-                          : "Submitted"}
-                      </p>
-                    </td>
-                  )}
-                  <td style={{ width: 100, minWidth: 100, maxWidth: 100 }}>
-                    {unit?.status_flag === "draft" ? (
-                      <Link
-                        to={`/applications/${unit.type}?id=${unit?.id}`}
-                        className="action-btn bg-transparent d-inline-flex align-items-center justify-content-center"
-                        onClick={(e) => e.stopPropagation()}
-                      >
-                        {SVGICON.app.edit}
-                      </Link>
-                    ) : (
-                      <Link
-                        to={`/applications/list/${unit.id}?award_type=${unit.type}`}
-                        className="action-btn bg-transparent d-inline-flex align-items-center justify-content-center"
-                        onClick={(e) => e.stopPropagation()}
-                      >
-                        {SVGICON.app.eye}
-                      </Link>
-                    )}
-                  </td>
-                </tr>
-              ))}
-          </tbody>
-        </table>
+            if (location.pathname === "/submitted-forms/list") {
+              navigate(`/submitted-forms/list/${unit.id}?award_type=${unit.type}`);
+            } else {
+              navigate(`/applications/list/${unit.id}?award_type=${unit.type}`);
+            }
+          }}
+          style={{ cursor: "pointer" }}
+        >
+         {role === "headquarter" && (
+  <td
+    style={{ width: 200, textAlign: "center" }}
+    onClick={(e) => e.stopPropagation()}
+  >
+    {unit?.isfinalized ? (
+      <span style={{ color: "green", fontWeight: 600 }}>Finalized</span>
+    ) : canShowCheckbox ? (
+      <input
+        type="checkbox"
+        checked={selectedUnits.some((u) => u.id === unit.id)}
+        onChange={() => handleSelectUnit(unit)}
+      />
+    ) : (
+      <span className="text-muted">Not Approved</span>
+    )}
+  </td>
+)}
+
+          <td style={{ width: 150 }}>
+            <p className="fw-4">#{unit.id}</p>
+          </td>
+          <td style={{ width: 150 }}>
+            <p className="fw-4">#{unit.unit_id}</p>
+          </td>
+
+          {role === "headquarter" && (
+            <td style={{ width: 150 }}>
+              <p className="fw-4">{unit?.fds?.command}</p>
+            </td>
+          )}
+
+          <td style={{ width: 200 }}>
+            <p className="fw-4">
+              {unit.fds?.last_date
+                ? new Date(unit.fds.last_date).toLocaleDateString()
+                : "-"}
+            </p>
+          </td>
+          <td style={{ width: 150 }}>
+            <p className="fw-4">
+              {unit.type.charAt(0).toUpperCase() + unit.type.slice(1)}
+            </p>
+          </td>
+          <td style={{ width: 150 }}>
+            <p className="fw-4">{getTotalMarks(unit).toFixed(2)}</p>
+          </td>
+          <td style={{ width: 150 }}>
+            <p className="fw-4">{unit.fds.command ?? "-"}</p>
+          </td>
+          <td style={{ width: 150 }}>
+            <p className="fw-4">{unit.fds.arms_service ?? "-"}</p>
+          </td>
+          <td style={{ width: 150 }}>
+            <p className="fw-4">{unit.fds.matrix_unit ?? "-"}</p>
+          </td>
+          <td style={{ width: 150 }}>
+            <p className="fw-4">{unit.fds.location ?? "-"}</p>
+          </td>
+
+          {role === "unit" && (
+            <td style={{ width: 150 }}>
+              <p className="fw-4">
+                {unit?.status_flag
+                  ? unit.status_flag.charAt(0).toUpperCase() +
+                    unit.status_flag.slice(1)
+                  : "Submitted"}
+              </p>
+            </td>
+          )}
+
+          <td style={{ width: 100 }}>
+            {unit?.status_flag === "draft" ? (
+              <Link
+                to={`/applications/${unit.type}?id=${unit?.id}`}
+                className="action-btn bg-transparent d-inline-flex align-items-center justify-content-center"
+                onClick={(e) => e.stopPropagation()}
+              >
+                {SVGICON.app.edit}
+              </Link>
+            ) : (
+              <Link
+                to={`/applications/list/${unit.id}?award_type=${unit.type}`}
+                className="action-btn bg-transparent d-inline-flex align-items-center justify-content-center"
+                onClick={(e) => e.stopPropagation()}
+              >
+                {SVGICON.app.eye}
+              </Link>
+            )}
+          </td>
+        </tr>
+      );
+    })
+  )}
+</tbody>
+
+
+    </table>
       </div>
 
       {/* Empty Data */}

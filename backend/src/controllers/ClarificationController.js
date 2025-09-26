@@ -2,6 +2,7 @@ const ClarificationService = require("../services/ClarificationService");
 const ResponseHelper = require("../utils/responseHelper");
 const { StatusCodes } = require("http-status-codes");
 const path = require('path');
+const { validateCreateClarification, validateUpdateClarification } = require("../validations/clarificationValidator");
 
 exports.addClarification = async (req, res) => {
   try {

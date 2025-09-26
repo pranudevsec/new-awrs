@@ -1,3 +1,5 @@
+// import { VscArchive } from "react-icons/vsc";
+
 export const awardTypeOptions: OptionType[] = [
   { value: "All", label: "All" },
   { value: "citation", label: "Citation" },
@@ -17,6 +19,19 @@ export const unitOptions: OptionType[] = [
   { value: "unit8", label: "Unit 8" },
   { value: "unit9", label: "Unit 9" },
   { value: "unit10", label: "Unit 10" },
+   { value: "unit11", label: "Unit 11" },
+    { value: "unit12", label: "Unit 12" },
+     { value: "unit13", label: "Unit 13" },
+      { value: "unit14", label: "Unit 14" },
+        { value: "unit15", label: "Unit 15" },
+  { value: "unit16", label: "Unit 16" },
+  { value: "unit17", label: "Unit 17" },
+   { value: "unit18", label: "Unit 18" },
+    { value: "unit19", label: "Unit 19" },
+     { value: "ahcc", label: "AHCC" }
+      
+      
+   
 ];
 
 export const brigadeOptions: OptionType[] = [

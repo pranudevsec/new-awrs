@@ -141,7 +141,7 @@ const drawWatermark = (doc: jsPDF, text: string) => {
 
   // Slightly darker grey + opacity
   doc.setFont("helvetica", "bold");
-  doc.setTextColor(120, 120, 120);
+  doc.setTextColor(0,0,0);
   let fontSize = 28;
   doc.setFontSize(fontSize);
 
@@ -168,53 +168,35 @@ const drawWatermark = (doc: jsPDF, text: string) => {
 
 const handleExportPDF = async () => {
   const ip = await getPublicIP();
-  const stamp = `IP: ${ip} • ${formatNowIST()} IST`;
+  const stamp = `IP: ${ip} • ${formatNowIST()}`;
 
   const doc = new jsPDF({ orientation: "landscape", unit: "pt", format: "a4" });
 
-  // Paint watermark exactly once per page (including first)
-  const paintedPages = new Set<number>();
-  const paintThisPage = () => {
-    const pageNum =
-      (doc as any).internal?.getCurrentPageInfo?.().pageNumber ??
-      (doc as any).internal?.pages?.length - 1 ??
-      1;
-    if (paintedPages.has(pageNum)) return;
-    drawWatermark(doc, stamp);
-    paintedPages.add(pageNum);
-  };
-  (doc as any).internal?.events?.subscribe?.("addPage", paintThisPage);
-  paintThisPage(); // first page
-
+  // Create the table headers and rows as before
   const MARK_ROLES = ["brigade", "division", "corps", "command"] as const;
-  const PRIORITY_ROLES = ["brigade", "division", "corps", "command", "cw2"] as const;
   const cap = (s: string) => (s ? s[0].toUpperCase() + s.slice(1) : s);
 
-  // headers: details → Application Marks → per-role Marks → Total Marks → Priorities
   const headers: string[] = [
     "S. No",
     "Award Type",
     "Unit Name",
     "Location",
-    "Brigade",
-    "Division",
-    "Corps",
+    "ARMS",
+    "Fmm",
+    "Role/Dply",
     "Command",
     "Application Marks",
     ...MARK_ROLES.map((r) => `Marks by ${cap(r)}`),
     "Total Marks",
-    ...PRIORITY_ROLES.map((r) => `Priority by ${r.toUpperCase() === "CW2" ? "CW2" : cap(r)}`),
   ];
 
   const rows = units.map((unit: any, index: number) => {
-    // Application Marks (± parameters)
     let applicationMarks = 0;
     (unit.fds?.parameters ?? []).forEach((p: any) => {
       const val = Number(p?.approved_marks ?? p?.marks ?? 0) || 0;
       applicationMarks += p?.negative ? -val : val;
     });
 
-    // Marks by role (grace)
     const graceMap: Record<string, number | string> = {};
     (unit.fds?.applicationGraceMarks ?? []).forEach((g: any) => {
       const role = String(g?.role ?? "").toLowerCase();
@@ -222,7 +204,6 @@ const handleExportPDF = async () => {
     });
     const marksByRole = MARK_ROLES.map((r) => graceMap[r] ?? "-");
 
-    // Total = Application Marks + sum of all numeric grace marks (all roles)
     const totalMarks =
       applicationMarks +
       MARK_ROLES.reduce((sum, r) => {
@@ -231,38 +212,29 @@ const handleExportPDF = async () => {
         return sum + (isNaN(n) ? 0 : n);
       }, 0);
 
-    // Priorities (incl. CW2)
-    const priorityMap: Record<string, number | string> = {};
-    (unit.fds?.applicationPriority ?? []).forEach((pr: any) => {
-      const role = String(pr?.role ?? "").toLowerCase();
-      priorityMap[role] = pr?.priority ?? "-";
-    });
-    const priorities = PRIORITY_ROLES.map((r) => priorityMap[r] ?? "-");
-
     return [
       index + 1,
       unit?.type ?? "-",
       unit?.unit_details?.name ?? "-",
       unit?.unit_details?.location ?? "-",
-      unit?.unit_details?.bde ?? "-",
-      unit?.unit_details?.div ?? "-",
+      unit?.unit_details?.unit_type ?? "-",
       unit?.unit_details?.corps ?? "-",
+      unit?.unit_details?.matrix_unit ?? "-",
       unit?.unit_details?.comd ?? "-",
       applicationMarks,
       ...marksByRole,
       totalMarks,
-      ...priorities,
     ];
   });
 
-  // shrink the two numeric summary columns
   const appMarksIdx = headers.indexOf("Application Marks");
   const totalMarksIdx = headers.indexOf("Total Marks");
 
+  // Render the table
   autoTable(doc, {
     head: [headers],
     body: rows,
-    startY: 40,
+    startY: 40,  // Adjust the Y position to place the table below the watermark
     theme: "grid",
     headStyles: { fillColor: [41, 128, 185] },
     styles: { fontSize: 8, cellPadding: 4, overflow: "linebreak" },
@@ -270,406 +242,29 @@ const handleExportPDF = async () => {
       [appMarksIdx]: { cellWidth: 60, halign: "right" },
       [totalMarksIdx]: { cellWidth: 60, halign: "right" },
     },
-    // IMPORTANT: no didDrawPage here — watermark is already underneath
   });
+
+  // Now, add watermark after the table
+  const paintWatermarkAfterTable = () => {
+    drawWatermark(doc, stamp);  // Add watermark after the table
+  };
+
+  // Call the function to paint watermark after the table
+  paintWatermarkAfterTable();
 
   doc.save("applications.pdf");
 };
 
 
 
+
+
   
   
   
-  // const handleExportExcel = () => {
-  //   const allParameterKeys: string[] = [];
-  //   const paramNameMap: Record<string, string> = {};
-  //   const matricUnits = [
-  //     "CI/CT",
-  //     "LC",
-  //     "AIOS",
-  //     "LAC",
-  //     "HAA",
-  //     "AGPL",
-  //     "Internal Security (IS)",
-  //   ];
+  // Excel function removed - using PDF instead
 
-  //   const nonMatricUnits = ["Non Metrics (NM)", "Peace/Mod Fd"];
-  //   const allGraceRoles: string[] = [];
-
-  //   const allPriorityRoles: string[] = [];
-
-  //   units.forEach((unit: any) => {
-  //     const params = unit.fds?.parameters ?? [];
-  //     params.forEach((p: any) => {
-  //       const key = `${p.name} (${p.id})`;
-  //       if (!allParameterKeys.includes(key)) {
-  //         allParameterKeys.push(key);
-  //         paramNameMap[key] = p.name;
-  //       }
-  //     });
-
-  //     (unit.fds?.applicationGraceMarks ?? []).forEach((g: any) => {
-  //       if (!allGraceRoles.includes(g.role)) {
-  //         allGraceRoles.push(g.role);
-  //       }
-  //     });
-
-  //     (unit.fds?.applicationPriority ?? []).forEach((pr: any) => {
-  //       if (!allPriorityRoles.includes(pr.role)) {
-  //         allPriorityRoles.push(pr.role);
-  //       }
-  //     });
-  //   });
-
-  //   const appDetailCols = 8;
-  //   const paramCols = allParameterKeys.length;
-  //   const graceCols = allGraceRoles.length;
-  //   const priorityCols = allPriorityRoles.length;
-
-  //   const headerRow1 = [
-  //     "Application Details",
-  //     ...Array(appDetailCols - 1).fill(""),
-  //     // "Matric Units",
-  //     // ...Array(matricUnits.length - 1).fill(""),
-  //     // "Non-Matric Units",
-  //     // ...Array(nonMatricUnits.length - 1).fill(""),
-  //     // "Parameters",
-  //     // ...Array(paramCols - 1).fill(""),
-  //     "Discretionary Points",
-  //     ...Array(graceCols - 1).fill(""),
-  //     "Priority",
-  //     ...Array(priorityCols - 1).fill(""),
-  //     "Total Marks",
-  //   ];
-
-  //   const headerRow2 = [
-  //     "S. No",
-  //     "Award Type",
-  //     "Unit Name",
-  //     "Location",
-  //     "Brigade",
-  //     "Division",
-  //     "Corps",
-  //     "Command",
-  //     // ...matricUnits,
-  //     // ...nonMatricUnits,
-  //     // ...allParameterKeys.map((key) => paramNameMap[key]), 
-  //     ...allGraceRoles.map((role) => role),
-  //     ...allPriorityRoles.map((role) => role),
-  //     "",
-  //   ];
-
-  //   const rows = units.map((unit: any, index: number) => {
-  //     const paramMap: Record<string, number | string> = {};
-  //     const graceMap: Record<string, number | string> = {};
-  //     const priorityMap: Record<string, number | string> = {};
-  //     let totalMarks = 0;
-
-  //     const matricCounts: Record<string, number> = {};
-  //     const nonMatricCounts: Record<string, number> = {};
-
-  //     matricUnits.forEach((label) => (matricCounts[label] = 0));
-  //     nonMatricUnits.forEach((label) => (nonMatricCounts[label] = 0));
-
-  //     (unit.fds?.parameters ?? []).forEach((p: any) => {
-  //       const key = `${p.name} (${p.id})`;
-  //       const marksVal = p.approved_marks ?? p.marks ?? 0;
-  //       const numVal = Number(marksVal) || 0;
-  //       if (p.negative) {
-  //         totalMarks -= numVal;
-  //         paramMap[key] = `-${numVal}`;
-  //       } else {
-  //         totalMarks += numVal;
-  //         paramMap[key] = numVal;
-  //       }
-
-  //       const armsServiceValue = p.arms_service ?? "";
-
-  //       const matchedMatric = matrixUnitOptions.find(
-  //         (opt) =>
-  //           opt.value === armsServiceValue && matricUnits.includes(opt.label)
-  //       );
-  //       if (matchedMatric) {
-  //         matricCounts[matchedMatric.label] += 1;
-  //       } else {
-  //         const matchedNonMatric = matrixUnitOptions.find(
-  //           (opt) =>
-  //             opt.value === armsServiceValue &&
-  //             nonMatricUnits.includes(opt.label)
-  //         );
-  //         if (matchedNonMatric) {
-  //           nonMatricCounts[matchedNonMatric.label] += 1;
-  //         }
-  //       }
-  //     });
-
-  //     (unit.fds?.applicationGraceMarks ?? []).forEach((g: any) => {
-  //       graceMap[g.role] = g.marks ?? "-";
-  //     });
-
-  //     const roleOrder = ["brigade", "division", "corps", "command"];
-  //     for (let i = roleOrder.length - 1; i >= 0; i--) {
-  //       const role = roleOrder[i];
-  //       if (graceMap[role] !== undefined && graceMap[role] !== "-") {
-  //         totalMarks += Number(graceMap[role]) || 0;
-  //         break;
-  //       }
-  //     }
-
-  //     (unit.fds?.applicationPriority ?? []).forEach((pr: any) => {
-  //       priorityMap[pr.role] = pr.priority ?? "-";
-  //     });
-
-  //     const matricValues = matricUnits.map(
-  //       (label) => matricCounts[label] || "-"
-  //     );
-  //     const nonMatricValues = nonMatricUnits.map(
-  //       (label) => nonMatricCounts[label] || "-"
-  //     );
-
-  //     return [
-  //       index + 1,
-  //       unit.type ?? "-",
-  //       unit.unit_details?.name ?? "-",
-  //       unit.unit_details?.location ?? "-",
-  //       unit.unit_details?.bde ?? "-",
-  //       unit.unit_details?.div ?? "-",
-  //       unit.unit_details?.corps ?? "-",
-  //       unit.unit_details?.comd ?? "-",
-  //       // ...matricValues,
-  //       // ...nonMatricValues,
-  //       // ...allParameterKeys.map((key) => paramMap[key] ?? "-"),
-  //       ...allGraceRoles.map((role) => graceMap[role] ?? "-"),
-  //       ...allPriorityRoles.map((role) => priorityMap[role] ?? "-"),
-  //       totalMarks,
-  //     ];
-  //   });
-
-  //   const worksheetData = [headerRow1, headerRow2, ...rows];
-
-  //   const worksheet = XLSX.utils.aoa_to_sheet(worksheetData);
-
-  //   worksheet["!merges"] = [
-  //     { s: { r: 0, c: 0 }, e: { r: 0, c: appDetailCols - 1 } },
-  //     {
-  //       s: { r: 0, c: appDetailCols },
-  //       e: { r: 0, c: appDetailCols + matricUnits.length - 1 },
-  //     },
-  //     {
-  //       s: { r: 0, c: appDetailCols + matricUnits.length },
-  //       e: {
-  //         r: 0,
-  //         c: appDetailCols + matricUnits.length + nonMatricUnits.length - 1,
-  //       },
-  //     },
-  //     {
-  //       s: {
-  //         r: 0,
-  //         c: appDetailCols + matricUnits.length + nonMatricUnits.length,
-  //       },
-  //       e: {
-  //         r: 0,
-  //         c:
-  //           appDetailCols +
-  //           matricUnits.length +
-  //           nonMatricUnits.length +
-  //           paramCols -
-  //           1,
-  //       },
-  //     },
-  //     {
-  //       s: {
-  //         r: 0,
-  //         c:
-  //           appDetailCols +
-  //           matricUnits.length +
-  //           nonMatricUnits.length +
-  //           paramCols,
-  //       },
-  //       e: {
-  //         r: 0,
-  //         c:
-  //           appDetailCols +
-  //           matricUnits.length +
-  //           nonMatricUnits.length +
-  //           paramCols +
-  //           graceCols -
-  //           1,
-  //       },
-  //     },
-  //     {
-  //       s: {
-  //         r: 0,
-  //         c:
-  //           appDetailCols +
-  //           matricUnits.length +
-  //           nonMatricUnits.length +
-  //           paramCols +
-  //           graceCols,
-  //       },
-  //       e: {
-  //         r: 0,
-  //         c:
-  //           appDetailCols +
-  //           matricUnits.length +
-  //           nonMatricUnits.length +
-  //           paramCols +
-  //           graceCols +
-  //           priorityCols -
-  //           1,
-  //       },
-  //     },
-
-  //     {
-  //       s: {
-  //         r: 0,
-  //         c:
-  //           appDetailCols +
-  //           matricUnits.length +
-  //           nonMatricUnits.length +
-  //           paramCols +
-  //           graceCols +
-  //           priorityCols,
-  //       },
-  //       e: {
-  //         r: 1,
-  //         c:
-  //           appDetailCols +
-  //           matricUnits.length +
-  //           nonMatricUnits.length +
-  //           paramCols +
-  //           graceCols +
-  //           priorityCols,
-  //       },
-  //     },
-  //   ];
-
-  //   const workbook = XLSX.utils.book_new();
-  //   XLSX.utils.book_append_sheet(workbook, worksheet, "Units Report");
-  //   XLSX.writeFile(workbook, "applications.xlsx");
-  // };
-
-  // const handleExportFMNExcel = () => {
-  //   // Updated matric units
-  //   const matricUnits = [
-  //     { label: "CI/CT", value: "HINTERLAND" },
-  //     { label: "LC", value: "LC" },
-  //     { label: "AIOS", value: "AIOS" },
-  //     { label: "LAC", value: "LAC" },
-  //     { label: "HAA", value: "HAA" },
-  //     { label: "AGPL", value: "AGPL" },
-  //     { label: "Internal Security (IS)", value: "IS" },
-  //   ];
-
-  //   // Updated non-matric units for matching matrix_unit values
-  //   const nonMatricUnits = [
-  //     { label: "Non Metrics (NM)", value: "NM" },
-  //     { label: "Peace/Mod Fd", value: "Peace" },
-  //   ];
-
-  //   // Group by FMN
-  //   const groupedByFMN: any = {};
-
-  //   units.forEach(unit => {
-  //     const fmn = unit.fds.command || "Unknown FMN";
-  //     if (!groupedByFMN[fmn]) {
-  //       groupedByFMN[fmn] = {
-  //         matricCounts: matricUnits.reduce((acc: any, u) => {
-  //           acc[u.label] = 0;
-  //           return acc;
-  //         }, {}),
-  //         nonMatricCounts: nonMatricUnits.reduce((acc: any, u) => {
-  //           acc[u.label] = 0;
-  //           return acc;
-  //         }, {}),
-  //         unitCitations: 0,
-  //         unitAppreciations: 0,
-  //         total: 0,
-  //       };
-  //     }
-  //     const fmnGroup = groupedByFMN[fmn];
-
-  //     // Count matric units based on fds.matrix_unit matching matric units
-  //     const isMatric = matricUnits.some(({ value }) => value === unit.fds.matrix_unit);
-  //     if (isMatric) {
-  //       matricUnits.forEach(({ label, value }) => {
-  //         if (unit.fds.matrix_unit === value) {
-  //           if (unit.type === "citation") {
-  //             fmnGroup.matricCounts[label]++;
-  //             fmnGroup.unitCitations++;
-  //           } else if (unit.type === "appreciation") {
-  //             fmnGroup.matricCounts[label]++;
-  //             fmnGroup.unitAppreciations++;
-  //           }
-  //         }
-  //       });
-  //     } else {
-  //       // For non-matric units, only count if matrix_unit matches any of nonMatricUnits values
-  //       const matchedNonMatric = nonMatricUnits.find(({ value }) => value === unit.fds.matrix_unit);
-  //       if (matchedNonMatric) {
-  //         if (unit.type === "citation") {
-  //           fmnGroup.nonMatricCounts[matchedNonMatric.label]++;
-  //           fmnGroup.unitCitations++;
-  //         } else if (unit.type === "appreciation") {
-  //           fmnGroup.nonMatricCounts[matchedNonMatric.label]++;
-  //           fmnGroup.unitAppreciations++;
-  //         }
-  //       }
-  //     }
-
-  //     fmnGroup.total++;
-  //   });
-
-  //   // Prepare header rows
-  //   const headerRow1 = [
-  //     "FMN",
-  //     "Matric Units", "", "", "", "", "", "",
-  //     "Non-Matric Units", "",
-  //     "Unit Citations",
-  //     "Unit Appreciations",
-  //     "Total",
-  //   ];
-
-  //   const headerRow2 = [
-  //     "",
-  //     "CI/CT", "LC", "AIOS", "LAC", "HAA", "AGPL", "Internal Security (IS)",
-  //     "Non Metrics (NM)", "Peace/Mod Fd",
-  //     "", "", "",
-  //   ];
-
-  //   // Data rows
-  //   const dataRows = Object.entries(groupedByFMN).map(([fmn, counts]: any) => [
-  //     fmn,
-  //     ...matricUnits.map(({ label }) => counts.matricCounts[label] > 0 ? counts.matricCounts[label] : "-"),
-  //     ...nonMatricUnits.map(({ label }) => counts.nonMatricCounts[label] > 0 ? counts.nonMatricCounts[label] : "-"),
-  //     counts.unitCitations,
-  //     counts.unitAppreciations,
-  //     counts.total,
-  //   ]);
-
-  //   const worksheetData = [headerRow1, headerRow2, ...dataRows];
-
-  //   // Create worksheet
-  //   const worksheet = XLSX.utils.aoa_to_sheet(worksheetData);
-
-  //   // Merge cells for grouped headers
-  //   worksheet["!merges"] = [
-  //     { s: { r: 0, c: 1 }, e: { r: 0, c: 7 } },  // B1:H1 Matric Units (unchanged)
-  //     { s: { r: 0, c: 8 }, e: { r: 0, c: 9 } },  // I1:J1 Non-Matric Units (reduced by 1)
-  //     { s: { r: 0, c: 0 }, e: { r: 1, c: 0 } },  // A1:A2 FMN
-  //     { s: { r: 0, c: 10 }, e: { r: 1, c: 10 } }, // K1:K2 Unit Citations (shifted left by 1)
-  //     { s: { r: 0, c: 11 }, e: { r: 1, c: 11 } }, // L1:L2 Unit Appreciations (shifted left by 1)
-  //     { s: { r: 0, c: 12 }, e: { r: 1, c: 12 } }, // M1:M2 Total (shifted left by 1)
-  //   ];
-
-  //   // Create workbook and append sheet
-  //   const workbook = XLSX.utils.book_new();
-  //   XLSX.utils.book_append_sheet(workbook, worksheet, "FMN Report");
-
-  //   // Export Excel file
-  //   XLSX.writeFile(workbook, "FMN_Report.xlsx");
-  // };
+  // Excel function removed - using PDF instead
 
   return (
     <div className="clarification-section">
@@ -687,7 +282,7 @@ const handleExportPDF = async () => {
             onClick={handleExportPDF}
           >
             {/* <FaDownload /> */}
-            <span>Generate Applications Report</span>
+            <span>Download PDF Report</span>
           </button>
           {/* <button className="_btn primary mb-3 d-flex align-items-center justify-content-center gap-2" onClick={handleExportExcel}>
                 
@@ -798,6 +393,16 @@ const handleExportPDF = async () => {
                 }}
               >
                 Unit ID
+              </th>
+               <th
+                style={{
+                  width: 150,
+                  minWidth: 150,
+                  maxWidth: 150,
+                  color: "white",
+                }}
+              >
+                Unit Name
               </th>
               <th
                 style={{
@@ -934,6 +539,9 @@ const handleExportPDF = async () => {
                     </td>
                     <td style={{ width: 150, minWidth: 150, maxWidth: 150 }}>
                       <p className="fw-4">#{unit.unit_id}</p>
+                    </td>
+                      <td style={{ width: 150, minWidth: 150, maxWidth: 150 }}>
+                      <p className="fw-4">#{unit?.unit_details?.name}</p>
                     </td>
                     <td style={{ width: 150, minWidth: 150, maxWidth: 150 }}>
                       <p className="fw-4">{unit.fds?.arms_service}</p>

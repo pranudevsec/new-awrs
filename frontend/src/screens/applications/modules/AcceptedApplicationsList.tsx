@@ -175,7 +175,6 @@ const AcceptedApplicationsList = () => {
       fetchData();
       toast.success("Priority updated successfully");
     } catch (error) {
-      console.error("approveMarks error:", error);
       toast.error("Failed to update priority");
     }
   };
@@ -225,7 +224,6 @@ const AcceptedApplicationsList = () => {
 
       dispatch(fetchSubordinates(params));
     } catch (err) {
-      console.error("error:", err)
       toast.error("One or more approvals failed");
     }
   };
@@ -899,8 +897,7 @@ const AcceptedApplicationsList = () => {
       <ReqSignatureApproveModal
         show={showSignatureModal}
         handleClose={() => setShowSignatureModal(false)}
-        handleApprove={(signatureFile) => {
-          console.log("Approving with signature:", signatureFile);
+        handleApprove={() => {
           handleBulkApprove();
           setShowSignatureModal(false);
         }}

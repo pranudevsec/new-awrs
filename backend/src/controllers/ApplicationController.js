@@ -60,13 +60,11 @@ exports.getApplicationsScoreboard = async (req, res) => {
   
   exports.updateApplicationStatus = async (req, res) => {
     try {
-      console.log("Updating application status");
       const { type, status,member,withdrawRequested,withdraw_status,level} = req.body;
       const id=req.params.id;
 
       if (status) {
         if (!['approved', 'rejected', "shortlisted_approved"].includes(status)) {
-          console.log("Invalid status value:", status);
           return res.status(StatusCodes.BAD_REQUEST).send(
             ResponseHelper.error(StatusCodes.BAD_REQUEST, "Invalid status value")
           );
@@ -264,6 +262,16 @@ exports.getApplicationsScoreboard = async (req, res) => {
   exports.getAllApplicationsGraph= async (req, res) => {
     try {
       const result = await ApplicationService.getApplicationsSummary(req.user, req.query);
+      res.status(StatusCodes.OK).send(result);
+    } catch (error) {
+      res.status(StatusCodes.INTERNAL_SERVER_ERROR).send(
+        ResponseHelper.error(StatusCodes.INTERNAL_SERVER_ERROR, "Internal Server Error", error.message)
+      );
+    }
+  };
+  exports.applicationFinalize= async (req, res) => {
+    try {
+      const result = await ApplicationService.applicationFinalize(req.user, req.body);
       res.status(StatusCodes.OK).send(result);
     } catch (error) {
       res.status(StatusCodes.INTERNAL_SERVER_ERROR).send(

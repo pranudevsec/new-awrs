@@ -81,7 +81,6 @@ const AppreciationReviewPage = () => {
                 if (parsed.counts) setCounts(parsed.counts);
                 if (parsed.marks) setMarks(parsed.marks);
             } catch (err) {
-                console.error("Failed to parse draft from localStorage", err);
             }
         }
     }, []);
@@ -118,7 +117,6 @@ const AppreciationReviewPage = () => {
                 throw new Error("Invalid upload response");
             }
         } catch (error) {
-            console.error("Upload failed:", error);
             return null;
         }
     };
@@ -256,7 +254,6 @@ const AppreciationReviewPage = () => {
                     toast.error("Failed to create appreciation.");
                 }
             } catch (err) {
-                console.error("create failed", err);
             }
         },
     });
@@ -288,7 +285,6 @@ const AppreciationReviewPage = () => {
                     setParameters(revParams);
                 }
             } catch (err) {
-                console.error("Failed to fetch data", err);
             }
         };
 

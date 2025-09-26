@@ -1,5 +1,8 @@
 import { useEffect, useRef, useState, type JSX } from "react";
 import { MdClose } from "react-icons/md";
+import jsPDF from "jspdf";
+import autoTable from "jspdf-autotable";
+import { downloadDocumentWithWatermark } from '../../../utils/documentUtils';
 import { IoMdCheckmark } from "react-icons/io";
 import { FaCheckCircle, FaDownload } from "react-icons/fa";
 import { SVGICON } from "../../../constants/iconsList";
@@ -24,8 +27,7 @@ import Axios, { baseURL } from "../../../reduxToolkit/helper/axios";
 import { useDebounce } from "../../../hooks/useDebounce";
 import { updateCitation } from "../../../reduxToolkit/services/citation/citationService";
 import { updateAppreciation } from "../../../reduxToolkit/services/appreciation/appreciationService";
-import * as XLSX from "xlsx";
-import { saveAs } from "file-saver";
+// Excel imports removed - using PDF instead
 import DisclaimerModal from "../../../modals/DisclaimerModal";
 import { DisclaimerText } from "../../../data/options";
 // import { TokenValidation,getSignedData } from "../../../reduxToolkit/services/application/applicationService";
@@ -103,6 +105,9 @@ const ApplicationDetails = () => {
     approvedMarks: 0,
     totalMarks: 0,
     negativeMarks: 0,
+    marksByRole: 0,
+    positiveMarks: 0,
+    approvedRole: ""
   });
   const [approvedMarksDocumentsState, setApprovedMarksDocumentsState] = useState<any>({});
   const [approvedMarksReasonState, setApprovedMarksReasonState] = useState<Record<string, string>>({});
@@ -146,71 +151,84 @@ const ApplicationDetails = () => {
 
   const calculateParameterStats = (parameters: any[]) => {
     const totalParams = parameters.length;
-
+    
     const filledParams = parameters.filter(
       (param) => (param.count ?? 0) > 0 || (param.marks ?? 0) > 0
     ).length;
 
-    const marks = parameters.reduce((acc, param) => {
+    // Calculate positive marks (original positive parameters, excluding rejected)
+    const positiveMarks = parameters.reduce((acc, param) => {
       const isRejected = param.clarification_details?.clarification_status === "rejected";
       const isNegative = param.negative;
       if (isRejected || isNegative) return acc;
       return acc + (param.marks ?? 0);
     }, 0);
 
+    // Calculate negative marks (original negative parameters, excluding rejected)
+    // Note: negative marks are stored as positive values, so we make them negative
+    const negativeMarks = parameters.reduce((acc, param) => {
+      const isRejected = param.clarification_details?.clarification_status === "rejected";
+      if (isRejected || !param.negative) return acc;
+      return acc + (param.marks ?? 0); // Keep as positive value for display
+    }, 0);
+
+    // Calculate approved marks (sum of all approved marks, excluding rejected parameters)
+    // Only count if approved_marks is actually set (not null/undefined/empty)
     const approvedMarks = parameters.reduce((acc, param) => {
       const isRejected = param.clarification_details?.clarification_status === "rejected";
       if (isRejected) {
         return acc;
       }
-      const approved_marks = Number(param.approved_marks ?? 0);
-      return acc + approved_marks;
+      
+      // Only count if approved_marks is actually set and not empty
+      const hasApprovedMarks = param.approved_marks !== null && 
+                               param.approved_marks !== undefined && 
+                               param.approved_marks !== "" &&
+                               !isNaN(Number(param.approved_marks));
+      
+      if (!hasApprovedMarks) {
+        return acc;
+      }
+      
+      const approved_marks = Number(param.approved_marks);
+      
+      // For negative parameters, use negative value for calculation
+      const marksToAdd = param.negative ? -approved_marks : approved_marks;
+      return acc + marksToAdd;
     }, 0);
 
-    // Calculate negativeMarks
-    const negativeMarks = parameters.reduce((acc, param) => {
-      const isRejected = param.clarification_details?.clarification_status === "rejected";
+    // Calculate marks added/deducted by role (difference between approved and original)
+    const originalTotalMarks = positiveMarks - negativeMarks;
+    // Only calculate marksByRole if there are actually approved marks
+    const marksByRole = approvedMarks > 0 ? approvedMarks - originalTotalMarks : 0;
 
-      if (isRejected) return acc;
-
-      const hasValidApproved =
-        param.approved_marks !== undefined &&
-        param.approved_marks !== null &&
-        param.approved_marks !== "" &&
-        !isNaN(Number(param.approved_marks));
-
-      const approved = hasValidApproved ? Number(param.approved_marks) : null;
-      const original = param.marks ?? 0;
-      const valueToCheck = approved ?? original;
-      return acc + (param.negative ? valueToCheck : 0);
-    }, 0);
-
-    const totalParameterMarks = parameters.reduce((acc, param) => {
-      const isRejected = param.clarification_details?.clarification_status === "rejected";
-
-      if (isRejected) return acc;
-      if (param.negative) return acc;
-
-      const hasValidApproved =
-        param.approved_marks !== undefined &&
-        param.approved_marks !== null &&
-        param.approved_marks !== "" &&
-        !isNaN(Number(param.approved_marks));
-
-      const approved = hasValidApproved ? Number(param.approved_marks) : null;
-      const original = param.marks ?? 0;
-
-      return acc + (approved ?? original);
-    }, 0);
-
-    let totalMarks = totalParameterMarks + Number(graceMarks ?? 0) - negativeMarks;
+    // Total marks = Positive marks - Negative marks + Marks by role + Grace marks
+    // For now, let's use the simple calculation: positive - negative
+    let totalMarks = positiveMarks - negativeMarks;
+    
+    // Only add approved marks and grace marks if they exist and are meaningful
+    if (marksByRole !== 0) {
+      totalMarks += marksByRole;
+    }
+    if (Number(graceMarks ?? 0) !== 0) {
+      totalMarks += Number(graceMarks ?? 0);
+    }
+    
+    // Get approved role information
+    const approvedRole = parameters.find((param) => 
+      param.approved_by_role && param.approved_marks && Number(param.approved_marks) > 0
+    )?.approved_by_role;
+    
     return {
       totalParams,
       filledParams,
-      marks,
-      approvedMarks,
+      marks: positiveMarks, // Keep for backward compatibility
+      positiveMarks,
       negativeMarks,
+      approvedMarks,
+      marksByRole,
       totalMarks,
+      approvedRole,
     };
   };
 
@@ -274,13 +292,25 @@ const ApplicationDetails = () => {
     if (!param) return;
 
     const approved_count = Number(approvedCountRaw);
-    const marks = Number(param.marks ?? 0);
-    const count = Number(param.count ?? 0);
-
-    let finalApprovedMarks = 0;
-    if (count > 0) {
-      finalApprovedMarks = approved_count * (marks / count);
+    
+    // Parse per_unit_mark and max_marks from the info string
+    // Format: "1 No of Coins = 2 marks (Max 25 marks)"
+    let perUnitMark = 0;
+    let maxMarks = 0;
+    
+    if (param.info) {
+      const infoMatch = param.info.match(/(\d+(?:\.\d+)?)\s*marks\s*\(Max\s*(\d+(?:\.\d+)?)\s*marks\)/);
+      if (infoMatch) {
+        perUnitMark = Number(infoMatch[1]);
+        maxMarks = Number(infoMatch[2]);
+      }
     }
+
+    // Use the same calculation logic as citation/appreciation
+    const finalApprovedMarks = Math.min(approved_count * perUnitMark, maxMarks);
+    
+    // For negative parameters, store the absolute value (same as citation form)
+    const marksToStore = param.negative ? Math.abs(finalApprovedMarks) : finalApprovedMarks;
 
     const body = {
       type: unitDetail?.type ?? "citation",
@@ -288,7 +318,7 @@ const ApplicationDetails = () => {
       parameters: [
         {
           id: paramId,
-          approved_marks: finalApprovedMarks,
+          approved_marks: marksToStore,
           approved_count: approved_count,
           approved_marks_documents: docsOverride ?? (Array.isArray(approvedMarksDocumentsState[paramId])
             ? approvedMarksDocumentsState[paramId]
@@ -304,13 +334,17 @@ const ApplicationDetails = () => {
       const updatedStats = calculateParameterStats(unitDetail?.fds?.parameters);
       setParamStats(updatedStats);
     } catch (err) {
-      console.error("Failed to save approved marks:", err);
     }
   };
 
   const debouncedHandleSave = useDebounce(handleSave, 600);
 
   const handleCountChange = (paramId: string, value: string) => {
+    // Only allow numbers (including empty string for clearing)
+    if (value !== "" && !/^\d+$/.test(value)) {
+      return; // Reject non-numeric input
+    }
+    
     setApprovedCountState((prev) => ({ ...prev, [paramId]: value }));
 
     // Also update the approved marks state for immediate UI feedback
@@ -318,15 +352,29 @@ const ApplicationDetails = () => {
     const param = parameters.find((p: any) => p.id === paramId);
     if (param) {
       const approved_count = Number(value);
-      const marks = Number(param.marks ?? 0);
-      const count = Number(param.count ?? 0);
-      let finalApprovedMarks = 0;
-      if (count > 0) {
-        finalApprovedMarks = approved_count * (marks / count);
+      
+      // Parse per_unit_mark and max_marks from the info string
+      // Format: "1 No of Coins = 2 marks (Max 25 marks)"
+      let perUnitMark = 0;
+      let maxMarks = 0;
+      
+      if (param.info) {
+        const infoMatch = param.info.match(/(\d+(?:\.\d+)?)\s*marks\s*\(Max\s*(\d+(?:\.\d+)?)\s*marks\)/);
+        if (infoMatch) {
+          perUnitMark = Number(infoMatch[1]);
+          maxMarks = Number(infoMatch[2]);
+        }
       }
+      
+      // Use the same calculation logic as citation/appreciation
+      const finalApprovedMarks = Math.min(approved_count * perUnitMark, maxMarks);
+      
+      // For negative parameters, store the absolute value (same as citation form)
+      const marksToStore = param.negative ? Math.abs(finalApprovedMarks) : finalApprovedMarks;
+      
       setApprovedMarksState((prev) => ({
         ...prev,
-        [paramId]: finalApprovedMarks.toFixed(2),
+        [paramId]: marksToStore.toFixed(2),
       }));
     }
 
@@ -354,17 +402,19 @@ const ApplicationDetails = () => {
     }
   }, [unitDetail?.remarks, role]);
 
-  const handleRemarksChange = (e: any) => {
-    const value = e.target.value;
+  const handleRemarksChange = (e:any) => {
+  const newRemarks = e.target.value;
+  // Regular expression to allow only alphanumeric and space
+  const regex = /^[A-Za-z0-9\s]*$/;
 
-    if (value.length > 200) {
-      setRemarksError("Remarks cannot exceed 200 characters.");
-      return;
-    }
+  if (regex.test(newRemarks) || newRemarks === "") {
+    setUnitRemarks(newRemarks);
+  } else {
+    // You can also show an error message if needed
+    setRemarksError("Special characters and symbols are not allowed.");
+  }
+};
 
-    setRemarksError(null);
-    setUnitRemarks(value);
-  };
 
   const handleCommentInputChange = (e: any) => {
     const value = e.target.value;
@@ -408,7 +458,6 @@ const ApplicationDetails = () => {
         throw new Error("Invalid upload response");
       }
     } catch (error) {
-      console.error("Upload failed:", error);
       return null;
     }
   };
@@ -436,7 +485,8 @@ const ApplicationDetails = () => {
 
   const handleApprovedMarksReasonChange = (paramId: any, value: any) => {
     setApprovedMarksReasonState((prev) => ({ ...prev, [paramId]: value }));
-    debouncedHandleSave(paramId, approvedCountState[paramId] ?? "");
+    // Don't trigger save on every keystroke to prevent focus loss
+    // Save will be triggered when user finishes typing (on blur) or when they save the form
   };
 
   // Debounce effect
@@ -456,7 +506,6 @@ const ApplicationDetails = () => {
       try {
         await dispatch(approveMarks(body)).unwrap();
       } catch (err) {
-        console.error("Failed to update remarks", err);
       }
     }, 500);
   }, [unitRemarks]);
@@ -512,7 +561,6 @@ const ApplicationDetails = () => {
       await dispatch(approveMarks(body)).unwrap();
       toast.success("Priority updated successfully");
     } catch (error) {
-      console.log("error -> ", error);
       toast.error("Failed to update priority");
     }
   };
@@ -678,7 +726,6 @@ const ApplicationDetails = () => {
       try {
         await handleAddsignature(member, decision);
       } catch (error) {
-        console.error("Error processing decision:", error);
       }
     } else {
       toast.error("No decision to process.");
@@ -714,6 +761,12 @@ const ApplicationDetails = () => {
       uploads = upload;
     } else if (typeof upload === "string") {
       uploads = upload.split(",");
+    } else if (upload && typeof upload === 'object') {
+      // If it's an object, try to extract a URL property
+      const url = upload.url || upload.path || upload.file || '';
+      if (url) {
+        uploads = [url];
+      }
     }
 
     return uploads.map((filePath: string) => (
@@ -721,6 +774,30 @@ const ApplicationDetails = () => {
         {filePath.trim().split("/").pop()}
       </span>
     ));
+  };
+
+  // Helper function to get file name from upload
+  const getFileNameFromUpload = (upload: any): string => {    
+    let uploads: string[] = [];
+
+    if (Array.isArray(upload)) {
+      uploads = upload;
+    } else if (typeof upload === "string") {
+      uploads = upload.split(",");
+    } else if (upload && typeof upload === 'object') {
+      // If it's an object, try to extract a URL property
+      const url = upload.url || upload.path || upload.file || '';
+      if (url) {
+        uploads = [url];
+      }
+    }
+
+    // Return the first file name, or a default if none found
+    if (uploads.length > 0) {
+      const fileName = uploads[0].trim().split("/").pop() || "document";
+      return fileName;
+    }
+    return "document";
   };
 
   const handleClarify = (id: number) => {
@@ -769,7 +846,16 @@ const ApplicationDetails = () => {
     const rows: JSX.Element[] = [];
 
     const isRejected = param?.clarification_details?.clarification_status === "rejected";
-    const approvedMarksValue = isRejected ? "0" : approvedMarksState[param.id] ?? "";
+    
+    // Apply same logic as citation form for negative parameters
+    let approvedMarksValue = isRejected ? "0" : approvedMarksState[param.id] ?? "";
+    if (!isRejected && param.negative && approvedMarksValue && approvedMarksValue !== "0") {
+      const marksNum = Number(approvedMarksValue);
+      if (marksNum > 0) {
+        approvedMarksValue = (-marksNum).toFixed(2); // Show negative sign for negative parameters
+      }
+    }
+    
     const approvedCountValue = isRejected ? "0" : approvedCountState[param.id] ?? "";
     const clarificationDetails = param?.clarification_details;
     const hasClarification = clarificationDetails?.clarification && clarificationDetails?.clarification_id;
@@ -805,16 +891,21 @@ const ApplicationDetails = () => {
 
         <td style={{ width: 200 }}>
           {param.upload && (
-            <a
-              href={`${baseURL}${param.upload}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              style={{ fontSize: 18 }}
+            <button
+              onClick={() => handleDocumentDownload(param.upload, getFileNameFromUpload(param.upload))}
+              style={{ 
+                fontSize: 14, 
+                wordBreak: "break-word",
+                background: "none",
+                border: "none",
+                color: "#1d4ed8",
+                textDecoration: "underline",
+                cursor: "pointer",
+                padding: 0
+              }}
             >
-              <span style={{ fontSize: 14, wordBreak: "break-word" }}>
-                {renderUploads(param.upload)}
-              </span>
-            </a>
+              {renderUploads(param.upload)}
+            </button>
           )}
         </td>
 
@@ -867,18 +958,21 @@ const ApplicationDetails = () => {
                         borderRadius: 4,
                       }}
                     >
-                      <a
-                        href={`${baseURL}${fileUrl}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
+                      <button
+                        onClick={() => handleDocumentDownload(fileUrl, fileUrl.split("/").pop() || "document")}
                         style={{
                           flex: 1,
                           color: "#1d4ed8",
                           textDecoration: "underline",
+                          background: "none",
+                          border: "none",
+                          cursor: "pointer",
+                          padding: 0,
+                          textAlign: "left"
                         }}
                       >
                         {fileUrl.split("/").pop()}
-                      </a>
+                      </button>
                       <button
                         type="button"
                         onClick={() => handleRemoveApprovedMarkDocument(param.id, idx)}
@@ -915,6 +1009,7 @@ const ApplicationDetails = () => {
                 autoComplete="off"
                 value={approvedMarksReasonState[param.id] ?? ""}
                 onChange={(e) => handleApprovedMarksReasonChange(param.id, e.target.value)}
+                onBlur={() => debouncedHandleSave(param.id, approvedCountState[param.id] ?? "")}
                 disabled={isRejected}
               />
             </td>
@@ -986,43 +1081,135 @@ const ApplicationDetails = () => {
     return rows;
   };
 
-  // Excel export handler
-  const handleDownloadExcel = () => {
-    const parameters = unitDetail?.fds?.parameters ?? [];
-    const members = profile?.unit?.members ?? [];
+  // Function to add watermark to jsPDF documents (for PDF reports)
+  const addWatermarkToJsPDF = (doc: any) => {
+    const currentDateTime = new Date().toLocaleString();
+    const userIP = window.location.hostname || "localhost";
 
-    // Prepare parameter data
-    const paramData = parameters.map((param: any) => ({
-      category: param.category ?? "",
-      subcategory: param.subcategory ?? "",
-      subsubcategory: param.subsubcategory ?? "",
-      name: param.name ?? "",
-      marks: param.marks ?? "",
-    }));
-
-    // Prepare member data
-    const memberData = members.map((member: any) => ({
-      name: member.name ?? "",
-      rank: member.rank ?? "",
-      member_type: member.member_type === "presiding_officer" ? "Presiding Officer" : "Member Officer",
-    }));
-
-    // Create workbook and sheets
-    const wb = XLSX.utils.book_new();
-    const wsParams = XLSX.utils.json_to_sheet(paramData);
-    XLSX.utils.book_append_sheet(wb, wsParams, "Parameters");
-
-    if (memberData.length > 0) {
-      const wsMembers = XLSX.utils.json_to_sheet(memberData);
-      XLSX.utils.book_append_sheet(wb, wsMembers, "Members");
-    }
-
-    // Write and download
-    const excelBuffer = XLSX.write(wb, { bookType: "xlsx", type: "array" });
-    const data = new Blob([excelBuffer], { type: "application/octet-stream" });
-    saveAs(data, `Application_${unitDetail?.id ?? ""}_Details.xlsx`);
+    // Add diagonal watermark - big size and black color
+    doc.setFontSize(40);
+    doc.setTextColor(0, 0, 0); // Black color
+    
+    // Save current graphics state
+    doc.saveGraphicsState();
+    
+    // Set opacity for watermark
+    doc.setGState(new (doc as any).GState({ opacity: 0.2 }));
+    
+    // Calculate center position for diagonal watermark
+    const pageWidth = doc.internal.pageSize.getWidth();
+    const pageHeight = doc.internal.pageSize.getHeight();
+    const centerX = pageWidth / 2;
+    const centerY = pageHeight / 2;
+    
+    // Draw diagonal watermark - IP first, then time, both centered
+    // Adjust positioning to account for diagonal rotation
+    doc.text(`${userIP}`, centerX - 50, centerY - 30, { angle: 45 });
+    doc.text(`${currentDateTime}`, centerX - 50, centerY + 30, { angle: 45 });
+    
+    // Restore graphics state
+    doc.restoreGraphicsState();
   };
 
+  // Function to download document with watermark using utility function
+  const handleDocumentDownload = async (documentUrl: any, fileName: string) => {
+    try {
+      await downloadDocumentWithWatermark(documentUrl, fileName, baseURL);
+      toast.success('Document downloaded with watermark');
+    } catch (error) {      
+      // Show more specific error message for missing files
+      if (error instanceof Error && error.message.includes('Document not found')) {
+        toast.error(`File not found: ${fileName}. The file may have been deleted or moved.`);
+      } else {
+        toast.error('Failed to download document');
+      }
+    }
+  };
+
+  // Excel export handler
+// Excel function removed - using PDF instead
+const handleDownloadPDF = () => {
+  const parameters = unitDetail?.fds?.parameters ?? [];
+  
+  // Calculate summary statistics
+  const stats = calculateParameterStats(parameters);
+
+  // Prepare parameter data with approved marks (remove name and subsubcategory columns, add dash for empty subcategories)
+  const paramData = parameters.map((param: any) => [
+    param.category ?? "-",
+    param.subcategory ?? "-",
+    // Show negative sign for negative parameters (like HR Violation)
+    param.negative ? (param.marks ? `-${Math.abs(param.marks)}` : "") : (param.marks ?? ""),
+    param.approved_count ?? "",
+    // Show negative sign for approved marks of negative parameters
+    param.negative && param.approved_marks ? `-${Math.abs(param.approved_marks)}` : (param.approved_marks ?? ""),
+  ]);
+
+  // Create PDF
+  const doc = new jsPDF();
+
+  // Add header
+  doc.setFontSize(16);
+  doc.text(`Application ID: #${unitDetail?.id ?? ""}`, 14, 30);
+  doc.setFontSize(12);
+  doc.text(
+    `Award Type: ${
+      unitDetail?.type
+        ? unitDetail.type.charAt(0).toUpperCase() + unitDetail.type.slice(1)
+        : ""
+    }`,
+    14,
+    40
+  );      
+  doc.text(`Unit Name: ${unitDetail?.unit_name ?? ""}`, 14, 50);
+
+  // Parameters Table (moved up)
+  if (paramData.length > 0) {
+    doc.setFontSize(14);
+    doc.text("Parameters Details", 14, 65);
+    autoTable(doc, {
+      startY: 70,
+      head: [["Category", "Subcategory", "Original Marks", "Approved Count", "Approved Marks"]],
+      body: paramData,
+      theme: 'grid',
+      headStyles: { fillColor: [0, 123, 255] },
+    });
+  }
+
+  // Add summary statistics table (moved below parameters)
+  const finalY = (doc as any).lastAutoTable.finalY || 90;
+  doc.setFontSize(14);
+  doc.text("Summary Statistics", 14, finalY + 15);
+  
+  const summaryData = [
+    ["Filled Params", stats.filledParams.toString()],
+    ["Positive Marks", stats.positiveMarks.toFixed(2)],
+    ["Negative Marks", `-${stats.negativeMarks}`],
+    ["Total Marks", stats.totalMarks.toFixed(2)]
+  ];
+  
+  // Add marks by role if applicable
+  if (stats.approvedRole && stats.marksByRole !== 0) {
+    summaryData.push([
+      `Marks ${stats.marksByRole > 0 ? 'added' : 'deducted'} by ${stats.approvedRole}`,
+      `${stats.marksByRole > 0 ? '+' : ''}${stats.marksByRole.toFixed(2)}`
+    ]);
+  }
+
+  autoTable(doc, {
+    startY: finalY + 20,
+    head: [["Metric", "Value"]],
+    body: summaryData,
+    theme: 'grid',
+    headStyles: { fillColor: [0, 123, 255] },
+  });
+
+  // Add watermark using the reusable function
+  addWatermarkToJsPDF(doc);
+
+  // Save PDF
+  doc.save(`Application_${unitDetail?.id ?? ""}_Details.pdf`);
+};
   // Show loader
   if (loading) return <Loader />;
 
@@ -1038,9 +1225,9 @@ const ApplicationDetails = () => {
               { label: "Application Details", href: "/applications/list/1" },
             ]}
           />
-          <button className="_btn primary mb-3 d-flex align-items-center gap-2" onClick={handleDownloadExcel}>
+          <button className="_btn primary mb-3 d-flex align-items-center gap-2" onClick={handleDownloadPDF}>
             <FaDownload />
-            <span>Report</span>
+            <span>Download PDF Report</span>
           </button>
         </div>
 
@@ -1272,23 +1459,29 @@ const ApplicationDetails = () => {
                 <div className="fw-bold">{paramStats.filledParams}</div>
               </div>
               <div className="col-6 col-sm-2">
-                <span className="fw-medium text-muted">Marks:</span>
-                <div className="fw-bold">{Number(paramStats.marks).toFixed(2)}</div>
+                <span className="fw-medium text-muted">Positive Marks:</span>
+                <div className="fw-bold">{Number(paramStats.positiveMarks).toFixed(2)}</div>
               </div>
-              <div className="col-6 col-sm-2">
-                <span className="fw-medium text-muted">Negative Marks:</span>
-                <div className="fw-bold text-danger">{paramStats.negativeMarks.toFixed(2)}</div>
-              </div>
-              <div className="col-6 col-sm-2">
-                <span className="fw-medium text-muted">Approved Marks:</span>
-                <div className="fw-bold text-primary">
-                  {paramStats.approvedMarks.toFixed(2)}
+                  <div className="col-6 col-sm-2">
+  <span className="fw-medium text-muted">Negative Marks:</span>
+  <div className="fw-bold text-danger">
+    -{paramStats.negativeMarks}
+  </div>
+</div>
+              {paramStats.approvedRole && paramStats.marksByRole !== 0 && (
+                <div className="col-6 col-sm-2">
+                  <span className="fw-medium text-muted">
+                    Marks {paramStats.marksByRole > 0 ? 'added' : 'deducted'} by {paramStats.approvedRole}:
+                  </span>
+                  <div className={`fw-bold ${paramStats.marksByRole > 0 ? 'text-success' : 'text-danger'}`}>
+                    {paramStats.marksByRole > 0 ? '+' : ''}{paramStats.marksByRole.toFixed(2)}
+                  </div>
                 </div>
-              </div>
+              )}
               <div className="col-6 col-sm-2">
                 <span className="fw-medium text-muted">Total Marks:</span>
                 <div className="fw-bold text-success">
-                  {paramStats.totalMarks}
+                  {paramStats.totalMarks.toFixed(2)}
                 </div>
               </div>
             </div>
@@ -1309,6 +1502,7 @@ const ApplicationDetails = () => {
                   value={unitRemarks}
                   onChange={handleRemarksChange}
                   rows={4}
+                  maxLength={200}
                 />
                 {remarksError && <p className="error-text">{remarksError}</p>}
               </div>

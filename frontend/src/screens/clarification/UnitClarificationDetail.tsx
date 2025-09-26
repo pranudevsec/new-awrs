@@ -27,8 +27,7 @@ const UnitClarificationDetail = () => {
         .then((res: any) => {
           setUnitDetail(res.data);
         })
-        .catch((err: any) => {
-          console.error("Fetch failed:", err);
+        .catch(() => {
         });
     }
   }, [award_type, numericAppId, isRefreshData]);

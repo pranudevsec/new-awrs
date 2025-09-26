@@ -26,5 +26,6 @@ router.get("/all-app-approve",  ApplicationController.getAllApplicationsApproved
 router.get("/all-app-final",  ApplicationController.getAllApplicationsFinalised);
 router.get("/all-app-count",  ApplicationController.getAllApplicationsStatusCount);
 router.get("/graph",  ApplicationController.getAllApplicationsGraph);
+router.post("/finalized",  ApplicationController.applicationFinalize);
 
 module.exports = router;

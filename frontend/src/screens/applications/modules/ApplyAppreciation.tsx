@@ -122,54 +122,27 @@ const ApplyAppreciation = () => {
   const [activeTab, setActiveTab] = useState(
     Object.keys(groupedParams)[0] ?? ""
   );
-  const [uploadedFiles, setUploadedFiles] = useState<Record<number, string[]>>(
-    () => {
-      try {
-        return JSON.parse(localStorage.getItem(DRAFT_FILE_UPLOAD_KEY) ?? "{}");
-      } catch {
-        return {};
-      }
-    }
-  );
-  const [unitRemarks, setUnitRemarks] = useState(() => {
-    return localStorage.getItem("applyAppreciationUnitRemarks") ?? "";
-  });
+  const [uploadedFiles, setUploadedFiles] = useState<Record<number, string[]>>({});
+  const [unitRemarks, setUnitRemarks] = useState("");
+
+  // 🔹 Helper to clear draft data when starting new appreciation
+  const clearDraftData = () => {
+    setCounts({});
+    setMarks({});
+    setUploadedFiles({});
+    setUnitRemarks("");
+    localStorage.removeItem(DRAFT_STORAGE_KEY);
+    localStorage.removeItem(DRAFT_FILE_UPLOAD_KEY);
+    localStorage.removeItem("applyAppreciationUnitRemarks");
+  };
 
   useEffect(() => {
-    const loadDraftData = () => {
-      loadDraftCountsAndMarks();
-      loadDraftUploads();
-    };
-
-    const loadDraftCountsAndMarks = () => {
-      const savedDraft = localStorage.getItem(DRAFT_STORAGE_KEY);
-      if (!savedDraft) return;
-
-      try {
-        const parsed = JSON.parse(savedDraft);
-        if (parsed.counts) setCounts(parsed.counts);
-        if (parsed.marks) setMarks(parsed.marks);
-      } catch (err) {
-        console.error("Failed to parse draft counts/marks", err);
-      }
-    };
-
-    const loadDraftUploads = () => {
-      const savedUploads = localStorage.getItem(DRAFT_FILE_UPLOAD_KEY);
-      if (!savedUploads) return;
-
-      try {
-        const parsedUploads = JSON.parse(savedUploads);
-        setUploadedFiles(parsedUploads);
-      } catch (err) {
-        console.error("Failed to parse uploaded file draft", err);
-      }
-    };
 
     if (id) {
       dispatch(fetchAppreciationById(Number(id)));
     } else {
-      loadDraftData();
+      // Clear any existing draft data when starting a new appreciation
+      clearDraftData();
     }
 
     return () => {
@@ -350,7 +323,6 @@ const ApplyAppreciation = () => {
         throw new Error("Invalid upload response");
       }
     } catch (error) {
-      console.error("Upload failed:", error);
       return null;
     }
   };
@@ -415,7 +387,6 @@ const ApplyAppreciation = () => {
         if (parsed.counts) setCounts(parsed.counts);
         if (parsed.marks) setMarks(parsed.marks);
       } catch (err) {
-        console.error("Failed to parse draft from localStorage", err);
       }
     }
   }, []);
@@ -485,7 +456,6 @@ const ApplyAppreciation = () => {
           toast.error("Failed to create appreciation.");
         }
       } catch (err) {
-        console.error("Submit failed:", err);
         toast.error("An error occurred while submitting.");
       }
     },
@@ -526,7 +496,6 @@ const ApplyAppreciation = () => {
           setParameters(revParams);
         }
       } catch (err) {
-        console.error("Failed to fetch data", err);
       }
     };
   
@@ -538,7 +507,6 @@ const ApplyAppreciation = () => {
           await fetchAllData(profileRes.data); 
         }
       } catch (err) {
-        console.error("Failed to fetch profile", err);
       } finally {
         setIsLoadingParameters(false); 
       }
@@ -574,23 +542,12 @@ const ApplyAppreciation = () => {
     if (id) {
       try {
         await dispatch(deleteAppreciation(Number(id))).unwrap();
-        localStorage.removeItem(DRAFT_STORAGE_KEY);
-        localStorage.removeItem(DRAFT_FILE_UPLOAD_KEY);
-        localStorage.removeItem("applyAppreciationUnitRemarks");
-        setCounts({});
-        setMarks({});
-        setUploadedFiles({});
+        clearDraftData();
         navigate("/submitted-forms/list");
       } catch (error) {
-        console.log("error -> ", error);
       }
     } else {
-      localStorage.removeItem(DRAFT_STORAGE_KEY);
-      localStorage.removeItem(DRAFT_FILE_UPLOAD_KEY);
-      localStorage.removeItem("applyAppreciationUnitRemarks");
-      setCounts({});
-      setMarks({});
-      setUploadedFiles({});
+      clearDraftData();
     }
   };
 

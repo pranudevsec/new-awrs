@@ -49,6 +49,7 @@ export interface DashboardStats {
   approved: number;
   rejected: number;
   acceptedApplications: number;
+  finalizedApproved: number;
 }
 
 export interface DashboardResponse {

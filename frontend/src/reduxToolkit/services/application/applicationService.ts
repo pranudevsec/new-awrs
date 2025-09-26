@@ -498,7 +498,6 @@ export const getSignedData = createAsyncThunk<any, any>(
         return rejectWithValue("Signing failed: No data received");
       }
     } catch (error: any) {
-      console.error("Data signing error:", error);
       const message = error?.response?.data?.message ?? "Error signing data";
       toast.error(message);
       return rejectWithValue(message);

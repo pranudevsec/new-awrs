@@ -142,7 +142,7 @@ exports.getCitationById = async (id) => {
   }
 };
 
-exports.updateCitation = async (id, data,user) => {
+exports.updateCitation = async (id, data, user) => {
   const client = await dbService.getClient();
   try {
     const allowedFields = [
@@ -157,24 +157,26 @@ exports.updateCitation = async (id, data,user) => {
       "is_hr_review",
       "is_dv_review",
       "is_mp_review",
-      "citation_fds",
+      "citation_fds"
     ];
-    const keys = Object.keys(data).filter((key) => allowedFields.includes(key));
 
+    const keys = Object.keys(data).filter((key) => allowedFields.includes(key));
     if (keys.length === 0) {
       return ResponseHelper.error(400, "No valid fields to update");
     }
-    
-    if (keys.includes("isShortlisted")) {
-        const allowedRoles = ["command", "headquarter"];
-        if (!allowedRoles.includes(user.user_role?.toLowerCase())) {
-          return ResponseHelper.error(
-            403,
-            `Only users with roles ${allowedRoles.join(" or ")} can update isShortlisted`
-          );
-        }
-      }
 
+    // Check for the 'isShortlisted' field and validate user role
+    if (keys.includes("isShortlisted")) {
+      const allowedRoles = ["command", "headquarter"];
+      if (!allowedRoles.includes(user.user_role?.toLowerCase())) {
+        return ResponseHelper.error(
+          403,
+          `Only users with roles ${allowedRoles.join(" or ")} can update isShortlisted`
+        );
+      }
+    }
+
+    // Handle the 'citation_fds' field updates
     if (keys.includes("citation_fds")) {
       const { award_type, parameters } = data.citation_fds;
 
@@ -187,51 +189,51 @@ exports.updateCitation = async (id, data,user) => {
 
       const paramList = paramResult.rows;
 
-  const findMatchedParam = (paramId) => {
-  return paramList.find(p =>
-    [p.param_id]
-      .map(x => (x))
-      .includes(paramId)
-  );
-};
+      // Find matching parameters from Parameter_Master
+      const findMatchedParam = (paramId) => {
+        return paramList.find(p => p.param_id === paramId);
+      };
 
-const updatedParameters = parameters.map((p) => {
-  const matchedParam = findMatchedParam(p.id);
-  if (!matchedParam) {
-    throw new Error(
-      `Parameter "${p.name}" not found in master for award_type "${award_type}"`
-    );
-  }
+      // Update the parameters with the matched data
+      const updatedParameters = parameters.map((p) => {
+        const matchedParam = findMatchedParam(p.id);
+        if (!matchedParam) {
+          throw new Error(
+            `Parameter "${p.name}" not found in master for award_type "${award_type}"`
+          );
+        }
 
-  const calculatedMarks = p.count * matchedParam.per_unit_mark;
-  const cappedMarks = Math.min(calculatedMarks, matchedParam.max_marks);
+        const calculatedMarks = p.count * matchedParam.per_unit_mark;
+        const cappedMarks = Math.min(calculatedMarks, matchedParam.max_marks);
 
-  return {
-    ...p,
-    name: matchedParam.name,
-    subcategory: matchedParam.subcategory,
-    subsubcategory: matchedParam.subsubcategory,
-    category: matchedParam.category,
-    marks: cappedMarks,
-    info: `1 ${matchedParam.name} = ${matchedParam.per_unit_mark} marks (Max ${matchedParam.max_marks} marks)`,
-  };
-});
+        return {
+          ...p,
+          name: matchedParam.name,
+          subcategory: matchedParam.subcategory,
+          subsubcategory: matchedParam.subsubcategory,
+          category: matchedParam.category,
+          marks: cappedMarks,
+          info: `1 ${matchedParam.name} = ${matchedParam.per_unit_mark} marks (Max ${matchedParam.max_marks} marks)`
+        };
+      });
 
+      // Update the citation_fds with updated parameters
       data.citation_fds.parameters = updatedParameters;
     }
 
+    // Prepare the update query for the allowed fields
     const values = keys.map((key) =>
       key === "citation_fds" ? JSON.stringify(data[key]) : data[key]
     );
+
     const setClause = keys.map((key, idx) => `${key} = $${idx + 1}`).join(", ");
 
     const result = await client.query(
-      `UPDATE Citation_tab SET ${setClause} WHERE citation_id = $${
-        keys.length + 1
-      } RETURNING *`,
+      `UPDATE Citation_tab SET ${setClause} WHERE citation_id = $${keys.length + 1} RETURNING *`,
       [...values, id]
     );
 
+    // Return the updated citation or an error message if not found
     return result.rows[0]
       ? ResponseHelper.success(200, "Citation updated", result.rows[0])
       : ResponseHelper.error(404, "Citation not found");
@@ -241,6 +243,7 @@ const updatedParameters = parameters.map((p) => {
     client.release();
   }
 };
+
 
 exports.deleteCitation = async (id) => {
   const client = await dbService.getClient();

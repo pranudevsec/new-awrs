@@ -55,7 +55,6 @@ const uploadFile = async (req, res) => {
       filePath: `/uploads/${req.file.filename}`,
     });
   } catch (err) {
-    console.error('uploadFile error:', err);
     res.status(500).json({ error: 'Internal server error' });
   }
 };
@@ -73,7 +72,6 @@ const retrieveAnswer = async (req, res) => {
       answer: result.answer || 'No answer found',
     });
   } catch (err) {
-    console.error('retrieveAnswer error:', err);
     res.status(500).json({ error: 'Internal server error' });
   }
 };

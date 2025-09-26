@@ -6,11 +6,12 @@ import FormSelect from "../../components/form/FormSelect";
 import EmptyTable from "../../components/ui/empty-table/EmptyTable";
 import Loader from "../../components/ui/loader/Loader";
 import Pagination from "../../components/ui/pagination/Pagination";
-import { awardTypeOptions, brigadeOptions, commandOptions, corpsOptions, divisionOptions, matrixUnitOptions } from "../../data/options";
+import { awardTypeOptions, brigadeOptions, commandOptions, corpsOptions, divisionOptions } from "../../data/options";
 import { SVGICON } from "../../constants/iconsList";
 import { useAppDispatch, useAppSelector } from "../../reduxToolkit/hooks";
 import { fetchAllApplications } from "../../reduxToolkit/services/application/applicationService";
-import * as XLSX from "xlsx";
+import jsPDF from "jspdf";
+import autoTable from "jspdf-autotable";
 
 
 const TrackApplications = () => {
@@ -70,142 +71,47 @@ const TrackApplications = () => {
     fetchData();
   }, [awardType, commandType, corpsType, divisionType, brigadeType, debouncedSearch, profile, page, limit]);
 
-  const handleExportExcel = () => {
-    const allParameterKeys: string[] = [];
-    const paramNameMap: Record<string, string> = {};
-    const matricUnits = [
-      "CI/CT", "LC", "AIOS", "LAC", "HAA", "AGPL", "Internal Security (IS)"
-    ];
+  const handleExportPDF = () => {
+    const doc = new jsPDF({ orientation: "landscape", unit: "pt", format: "a4" });
 
-    const nonMatricUnits = [
-      "Non Metrics (NM)", "Peace/Mod Fd"
-    ];
-    const allGraceRoles: string[] = [];
-
-    const allPriorityRoles: string[] = [];
-
-    units.forEach((unit: any) => {
-      const params = unit.fds?.parameters ?? [];
-      params.forEach((p: any) => {
-        const key = `${p.name} (${p.id})`;
-        if (!allParameterKeys.includes(key)) {
-          allParameterKeys.push(key);
-          paramNameMap[key] = p.name;
-        }
-      });
-
-      (unit.fds?.applicationGraceMarks ?? []).forEach((g: any) => {
-        if (!allGraceRoles.includes(g.role)) {
-          allGraceRoles.push(g.role);
-        }
-      });
-
-      (unit.fds?.applicationPriority ?? []).forEach((pr: any) => {
-        if (!allPriorityRoles.includes(pr.role)) {
-          allPriorityRoles.push(pr.role);
-        }
-      });
-    });
-
-    const appDetailCols = 8;
-    const paramCols = allParameterKeys.length;
-    const graceCols = allGraceRoles.length;
-    const priorityCols = allPriorityRoles.length;
-
-    const headerRow1 = [
-      "Application Details",
-      ...Array(appDetailCols - 1).fill(""),
-      "Matric Units",
-      ...Array(matricUnits.length - 1).fill(""),
-      "Non-Matric Units",
-      ...Array(nonMatricUnits.length - 1).fill(""),
-      "Parameters",
-      ...Array(paramCols - 1).fill(""),
-      "Discretionary Points",
-      ...Array(graceCols - 1).fill(""),
-      "Priority",
-      ...Array(priorityCols - 1).fill(""),
-      "Total Marks"
-    ];
-
-    const headerRow2 = [
+    // Create simplified headers for PDF
+    const headers = [
       "S. No",
-      "Award Type",
+      "Award Type", 
       "Unit Name",
       "Location",
       "Brigade",
-      "Division",
+      "Division", 
       "Corps",
       "Command",
-      ...matricUnits,
-      ...nonMatricUnits,
-      ...allParameterKeys.map((key) => paramNameMap[key]),
-      ...allGraceRoles.map((role) => role),
-      ...allPriorityRoles.map((role) => role),
-      ""
+      "Total Marks"
     ];
 
-
+    // Create simplified rows for PDF
     const rows = units.map((unit: any, index: number) => {
-      const paramMap: Record<string, number | string> = {};
-      const graceMap: Record<string, number | string> = {};
-      const priorityMap: Record<string, number | string> = {};
       let totalMarks = 0;
 
-      const matricCounts: Record<string, number> = {};
-      const nonMatricCounts: Record<string, number> = {};
-
-      matricUnits.forEach((label) => (matricCounts[label] = 0));
-      nonMatricUnits.forEach((label) => (nonMatricCounts[label] = 0));
-
+      // Calculate total marks from parameters
       (unit.fds?.parameters ?? []).forEach((p: any) => {
-        const key = `${p.name} (${p.id})`;
         const marksVal = p.approved_marks ?? p.marks ?? 0;
         const numVal = Number(marksVal) || 0;
         if (p.negative) {
           totalMarks -= numVal;
-          paramMap[key] = `-${numVal}`;
         } else {
           totalMarks += numVal;
-          paramMap[key] = numVal;
-        }
-
-        const armsServiceValue = p.arms_service ?? "";
-
-        const matchedMatric = matrixUnitOptions.find(
-          (opt) => opt.value === armsServiceValue && matricUnits.includes(opt.label)
-        );
-        if (matchedMatric) {
-          matricCounts[matchedMatric.label] += 1;
-        } else {
-          const matchedNonMatric = matrixUnitOptions.find(
-            (opt) => opt.value === armsServiceValue && nonMatricUnits.includes(opt.label)
-          );
-          if (matchedNonMatric) {
-            nonMatricCounts[matchedNonMatric.label] += 1;
-          }
         }
       });
 
-      (unit.fds?.applicationGraceMarks ?? []).forEach((g: any) => {
-        graceMap[g.role] = g.marks ?? "-";
-      });
-
+      // Add grace marks
       const roleOrder = ["brigade", "division", "corps", "command"];
       for (let i = roleOrder.length - 1; i >= 0; i--) {
         const role = roleOrder[i];
-        if (graceMap[role] !== undefined && graceMap[role] !== "-") {
-          totalMarks += Number(graceMap[role]) || 0;
+        const graceEntry = (unit.fds?.applicationGraceMarks ?? []).find((g: any) => g.role === role);
+        if (graceEntry && graceEntry.marks) {
+          totalMarks += Number(graceEntry.marks) || 0;
           break;
         }
       }
-
-      (unit.fds?.applicationPriority ?? []).forEach((pr: any) => {
-        priorityMap[pr.role] = pr.priority ?? "-";
-      });
-
-      const matricValues = matricUnits.map((label) => matricCounts[label] || "-");
-      const nonMatricValues = nonMatricUnits.map((label) => nonMatricCounts[label] || "-");
 
       return [
         index + 1,
@@ -216,37 +122,28 @@ const TrackApplications = () => {
         unit.unit_details?.div ?? "-",
         unit.unit_details?.corps ?? "-",
         unit.unit_details?.comd ?? "-",
-        ...matricValues,
-        ...nonMatricValues,
-        ...allParameterKeys.map((key) => paramMap[key] ?? "-"),
-        ...allGraceRoles.map((role) => graceMap[role] ?? "-"),
-        ...allPriorityRoles.map((role) => priorityMap[role] ?? "-"),
         totalMarks,
       ];
     });
 
+    // Add title
+    doc.setFontSize(16);
+    doc.text("Applications Report", 14, 22);
 
-    const worksheetData = [headerRow1, headerRow2, ...rows];
+    // Create table
+    autoTable(doc, {
+      head: [headers],
+      body: rows,
+      startY: 30,
+      theme: "grid",
+      headStyles: { fillColor: [41, 128, 185] },
+      styles: { fontSize: 8, cellPadding: 4, overflow: "linebreak" },
+      columnStyles: {
+        8: { cellWidth: 60, halign: "right" }, // Total Marks column
+      },
+    });
 
-    const worksheet = XLSX.utils.aoa_to_sheet(worksheetData);
-
-    worksheet['!merges'] = [
-      { s: { r: 0, c: 0 }, e: { r: 0, c: appDetailCols - 1 } },
-      { s: { r: 0, c: appDetailCols }, e: { r: 0, c: appDetailCols + matricUnits.length - 1 } },
-      { s: { r: 0, c: appDetailCols + matricUnits.length }, e: { r: 0, c: appDetailCols + matricUnits.length + nonMatricUnits.length - 1 } },
-      { s: { r: 0, c: appDetailCols + matricUnits.length + nonMatricUnits.length }, e: { r: 0, c: appDetailCols + matricUnits.length + nonMatricUnits.length + paramCols - 1 } },
-      { s: { r: 0, c: appDetailCols + matricUnits.length + nonMatricUnits.length + paramCols }, e: { r: 0, c: appDetailCols + matricUnits.length + nonMatricUnits.length + paramCols + graceCols - 1 } },
-      { s: { r: 0, c: appDetailCols + matricUnits.length + nonMatricUnits.length + paramCols + graceCols }, e: { r: 0, c: appDetailCols + matricUnits.length + nonMatricUnits.length + paramCols + graceCols + priorityCols - 1 } },
-
-      {
-        s: { r: 0, c: appDetailCols + matricUnits.length + nonMatricUnits.length + paramCols + graceCols + priorityCols },
-        e: { r: 1, c: appDetailCols + matricUnits.length + nonMatricUnits.length + paramCols + graceCols + priorityCols }
-      }
-    ];
-
-    const workbook = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(workbook, worksheet, "Units Report");
-    XLSX.writeFile(workbook, "applications.xlsx");
+    doc.save("applications.pdf");
   };
 
   // const handleExportFMNExcel = () => {
@@ -381,9 +278,9 @@ const TrackApplications = () => {
           ]}
         />
         <div className="d-flex gap-2">
-          <button className="_btn primary mb-3 d-flex align-items-center gap-2" onClick={handleExportExcel}>
+          <button className="_btn primary mb-3 d-flex align-items-center gap-2" onClick={handleExportPDF}>
             {/* <FaDownload /> */}
-            <span>Generate Applications Report</span>
+            <span>Download PDF Report</span>
           </button>
           {/* <button className="_btn primary mb-3 d-flex align-items-center justify-content-center gap-2" onClick={handleExportExcel}>
                 

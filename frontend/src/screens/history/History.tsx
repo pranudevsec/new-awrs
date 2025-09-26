@@ -6,11 +6,11 @@ import FormSelect from "../../components/form/FormSelect";
 import EmptyTable from "../../components/ui/empty-table/EmptyTable";
 import Loader from "../../components/ui/loader/Loader";
 import Pagination from "../../components/ui/pagination/Pagination";
-import { awardTypeOptions, matrixUnitOptions } from "../../data/options";
+import { awardTypeOptions } from "../../data/options";
 import { SVGICON } from "../../constants/iconsList";
 import { useAppDispatch, useAppSelector } from "../../reduxToolkit/hooks";
 import { fetchApplicationHistory, updateApplication, } from "../../reduxToolkit/services/application/applicationService";
-import * as XLSX from "xlsx";
+// Removed XLSX import - using PDF instead
 
 const getStatusColor = (status: string) => {
   if (["pending", "in_review", "shortlisted_approved"].includes(status)) return "orange";
@@ -74,184 +74,7 @@ const History = () => {
     fetchData();
   }, [awardType, debouncedSearch, profile, page, limit]);
 
-  const handleExportExcel = () => {
-    const allParameterKeys: string[] = [];
-    const paramNameMap: Record<string, string> = {};
-    const matricUnits = [
-      "CI/CT", "LC", "AIOS", "LAC", "HAA", "AGPL", "Internal Security (IS)"
-    ];
-    
-    const nonMatricUnits = [
-      "Non Metrics (NM)", "Peace/Mod Fd"
-    ];
-    const allGraceRoles: string[] = [];
-  
-    const allPriorityRoles: string[] = [];
-  
-    units.forEach((unit: any) => {
-      const params = unit.fds?.parameters ?? [];
-      params.forEach((p: any) => {
-        const key = `${p.name} (${p.id})`;
-        if (!allParameterKeys.includes(key)) {
-          allParameterKeys.push(key);
-          paramNameMap[key] = p.name;
-        }
-      });
-  
-      (unit.fds?.applicationGraceMarks ?? []).forEach((g: any) => {
-        if (!allGraceRoles.includes(g.role)) {
-          allGraceRoles.push(g.role);
-        }
-      });
-  
-      (unit.fds?.applicationPriority ?? []).forEach((pr: any) => {
-        if (!allPriorityRoles.includes(pr.role)) {
-          allPriorityRoles.push(pr.role);
-        }
-      });
-    });
-  
-    const appDetailCols = 8;
-    const paramCols = allParameterKeys.length;
-    const graceCols = allGraceRoles.length;
-    const priorityCols = allPriorityRoles.length;
-    const safeArray = (n: number) => (n > 0 ? Array(n).fill("") : []);
-
-    const headerRow1 = [
-      "Application Details",
-      ...safeArray(appDetailCols - 1),
-      "Matric Units",
-      ...safeArray(matricUnits.length - 1),
-      "Non-Matric Units",
-      ...safeArray(nonMatricUnits.length - 1),
-      "Parameters",
-      ...safeArray(paramCols - 1),
-      "Discretionary Points",
-      ...safeArray(graceCols - 1),
-      "Priority",
-      ...safeArray(priorityCols - 1),
-      "Total Marks"
-    ];
-    const headerRow2 = [
-      "S. No",
-      "Award Type",
-      "Unit Name",
-      "Location",
-      "Brigade",
-      "Division",
-      "Corps",
-      "Command",
-      ...matricUnits,
-      ...nonMatricUnits,
-      ...allParameterKeys.map((key) => paramNameMap[key]),
-      ...allGraceRoles.map((role) => role),
-      ...allPriorityRoles.map((role) => role),
-      ""
-    ];
-    
-  
-    const rows = units.map((unit: any, index: number) => {
-      const paramMap: Record<string, number | string> = {};
-      const graceMap: Record<string, number | string> = {};
-      const priorityMap: Record<string, number | string> = {};
-      let totalMarks = 0;
-    
-      const matricCounts: Record<string, number> = {};
-      const nonMatricCounts: Record<string, number> = {};
-      
-      matricUnits.forEach((label) => (matricCounts[label] = 0));
-      nonMatricUnits.forEach((label) => (nonMatricCounts[label] = 0));
-    
-      (unit.fds?.parameters ?? []).forEach((p: any) => {
-        const key = `${p.name} (${p.id})`;
-        const marksVal = p.approved_marks ?? p.marks ?? 0;
-        const numVal = Number(marksVal) || 0;
-        if (p.negative) {
-          totalMarks -= numVal;
-          paramMap[key] = `-${numVal}`;
-        } else {
-          totalMarks += numVal;
-          paramMap[key] = numVal;
-        }
-    
-        const armsServiceValue = p.arms_service ?? "";
-    
-        const matchedMatric = matrixUnitOptions.find(
-          (opt) => opt.value === armsServiceValue && matricUnits.includes(opt.label)
-        );
-        if (matchedMatric) {
-          matricCounts[matchedMatric.label] += 1;
-        } else {
-          const matchedNonMatric = matrixUnitOptions.find(
-            (opt) => opt.value === armsServiceValue && nonMatricUnits.includes(opt.label)
-          );
-          if (matchedNonMatric) {
-            nonMatricCounts[matchedNonMatric.label] += 1;
-          }
-        }
-      });
-    
-      (unit.fds?.applicationGraceMarks ?? []).forEach((g: any) => {
-        graceMap[g.role] = g.marks ?? "-";
-      });
-    
-      const roleOrder = ["brigade", "division", "corps", "command"];
-      for (let i = roleOrder.length - 1; i >= 0; i--) {
-        const role = roleOrder[i];
-        if (graceMap[role] !== undefined && graceMap[role] !== "-") {
-          totalMarks += Number(graceMap[role]) || 0;
-          break;
-        }
-      }
-    
-      (unit.fds?.applicationPriority ?? []).forEach((pr: any) => {
-        priorityMap[pr.role] = pr.priority ?? "-";
-      });
-    
-      const matricValues = matricUnits.map((label) => matricCounts[label] || "-");
-      const nonMatricValues = nonMatricUnits.map((label) => nonMatricCounts[label] || "-");
-    
-      return [
-        index + 1,
-        unit.type ?? "-",
-        unit.unit_details?.name ?? "-",
-        unit.unit_details?.location ?? "-",
-        unit.unit_details?.bde ?? "-",
-        unit.unit_details?.div ?? "-",
-        unit.unit_details?.corps ?? "-",
-        unit.unit_details?.comd ?? "-",
-        ...matricValues,
-        ...nonMatricValues,
-        ...allParameterKeys.map((key) => paramMap[key] ?? "-"),
-        ...allGraceRoles.map((role) => graceMap[role] ?? "-"),
-        ...allPriorityRoles.map((role) => priorityMap[role] ?? "-"),
-        totalMarks,
-      ];
-    });
-    
-  
-    const worksheetData = [headerRow1, headerRow2, ...rows];
-  
-    const worksheet = XLSX.utils.aoa_to_sheet(worksheetData);
-  
-    worksheet['!merges'] = [
-      { s: { r: 0, c: 0 }, e: { r: 0, c: appDetailCols - 1 } },
-      { s: { r: 0, c: appDetailCols }, e: { r: 0, c: appDetailCols + matricUnits.length - 1 } }, // Matric Units
-      { s: { r: 0, c: appDetailCols + matricUnits.length }, e: { r: 0, c: appDetailCols + matricUnits.length + nonMatricUnits.length - 1 } }, // Non-Matric Units
-      { s: { r: 0, c: appDetailCols + matricUnits.length + nonMatricUnits.length }, e: { r: 0, c: appDetailCols + matricUnits.length + nonMatricUnits.length + paramCols - 1 } }, // Parameters
-      { s: { r: 0, c: appDetailCols + matricUnits.length + nonMatricUnits.length + paramCols }, e: { r: 0, c: appDetailCols + matricUnits.length + nonMatricUnits.length + paramCols + graceCols - 1 } }, // Discretionary Points
-      { s: { r: 0, c: appDetailCols + matricUnits.length + nonMatricUnits.length + paramCols + graceCols }, e: { r: 0, c: appDetailCols + matricUnits.length + nonMatricUnits.length + paramCols + graceCols + priorityCols - 1 } }, // Priority
-    
-      {
-        s: { r: 0, c: appDetailCols + matricUnits.length + nonMatricUnits.length + paramCols + graceCols + priorityCols },
-        e: { r: 1, c: appDetailCols + matricUnits.length + nonMatricUnits.length + paramCols + graceCols + priorityCols }
-      }
-    ];
-  
-    const workbook = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(workbook, worksheet, "Units Report");
-    XLSX.writeFile(workbook, "applications.xlsx");
-  };
+  // Excel function removed - using PDF instead
 //   from units i want to generate a excel units data are like 
 //   [
 //         {
@@ -392,10 +215,10 @@ const History = () => {
             { label: "History", href: "/history" },
           ]}
         />
-              <button className="_btn primary mb-3 d-flex align-items-center gap-2" onClick={handleExportExcel}>
-                  {/* <FaDownload /> */}
-                  <span>Generate Report</span>
-                </button>
+              {/* <button className="_btn primary mb-3 d-flex align-items-center gap-2" onClick={handleExportPDF}>
+ 
+                  <span>Download PDF Report</span>
+                </button> */}
       </div>
 
       <div className="filter-wrapper d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3">

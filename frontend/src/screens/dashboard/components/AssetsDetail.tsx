@@ -53,13 +53,11 @@
 
 //     )
 // }
-
-// export default AssetsDetail
 import type { DashboardStats } from "../../../reduxToolkit/services/command-panel/commandPanelInterface";
 import { useNavigate } from "react-router-dom";
 
 interface ProductDetailProps {
-  dashboardStats: DashboardStats | null;
+  dashboardStats: DashboardStats | null | any;
   unitType?: string;
 }
 
@@ -77,7 +75,7 @@ const AssetsDetail: React.FC<ProductDetailProps> = ({
       bgColor: "#d34431ff",
       textColor: "#01060eff",
       borderColor: "#f2f3f5ff",
-      route: "/all-applications", // unitType === "cw2" ? "/applications/all-applications" : 
+      route: "/all-applications",
     },
     {
       title: "Pending Applications",
@@ -85,7 +83,7 @@ const AssetsDetail: React.FC<ProductDetailProps> = ({
       bgColor: "#23aed1ff",
       textColor: "#1b1502ff",
       borderColor: "#ffeaa7",
-      route:  unitType === "cw2" ? "/applications/pending" : "/applications/list",
+      route: unitType === "cw2" ? "/applications/pending" : "/applications/list",
     },
     {
       title: "Rejected Applications",
@@ -95,30 +93,44 @@ const AssetsDetail: React.FC<ProductDetailProps> = ({
       borderColor: "#f5c6cb",
       route: "/applications/rejected",
     },
-    {
-      title:  "Recommended Applications",
+    // Recommended Applications will be conditionally added later
+  ];
+
+  // Add "Recommended Applications" only if NOT cw2
+  if (unitType !== "cw2") {
+    baseCards.push({
+      title: "Recommended Applications",
       value: dashboardStats?.acceptedApplications ?? 0,
       bgColor: "#b6c4c7ff",
       textColor: "#0c5460",
       borderColor: "#bee5eb",
-      route: unitType === "cw2" ? "/applications/approved" : "/application/accepted",
-    },
-  ];
+      route: "/application/accepted",
+    });
+  }
 
-  // Add "Finalized Applications" only if unitType is "cw2"
-  const cards = unitType === "cw2" 
-    ? [
-        ...baseCards,
-        {
-          title: "Finalized Applications",
-          value: dashboardStats?.approved ?? 0,
-          bgColor: "#0a6e21ff",
-          textColor: "#000501ff",
-          borderColor: "#c3e6cb",
-          route: "/applications/finalized",
-        },
-      ]
-    : baseCards;
+  // Add extra cards for cw2
+  const cards =
+    unitType === "cw2"
+      ? [
+          ...baseCards,
+          {
+            title: "Finalized Applications",
+            value: dashboardStats?.approved ?? 0,
+            bgColor: "#0a6e21ff",
+            textColor: "#000501ff",
+            borderColor: "#c3e6cb",
+            route: "/applications/finalized",
+          },
+          {
+            title: "Finalized Approved Applications",
+            value: dashboardStats?.finalizedApproved ?? 0,
+            bgColor: "#ddcf11ff",
+            textColor: "#000501ff",
+            borderColor: "#c3e6cb",
+            route: "/applications/finalized-approved",
+          },
+        ]
+      : baseCards;
 
   const handleCardClick = (route: string) => {
     navigate(route);
