@@ -1121,7 +1121,7 @@ const ApplicationDetails = () => {
       if (error instanceof Error && error.message.includes('Document not found')) {
         toast.error(`File not found: ${fileName}. The file may have been deleted or moved.`);
       } else {
-        toast.error('Failed to download document');
+        toast.error('Failed to load document');
       }
     }
   };

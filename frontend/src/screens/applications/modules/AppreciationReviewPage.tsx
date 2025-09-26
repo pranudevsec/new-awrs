@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, type JSX } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { useFormik } from "formik";
 import { unwrapResult } from "@reduxjs/toolkit";
 import toast from "react-hot-toast";
@@ -30,6 +30,8 @@ const groupParametersByCategory = (params: Parameter[]) => {
 const AppreciationReviewPage = () => {
     const navigate = useNavigate();
     const dispatch = useAppDispatch();
+    const [searchParams] = useSearchParams();
+    const isVcoas = searchParams.get("is_vcoas") === "true";
 
     const profile: any = useAppSelector((state) => state.admin.profile);
     const { loading } = useAppSelector((state) => state.parameter);
@@ -235,6 +237,7 @@ const AppreciationReviewPage = () => {
                         unitRemarks: unitRemarks,
                         unit_type: profile?.unit?.unit_type
                     },
+                    is_vcoas: isVcoas
                 };
 
                 const resultAction: any = await dispatch(createAppreciation(payload));
@@ -418,14 +421,24 @@ const AppreciationReviewPage = () => {
     return (
         <div className="apply-citation-section">
             <div className="d-flex flex-sm-row flex-column align-items-sm-center justify-content-between mb-4">
-                <Breadcrumb
-                    title="Appreciation For Review"
-                    paths={[
-                        { label: "Home", href: "/applications" },
-                        { label: "Apply For Appreciation", href: "/applications/appreciation" },
-                        { label: "Appreciation For Review", href: "/applications/appreciation-review" },
-                    ]}
-                />
+            <Breadcrumb
+      title={isVcoas ? "VCOAS Appreciation For Review" : "Appreciation For Review"}
+      paths={[
+        { label: "Home", href: "/applications" },
+        { 
+          label: isVcoas ? "Apply For VCOAS Appreciation" : "Apply For Appreciation", 
+          href: isVcoas 
+            ? "/applications/appreciation?is_vcoas=true" 
+            : "/applications/appreciation" 
+        },
+        { 
+          label: isVcoas ? "VCOAS Appreciation For Review" : "Appreciation For Review", 
+          href: isVcoas 
+            ? "/applications/appreciation-review?is_vcoas=true" 
+            : "/applications/appreciation-review" 
+        },
+      ]}
+    />
             </div>
             {Object.keys(groupedParams).length === 0 ?
                 <EmptyTable />

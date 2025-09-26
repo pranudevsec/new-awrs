@@ -123,11 +123,11 @@ const Applications = () => {
                   <div
                     role="button"
                     tabIndex={0}
-                    onClick={() => handleCardClick("/applications/appreciation")}
+                    onClick={() => handleCardClick("/applications/appreciation?is_vcoas=true")}
                     onKeyDown={(e) => {
                       if (e.key === "Enter" || e.key === " ") {
                         e.preventDefault();
-                        handleCardClick("/applications/appreciation");
+                        handleCardClick("/applications/appreciation"); 
                       }
                     }}
                     className="h-100 d-block w-100"

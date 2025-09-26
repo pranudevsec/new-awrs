@@ -1,47 +1,95 @@
 .step-progress-container {
     margin: 50px 0;
-
+    display: flex;
+    flex-wrap: nowrap; 
+    justify-content: center;
+    align-items: center;
+    position: relative;
+    gap: 10px;
+  
     .step-item {
-        flex: 1;
-
-        .step-circle {
-            width: 32px;
-            height: 32px;
-            border-radius: 50%;
-            background: var(--gray-200);
-            color: #fff;
-            margin: 0 auto;
-            z-index: 2;
-            position: relative;
-
-            &.completed {
-                background: var(--blue-default);
-            }
+      flex: 1;
+      min-width: 60px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      position: relative;
+  
+      .step-circle {
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        background: var(--gray-200);
+        color: #fff;
+        margin: 0 auto;
+        z-index: 2;
+        position: relative;
+  
+        &.completed {
+          background: var(--blue-default);
         }
-
-        .step-line {
-            height: 4px;
-            background: var(--gray-200);
-            position: absolute;
-            top: 14px;
-            left: 50%;
-            width: 100%;
-            z-index: 1;
-
-            &.completed {
-                background: var(--blue-default);
-            }
+  
+        &.rejected {
+          background: var(--red-default);
         }
-
-        .step-label {
-            margin-top: 10px;
-            color: var(--blue-default);
-            font-weight: 500;
-
-            .step-icon {
-                font-size: 18px;
-                margin-bottom: 4px;
-            }
+      }
+  
+      .step-line {
+        height: 4px;
+        background: var(--gray-200);
+        position: absolute;
+        top: 14px;
+        left: 50%;
+        width: 100%;
+        z-index: 1;
+  
+        &.completed {
+          background: var(--blue-default);
         }
+  
+        &.rejected {
+          background: var(--red-default);
+        }
+      }
+  
+      .step-label {
+        margin-top: 10px;
+        color: var(--blue-default);
+        font-weight: 500;
+  
+        .small {
+          font-size: 12px;
+        }
+      }
     }
-}
+  
+    // **Mobile responsive adjustments**
+    @media (max-width: 768px) {
+      flex-wrap: wrap;
+      margin: 30px 0;
+  
+      .step-item {
+        flex: 1 1 45%; 
+        margin-bottom: 20px;
+  
+        .step-line {
+          display: none;
+        }
+      }
+    }
+  
+    @media (max-width: 480px) {
+      .step-item {
+        flex: 1 1 100%;
+        .step-circle {
+          width: 28px;
+          height: 28px;
+        }
+        .step-label {
+          font-size: 12px;
+        }
+      }
+    }
+  }
+  

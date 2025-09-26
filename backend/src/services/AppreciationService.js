@@ -5,7 +5,7 @@ const AuthService = require("../services/AuthService.js");
 exports.createAppre = async (data, user) => {
   const client = await dbService.getClient();
   try {
-    const { date_init, appre_fds, isDraft } = data;
+    const { date_init, appre_fds, isDraft ,is_vcoas} = data;
     let status_flag = isDraft === true ? "draft" : "in_review";
 
     const profile = await AuthService.getProfile(user);
@@ -96,12 +96,15 @@ if (isSpecialUnit && !isDraft) {
   is_ol_approved = true;
   ol_approved_at = new Date().toISOString();
 }
-
+let isVcoas = false;
+if (is_vcoas === true) {
+  isVcoas = true;
+}
 const result = await client.query(
   `INSERT INTO Appre_tab 
    (unit_id, date_init, appre_fds, status_flag, isshortlisted, last_approved_at, last_approved_by_role, 
-    is_mo_approved, mo_approved_at, is_ol_approved, ol_approved_at)
-   VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+    is_mo_approved, mo_approved_at, is_ol_approved, ol_approved_at, is_vcoas)
+   VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
    RETURNING *`,
   [
     user.unit_id,
@@ -114,7 +117,8 @@ const result = await client.query(
     is_mo_approved,
     mo_approved_at,
     is_ol_approved,
-    ol_approved_at
+    ol_approved_at,
+    isVcoas
   ]
 );
 

@@ -106,6 +106,7 @@ const ApplyAppreciation = () => {
 
   const [searchParams] = useSearchParams();
   const id = searchParams.get("id") ?? "";
+  const isVcoas = searchParams.get("is_vcoas") === "true";
 
   const { draftData } = useAppSelector((state) => state.appreciation);
   const { loading } = useAppSelector((state) => state.parameter);
@@ -574,7 +575,11 @@ const ApplyAppreciation = () => {
     localStorage.setItem(DRAFT_STORAGE_KEY, JSON.stringify({ counts, marks }));
     localStorage.setItem(DRAFT_FILE_UPLOAD_KEY, JSON.stringify(uploadedFiles));
 
-    navigate("/applications/appreciation-review");
+    const targetPath = isVcoas 
+    ? "/applications/appreciation-review?is_vcoas=true" 
+    : "/applications/appreciation-review";
+
+  navigate(targetPath);
   };
 
   const getParamDisplay = (param: any) => {
@@ -775,7 +780,9 @@ const ApplyAppreciation = () => {
   return (
     <div className="apply-citation-section">
       <div className="d-flex flex-sm-row flex-column align-items-sm-center justify-content-between mb-4">
-        <Breadcrumb title="Apply For Appreciation" />
+      <Breadcrumb
+      title={isVcoas ? "Apply For VCOAS Appreciation" : "Apply For Appreciation"}
+    />
       </div>
 
       {Object.keys(groupedParams).length === 0 ? (
