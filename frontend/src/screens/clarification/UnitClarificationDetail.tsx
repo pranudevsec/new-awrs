@@ -150,13 +150,62 @@ const UnitClarificationDetail = () => {
           "--"
         )}
       </td>
-      <td style={{ width: 200 }}>
-        <p className="fw-4">{param.clarification_details?.reviewer_comment ?? "—"}</p>
+      <td style={{ width: 200, wordWrap: "break-word", wordBreak: "break-word", overflowWrap: "break-word" }}>
+        <div 
+          className="position-relative"
+          title={param.clarification_details?.reviewer_comment ?? "—"}
+          style={{ cursor: "help" }}
+        >
+          <p 
+            className="fw-4" 
+            style={{ 
+              wordWrap: "break-word", 
+              wordBreak: "break-word", 
+              overflowWrap: "break-word", 
+              whiteSpace: "normal",
+              maxHeight: "60px",
+              overflow: "hidden",
+              textOverflow: "ellipsis",
+              display: "-webkit-box",
+              WebkitLineClamp: 3,
+              WebkitBoxOrient: "vertical"
+            }}
+          >
+            {param.clarification_details?.reviewer_comment ?? "—"}
+          </p>
+          {(param.clarification_details?.reviewer_comment && param.clarification_details.reviewer_comment.length > 100) && (
+            <small className="text-muted" style={{ fontSize: "10px" }}>
+              Hover to see full comment
+            </small>
+          )}
+        </div>
       </td>
       <td style={{ width: 200 }}>
   {param?.clarification_details?.clarification ? (
-    <div>
-      {param.clarification_details.clarification.slice(0, 10)}...
+    <div 
+      className="position-relative"
+      title={param.clarification_details.clarification}
+      style={{ cursor: "help" }}
+    >
+      <div
+        style={{ 
+          maxHeight: "60px",
+          overflow: "hidden",
+          textOverflow: "ellipsis",
+          display: "-webkit-box",
+          WebkitLineClamp: 3,
+          WebkitBoxOrient: "vertical",
+          wordWrap: "break-word",
+          wordBreak: "break-word"
+        }}
+      >
+        {param.clarification_details.clarification}
+      </div>
+      {param.clarification_details.clarification.length > 50 && (
+        <small className="text-muted" style={{ fontSize: "10px" }}>
+          Hover to see full clarification
+        </small>
+      )}
     </div>
   ) : param?.clarification_details?.clarification_id ? (
     <button

@@ -511,10 +511,20 @@ exports.getAllApplicationsWithClarificationsForUnit = async (user, query) => {
       const searchLower = normalize(search);
       allApps = allApps.filter((app) => {
         const idMatch = app.id.toString().toLowerCase().includes(searchLower);
-        const cycleMatch = normalize(app.fds?.cycle_period || "").includes(
-          searchLower
-        );
-        return idMatch || cycleMatch;
+        const cycleMatch = normalize(app.fds?.cycle_period || "").includes(searchLower);
+        
+        // Search in fds fields that actually exist
+        const awardTypeMatch = normalize(app.fds?.award_type || "").includes(searchLower);
+        const commandMatch = normalize(app.fds?.command || "").includes(searchLower);
+        const brigadeMatch = normalize(app.fds?.brigade || "").includes(searchLower);
+        const divisionMatch = normalize(app.fds?.division || "").includes(searchLower);
+        const corpsMatch = normalize(app.fds?.corps || "").includes(searchLower);
+        const unitTypeMatch = normalize(app.fds?.unit_type || "").includes(searchLower);
+        const matrixUnitMatch = normalize(app.fds?.matrix_unit || "").includes(searchLower);
+        const locationMatch = normalize(app.fds?.location || "").includes(searchLower);
+        
+        return idMatch || cycleMatch || awardTypeMatch || commandMatch || brigadeMatch || 
+               divisionMatch || corpsMatch || unitTypeMatch || matrixUnitMatch || locationMatch;
       });
     }
 

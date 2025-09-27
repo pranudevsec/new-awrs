@@ -46,15 +46,14 @@ export const downloadDocumentWithWatermark = async (
     }
     
     // Use provided baseURL or fallback to configured API URL
-    // If baseURL contains port 8385, replace with 3001 (current backend port)
     let defaultBaseURL = baseURL || window.location.origin;
     
-    // Handle common port mismatches - ensure we're using the correct backend port
-    if (defaultBaseURL.includes(':8385')) {
-      defaultBaseURL = defaultBaseURL.replace(':8385', ':3001');
-    } else if (defaultBaseURL === window.location.origin && !defaultBaseURL.includes(':3001')) {
-      // If no specific port is set and we're not already on 3001, use 3001
-      defaultBaseURL = defaultBaseURL.replace(/:\d+/, ':3001');
+    // Ensure we're using the correct backend port (8385)
+    if (defaultBaseURL.includes(':3001')) {
+      defaultBaseURL = defaultBaseURL.replace(':3001', ':8385');
+    } else if (defaultBaseURL === window.location.origin && !defaultBaseURL.includes(':8385')) {
+      // If no specific port is set and we're not already on 8385, use 8385
+      defaultBaseURL = defaultBaseURL.replace(/:\d+/, ':8385');
     }
     
     const baseUrlWithSlash = defaultBaseURL.endsWith('/') ? defaultBaseURL : `${defaultBaseURL}/`;
@@ -412,15 +411,14 @@ export const viewDocument = async (
     }
     
     // Use provided baseURL or fallback to configured API URL
-    // If baseURL contains port 8385, replace with 3001 (current backend port)
     let defaultBaseURL = baseURL || window.location.origin;
     
-    // Handle common port mismatches - ensure we're using the correct backend port
-    if (defaultBaseURL.includes(':8385')) {
-      defaultBaseURL = defaultBaseURL.replace(':8385', ':3001');
-    } else if (defaultBaseURL === window.location.origin && !defaultBaseURL.includes(':3001')) {
-      // If no specific port is set and we're not already on 3001, use 3001
-      defaultBaseURL = defaultBaseURL.replace(/:\d+/, ':3001');
+    // Ensure we're using the correct backend port (8385)
+    if (defaultBaseURL.includes(':3001')) {
+      defaultBaseURL = defaultBaseURL.replace(':3001', ':8385');
+    } else if (defaultBaseURL === window.location.origin && !defaultBaseURL.includes(':8385')) {
+      // If no specific port is set and we're not already on 8385, use 8385
+      defaultBaseURL = defaultBaseURL.replace(/:\d+/, ':8385');
     }
     
     const baseUrlWithSlash = defaultBaseURL.endsWith('/') ? defaultBaseURL : `${defaultBaseURL}/`;

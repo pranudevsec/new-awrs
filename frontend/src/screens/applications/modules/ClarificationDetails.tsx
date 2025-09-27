@@ -117,10 +117,33 @@ const ClarificationDetails = () => {
                                 <td style={{ width: 100, minWidth: 100, maxWidth: 100 }}>
                                     <div style={{ fontSize: 18 }}>{SVGICON.app.pdf} </div>
                                 </td>
-                                <td style={{ width: 200, minWidth: 200, maxWidth: 200 }}>
-                                    <p className="fw-4">
-                                        Please upload the correct document for parameter 4
-                                    </p>
+                                <td style={{ width: 200, minWidth: 200, maxWidth: 200, wordWrap: "break-word", wordBreak: "break-word", overflowWrap: "break-word" }}>
+                                    <div 
+                                        className="position-relative"
+                                        title="Please upload the correct document for parameter 4"
+                                        style={{ cursor: "help" }}
+                                    >
+                                        <p 
+                                            className="fw-4" 
+                                            style={{ 
+                                                wordWrap: "break-word", 
+                                                wordBreak: "break-word", 
+                                                overflowWrap: "break-word", 
+                                                whiteSpace: "normal",
+                                                maxHeight: "60px",
+                                                overflow: "hidden",
+                                                textOverflow: "ellipsis",
+                                                display: "-webkit-box",
+                                                WebkitLineClamp: 3,
+                                                WebkitBoxOrient: "vertical"
+                                            }}
+                                        >
+                                            Please upload the correct document for parameter 4
+                                        </p>
+                                        <small className="text-muted" style={{ fontSize: "10px" }}>
+                                            Hover to see full comment
+                                        </small>
+                                    </div>
                                 </td>
                                 <td style={{ width: 300, minWidth: 300, maxWidth: 300 }}>
                                     <input

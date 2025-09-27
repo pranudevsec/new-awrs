@@ -113,7 +113,7 @@ const FinalizedApprovedApplicationsList = () => {
       <th style={{ width: 200, color: "white" }}>Submission Date</th>
       <th style={{ width: 150, color: "white" }}>Type</th>
       <th style={{ width: 150, color: "white" }}>Net Marks</th>
-      <th style={{ width: 150, color: "white" }}>Arm / Service</th>
+      {role !== "unit" && <th style={{ width: 150, color: "white" }}>Arm / Service</th>}
       <th style={{ width: 150, color: "white" }}>Location</th>
       {role === "unit" && (
         <th style={{ width: 150, color: "white" }}>Status</th>
@@ -158,9 +158,11 @@ const FinalizedApprovedApplicationsList = () => {
               <p className="fw-4">{application.totalMarks}</p>
             </td>
           
-            <td style={{ width: 150 }}>
-              <p className="fw-4">{application.fds.arms_service}</p>
-            </td>
+            {role !== "unit" && (
+              <td style={{ width: 150 }}>
+                <p className="fw-4">{application.fds.arms_service}</p>
+              </td>
+            )}
             <td style={{ width: 150 }}>
               <p className="fw-4">{application.fds.location}</p>
             </td>

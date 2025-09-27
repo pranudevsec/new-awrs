@@ -61,8 +61,10 @@ const SidebarMenu = ({ onToggleCollapse }: SidebarMenuProps) => {
     ).length
     : 0;
 
-  const totalRaisedClarifications = Array.isArray(sidebarClarificationUnits)
-    ? sidebarClarificationUnits.filter(unit => (unit.clarifications_count ?? 0) > 0).length
+  // Use the same data source as ClarificationRaisedList for accurate count
+  const applicationUnits = useAppSelector((state) => state.application.units);
+  const totalRaisedClarifications = Array.isArray(applicationUnits)
+    ? applicationUnits.filter((unit: any) => (unit.clarifications_count ?? 0) > 0).length
     : 0;
 
   const applicationsToReview = useAppSelector((state) => state.commandPanel.homeCounts?.applicationsToReview ?? 0);
