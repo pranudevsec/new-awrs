@@ -6,6 +6,8 @@ import { useParams, useSearchParams } from "react-router-dom";
 import { useAppDispatch, useAppSelector } from "../../reduxToolkit/hooks";
 import { fetchApplicationUnitDetail } from "../../reduxToolkit/services/application/applicationService";
 import { baseURL } from "../../reduxToolkit/helper/axios";
+import { downloadDocumentWithWatermark } from "../../utils/documentUtils";
+import toast from "react-hot-toast";
 
 const TrackApplicationDetails = () => {
   const dispatch = useAppDispatch();
@@ -146,6 +148,21 @@ const TrackApplicationDetails = () => {
     }
   }, [unitDetail, role]);
 
+  // Function to handle document download with watermark
+  const handleDocumentDownload = async (documentUrl: any, fileName: string) => {
+    try {
+      await downloadDocumentWithWatermark(documentUrl, fileName, baseURL);
+      toast.success('Document downloaded with watermark');
+    } catch (error) {      
+      // Show more specific error message for missing files
+      if (error instanceof Error && error.message.includes('Document not found')) {
+        toast.error(`File not found: ${fileName}. The file may have been deleted or moved.`);
+      } else {
+        toast.error('Failed to load document');
+      }
+    }
+  };
+
   const getParamDisplay = (param: any) => {
     if (param.name != "no") {
       return {
@@ -212,16 +229,35 @@ const TrackApplicationDetails = () => {
 
         <td style={{ width: 200 }}>
           {param.upload && (
-            <a
-              href={`${baseURL}${param.upload}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              style={{ fontSize: 18 }}
-            >
-              <span style={{ fontSize: 14, wordBreak: "break-word" }}>
-                {renderUploads(param.upload)}
-              </span>
-            </a>
+            <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
+              {(() => {
+                let uploads: string[] = [];
+                if (Array.isArray(param.upload)) {
+                  uploads = param.upload;
+                } else if (typeof param.upload === "string") {
+                  uploads = param.upload.split(",");
+                }
+                return uploads.map((filePath: string) => (
+                  <button
+                    key={filePath}
+                    onClick={() => handleDocumentDownload(filePath, filePath.split("/").pop() || "document")}
+                    style={{ 
+                      fontSize: 14, 
+                      wordBreak: "break-word",
+                      background: "none",
+                      border: "none",
+                      color: "#1d4ed8",
+                      textDecoration: "underline",
+                      cursor: "pointer",
+                      padding: 0,
+                      textAlign: "left"
+                    }}
+                  >
+                    {filePath.split("/").pop()}
+                  </button>
+                ));
+              })()}
+            </div>
           )}
         </td>
 
