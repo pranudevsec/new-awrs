@@ -1,10 +1,25 @@
+// vite.config.ts
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react-swc";
 
-// https://vite.dev/config/
 export default defineConfig({
   plugins: [react()],
   build: {
-    chunkSizeWarningLimit: 2000,
+    target: "esnext",       
+    minify: "esbuild",      
+    cssCodeSplit: true,     
+    rollupOptions: {
+      treeshake: true, 
+      output: {
+        manualChunks(id) {
+          if (id.includes("node_modules")) {
+            return "vendor";
+          }
+        },
+      },
+    },
+  },
+  esbuild: {
+    drop: ["console", "debugger"], 
   },
 });

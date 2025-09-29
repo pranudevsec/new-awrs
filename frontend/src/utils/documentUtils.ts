@@ -147,19 +147,7 @@ export const downloadDocumentWithWatermark = async (
         window.URL.revokeObjectURL(url);
               }
     }
-  } catch (error) {    
-    // If it's a 404 error, try to provide helpful information
-    if (error instanceof Error && error.message.includes('Document not found')) {
-      console.warn(`File not found: ${fileName}`);
-      console.warn('Available files in uploads directory:');
-      console.warn('- 3249816.pdf');
-      console.warn('- accepted-applications (1).pdf');
-      console.warn('- accepted-applications (2).pdf');
-      console.warn('- fluent-emoji-high-contrast_tiger-face.png');
-      console.warn('- history-data.pdf');
-      console.warn('- Screenshot 2025-09-24 at 8.58.47â AM.png');
-    }
-    
+  } catch (error) {      
     throw error;
   }
 };

@@ -18,16 +18,5 @@ pool.on("connect", () => {
     isConnected = true;
   }
 });
-pool.on("error", (err) => {
-  console.error("Error connecting to PostgreSQL database:", err);
-});
-
-pool.query("SELECT NOW()", (err, res) => {
-  if (err) {
-    console.error("Initial connection query failed:", err.stack);
-  } else {
-    console.log("Initial connection query succeeded at:", res.rows[0].now);
-  }
-});
 
 module.exports = pool;
