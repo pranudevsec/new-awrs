@@ -75,6 +75,8 @@ const ApplicationsList = () => {
         limit,
       };
 
+
+
       if (role === 'cw2' || role === 'headquarter') {
         dispatch(fetchApplicationsForHQ(params));
       } else if (role !== 'unit') {
@@ -240,28 +242,29 @@ const ApplicationsList = () => {
             { label: "Applications", href: "/applications/list" },
           ]}
         />
-        <button className="btn btn-primary" onClick={handleDownloadPDF}>
-          Download PDF Report
-        </button>
+        {location.pathname !== "/submitted-forms/list" && (
+          <button className="btn btn-primary" onClick={handleDownloadPDF}>
+            Download PDF Report
+          </button>
+        )}
       </div>
 
       <div className="filter-wrapper d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
       <div className="search-wrapper position-relative d-flex align-items-center gap-2">
-  <div className="position-relative flex-grow-1">
-    <button className="border-0 bg-transparent position-absolute translate-middle-y top-50">
-      {SVGICON.app.search}
-    </button>
-    <input
-      type="text"
-      placeholder="search..."
-      className="form-control ps-5"
-      value={searchTerm}
-      onChange={(e) => setSearchTerm(e.target.value)}
-    />
-  </div>
-
-
-</div>
+        <div className="position-relative flex-grow-1">
+          <button className="border-0 bg-transparent position-absolute translate-middle-y top-50 start-0" style={{ zIndex: 10 }}>
+            {SVGICON.app.search}
+          </button>
+          <input
+            type="text"
+            placeholder="Search by ID, award type, command, brigade, division, corps, unit type, location..."
+            className="form-control ps-5"
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            style={{ paddingLeft: '2.5rem' }}
+          />
+        </div>
+      </div>
 
         <div className="d-flex flex-wrap align-items-center gap-2">
           <FormSelect
@@ -309,8 +312,8 @@ const ApplicationsList = () => {
           <th style={{ width: 150, minWidth: 150, maxWidth: 150, color: "white" }}>Type</th>
           <th style={{ width: 150, minWidth: 150, maxWidth: 150, color: "white" }}>Total Marks</th>
           <th style={{ width: 150, minWidth: 150, maxWidth: 150, color: "white" }}>Command</th>
-          <th style={{ width: 150, minWidth: 150, maxWidth: 150, color: "white" }}>Arm / Service</th>
-          <th style={{ width: 150, minWidth: 150, maxWidth: 150, color: "white" }}>Role / Deployment</th>
+          {role !== "unit" && <th style={{ width: 150, minWidth: 150, maxWidth: 150, color: "white" }}>Arm / Service</th>}
+          {role !== "unit" && <th style={{ width: 150, minWidth: 150, maxWidth: 150, color: "white" }}>Role / Deployment</th>}
           <th style={{ width: 150, minWidth: 150, maxWidth: 150, color: "white" }}>Location</th>
           {role === "unit" && (
             <th style={{ width: 150, minWidth: 150, maxWidth: 150, color: "white" }}>Status</th>
@@ -322,7 +325,7 @@ const ApplicationsList = () => {
   <tbody>
   {loading ? (
     <tr>
-      <td colSpan={role === "headquarter" ? 11 : 10}>
+      <td colSpan={role === "headquarter" ? 11 : (role === "unit" ? 8 : 10)}>
         <div className="d-flex justify-content-center py-5">
           <Loader inline size={40} />
         </div>
@@ -386,8 +389,8 @@ const ApplicationsList = () => {
 
           <td style={{ width: 200 }}>
             <p className="fw-4">
-              {unit.fds?.last_date
-                ? new Date(unit.fds.last_date).toLocaleDateString()
+              {unit.date_init
+                ? new Date(unit.date_init).toLocaleDateString()
                 : "-"}
             </p>
           </td>
@@ -402,12 +405,16 @@ const ApplicationsList = () => {
           <td style={{ width: 150 }}>
             <p className="fw-4">{unit.fds.command ?? "-"}</p>
           </td>
-          <td style={{ width: 150 }}>
-            <p className="fw-4">{unit.fds.arms_service ?? "-"}</p>
-          </td>
-          <td style={{ width: 150 }}>
-            <p className="fw-4">{unit.fds.matrix_unit ?? "-"}</p>
-          </td>
+          {role !== "unit" && (
+            <td style={{ width: 150 }}>
+              <p className="fw-4">{unit.fds.arms_service ?? "-"}</p>
+            </td>
+          )}
+          {role !== "unit" && (
+            <td style={{ width: 150 }}>
+              <p className="fw-4">{unit.fds.matrix_unit ?? "-"}</p>
+            </td>
+          )}
           <td style={{ width: 150 }}>
             <p className="fw-4">{unit.fds.location ?? "-"}</p>
           </td>

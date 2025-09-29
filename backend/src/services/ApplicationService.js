@@ -56,10 +56,20 @@ exports.getAllApplicationsForUnit = async (user, query) => {
       const searchLower = normalize(search);
       allApps = allApps.filter((app) => {
         const idMatch = app.id.toString().toLowerCase().includes(searchLower);
-        const cycleMatch = normalize(app.fds?.cycle_period || "").includes(
-          searchLower
-        );
-        return idMatch || cycleMatch;
+        const cycleMatch = normalize(app.fds?.cycle_period || "").includes(searchLower);
+        
+        // Search in fds fields that actually exist
+        const awardTypeMatch = normalize(app.fds?.award_type || "").includes(searchLower);
+        const commandMatch = normalize(app.fds?.command || "").includes(searchLower);
+        const brigadeMatch = normalize(app.fds?.brigade || "").includes(searchLower);
+        const divisionMatch = normalize(app.fds?.division || "").includes(searchLower);
+        const corpsMatch = normalize(app.fds?.corps || "").includes(searchLower);
+        const unitTypeMatch = normalize(app.fds?.unit_type || "").includes(searchLower);
+        const matrixUnitMatch = normalize(app.fds?.matrix_unit || "").includes(searchLower);
+        const locationMatch = normalize(app.fds?.location || "").includes(searchLower);
+        
+        return idMatch || cycleMatch || awardTypeMatch || commandMatch || brigadeMatch || 
+               divisionMatch || corpsMatch || unitTypeMatch || matrixUnitMatch || locationMatch;
       });
     }
 
@@ -234,10 +244,20 @@ exports.getAllApplicationsForHQ = async (user, query) => {
       const searchLower = normalize(search);
       allApps = allApps.filter((app) => {
         const idMatch = app.id.toString().toLowerCase().includes(searchLower);
-        const cycleMatch = normalize(app.fds?.cycle_period || "").includes(
-          searchLower
-        );
-        return idMatch || cycleMatch;
+        const cycleMatch = normalize(app.fds?.cycle_period || "").includes(searchLower);
+        
+        // Search in fds fields that actually exist
+        const awardTypeMatch = normalize(app.fds?.award_type || "").includes(searchLower);
+        const commandMatch = normalize(app.fds?.command || "").includes(searchLower);
+        const brigadeMatch = normalize(app.fds?.brigade || "").includes(searchLower);
+        const divisionMatch = normalize(app.fds?.division || "").includes(searchLower);
+        const corpsMatch = normalize(app.fds?.corps || "").includes(searchLower);
+        const unitTypeMatch = normalize(app.fds?.unit_type || "").includes(searchLower);
+        const matrixUnitMatch = normalize(app.fds?.matrix_unit || "").includes(searchLower);
+        const locationMatch = normalize(app.fds?.location || "").includes(searchLower);
+        
+        return idMatch || cycleMatch || awardTypeMatch || commandMatch || brigadeMatch || 
+               divisionMatch || corpsMatch || unitTypeMatch || matrixUnitMatch || locationMatch;
       });
     }
 
@@ -670,10 +690,20 @@ exports.getApplicationsOfSubordinates = async (user, query) => {
       const searchLower = normalize(search);
       allApps = allApps.filter((app) => {
         const idMatch = app.id.toString().toLowerCase().includes(searchLower);
-        const cycleMatch = normalize(app.fds?.cycle_period || "").includes(
-          searchLower
-        );
-        return idMatch || cycleMatch;
+        const cycleMatch = normalize(app.fds?.cycle_period || "").includes(searchLower);
+        
+        // Search in fds fields that actually exist
+        const awardTypeMatch = normalize(app.fds?.award_type || "").includes(searchLower);
+        const commandMatch = normalize(app.fds?.command || "").includes(searchLower);
+        const brigadeMatch = normalize(app.fds?.brigade || "").includes(searchLower);
+        const divisionMatch = normalize(app.fds?.division || "").includes(searchLower);
+        const corpsMatch = normalize(app.fds?.corps || "").includes(searchLower);
+        const unitTypeMatch = normalize(app.fds?.unit_type || "").includes(searchLower);
+        const matrixUnitMatch = normalize(app.fds?.matrix_unit || "").includes(searchLower);
+        const locationMatch = normalize(app.fds?.location || "").includes(searchLower);
+        
+        return idMatch || cycleMatch || awardTypeMatch || commandMatch || brigadeMatch || 
+               divisionMatch || corpsMatch || unitTypeMatch || matrixUnitMatch || locationMatch;
       });
     }
 
@@ -2332,20 +2362,21 @@ exports.getAllApplications = async (user, query) => {
     }
 
     if (search) {
-  const searchNorm = normalize(search);
-  allApps = allApps.filter(
-    (app) => 
-      app.id.toString().toLowerCase().includes(searchNorm) ||
-      normalize(app.fds?.cycle_period || "").includes(searchNorm) ||
-      normalize(app.fds?.unit_name || "").includes(searchNorm) ||
-      normalize(app.fds?.brigade || "").includes(searchNorm) ||
-      normalize(app.fds?.division || "").includes(searchNorm) ||
-      normalize(app.fds?.corps || "").includes(searchNorm) ||
-      normalize(app.fds?.command || "").includes(searchNorm) ||
-      normalize(app.fds?.unit_type || "").includes(searchNorm) ||
-      normalize(app.fds?.matrix_unit || "").includes(searchNorm)
-  );
-}
+      const searchNorm = normalize(search);
+      allApps = allApps.filter(
+        (app) => 
+          app.id.toString().toLowerCase().includes(searchNorm) ||
+          normalize(app.fds?.cycle_period || "").includes(searchNorm) ||
+          normalize(app.fds?.award_type || "").includes(searchNorm) ||
+          normalize(app.fds?.brigade || "").includes(searchNorm) ||
+          normalize(app.fds?.division || "").includes(searchNorm) ||
+          normalize(app.fds?.corps || "").includes(searchNorm) ||
+          normalize(app.fds?.command || "").includes(searchNorm) ||
+          normalize(app.fds?.unit_type || "").includes(searchNorm) ||
+          normalize(app.fds?.matrix_unit || "").includes(searchNorm) ||
+          normalize(app.fds?.location || "").includes(searchNorm)
+      );
+    }
 
 
     // Clarifications linking
@@ -2804,10 +2835,69 @@ function paginate(items, page = 1, limit = 10) {
   };
 }
 
-exports.listAllApplications = async (query = {}) => {
+exports.listAllApplications = async (user, query = {}) => {
   try {
-    const allApps = await loadApplications();
-    const { data, meta } = paginate(allApps, query.page, query.limit);
+    const client = await dbService.getClient();
+    const { user_role } = user;
+    const { page = 1, limit = 10 } = query;
+
+    // Get user's profile and unit information
+    const profile = await AuthService.getProfile(user);
+    const unit = profile?.data?.unit;
+
+    if (!unit) {
+      return ResponseHelper.error(400, 'User profile not found');
+    }
+
+    // Build command-based filtering
+    let unitIds = [];
+    let whereClause = '';
+
+    if (user_role.toLowerCase() === "headquarter") {
+      // HQ can see all applications - no filtering needed
+      whereClause = '';
+    } else {
+      // For other roles, filter by command hierarchy
+      const ROLE_HIERARCHY = ["unit", "brigade", "division", "corps", "command"];
+      const currentRole = user_role.toLowerCase();
+      const currentIndex = ROLE_HIERARCHY.indexOf(currentRole);
+      
+      if (currentIndex === -1) {
+        throw new Error("Invalid user role");
+      }
+
+      const subordinateFieldMap = {
+        brigade: "bde",
+        division: "div", 
+        corps: "corps",
+        command: "comd",
+      };
+
+      if (currentRole === "unit") {
+        unitIds = [unit.unit_id];
+      } else {
+        const matchField = subordinateFieldMap[currentRole];
+        const subUnitsRes = await client.query(
+          `SELECT unit_id FROM Unit_tab WHERE ${matchField} = $1`,
+          [unit.name]
+        );
+        unitIds = subUnitsRes.rows.map((u) => u.unit_id);
+      }
+
+      if (unitIds.length === 0) {
+        return ResponseHelper.success(200, "No applications found", [], {
+          totalItems: 0,
+          currentPage: parseInt(page),
+          itemsPerPage: parseInt(limit),
+        });
+      }
+
+      whereClause = `unit_id = ANY($1)`;
+    }
+
+    // Load applications with proper filtering
+    const allApps = await loadApplications(whereClause, unitIds.length > 0 ? [unitIds] : []);
+    const { data, meta } = paginate(allApps, page, limit);
     return ResponseHelper.success(200, 'All applications', data, meta);
   } catch (err) {
     return ResponseHelper.error(500, 'Failed to list all applications', err.message);
@@ -2815,14 +2905,75 @@ exports.listAllApplications = async (query = {}) => {
 };
 
 // 2) Pending applications: NOT command-approved AND status != rejected
-exports.listPendingApplications = async (query = {}) => {
+exports.listPendingApplications = async (user, query = {}) => {
   try {
-    const whereSql = `
+    const client = await dbService.getClient();
+    const { user_role } = user;
+    const { page = 1, limit = 10 } = query;
+
+    // Get user's profile and unit information
+    const profile = await AuthService.getProfile(user);
+    const unit = profile?.data?.unit;
+
+    if (!unit) {
+      return ResponseHelper.error(400, 'User profile not found');
+    }
+
+    // Build command-based filtering
+    let unitIds = [];
+    let whereClause = `
       (last_approved_by_role IS DISTINCT FROM 'command')
       AND (status_flag IS DISTINCT FROM 'rejected')
     `;
-    const allApps = await loadApplications(whereSql);
-    const { data, meta } = paginate(allApps, query.page, query.limit);
+
+    if (user_role.toLowerCase() === "headquarter") {
+      // HQ can see all pending applications - no additional filtering needed
+      whereClause = `
+        (last_approved_by_role IS DISTINCT FROM 'command')
+        AND (status_flag IS DISTINCT FROM 'rejected')
+      `;
+    } else {
+      // For other roles, filter by command hierarchy
+      const ROLE_HIERARCHY = ["unit", "brigade", "division", "corps", "command"];
+      const currentRole = user_role.toLowerCase();
+      const currentIndex = ROLE_HIERARCHY.indexOf(currentRole);
+      
+      if (currentIndex === -1) {
+        throw new Error("Invalid user role");
+      }
+
+      const subordinateFieldMap = {
+        brigade: "bde",
+        division: "div", 
+        corps: "corps",
+        command: "comd",
+      };
+
+      if (currentRole === "unit") {
+        unitIds = [unit.unit_id];
+      } else {
+        const matchField = subordinateFieldMap[currentRole];
+        const subUnitsRes = await client.query(
+          `SELECT unit_id FROM Unit_tab WHERE ${matchField} = $1`,
+          [unit.name]
+        );
+        unitIds = subUnitsRes.rows.map((u) => u.unit_id);
+      }
+
+      if (unitIds.length === 0) {
+        return ResponseHelper.success(200, "No pending applications found", [], {
+          totalItems: 0,
+          currentPage: parseInt(page),
+          itemsPerPage: parseInt(limit),
+        });
+      }
+
+      whereClause += ` AND unit_id = ANY($1)`;
+    }
+
+    // Load applications with proper filtering
+    const allApps = await loadApplications(whereClause, unitIds.length > 0 ? [unitIds] : []);
+    const { data, meta } = paginate(allApps, page, limit);
     return ResponseHelper.success(200, 'Pending applications', data, meta);
   } catch (err) {
     return ResponseHelper.error(500, 'Failed to list pending applications', err.message);
@@ -2830,11 +2981,15 @@ exports.listPendingApplications = async (query = {}) => {
 };
 
 // 3) Rejected applications
-exports.listRejectedApplications = async (query = {}) => {
+exports.listRejectedApplications = async (user, query = {}) => {
   try {
-    const whereSql = `status_flag = 'rejected'`;
-    const allApps = await loadApplications(whereSql);
-    const { data, meta } = paginate(allApps, query.page, query.limit);
+    const client = await dbService.getClient();
+    const { user_role } = user;
+    const { page = 1, limit = 10 } = query;
+
+    const allApps = await loadApplications(`AND status_flag = 'rejected'`);
+    const { data, meta } = paginate(allApps, page, limit);
+    
     return ResponseHelper.success(200, 'Rejected applications', data, meta);
   } catch (err) {
     return ResponseHelper.error(500, 'Failed to list rejected applications', err.message);

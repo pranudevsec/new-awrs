@@ -300,7 +300,7 @@ const handleExportPDF = async () => {
           </button>
           <input
             type="text"
-            placeholder="search..."
+            placeholder="Search by ID, award type, command, brigade, division, corps, unit type, location..."
             className="form-control"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}

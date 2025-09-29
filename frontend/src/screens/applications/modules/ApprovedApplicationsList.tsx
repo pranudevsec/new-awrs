@@ -136,7 +136,7 @@ const ApprovedApplicationsList = () => {
             <input
               type="text"
               className="form-control"
-              placeholder="Search applications..."
+              placeholder="Search by ID, award type, command, brigade, division, corps, unit type, location..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
             />
@@ -165,7 +165,7 @@ const ApprovedApplicationsList = () => {
               <th style={{ width: 150, minWidth: 150, maxWidth: 150, color: "white" }}>Type</th>
               <th style={{ width: 150, minWidth: 150, maxWidth: 150, color: "white" }}>Net Marks</th>
               <th style={{ width: 150, minWidth: 150, maxWidth: 150, color: "white" }}>Command</th>
-              <th style={{ width: 150, minWidth: 150, maxWidth: 150, color: "white" }}>Arm / Service</th>
+              {role !== "unit" && <th style={{ width: 150, minWidth: 150, maxWidth: 150, color: "white" }}>Arm / Service</th>}
               <th style={{ width: 150, minWidth: 150, maxWidth: 150, color: "white" }}>Location</th>
               {role === "unit" && (<th style={{ width: 150, minWidth: 150, maxWidth: 150, color: "white" }}>Status</th>)}
               <th style={{ width: 100, minWidth: 100, maxWidth: 100, color: "white" }}></th>
@@ -208,9 +208,11 @@ const ApprovedApplicationsList = () => {
                   <td style={{ width: 150, minWidth: 150, maxWidth: 150 }}>
                     <p className="fw-4">{application.fds.command}</p>
                   </td>
-                  <td style={{ width: 150, minWidth: 150, maxWidth: 150 }}>
-                    <p className="fw-4">{application.fds.arms_service}</p>
-                  </td>
+                  {role !== "unit" && (
+                    <td style={{ width: 150, minWidth: 150, maxWidth: 150 }}>
+                      <p className="fw-4">{application.fds.arms_service}</p>
+                    </td>
+                  )}
                   <td style={{ width: 150, minWidth: 150, maxWidth: 150 }}>
                     <p className="fw-4">{application.fds.location}</p>
                   </td>
