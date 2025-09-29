@@ -349,7 +349,6 @@ const SubmittedFormDetail = () => {
             await dispatch(approveMarks(body)).unwrap();
             toast.success("Priority updated successfully");
         } catch (error) {
-            console.log("error -> ", error);
             toast.error("Failed to update priority");
         }
     };

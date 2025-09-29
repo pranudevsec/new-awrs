@@ -1,6 +1,6 @@
-import axios from 'axios';
+import axios from "axios";
 
-export const baseURL = "http://192.168.1.2:8385";
+export const baseURL = import.meta.env.VITE_APP_API_URL;
 
 const Axios = axios.create({
   baseURL: baseURL,
@@ -8,9 +8,9 @@ const Axios = axios.create({
 
 Axios.interceptors.request.use(
   function (config) {
-    const token = localStorage.getItem('persist:admin');
+    const token = localStorage.getItem("persist:admin");
     const parsedData = token ? JSON.parse(token) : null;
-    const userToken = JSON.parse(parsedData?.admin ?? 'null')?.token ?? null;
+    const userToken = JSON.parse(parsedData?.admin ?? "null")?.token ?? null;
 
     if (userToken) {
       config.headers.Authorization = `Bearer ${userToken}`;
@@ -18,7 +18,9 @@ Axios.interceptors.request.use(
     return config;
   },
   function (error) {
-    return Promise.reject(error instanceof Error ? error : new Error(String(error)));
+    return Promise.reject(
+      error instanceof Error ? error : new Error(String(error))
+    );
   }
 );
 
@@ -30,14 +32,14 @@ Axios.interceptors.response.use(
     if (
       error.response &&
       error.response.status === 401 &&
-      error.response.data?.message === 'Invalid access token.'
+      error.response.data?.message === "Invalid access token."
     ) {
       localStorage.clear();
-      window.location.href = '/authentication/sign-in';
+      window.location.href = "/authentication/sign-in";
     }
 
     if (!(error instanceof Error)) {
-      const customError = new Error(error.message ?? 'Unknown error');
+      const customError = new Error(error.message ?? "Unknown error");
       (customError as any).originalError = error;
       return Promise.reject(customError);
     }

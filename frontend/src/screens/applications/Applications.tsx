@@ -5,6 +5,7 @@ import { getHomeCountStats } from "../../reduxToolkit/services/command-panel/com
 import { DisclaimerText } from "../../data/options";
 import Breadcrumb from "../../components/ui/breadcrumb/Breadcrumb";
 import DisclaimerModal from "../../modals/DisclaimerModal";
+import { fetchParameters } from "../../reduxToolkit/services/parameter/parameterService";
 
 const Applications = () => {
   const dispatch = useAppDispatch();
@@ -16,9 +17,55 @@ const Applications = () => {
   const isSpecialUnit = profile?.user?.is_special_unit;
   const isUnitRole = userRole === "unit";
   const isHigherRole = ["brigade", "division", "corps", "command"].includes(userRole ?? "");
+  const [citationParams, setCitationParams] = useState<any[]>([]);
+  const [appreciationParams, setAppreciationParams] = useState<any[]>([]);
 
   const [showModal, setShowModal] = useState(false);
   const [destination, setDestination] = useState<string | null>(null);
+  useEffect(() => {
+    if (!profile) return;
+  
+    const fetchData = async () => {
+      try {
+        // Citation params
+        const citationRes = await dispatch(
+          fetchParameters({
+            awardType: "citation",
+            search: "",
+            matrix_unit: profile?.unit?.matrix_unit ?? undefined,
+            comd: profile?.unit?.comd ?? undefined,
+            unit_type: profile?.unit?.unit_type ?? undefined,
+            page: 1,
+            limit: 5000,
+          })
+        ).unwrap();
+  
+        if (citationRes.success && citationRes.data?.length > 0) {
+          setCitationParams([...citationRes.data].reverse());
+        }
+  
+        // Appreciation params
+        const appreciationRes = await dispatch(
+          fetchParameters({
+            awardType: "appreciation",
+            search: "",
+            matrix_unit: profile?.unit?.matrix_unit ?? undefined,
+            comd: profile?.unit?.comd ?? undefined,
+            unit_type: profile?.unit?.unit_type ?? undefined,
+            page: 1,
+            limit: 5000,
+          })
+        ).unwrap();
+  
+        if (appreciationRes.success && appreciationRes.data?.length > 0) {
+          setAppreciationParams([...appreciationRes.data].reverse());
+        }
+      } catch (error) {
+      }
+    };
+  
+    fetchData();
+  }, [profile, dispatch]);
 
   useEffect(() => {
     dispatch(getHomeCountStats());
@@ -45,12 +92,18 @@ const Applications = () => {
             className="d-flex flex-md-row flex-column justify-content-center align-items-center gap-3"
             style={{ marginTop: "1rem" }}
           >
+                 {citationParams.length === 0 && appreciationParams.length === 0 && (
+  <h6 className="text-muted text-center mt-3">
+    No forms are available for the selected settings at this time.
+  </h6>
+)}
+
             {/* Cards column */}
             <div
               className="d-flex flex-column align-items-center justify-content-center h-100"
               style={{ minWidth: 350 }}
             >
-              {!profile?.user?.is_special_unit && (
+              {!profile?.user?.is_special_unit &&  citationParams.length > 0 &&(
                 <div className="mb-4 w-100">
                   <div
                     role="button"
@@ -85,7 +138,7 @@ const Applications = () => {
               )}
 
               {/* Appreciation Card */}
-              <div className="w-100 mb-4">
+              { appreciationParams.length > 0 &&  <div className="w-100 mb-4">
                 <div
                   role="button"
                   tabIndex={0}
@@ -115,10 +168,10 @@ const Applications = () => {
                     </span>
                   </div>
                 </div>
-              </div>
+              </div>}
 
               {/* Honour Card if special unit */}
-              {isSpecialUnit && (
+              {isSpecialUnit && appreciationParams.length > 0 && (
                 <div className="w-100">
                   <div
                     role="button"

@@ -2252,6 +2252,7 @@ exports.getAllApplications = async (user, query) => {
       c.is_mo_approved,
       c.mo_approved_at,
       c.is_ol_approved,
+      c.last_rejected_by_role,
       c.ol_approved_at,
       c.last_approved_by_role,
       c.last_approved_at
@@ -2293,6 +2294,7 @@ exports.getAllApplications = async (user, query) => {
       a.status_flag,
       a.is_mo_approved,
       a.mo_approved_at,
+      a.last_rejected_by_role,
       a.is_ol_approved,
       a.ol_approved_at,
       a.last_approved_by_role,
@@ -2543,117 +2545,140 @@ exports.getApplicationStats = async (user, _query) => {
   try {
     const { user_role } = user || {};
     const roleLc = (user_role || '').toLowerCase();
+    let s;
+if(user && user.user_role==='headquarter'){
+  const { rows } = await client.query(`
+    SELECT 
+      -- total
+      (SELECT COUNT(*) FROM Citation_tab) +
+      (SELECT COUNT(*) FROM Appre_tab) AS totalApplications,
 
-    // Base aggregates (with approved split)
-    const { rows } = await client.query(`
-      SELECT 
-        -- total
-        (SELECT COUNT(*) FROM Citation_tab) +
-        (SELECT COUNT(*) FROM Appre_tab) AS totalApplications,
-    
-      
-    -- pending: status not rejected AND mo/ol = false
+      -- pending: not command-approved AND status != rejected (NULL-safe)
+      (SELECT COUNT(*) FROM Citation_tab 
+         WHERE last_approved_by_role IS DISTINCT FROM 'command'
+           AND status_flag IS DISTINCT FROM 'rejected') +
+      (SELECT COUNT(*) FROM Appre_tab 
+         WHERE last_approved_by_role IS DISTINCT FROM 'command'
+           AND status_flag IS DISTINCT FROM 'rejected') AS pendingApplications,
+
+      -- rejected
+      (SELECT COUNT(*) FROM Citation_tab WHERE status_flag = 'rejected') +
+      (SELECT COUNT(*) FROM Appre_tab   WHERE status_flag = 'rejected') AS rejectedApplications,
+
+      -- finalised
+      (SELECT COUNT(*) FROM Citation_tab WHERE is_ol_approved = true) +
+      (SELECT COUNT(*) FROM Appre_tab   WHERE is_ol_approved = true) AS finalisedApplications,
+
+      -- approved by command
+      (SELECT COUNT(*) FROM Citation_tab WHERE last_approved_by_role = 'command') +
+      (SELECT COUNT(*) FROM Appre_tab   WHERE last_approved_by_role = 'command') AS approvedApplications
+  `);
+
+   s = rows[0];
+}else{
+ // Base aggregates (unchanged)
+ const { rows } = await client.query(`
+  WITH unit_data AS (
+    SELECT name 
+    FROM Unit_tab 
+    WHERE unit_id = $1
+  )
+  SELECT 
+    -- total
+    (SELECT COUNT(*) FROM Citation_tab) +
+    (SELECT COUNT(*) FROM Appre_tab) AS totalApplications,
+
+    -- pending
     (SELECT COUNT(*) FROM Citation_tab 
-       WHERE status_flag IS DISTINCT FROM 'rejected'
-         AND is_mo_approved = false
-         AND is_ol_approved = false) +
+       WHERE last_approved_by_role IS DISTINCT FROM 'command'
+         AND status_flag IS DISTINCT FROM 'rejected') +
     (SELECT COUNT(*) FROM Appre_tab 
-       WHERE status_flag IS DISTINCT FROM 'rejected'
-         AND is_mo_approved = false
-         AND is_ol_approved = false) AS pendingApplications,
+       WHERE last_approved_by_role IS DISTINCT FROM 'command'
+         AND status_flag IS DISTINCT FROM 'rejected') AS pendingApplications,
 
-        -- rejected
-        (SELECT COUNT(*) FROM Citation_tab WHERE status_flag = 'rejected') +
-        (SELECT COUNT(*) FROM Appre_tab   WHERE status_flag = 'rejected') AS rejectedApplications,
-    
-        -- finalised (ol approved = true)
-        (SELECT COUNT(*) FROM Citation_tab WHERE is_ol_approved = true) +
-        (SELECT COUNT(*) FROM Appre_tab   WHERE is_ol_approved = true) AS finalisedApplications,
-    
-        -- approved but not finalized: mo+ol true AND finalized false
-        (SELECT COUNT(*) FROM Citation_tab 
-           WHERE is_mo_approved = true
-             AND is_ol_approved = true
-             AND isfinalized = false) +
-        (SELECT COUNT(*) FROM Appre_tab 
-           WHERE is_mo_approved = true
-             AND is_ol_approved = true
-             AND isfinalized = false) AS approvedApplications,
-    
-        -- approved AND finalized: mo+ol true AND finalized true
-        (SELECT COUNT(*) FROM Citation_tab 
-           WHERE is_mo_approved = true
-             AND is_ol_approved = true
-             AND isfinalized = true) +
-        (SELECT COUNT(*) FROM Appre_tab 
-           WHERE is_mo_approved = true
-             AND is_ol_approved = true
-             AND isfinalized = true) AS finalizedApprovedApplications
-    `);
-    
-    
+    -- rejected (filtered by unit.name)
+    (SELECT COUNT(*) 
+       FROM Citation_tab c, unit_data u
+       WHERE c.status_flag = 'rejected'
+         AND c.citation_fds->>'command' = u.name) +
+    (SELECT COUNT(*) 
+       FROM Appre_tab a, unit_data u
+       WHERE a.status_flag = 'rejected'
+         AND a.appre_fds->>'command' = u.name) AS rejectedApplications,
 
-    const s = rows[0];
-    let totalFromApi = parseInt(s.totalapplications, 10);
+    -- finalised
+    (SELECT COUNT(*) FROM Citation_tab WHERE is_ol_approved = true) +
+    (SELECT COUNT(*) FROM Appre_tab   WHERE is_ol_approved = true) AS finalisedApplications,
 
+    -- approved by command
+    (SELECT COUNT(*) FROM Citation_tab WHERE last_approved_by_role = 'command') +
+    (SELECT COUNT(*) FROM Appre_tab   WHERE last_approved_by_role = 'command') AS approvedApplications
+`, [user.unit_id]);
+ s = rows[0];
+}
+       let totalFromApi = parseInt(s.totalapplications, 10);
     try {
       const totalRes = await exports.getAllApplications(user, { ..._query, page: 1, limit: 1000 });
       const ok = totalRes && ((totalRes.statusCode || totalRes.status) === 200);
       if (ok) {
-        totalFromApi = totalRes.data.length;
+        totalFromApi = totalRes.data.length
+          
       }
     } catch (_) {
-      // fallback to DB total
+      // fallback to DB total already in totalFromApi
     }
-
     // --- recommendedApplications ---
     let recommendedApplications = 0;
     if (roleLc === 'headquarter') {
-      recommendedApplications = parseInt(s.approvedApplications, 10);
+      // HQ: recommended == approved by command
+      recommendedApplications = parseInt(s.approvedapplications, 10);
     } else if (roleLc) {
+      // Non-HQ: use subordinate listing as source of truth
       const subRes = await exports.getApplicationsOfSubordinates(user, {
         page: 1,
-        limit: 100,
-        isShortlisted: true
+        limit: 100,           // use meta.totalItems to avoid fetching everything
+        isShortlisted: true // matches your "recommended" listing logic
       });
 
-      const ok = subRes && ((subRes.statusCode || subRes.status) === 200 && subRes.data.length > 0);
+      const ok = (subRes.data !=[] && ((subRes.statusCode || subRes.status) === 200));
       if (ok) {
-        recommendedApplications = subRes.data.length;
+        recommendedApplications = subRes.data.length
       }
     }
 
     // --- pending ---
+    // HQ: keep SQL pending
+    // Non-HQ: total - rejected - recommended
     let totalPendingApplications = parseInt(s.pendingapplications, 10);
     if (roleLc && roleLc !== 'headquarter') {
       const pendRes = await exports.getApplicationsOfSubordinates(user, {
         page: 1,
-        limit: 100,
+        limit: 100,                 // use meta.totalItems
         isGetNotClarifications: true
       });
       const ok = pendRes && ((pendRes.statusCode || pendRes.status) === 200);
       if (ok) {
-        totalPendingApplications = pendRes.data.length;
-      }
-    }
+        totalPendingApplications = pendRes.data.length
+       
+      }}
+    
+  
 
     // --- acceptedApplications ---
-    const acceptedApplications =
-      (roleLc && roleLc !== 'headquarter')
-        ? recommendedApplications
-        : parseInt(s.approvedapplications, 10);
-
-    if (totalFromApi == 0) {
-      s.rejectedapplications = 0;
-    }
-
+    // Non-HQ: acceptedApplications = recommendedApplications (your request)
+    // HQ: acceptedApplications = approved by command (unchanged)
+    const acceptedApplications = (roleLc && roleLc !== 'headquarter')
+      ? recommendedApplications
+      : parseInt(s.approvedapplications, 10);
+if(totalFromApi==0){
+  s.rejectedapplications =0
+}
     return ResponseHelper.success(200, 'Application stats', {
-      clarificationRaised: totalFromApi,                   // total
-      totalPendingApplications,                            // pending
-      rejected: parseInt(s.rejectedapplications, 10),      // rejected
-      approved: parseInt(s.approvedapplications, 10),      // approved but NOT finalized
-      finalizedApproved: parseInt(s.finalizedapprovedapplications, 10), // approved + finalized
-      acceptedApplications,                                // role-aware accepted
+      clarificationRaised:     totalFromApi,       // total
+      totalPendingApplications,                                          // pending (role-aware)
+      rejected:                 parseInt(s.rejectedapplications, 10),    // rejected
+      approved:                 parseInt(s.finalisedapplications, 10),   // finalised (unchanged)
+      acceptedApplications,                                             // now role-aware                                         // new/role-aware
     });
   } catch (err) {
     return ResponseHelper.error(500, 'Failed to compute application stats', err.message);
@@ -2665,10 +2690,12 @@ exports.getApplicationStats = async (user, _query) => {
 
 
 
-async function loadApplications(whereSql = '', params = []) {
+async function loadApplications(whereSql = '', params = [],user) {
   const client = await dbService.getClient();
   try {
-    const citationQuery = `
+    let citationQuery,appreQuery;
+    if (user && user?.user_role === 'headquarter') {
+      citationQuery = `
       SELECT 
         c.citation_id AS id,
         'citation' AS type,
@@ -2681,7 +2708,6 @@ async function loadApplications(whereSql = '', params = []) {
         c.mo_approved_at,
         c.is_ol_approved,
         c.ol_approved_at,
-        c.isFinalized,
         c.last_approved_by_role,
         c.last_approved_at
       FROM Citation_tab c
@@ -2695,7 +2721,7 @@ async function loadApplications(whereSql = '', params = []) {
       ${whereSql ? `WHERE ${whereSql.replace(/^\s*AND\s*/i, '')}` : ''}
     `;
 
-    const appreQuery = `
+     appreQuery = `
       SELECT 
         a.appreciation_id AS id,
         'appreciation' AS type,
@@ -2708,7 +2734,6 @@ async function loadApplications(whereSql = '', params = []) {
         a.mo_approved_at,
         a.is_ol_approved,
         a.ol_approved_at,
-            a.isFinalized,
         a.last_approved_by_role,
         a.last_approved_at
       FROM Appre_tab a
@@ -2721,6 +2746,49 @@ async function loadApplications(whereSql = '', params = []) {
       ) u ON a.unit_id = u.unit_id
       ${whereSql ? `WHERE ${whereSql.replace(/^\s*AND\s*/i, '')}` : ''}
     `;
+    }else{
+       citationQuery = `
+      SELECT 
+        c.citation_id AS id,
+        'citation' AS type,
+        c.unit_id,
+        row_to_json(u) AS unit_details,
+        c.date_init,
+        c.citation_fds AS fds,
+        c.status_flag,
+        c.is_mo_approved,
+        c.mo_approved_at,
+        c.is_ol_approved,
+        c.ol_approved_at,
+        c.last_approved_by_role,
+        c.last_approved_at
+      FROM Citation_tab c
+      LEFT JOIN Unit_tab u ON c.unit_id = u.unit_id
+      WHERE c.status_flag = 'rejected' 
+        AND c.citation_fds->>'command' = $1
+    `;
+
+     appreQuery = `
+      SELECT 
+        a.appreciation_id AS id,
+        'appreciation' AS type,
+        a.unit_id,
+        row_to_json(u) AS unit_details,
+        a.date_init,
+        a.appre_fds AS fds,
+        a.status_flag,
+        a.is_mo_approved,
+        a.mo_approved_at,
+        a.is_ol_approved,
+        a.ol_approved_at,
+        a.last_approved_by_role,
+        a.last_approved_at
+      FROM Appre_tab a
+      LEFT JOIN Unit_tab u ON a.unit_id = u.unit_id
+      WHERE a.status_flag = 'rejected' 
+        AND a.appre_fds->>'command' = $1
+    `;
+    }
 
     const [citations, appreciations] = await Promise.all([
       client.query(citationQuery, params),
@@ -2983,14 +3051,33 @@ exports.listPendingApplications = async (user, query = {}) => {
 // 3) Rejected applications
 exports.listRejectedApplications = async (user, query = {}) => {
   try {
-    const client = await dbService.getClient();
-    const { user_role } = user;
-    const { page = 1, limit = 10 } = query;
+    let allApps;
 
-    const allApps = await loadApplications(`AND status_flag = 'rejected'`);
-    const { data, meta } = paginate(allApps, page, limit);
-    
+    if (user.user_role === 'headquarter') {
+      const whereSql = `status_flag = 'rejected'`;
+      // Pass empty array since there are no $1 placeholders
+      allApps = await loadApplications(whereSql,[],user);
+    } else {
+      // Step 1: Get the user's unit and its COMD
+      const unitRes = await dbService.query(
+        `SELECT name FROM Unit_tab WHERE unit_id = $1`,
+        [user.unit_id]
+      );
+      if (!unitRes.rows.length) {
+        return ResponseHelper.error(404, 'Unit not found');
+      }
+      const userComd = unitRes.rows[0].name;
+
+      // Step 2: Build WHERE clause to filter rejected + matching comd
+      const whereSql = `status_flag = 'rejected' AND fds->>'command' = $1`;
+
+      // Step 3: Load applications using this filter
+      allApps = await loadApplications(whereSql, [userComd]);
+    }
+
+    const { data, meta } = paginate(allApps, query.page, query.limit);
     return ResponseHelper.success(200, 'Rejected applications', data, meta);
+
   } catch (err) {
     return ResponseHelper.error(500, 'Failed to list rejected applications', err.message);
   }

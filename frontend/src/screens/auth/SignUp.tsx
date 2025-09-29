@@ -5,7 +5,7 @@ import { unwrapResult } from "@reduxjs/toolkit";
 // import ReCAPTCHA from "react-google-recaptcha";
 import FormInput from "../../components/form/FormInput";
 import FormSelect from "../../components/form/FormSelect";
-import bgimg from "../../assets/Picture7.jpg";
+import bgimg from "../../assets/Picture7.webp";
 import {  roleOptions,rank } from "../../data/options";
 import { SignUpSchema } from "../../validations/validations";
 import { reqToSignUp } from "../../reduxToolkit/services/auth/authService";

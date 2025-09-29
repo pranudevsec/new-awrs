@@ -30,7 +30,6 @@ const SidebarMenu = ({ onToggleCollapse }: SidebarMenuProps) => {
   const isMember = user.is_member ?? false;
   const cw2_type = user.cw2_type?.toLowerCase() ?? "";
 
-  const [sidebarClarificationUnits, setSidebarClarificationUnits] = useState<any[]>([]);
   const [isCollapsed, setIsCollapsed] = useState(false);
 
   useEffect(() => {
@@ -40,10 +39,7 @@ const SidebarMenu = ({ onToggleCollapse }: SidebarMenuProps) => {
   useEffect(() => {
     if (!userRole) return;
     const fetchUnits = async (url: string) => {
-      const res = await Axios.get(url);
-      if (res.data && Array.isArray(res.data.data)) {
-        setSidebarClarificationUnits(res.data.data);
-      }
+      await Axios.get(url);
     };
     if (userRole.trim() === "unit") {
       dispatch(getClarifications({ awardType: "", search: "", page: 1, limit: 1000 }));

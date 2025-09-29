@@ -793,7 +793,6 @@ const AcceptedApplicationsList = () => {
                       //         }
                       //         await handleAddsignature("approved", unit);
                       //       } catch (error) {
-                      //         console.log("error ->", error)
                       //         toast.error("Error while approving the application.");
                       //       }
                       //     }}

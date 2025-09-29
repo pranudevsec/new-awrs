@@ -47,7 +47,7 @@ export interface ProfileUser {
   rank: string;
   user_role: string;
   cw2_type: string;
-  is_special_unit: boolean;
+    is_special_unit: boolean;
   is_member?: boolean;
   is_officer?: boolean;
   officer_id?: string | number | null;

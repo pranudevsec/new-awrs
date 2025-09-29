@@ -582,7 +582,7 @@ const handleExportPDF = async () => {
                       </p>
                     </td>
                     <td style={{ width: 150, minWidth: 150, maxWidth: 150 }}>
-                      <p className="fw-4">{approverRole}</p>
+                      <p className="fw-4">{approverRole?.replace(/_/g," ")}</p>
                     </td>
                     <td style={{ width: 200, minWidth: 200, maxWidth: 200 }}>
                       <p className="fw-4">

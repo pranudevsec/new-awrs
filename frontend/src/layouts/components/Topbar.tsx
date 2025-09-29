@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom';
-import logo from '../../assets/logo.png';
-import dgis from '../../assets/dgislogo.png';
+import logo from '../../assets/logo.webp';
+import dgis from '../../assets/dgislogo.webp';
 
 const Topbar = () => {
   return (
