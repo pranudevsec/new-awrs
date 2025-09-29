@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
 import Breadcrumb from "../../../components/ui/breadcrumb/Breadcrumb";
@@ -20,6 +20,7 @@ import {
   fetchSubordinates,
   updateApplication
 } from "../../../reduxToolkit/services/application/applicationService";
+import { useDebounce } from "../../../hooks/useDebounce";
 
 declare module "jspdf" {
   interface jsPDF {
@@ -163,6 +164,12 @@ const AcceptedApplicationsList = () => {
       return;
     }
 
+    // Validate priority range (1-1000)
+    if (priorityPoints < 1 || priorityPoints > 1000) {
+      toast.error("Priority must be between 1 and 1000");
+      return;
+    }
+
     const body = {
       type: unitDetail?.type ?? "citation",
       application_id: unitDetail?.id ?? 0,
@@ -178,6 +185,9 @@ const AcceptedApplicationsList = () => {
       toast.error("Failed to update priority");
     }
   };
+
+  // Debounced version of handlePriorityChange
+  const debouncedHandlePriorityChange = useDebounce(handlePriorityChange, 1000);
 
   const handleBulkApprove = async () => {
     const incompleteUnits = units.filter((unit) => {
@@ -717,27 +727,22 @@ const AcceptedApplicationsList = () => {
 
 <td style={{ width: 200, minWidth: 200, maxWidth: 200 }}>
   <input
-    type="text"
+    type="number"
     className="form-control"
-    placeholder="Enter priority"
+    placeholder="Enter priority (1-1000)"
     autoComplete="off"
+    min="1"
+    max="1000"
     value={priorityValues[String(unit.id)]?.[unit.type] ?? ""}
     onChange={(e) => {
       const value = e.target.value;
 
-      // Count how many '0' digits are in the value
-      const zeroCount = (value.match(/0/g) || []).length;
-
-      if (value === "0") {
-        toast.error("Priority cannot be 0");
+      // Only allow numbers
+      if (value && !/^\d+$/.test(value)) {
         return;
       }
 
-      if (zeroCount > 1) {
-        toast.error("Priority cannot contain more than one zero");
-        return;
-      }
-
+      // Update local state immediately for UI responsiveness
       setPriorityValues((prev) => ({
         ...prev,
         [String(unit.id)]: {
@@ -746,7 +751,13 @@ const AcceptedApplicationsList = () => {
         },
       }));
 
-      handlePriorityChange(unit, value);
+      // Only call debounced function if value is not empty and is a valid number
+      if (value && !isNaN(Number(value))) {
+        const numValue = Number(value);
+        if (numValue >= 1 && numValue <= 1000) {
+          debouncedHandlePriorityChange(unit, value);
+        }
+      }
     }}
   />
 </td>

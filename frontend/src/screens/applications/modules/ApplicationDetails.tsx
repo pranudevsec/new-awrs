@@ -550,6 +550,12 @@ const ApplicationDetails = () => {
       return;
     }
 
+    // Validate priority range (1-1000)
+    if (priorityPoints < 1 || priorityPoints > 1000) {
+      toast.error("Priority must be between 1 and 1000");
+      return;
+    }
+
     const body = {
       type: unitDetail?.type ?? "citation",
       application_id: unitDetail?.id ?? 0,
@@ -564,6 +570,9 @@ const ApplicationDetails = () => {
       toast.error("Failed to update priority");
     }
   };
+
+  // Debounced version of handlePriorityChange
+  const debouncedHandlePriorityChange = useDebounce(handlePriorityChange, 1000);
 
   const debouncedHandleSaveComment = useDebounce(handleSaveComment, 600);
 
@@ -1758,11 +1767,27 @@ const handleDownloadPDF = () => {
                       className="form-control"
                       name="priority"
                       id="priority"
+                      min="1"
+                      max="1000"
+                      placeholder="Enter priority (1-1000)"
                       value={priority}
                       onChange={(e) => {
                         const value = e.target.value;
+                        
+                        // Only allow numbers
+                        if (value && !/^\d+$/.test(value)) {
+                          return;
+                        }
+                        
                         setPriority(value);
-                        handlePriorityChange(value);
+                        
+                        // Only call debounced function if value is not empty and is a valid number
+                        if (value && !isNaN(Number(value))) {
+                          const numValue = Number(value);
+                          if (numValue >= 1 && numValue <= 1000) {
+                            debouncedHandlePriorityChange(value);
+                          }
+                        }
                       }}
                     />
                     {priorityError && <p className="error-text">{priorityError}</p>}

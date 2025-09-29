@@ -22,6 +22,7 @@ import Axios, { baseURL } from "../../../reduxToolkit/helper/axios";
 import { resetAppreciationState } from "../../../reduxToolkit/slices/appreciation/appreciationSlice";
 import { checkUnitProfileFields } from "../../../reduxToolkit/services/utils/utilities";
 import { getProfile } from "../../../reduxToolkit/services/auth/authService";
+import { downloadDocumentWithWatermark } from "../../../utils/documentUtils";
 
 const DRAFT_STORAGE_KEY = "applyAppreciationDraft";
 const DRAFT_FILE_UPLOAD_KEY = "applyAppreciationUploadedDocsDraft";
@@ -39,12 +40,14 @@ type UploadedFileListProps = {
   files: string[];
   paramId: number;
   onRemove: (paramId: number, index: number) => void;
+  onDownload: (documentUrl: any, fileName: string) => void;
 };
 
 const UploadedFileList = ({
   files,
   paramId,
   onRemove,
+  onDownload,
 }: UploadedFileListProps) => {
   return (
     <div
@@ -66,14 +69,21 @@ const UploadedFileList = ({
             borderRadius: 4,
           }}
         >
-          <a
-            href={`${baseURL}${fileUrl}`}
-            target="_blank"
-            rel="noopener noreferrer"
-            style={{ flex: 1, color: "#1d4ed8", textDecoration: "underline" }}
+          <button
+            onClick={() => onDownload(fileUrl, fileUrl.split("/").pop() || "document")}
+            style={{ 
+              flex: 1, 
+              color: "#1d4ed8", 
+              textDecoration: "underline",
+              background: "none",
+              border: "none",
+              cursor: "pointer",
+              padding: 0,
+              textAlign: "left"
+            }}
           >
             {fileUrl.split("/").pop()}
-          </a>
+          </button>
           <button
             type="button"
             onClick={() => onRemove(paramId, idx)}
@@ -378,6 +388,21 @@ const ApplyAppreciation = () => {
     setUploadedFiles(updatedFiles);
     localStorage.setItem(DRAFT_FILE_UPLOAD_KEY, JSON.stringify(updatedFiles));
     toast.success("File removed");
+  };
+
+  // Function to handle document download with watermark
+  const handleDocumentDownload = async (documentUrl: any, fileName: string) => {
+    try {
+      await downloadDocumentWithWatermark(documentUrl, fileName, baseURL);
+      toast.success('Document downloaded with watermark');
+    } catch (error) {      
+      // Show more specific error message for missing files
+      if (error instanceof Error && error.message.includes('Document not found')) {
+        toast.error(`File not found: ${fileName}. The file may have been deleted or moved.`);
+      } else {
+        toast.error('Failed to load document');
+      }
+    }
   };
 
   useEffect(() => {
@@ -747,6 +772,7 @@ const ApplyAppreciation = () => {
                     files={uploadedFiles[param.param_id]}
                     paramId={param.param_id}
                     onRemove={handleRemoveUploadedFile}
+                    onDownload={handleDocumentDownload}
                   />
                 )}
                 <input

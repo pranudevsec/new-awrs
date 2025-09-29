@@ -1,6 +1,8 @@
 import Modal from "react-bootstrap/Modal";
 import { SVGICON } from "../constants/iconsList";
 import { baseURL } from "../reduxToolkit/helper/axios";
+import { downloadDocumentWithWatermark } from "../utils/documentUtils";
+import toast from "react-hot-toast";
 
 interface ClarificationModalProps {
   show: boolean;
@@ -15,6 +17,21 @@ const ReqClarificationModal: React.FC<ClarificationModalProps> = ({
   clarification_doc,
   clarification,
 }) => {
+  // Function to handle document download with watermark
+  const handleDocumentDownload = async (documentUrl: any, fileName: string) => {
+    try {
+      await downloadDocumentWithWatermark(documentUrl, fileName, baseURL);
+      toast.success('Document downloaded with watermark');
+    } catch (error) {      
+      // Show more specific error message for missing files
+      if (error instanceof Error && error.message.includes('Document not found')) {
+        toast.error(`File not found: ${fileName}. The file may have been deleted or moved.`);
+      } else {
+        toast.error('Failed to load document');
+      }
+    }
+  };
+
   return (
     <Modal
       centered
@@ -36,18 +53,22 @@ const ReqClarificationModal: React.FC<ClarificationModalProps> = ({
           <div className="mb-4">
             <h6 className="fw-6 mb-2">Clarification Document:</h6>
             <div className="p-3 bg-light rounded border">
-              <a
-                target="_blank"
-                href={`${baseURL}/${clarification_doc}`}
+              <button
+                onClick={() => handleDocumentDownload(clarification_doc, clarification_doc.split("/").pop() || "document")}
                 className="fw-6 text-primary text-decoration-none"
                 style={{ 
                   wordBreak: 'break-all',
                   fontSize: '14px',
-                  lineHeight: '1.4'
+                  lineHeight: '1.4',
+                  background: "none",
+                  border: "none",
+                  cursor: "pointer",
+                  padding: 0,
+                  textAlign: "left"
                 }}
               >
                 {`${baseURL}/${clarification_doc}`}
-              </a>
+              </button>
             </div>
           </div>
         )}

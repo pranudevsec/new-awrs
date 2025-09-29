@@ -5,6 +5,8 @@ import { fetchApplicationUnitDetail } from "../../reduxToolkit/services/applicat
 import { baseURL } from "../../reduxToolkit/helper/axios";
 import Breadcrumb from "../../components/ui/breadcrumb/Breadcrumb";
 import GiveClarificationModal from "../../modals/GiveClarificationModal";
+import { downloadDocumentWithWatermark } from "../../utils/documentUtils";
+import toast from "react-hot-toast";
 
 const UnitClarificationDetail = () => {
   const dispatch = useAppDispatch();
@@ -61,6 +63,21 @@ const UnitClarificationDetail = () => {
         subheader: null,
         subsubheader: null,
       };
+    }
+  };
+
+  // Function to handle document download with watermark
+  const handleDocumentDownload = async (documentUrl: any, fileName: string) => {
+    try {
+      await downloadDocumentWithWatermark(documentUrl, fileName, baseURL);
+      toast.success('Document downloaded with watermark');
+    } catch (error) {      
+      // Show more specific error message for missing files
+      if (error instanceof Error && error.message.includes('Document not found')) {
+        toast.error(`File not found: ${fileName}. The file may have been deleted or moved.`);
+      } else {
+        toast.error('Failed to load document');
+      }
     }
   };
 
@@ -123,29 +140,35 @@ const UnitClarificationDetail = () => {
       </td>
       <td style={{ width: 200 }}>
         {param.upload ? (
-          <a
-            href={`${baseURL}${param.upload}`}
-            target="_blank"
-            rel="noopener noreferrer"
-            style={{ fontSize: 18 }}
+          <button
+            onClick={() => handleDocumentDownload(param.upload, param.upload.split("/").pop() || "document")}
+            style={{ 
+              fontSize: 14, 
+              wordBreak: "break-word",
+              background: "none",
+              border: "none",
+              color: "#1d4ed8",
+              textDecoration: "underline",
+              cursor: "pointer",
+              padding: 0,
+              textAlign: "left"
+            }}
           >
-            <span style={{ fontSize: 14, wordBreak: "break-word" }}>
-              {Array.isArray(param?.upload)
-                ? param.upload.map((filePath: any) => (
+            {Array.isArray(param?.upload)
+              ? param.upload.map((filePath: any) => (
+                <span key={filePath} style={{ display: "block" }}>
+                  {filePath.split("/").pop()}
+                </span>
+              ))
+              : param?.upload
+                ?.toString()
+                .split(",")
+                .map((filePath: any) => (
                   <span key={filePath} style={{ display: "block" }}>
-                    {filePath.split("/").pop()}
+                    {filePath.trim().split("/").pop()}
                   </span>
-                ))
-                : param?.upload
-                  ?.toString()
-                  .split(",")
-                  .map((filePath: any) => (
-                    <span key={filePath} style={{ display: "block" }}>
-                      {filePath.trim().split("/").pop()}
-                    </span>
-                  ))}
-            </span>
-          </a>
+                ))}
+          </button>
         ) : (
           "--"
         )}

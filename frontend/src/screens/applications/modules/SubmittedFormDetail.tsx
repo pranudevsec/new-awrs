@@ -22,6 +22,7 @@ import { baseURL } from "../../../reduxToolkit/helper/axios";
 import { useDebounce } from "../../../hooks/useDebounce";
 import { updateCitation } from "../../../reduxToolkit/services/citation/citationService";
 import { updateAppreciation } from "../../../reduxToolkit/services/appreciation/appreciationService";
+import { downloadDocumentWithWatermark } from "../../../utils/documentUtils";
 
 function areAllClarificationsResolved(unitDetail: any): boolean {
     const parameters = unitDetail?.fds?.parameters;
@@ -330,11 +331,32 @@ const SubmittedFormDetail = () => {
             .catch(() => { });
     };
 
+    // Function to handle document download with watermark
+    const handleDocumentDownload = async (documentUrl: any, fileName: string) => {
+        try {
+            await downloadDocumentWithWatermark(documentUrl, fileName, baseURL);
+            toast.success('Document downloaded with watermark');
+        } catch (error) {      
+            // Show more specific error message for missing files
+            if (error instanceof Error && error.message.includes('Document not found')) {
+                toast.error(`File not found: ${fileName}. The file may have been deleted or moved.`);
+            } else {
+                toast.error('Failed to load document');
+            }
+        }
+    };
+
     const handlePriorityChange = async (value: string) => {
         const priorityPoints = parseInt(value);
 
         if (isNaN(priorityPoints)) {
             toast.error("Please enter a valid number");
+            return;
+        }
+
+        // Validate priority range (1-1000)
+        if (priorityPoints < 1 || priorityPoints > 1000) {
+            toast.error("Priority must be between 1 and 1000");
             return;
         }
 
@@ -352,6 +374,9 @@ const SubmittedFormDetail = () => {
             toast.error("Failed to update priority");
         }
     };
+
+    // Debounced version of handlePriorityChange
+    const debouncedHandlePriorityChange = useDebounce(handlePriorityChange, 1000);
 
     const debouncedHandleSaveComment = useDebounce(handleSaveComment, 600);
 
@@ -468,21 +493,6 @@ const SubmittedFormDetail = () => {
         }
     };
 
-    const renderUploads = (upload: any) => {
-        let uploads: string[] = [];
-
-        if (Array.isArray(upload)) {
-            uploads = upload;
-        } else if (typeof upload === "string") {
-            uploads = upload.split(",");
-        }
-
-        return uploads.map((filePath: string) => (
-            <span key={filePath} style={{ display: "block" }}>
-                {filePath.trim().split("/").pop()}
-            </span>
-        ));
-    };
 
     const handleClarify = (id: number) => {
         dispatch(updateClarification({ id, clarification_status: "clarified" }))
@@ -557,16 +567,35 @@ const SubmittedFormDetail = () => {
 
                 <td style={{ width: 200 }}>
                     {param.upload && (
-                        <a
-                            href={`${baseURL}${param.upload}`}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            style={{ fontSize: 18 }}
-                        >
-                            <span style={{ fontSize: 14, wordBreak: "break-word" }}>
-                                {renderUploads(param.upload)}
-                            </span>
-                        </a>
+                        <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
+                            {(() => {
+                                let uploads: string[] = [];
+                                if (Array.isArray(param.upload)) {
+                                    uploads = param.upload;
+                                } else if (typeof param.upload === "string") {
+                                    uploads = param.upload.split(",");
+                                }
+                                return uploads.map((filePath: string) => (
+                                    <button
+                                        key={filePath}
+                                        onClick={() => handleDocumentDownload(filePath, filePath.split("/").pop() || "document")}
+                                        style={{ 
+                                            fontSize: 14, 
+                                            wordBreak: "break-word",
+                                            background: "none",
+                                            border: "none",
+                                            color: "#1d4ed8",
+                                            textDecoration: "underline",
+                                            cursor: "pointer",
+                                            padding: 0,
+                                            textAlign: "left"
+                                        }}
+                                    >
+                                        {filePath.split("/").pop()}
+                                    </button>
+                                ));
+                            })()}
+                        </div>
                     )}
                 </td>
 
@@ -1159,11 +1188,27 @@ const SubmittedFormDetail = () => {
                                         className="form-control"
                                         name="priority"
                                         id="priority"
+                                        min="1"
+                                        max="1000"
+                                        placeholder="Enter priority (1-1000)"
                                         value={priority}
                                         onChange={(e) => {
                                             const value = e.target.value;
+                                            
+                                            // Only allow numbers
+                                            if (value && !/^\d+$/.test(value)) {
+                                                return;
+                                            }
+                                            
                                             setPriority(value);
-                                            handlePriorityChange(value);
+                                            
+                                            // Only call debounced function if value is not empty and is a valid number
+                                            if (value && !isNaN(Number(value))) {
+                                                const numValue = Number(value);
+                                                if (numValue >= 1 && numValue <= 1000) {
+                                                    debouncedHandlePriorityChange(value);
+                                                }
+                                            }
                                         }}
                                     />
                                 </div>

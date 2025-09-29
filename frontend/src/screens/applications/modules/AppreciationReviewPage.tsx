@@ -14,6 +14,7 @@ import { resetCitationState } from "../../../reduxToolkit/slices/citation/citati
 import type { Parameter } from "../../../reduxToolkit/services/parameter/parameterInterface";
 import { createAppreciation } from "../../../reduxToolkit/services/appreciation/appreciationService";
 import Axios, { baseURL } from "../../../reduxToolkit/helper/axios";
+import { downloadDocumentWithWatermark } from "../../../utils/documentUtils";
 
 const DRAFT_STORAGE_KEY = "applyAppreciationDraft";
 const DRAFT_FILE_UPLOAD_KEY = "applyAppreciationUploadedDocsDraft";
@@ -183,6 +184,21 @@ const AppreciationReviewPage = () => {
             toast.success(`Uploaded ${uploadedUrls.length} file(s)`);
         } else {
             input.value = "";
+        }
+    };
+
+    // Function to handle document download with watermark
+    const handleDocumentDownload = async (documentUrl: any, fileName: string) => {
+        try {
+            await downloadDocumentWithWatermark(documentUrl, fileName, baseURL);
+            toast.success('Document downloaded with watermark');
+        } catch (error) {      
+            // Show more specific error message for missing files
+            if (error instanceof Error && error.message.includes('Document not found')) {
+                toast.error(`File not found: ${fileName}. The file may have been deleted or moved.`);
+            } else {
+                toast.error('Failed to load document');
+            }
         }
     };
 
@@ -385,15 +401,23 @@ const AppreciationReviewPage = () => {
                                 {uploadedFiles[param.param_id]?.length > 0 && (
                                     <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
                                         {uploadedFiles[param.param_id].map((fileUrl) => (
-                                            <a
+                                            <button
                                                 key={fileUrl}
-                                                href={`${baseURL}${fileUrl}`}
-                                                target="_blank"
-                                                rel="noopener noreferrer"
-                                                style={{ fontSize: 14, wordBreak: 'break-all' }}
+                                                onClick={() => handleDocumentDownload(fileUrl, fileUrl.split("/").pop() || "document")}
+                                                style={{ 
+                                                    fontSize: 14, 
+                                                    wordBreak: 'break-all',
+                                                    background: "none",
+                                                    border: "none",
+                                                    color: "#1d4ed8",
+                                                    textDecoration: "underline",
+                                                    cursor: "pointer",
+                                                    padding: 0,
+                                                    textAlign: "left"
+                                                }}
                                             >
                                                 {fileUrl.split("/").pop()}
-                                            </a>
+                                            </button>
                                         ))}
                                     </div>
                                 )}
