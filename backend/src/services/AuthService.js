@@ -3,8 +3,8 @@ const jwt = require("jsonwebtoken");
 const config = require("../config/config");
 const ResponseHelper = require("../utils/responseHelper");
 const MSG = require("../utils/MSG");
-const db = require("../db/postgres-connection");
-const pool = require("../db/postgres-connection");
+// Using army-2 database connection for normalized structure
+const db = require("../db/army2-connection");
 
 exports.register = async ({ rank, name, user_role, username, password }) => {
   try {
@@ -21,22 +21,101 @@ exports.register = async ({ rank, name, user_role, username, password }) => {
       return ResponseHelper.error(400, MSG.USER_ALREADY_EXISTS);
     }
 
+    // Get or create role reference
+    let roleId;
+    const roleResult = await db.query(
+      "SELECT role_id FROM Role_Master WHERE role_name = $1",
+      [user_role]
+    );
+
+    if (roleResult.rows.length > 0) {
+      roleId = roleResult.rows[0].role_id;
+    } else {
+      // Create new role if it doesn't exist
+      const newRoleResult = await db.query(
+        "INSERT INTO Role_Master (role_name) VALUES ($1) RETURNING role_id",
+        [user_role]
+      );
+      roleId = newRoleResult.rows[0].role_id;
+    }
+
     const insertQuery = `
-      INSERT INTO User_tab (pers_no, rank, name, user_role, username, password)
+      INSERT INTO User_tab (pers_no, rank, name, username, password, role_id)
       VALUES ($1, $2, $3, $4, $5, $6)
-      RETURNING user_id, pers_no, rank, name, user_role, username, is_active, created_at
+      RETURNING user_id, pers_no, rank, name, username, is_active, created_at, role_id
     `;
 
     const result = await db.query(insertQuery, [
       pers_no,
       rank,
       name,
-      user_role,
       username,
-      hashedPassword
+      hashedPassword,
+      roleId
     ]);
 
-    return ResponseHelper.success(201, MSG.REGISTER_SUCCESS, result.rows[0]);
+    const userData = result.rows[0];
+    const userId = userData.user_id;
+
+    // Create entry in role-specific tables based on user_role
+    if (user_role === 'unit') {
+      // Create entry in Unit_tab
+      await db.query(`
+        INSERT INTO Unit_tab (name, unit_type, sos_no, location)
+        VALUES ($1, $2, $3, $4)
+      `, [
+        name, // name
+        'Regular', // unit_type
+        pers_no, // sos_no (using pers_no as sos_no)
+        'Not Specified' // location
+      ]);
+    } else if (user_role === 'brigade') {
+      // Create entry in Brigade_Master
+      await db.query(`
+        INSERT INTO Brigade_Master (brigade_name, brigade_code)
+        VALUES ($1, $2)
+      `, [
+        name, // brigade_name
+        pers_no.substring(0, 10) // brigade_code (truncated to 10 chars)
+      ]);
+    } else if (user_role === 'division') {
+      // Create entry in Division_Master
+      await db.query(`
+        INSERT INTO Division_Master (division_name, division_code)
+        VALUES ($1, $2)
+      `, [
+        name, // division_name
+        pers_no.substring(0, 10) // division_code (truncated to 10 chars)
+      ]);
+    } else if (user_role === 'corps') {
+      // Create entry in Corps_Master
+      await db.query(`
+        INSERT INTO Corps_Master (corps_name, corps_code)
+        VALUES ($1, $2)
+      `, [
+        name, // corps_name
+        pers_no.substring(0, 10) // corps_code (truncated to 10 chars)
+      ]);
+    } else if (user_role === 'command') {
+      // Create entry in Command_Master
+      await db.query(`
+        INSERT INTO Command_Master (command_name, command_code)
+        VALUES ($1, $2)
+      `, [
+        name, // command_name
+        pers_no.substring(0, 10) // command_code (truncated to 10 chars)
+      ]);
+    }
+
+    // Get role name for response
+    const roleNameResult = await db.query(
+      "SELECT role_name FROM Role_Master WHERE role_id = $1",
+      [roleId]
+    );
+
+    userData.user_role = roleNameResult.rows[0].role_name;
+
+    return ResponseHelper.success(201, MSG.REGISTER_SUCCESS, userData);
   } catch (error) {
     return ResponseHelper.error(500, MSG.INTERNAL_SERVER_ERROR, error.message);
   }
@@ -50,22 +129,28 @@ exports.login = async (credentials) => {
 
     let { user_role, username, password, is_member } = credentials;
 
-    let queryText = "SELECT * FROM User_tab WHERE user_role = $1 AND username = $2";
+    // Build query with role reference
+    let queryText = `
+      SELECT u.*, rm.role_name 
+      FROM User_tab u 
+      LEFT JOIN Role_Master rm ON u.role_id = rm.role_id 
+      WHERE rm.role_name = $1 AND u.username = $2
+    `;
     let queryParams = [user_role, username];
 
-    // 🚩 If user_role is 'special_unit', treat as 'unit' but check is_special_unit
+    // Handle special_unit case
     if (user_role === "special_unit") {
       user_role = "unit";
-      queryText += " AND is_special_unit = TRUE";
+      queryText += " AND u.is_special_unit = TRUE";
       queryParams = [user_role, username];
     }
 
-    // 🚩 If is_member is true, enforce is_member = TRUE
+    // Handle member case
     if (is_member === true) {
-      queryText += " AND is_member = TRUE";
+      queryText += " AND u.is_member = TRUE";
     }
 
-    // Step 1: Find user
+    // Find user with role information
     const userQuery = await db.query(queryText, queryParams);
 
     if (userQuery.rows.length === 0) {
@@ -74,29 +159,42 @@ exports.login = async (credentials) => {
 
     const user = userQuery.rows[0];
 
-    // 🚩 Double-check: If is_member is true but user.is_member is false, reject
+    // Double-check member status
     if (is_member === true && user.is_member !== true) {
       return ResponseHelper.error(401, "Unauthorized: User is not a member");
     }
 
-    // Step 2: Validate password
+    // Validate password
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) {
       return ResponseHelper.error(401, MSG.INVALID_CREDENTIALS);
     }
 
-    // Step 3: Generate JWT
+    // Generate JWT with role information
     const token = jwt.sign(
-      { id: user.user_id, username: user.username, user_role: user.user_role },
+      { 
+        id: user.user_id, 
+        username: user.username, 
+        user_role: user.role_name,
+        role_id: user.role_id
+      },
       config.jwtSecret,
       { expiresIn: "1d" }
     );
 
-    // Step 4: Respond
-    const { name, user_role: role, rank } = user;
-
+    // Return user data with role information
     return ResponseHelper.success(200, MSG.LOGIN_SUCCESS, {
-      user: { name, username, rank, user_role: role },
+      user: { 
+        name: user.name, 
+        username: user.username, 
+        rank: user.rank, 
+        user_role: user.role_name,
+        role_id: user.role_id,
+        unit_id: user.unit_id,
+        is_special_unit: user.is_special_unit,
+        is_member: user.is_member,
+        is_officer: user.is_officer
+      },
       token,
     });
   } catch (error) {
@@ -106,115 +204,39 @@ exports.login = async (credentials) => {
 
 exports.getProfile = async ({ user_id }) => {
   try {
-    const userId = user_id;
-
-    // Step 1: Fetch user details
-    const userResult = await db.query(
-      `
-      SELECT 
-        u.user_id, u.name AS user_name, u.username, u.pers_no, u.rank, u.user_role, u.cw2_type,
-        u.unit_id, u.is_special_unit,
-        u.is_officer,
-        u.is_member,
-        u.is_member_added, 
-        u.officer_id
-      FROM User_tab u
+    const query = `
+      SELECT u.*, rm.role_name 
+      FROM User_tab u 
+      LEFT JOIN Role_Master rm ON u.role_id = rm.role_id 
       WHERE u.user_id = $1
-      `,
-      [userId]
-    );
-
-    if (userResult.rows.length === 0) {
-      return ResponseHelper.error(404, MSG.USER_NOT_FOUND);
+    `;
+    
+    const result = await db.query(query, [user_id]);
+    
+    if (result.rows.length === 0) {
+      return ResponseHelper.error(404, "User not found");
     }
 
-    const user = userResult.rows[0];
-
-    let unitData = null;
-
-    // Step 2: Determine correct unit_id for fetching unit data
-    let effectiveUnitId = user.unit_id;
-
-    if (!effectiveUnitId && user.is_member && user.officer_id) {
-      const officerResult = await db.query(
-        `SELECT unit_id FROM User_tab WHERE user_id = $1`,
-        [user.officer_id]
-      );
-      if (officerResult.rows.length > 0) {
-        effectiveUnitId = officerResult.rows[0].unit_id;
-      }
-    }
-
-    // Step 3: Fetch unit details if unit_id found
-    if (effectiveUnitId) {
-      const unitResult = await db.query(
-        `
-        SELECT 
-          unit_id, sos_no, name, adm_channel, tech_channel, bde, div, corps, comd,
-          unit_type, matrix_unit, location, awards, members,start_month,
-    start_year,
-    end_month,
-    end_year
-        FROM Unit_tab
-        WHERE unit_id = $1
-        `,
-        [effectiveUnitId]
-      );
-
-      if (unitResult.rows.length > 0) {
-        const unit = unitResult.rows[0];
-        unitData = {
-          unit_id: unit.unit_id,
-          sos_no: unit.sos_no,
-          name: unit.name,
-          adm_channel: unit.adm_channel,
-          tech_channel: unit.tech_channel,
-          bde: unit.bde,
-          div: unit.div,
-          corps: unit.corps,
-          comd: unit.comd,
-          unit_type: unit.unit_type,
-          matrix_unit: unit.matrix_unit,
-          location: unit.location,
-          awards: unit.awards,
-          members: unit.members,
-          start_month: unit.start_month,
-          start_year: unit.start_year,
-          end_month: unit.end_month,
-          end_year: unit.end_year,
-        };
-      }
-    }
-
-    // Step 4: Fetch registered member's username if is_member_added is true
-    let memberUsername = null;
-    if (user.is_member_added) {
-      const memberResult = await db.query(
-        `SELECT username FROM User_tab WHERE officer_id = $1 LIMIT 1`,
-        [user.user_id]
-      );
-      if (memberResult.rows.length > 0) {
-        memberUsername = memberResult.rows[0].username;
-      }
-    }
-
-    // Step 5: Return structured response
-    return ResponseHelper.success(200, MSG.FOUND_SUCCESS, {
-      user: {
-        user_id: user.user_id,
-        name: user.user_name,
-        username: user.username,
-        pers_no: user.pers_no,
-        rank: user.rank,
-        user_role: user.user_role,
-        cw2_type: user.cw2_type,
-        is_special_unit: user.is_special_unit,
-        is_officer: user.is_officer,
-        is_member: user.is_member,
-        is_member_added: user.is_member_added,
-        member_username: memberUsername,
-      },
-      unit: unitData,
+    const user = result.rows[0];
+    
+    // Return profile with role information
+    return ResponseHelper.success(200, "Profile retrieved successfully", {
+      user_id: user.user_id,
+      pers_no: user.pers_no,
+      rank: user.rank,
+      name: user.name,
+      username: user.username,
+      user_role: user.role_name,
+      role_id: user.role_id,
+      unit_id: user.unit_id,
+      cw2_type: user.cw2_type,
+      is_special_unit: user.is_special_unit,
+      is_member: user.is_member,
+      is_officer: user.is_officer,
+      is_member_added: user.is_member_added,
+      is_active: user.is_active,
+      created_at: user.created_at,
+      updated_at: user.updated_at
     });
   } catch (error) {
     return ResponseHelper.error(500, MSG.INTERNAL_SERVER_ERROR, error.message);
