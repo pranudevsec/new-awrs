@@ -5,10 +5,17 @@ const ResponseHelper = require("../utils/responseHelper");
 exports.getFirstConfig = async () => {
   const client = await dbService.getClient();
   try {
-    const result = await client.query("SELECT * FROM Config_tab ORDER BY config_id ASC LIMIT 1");
-    return result.rows[0]
-      ? ResponseHelper.success(200, "Fetched config", result.rows[0])
-      : ResponseHelper.error(404, "Config not found");
+    const result = await client.query(
+      `SELECT * FROM Config_tab ORDER BY config_id ASC LIMIT 1`
+    );
+
+    if (!result.rows.length) {
+      return ResponseHelper.error(404, "Config not found");
+    }
+
+    return ResponseHelper.success(200, "Fetched config", result.rows[0]);
+  } catch (error) {
+    return ResponseHelper.error(500, "Failed to fetch config", error.message);
   } finally {
     client.release();
   }

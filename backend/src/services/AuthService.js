@@ -201,44 +201,86 @@ exports.login = async (credentials) => {
     return ResponseHelper.error(500, MSG.INTERNAL_SERVER_ERROR, error.message);
   }
 };
-
 exports.getProfile = async ({ user_id }) => {
   try {
-    const query = `
+    const userQuery = `
       SELECT u.*, rm.role_name 
-      FROM User_tab u 
-      LEFT JOIN Role_Master rm ON u.role_id = rm.role_id 
+      FROM user_tab u 
+      LEFT JOIN role_master rm ON u.role_id = rm.role_id 
       WHERE u.user_id = $1
     `;
-    
-    const result = await db.query(query, [user_id]);
-    
-    if (result.rows.length === 0) {
+    const userResult = await db.query(userQuery, [user_id]);
+
+    if (userResult.rows.length === 0) {
       return ResponseHelper.error(404, "User not found");
     }
 
-    const user = result.rows[0];
-    
-    // Return profile with role information
-    return ResponseHelper.success(200, "Profile retrieved successfully", {
-      user_id: user.user_id,
-      pers_no: user.pers_no,
-      rank: user.rank,
-      name: user.name,
-      username: user.username,
-      user_role: user.role_name,
-      role_id: user.role_id,
-      unit_id: user.unit_id,
-      cw2_type: user.cw2_type,
-      is_special_unit: user.is_special_unit,
-      is_member: user.is_member,
-      is_officer: user.is_officer,
-      is_member_added: user.is_member_added,
-      is_active: user.is_active,
-      created_at: user.created_at,
-      updated_at: user.updated_at
+    const user = userResult.rows[0];
+
+    let unit = null;
+    if (user.unit_id) {
+      const unitQuery = `
+        SELECT u.*, 
+               b.brigade_name AS bde,
+               d.division_name AS div,
+               c.corps_name AS corps,
+               cm.command_name AS comd
+        FROM unit_tab u
+        LEFT JOIN brigade_master b ON u.brigade_id = b.brigade_id
+        LEFT JOIN division_master d ON u.division_id = d.division_id
+        LEFT JOIN corps_master c ON u.corps_id = c.corps_id
+        LEFT JOIN command_master cm ON u.command_id = cm.command_id
+        WHERE u.unit_id = $1
+      `;
+      const unitResult = await db.query(unitQuery, [user.unit_id]);
+      if (unitResult.rows.length > 0) {
+        unit = unitResult.rows[0];
+      }
+    }
+
+    return ResponseHelper.success(200, "Successfully found.", {
+      user: {
+        user_id: user.user_id,
+        name: user.name,
+        username: user.username,
+        pers_no: user.pers_no,
+        rank: user.rank,
+        user_role: user.role_name,
+        cw2_type: user.cw2_type,
+        is_special_unit: user.is_special_unit,
+        is_officer: user.is_officer,
+        is_member: user.is_member,
+        is_member_added: user.is_member_added,
+        member_username: null,
+      },
+      unit: unit
+        ? {
+            unit_id: unit.unit_id,
+            sos_no: unit.sos_no,
+            name: unit.name,
+            adm_channel: unit.adm_channel,
+            tech_channel: unit.tech_channel,
+            bde: unit.bde,
+            div: unit.div,
+            corps: unit.corps,
+            comd: unit.comd,
+            unit_type: unit.unit_type,
+            matrix_unit: unit.matrix_unit,
+            location: unit.location,
+            awards: unit.awards || [],
+            members: unit.members || [],
+            start_month: unit.start_month || "",
+            start_year: unit.start_year || "",
+            end_month: unit.end_month || "",
+            end_year: unit.end_year || "",
+          }
+        : null,
     });
   } catch (error) {
-    return ResponseHelper.error(500, MSG.INTERNAL_SERVER_ERROR, error.message);
+    return ResponseHelper.error(
+      500,
+      "Internal server error",
+      error.message
+    );
   }
 };

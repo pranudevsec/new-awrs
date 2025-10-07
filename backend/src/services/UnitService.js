@@ -112,10 +112,29 @@ exports.createOrUpdateUnitForUser = async (userId, data, user) => {
   try {
     await client.query("BEGIN");
 
-    const { memberUsername, memberPassword } = data;
+    const {
+      name,
+      adm_channel,
+      tech_channel,
+      unit_type,
+      matrix_unit,
+      location,
+      awards,
+      start_month,
+      start_year,
+      end_month,
+      end_year,
+      bde,
+      div,
+      corps,
+      comd,
+      memberUsername,
+      memberPassword,
+    } = data;
 
+    // 1. Create member user if credentials are provided
     if (memberUsername && memberPassword) {
-      const result = await createMemberUser(
+      const memberResult = await createMemberUser(
         client,
         user,
         memberUsername,
@@ -125,25 +144,109 @@ exports.createOrUpdateUnitForUser = async (userId, data, user) => {
       return ResponseHelper.success(
         200,
         "Member user created successfully",
-        result
+        memberResult
       );
     }
 
+    // 2. Map human-readable names to IDs for foreign keys (insert if not exists)
+    const getOrCreateId = async (table, column, value, idCol) => {
+      if (!value) return null;
+      // Try to fetch existing
+      let res = await client.query(
+        `SELECT ${idCol} FROM ${table} WHERE ${column} = $1 LIMIT 1`,
+        [value]
+      );
+      if (res.rows.length) return res.rows[0][idCol];
+      // Insert new if not exists
+      res = await client.query(
+        `INSERT INTO ${table} (${column}) VALUES ($1) RETURNING ${idCol}`,
+        [value]
+      );
+      return res.rows[0][idCol];
+    };
+
+    const brigade_id = await getOrCreateId("brigade_master", "brigade_name", bde, "brigade_id");
+    const division_id = await getOrCreateId("division_master", "division_name", div, "division_id");
+    const corps_id = await getOrCreateId("corps_master", "corps_name", corps, "corps_id");
+    let command_id = null;
+    if (comd) {
+      const res = await client.query(
+        `SELECT command_id FROM command_master WHERE command_name = $1 LIMIT 1`,
+        [comd]
+      );
+      if (res.rows.length) command_id = res.rows[0].command_id;
+    }
+
+    // 3. Check if user already has a unit
     const currentUnitId = await getCurrentUnitId(client, userId);
     let unitResult;
 
+    const values = [
+      name,
+      adm_channel || "",
+      tech_channel || "",
+      unit_type || "",
+      matrix_unit || "",
+      location || "",
+      awards && Array.isArray(awards) ? JSON.stringify(awards) : "[]",
+      start_month || "",
+      start_year || "",
+      end_month || "",
+      end_year || "",
+      brigade_id,
+      division_id,
+      corps_id,
+      command_id,
+    ];
+
     if (!currentUnitId) {
-      unitResult = await createUnitAndLinkToUser(client, data, userId);
+      // Create new unit
+      const insertQuery = `
+        INSERT INTO unit_tab 
+          (name, adm_channel, tech_channel, unit_type, matrix_unit, location, awards,
+           start_month, start_year, end_month, end_year,
+           brigade_id, division_id, corps_id, command_id)
+        VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15)
+        RETURNING *
+      `;
+      const res = await client.query(insertQuery, values);
+      unitResult = res.rows[0];
+
+      // Link new unit to user
+      await client.query(
+        `UPDATE user_tab SET unit_id = $1 WHERE user_id = $2`,
+        [unitResult.unit_id, userId]
+      );
     } else {
-      unitResult = await updateUnitDetails(client, currentUnitId, data);
+      // Update existing unit
+      const updateQuery = `
+        UPDATE unit_tab
+        SET 
+          name = $1,
+          adm_channel = $2,
+          tech_channel = $3,
+          unit_type = $4,
+          matrix_unit = $5,
+          location = $6,
+          awards = $7,
+          start_month = $8,
+          start_year = $9,
+          end_month = $10,
+          end_year = $11,
+          brigade_id = $12,
+          division_id = $13,
+          corps_id = $14,
+          command_id = $15
+        WHERE unit_id = $16
+        RETURNING *
+      `;
+      values.push(currentUnitId);
+      const res = await client.query(updateQuery, values);
+      unitResult = res.rows[0];
     }
 
     await client.query("COMMIT");
-    return ResponseHelper.success(
-      200,
-      "Unit processed successfully",
-      unitResult
-    );
+    return ResponseHelper.success(200, "Unit processed successfully", unitResult);
   } catch (error) {
     await client.query("ROLLBACK");
     return ResponseHelper.error(
@@ -155,6 +258,7 @@ exports.createOrUpdateUnitForUser = async (userId, data, user) => {
     client.release();
   }
 };
+
 
 // START HELPER OF createOrUpdateUnitForUser
 async function createMemberUser(client, user, username, password) {

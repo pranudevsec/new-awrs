@@ -17,7 +17,7 @@ exports.createParameter = async (data) => {
       weightage,
       param_sequence,
       param_mark,
-      category
+      category,
     } = data;
 
     const result = await client.query(
@@ -38,7 +38,7 @@ exports.createParameter = async (data) => {
         weightage,
         param_sequence,
         param_mark,
-        category
+        category,
       ]
     );
 
@@ -59,7 +59,7 @@ exports.getAllParameters = async (query) => {
       comd,
       unit_type,
       page = 1,
-      limit = 10
+      limit = 10,
     } = query;
 
     const pageInt = parseInt(page);
@@ -73,41 +73,57 @@ exports.getAllParameters = async (query) => {
     // awardType filter
     if (awardType) {
       values.push(awardType);
-      filters.push(`award_type = $${values.length}`);
+      filters.push(`pm.award_type = $${values.length}`);
     }
 
-    // comd filter
     if (comd) {
-      values.push(comd);
-      filters.push(`comd = $${values.length}`);
+      const cmdRes = await client.query(
+        `SELECT command_id FROM command_master WHERE command_name = $1 LIMIT 1`,
+        [comd]
+      );
+      if (cmdRes.rows.length) {
+        const commandId = cmdRes.rows[0].command_id;
+        values.push(commandId);
+        filters.push(`pm.command_id = $${values.length}`);
+      } else {
+        return ResponseHelper.success(
+          200,
+          "Fetched parameters",
+          [],
+          { totalItems: 0, totalPages: 0, currentPage: pageInt, itemsPerPage: limitInt }
+        );
+      }
     }
 
     // name search filter
     if (search) {
       values.push(`%${search.toLowerCase()}%`);
-      filters.push(`LOWER(name) LIKE $${values.length}`);
+      filters.push(`LOWER(pm.name) LIKE $${values.length}`);
     }
 
-    // unit_type OR matrix_unit OR 'ALL' match arms_service
-if (unit_type) {
-  values.push(unit_type);
-  orConditions.push(`TRIM(LOWER(arms_service)) = TRIM(LOWER($${values.length}))`);
-}
+    if (unit_type) {
+      values.push(unit_type);
+      orConditions.push(
+        `TRIM(LOWER(asm.arms_service_name)) = TRIM(LOWER($${values.length}))`
+      );
+    }
 
-if (matrix_unit) {
-  const units = matrix_unit
-    .split(',')
-    .map(u => u.trim())
-    .filter(Boolean);
+    if (matrix_unit) {
+      const units = matrix_unit
+        .split(",")
+        .map((u) => u.trim())
+        .filter(Boolean);
 
-  units.forEach(unit => {
-    values.push(unit);
-    orConditions.push(`TRIM(LOWER(arms_service)) = TRIM(LOWER($${values.length}))`);
-  });
-}
+      units.forEach((unit) => {
+        values.push(unit);
+        orConditions.push(
+          `TRIM(LOWER(asm.arms_service_name)) = TRIM(LOWER($${values.length}))`
+        );
+      });
+    }
 
-// Add arms_service = 'ALL'
-orConditions.push(`TRIM(LOWER(arms_service)) = 'all'`);
+    // Add arms_service_name = 'ALL'
+    orConditions.push(`TRIM(LOWER(asm.arms_service_name)) = 'all'`);
 
     if (orConditions.length > 0) {
       filters.push(`(${orConditions.join(" OR ")})`);
@@ -116,15 +132,24 @@ orConditions.push(`TRIM(LOWER(arms_service)) = 'all'`);
     const whereClause = filters.length ? `WHERE ${filters.join(" AND ")}` : "";
 
     // Count query
-    const countQuery = `SELECT COUNT(*) FROM Parameter_Master ${whereClause}`;
+    const countQuery = `
+      SELECT COUNT(*) 
+      FROM parameter_master pm
+      LEFT JOIN arms_service_master asm
+      ON pm.arms_service_id = asm.arms_service_id
+      ${whereClause}
+    `;
     const countResult = await client.query(countQuery, values);
     const totalItems = parseInt(countResult.rows[0].count);
 
     // Data query
     const dataQuery = `
-      SELECT * FROM Parameter_Master 
+      SELECT pm.*, asm.arms_service_name 
+      FROM parameter_master pm
+      LEFT JOIN arms_service_master asm
+      ON pm.arms_service_id = asm.arms_service_id
       ${whereClause}
-      ORDER BY param_id DESC 
+      ORDER BY pm.param_id DESC
       LIMIT $${values.length + 1} OFFSET $${values.length + 2}
     `;
     values.push(limitInt, offset);
@@ -137,7 +162,12 @@ orConditions.push(`TRIM(LOWER(arms_service)) = 'all'`);
       itemsPerPage: limitInt,
     };
 
-    return ResponseHelper.success(200, "Fetched parameters", dataResult.rows, pagination);
+    return ResponseHelper.success(
+      200,
+      "Fetched parameters",
+      dataResult.rows,
+      pagination
+    );
   } catch (err) {
     return ResponseHelper.error(500, "Failed to fetch parameters", err.message);
   } finally {
@@ -163,35 +193,46 @@ exports.getParameterById = async (id) => {
 
 // Update Parameter
 exports.updateParameter = async (id, data) => {
-    const client = await dbService.getClient();
-    try {
-      const allowedFields = [
-        "comd", "award_type", "applicability", "name", "description",
-        "negative", "max_marks", "proof_reqd", "weightage", "param_sequence", "param_mark"
-      ];
-  
-      // Filter only provided fields
-      const keys = Object.keys(data).filter((key) => allowedFields.includes(key));
-      if (keys.length === 0) {
-        return ResponseHelper.error(400, "No valid fields provided to update");
-      }
-  
-      const values = keys.map((key) => data[key]);
-      const setClause = keys.map((key, idx) => `${key} = $${idx + 1}`).join(", ");
-  
-      const result = await client.query(
-        `UPDATE Parameter_Master SET ${setClause} WHERE param_id = $${keys.length + 1} RETURNING *`,
-        [...values, id]
-      );
-  
-      return result.rows[0]
-        ? ResponseHelper.success(200, "Parameter updated", result.rows[0])
-        : ResponseHelper.error(404, "Parameter not found");
-    } finally {
-      client.release();
+  const client = await dbService.getClient();
+  try {
+    const allowedFields = [
+      "comd",
+      "award_type",
+      "applicability",
+      "name",
+      "description",
+      "negative",
+      "max_marks",
+      "proof_reqd",
+      "weightage",
+      "param_sequence",
+      "param_mark",
+    ];
+
+    // Filter only provided fields
+    const keys = Object.keys(data).filter((key) => allowedFields.includes(key));
+    if (keys.length === 0) {
+      return ResponseHelper.error(400, "No valid fields provided to update");
     }
-  };  
-  
+
+    const values = keys.map((key) => data[key]);
+    const setClause = keys.map((key, idx) => `${key} = $${idx + 1}`).join(", ");
+
+    const result = await client.query(
+      `UPDATE Parameter_Master SET ${setClause} WHERE param_id = $${
+        keys.length + 1
+      } RETURNING *`,
+      [...values, id]
+    );
+
+    return result.rows[0]
+      ? ResponseHelper.success(200, "Parameter updated", result.rows[0])
+      : ResponseHelper.error(404, "Parameter not found");
+  } finally {
+    client.release();
+  }
+};
+
 // Delete Parameter
 exports.deleteParameter = async (id) => {
   const client = await dbService.getClient();
