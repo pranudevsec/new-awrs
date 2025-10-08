@@ -1,0 +1,44 @@
+ALTER TABLE appre_tab
+DROP COLUMN IF EXISTS appre_fds;
+
+ALTER TABLE fds
+ADD COLUMN corps_id INTEGER REFERENCES corps_master(corps_id) ON DELETE SET NULL;
+
+ALTER TABLE fds
+ADD COLUMN brigade_id INTEGER REFERENCES brigade_master(brigade_id) ON DELETE SET NULL;
+
+ALTER TABLE fds
+ADD COLUMN division_id INTEGER REFERENCES division_master(division_id) ON DELETE SET NULL;
+
+ALTER TABLE fds
+ADD COLUMN command_id INTEGER REFERENCES command_master(command_id) ON DELETE SET NULL;
+
+ALTER TABLE fds
+ADD COLUMN arms_service_id INTEGER REFERENCES arms_service_master(arms_service_id) ON DELETE SET NULL;
+
+-- Optional: Drop old VARCHAR columns after migration
+ALTER TABLE fds
+DROP COLUMN corps,
+DROP COLUMN brigade,
+DROP COLUMN division,
+DROP COLUMN command,
+DROP COLUMN arms_service;
+
+
+ALTER TABLE fds
+DROP COLUMN awards;
+----------------------------------------------
+TRUNCATE TABLE fds_awards CASCADE;
+TRUNCATE TABLE fds_parameters CASCADE;
+
+-- Then truncate parent tables
+TRUNCATE TABLE fds CASCADE;
+TRUNCATE TABLE citation_tab CASCADE;
+TRUNCATE TABLE appre_tab CASCADE;
+
+-- Reset serial sequences (optional)
+ALTER SEQUENCE fds_fds_id_seq RESTART WITH 1;
+ALTER SEQUENCE fds_awards_fds_award_id_seq RESTART WITH 1;
+ALTER SEQUENCE fds_parameters_fds_parameter_id_seq RESTART WITH 1;
+ALTER SEQUENCE citation_tab_citation_id_seq RESTART WITH 1;
+ALTER SEQUENCE appre_tab_appreciation_id_seq RESTART WITH 1;

@@ -2,6 +2,7 @@ const dbService = require("../utils/postgres/dbService");
 const ResponseHelper = require("../utils/responseHelper");
 const AuthService = require("../services/AuthService.js");
 const { application } = require("express");
+const { attachFdsToApplications, attachSingleFdsToApplication } = require("./commonService.js");
 
 exports.getAllApplicationsForUnit = async (user, query) => {
   const client = await dbService.getClient();
@@ -16,7 +17,6 @@ exports.getAllApplicationsForUnit = async (user, query) => {
         'citation' AS type,
         unit_id,
         date_init,
-        citation_fds AS fds,
         status_flag
       FROM Citation_tab
       WHERE unit_id = $1
@@ -31,7 +31,6 @@ exports.getAllApplicationsForUnit = async (user, query) => {
         'appreciation' AS type,
         unit_id,
         date_init,
-        appre_fds AS fds,
         status_flag
       FROM Appre_tab
       WHERE unit_id = $1
@@ -40,6 +39,7 @@ exports.getAllApplicationsForUnit = async (user, query) => {
     );
 
     let allApps = [...citations.rows, ...appreciations.rows];
+    allApps = await attachFdsToApplications(allApps);
 
     if (award_type) {
       allApps = allApps.filter(
@@ -400,7 +400,6 @@ exports.getSingleApplicationForUnit = async (
           c.unit_id,
           u.name AS unit_name,
           c.date_init,
-          c.citation_fds AS fds,
           c.last_approved_by_role,
           c.last_approved_at,
           c.status_flag,
@@ -427,7 +426,6 @@ exports.getSingleApplicationForUnit = async (
           a.unit_id,
           u.name AS unit_name,
           a.date_init,
-          a.appre_fds AS fds,
           a.last_approved_by_role,
           a.last_approved_at,
           a.status_flag,
@@ -451,7 +449,8 @@ exports.getSingleApplicationForUnit = async (
     }
 
     const res = await client.query(query, params);
-    const application = res.rows[0];
+    let  application = res.rows[0];
+    application=await attachSingleFdsToApplication(application);
     if (!application) {
       return ResponseHelper.error(404, "Application not found");
     }
@@ -496,6 +495,7 @@ exports.getSingleApplicationForUnit = async (
 
     // Attach and clean clarifications for all parameters
     const fds = application.fds;
+
     if (Array.isArray(fds.parameters)) {
       for (let i = 0; i < fds.parameters.length; i++) {
         const param = fds.parameters[i];

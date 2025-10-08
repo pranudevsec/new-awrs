@@ -1,144 +1,163 @@
-const db = require("../db/army2-connection");
+const dbService = require("../utils/postgres/dbService");
 const ResponseHelper = require("../utils/responseHelper");
 const AuthService = require("../services/AuthService.js");
+const { v4: uuidv4 } = require('uuid');
 
 exports.createCitation = async (data, user) => {
+  const client = await dbService.getClient();
+
   try {
     const { date_init, citation_fds, isDraft } = data;
-    let status_flag = isDraft === true ? "draft" : "in_review";
+    let status_flag = isDraft ? "draft" : "in_review";
 
     const profile = await AuthService.getProfile(user);
     const unit = profile?.data?.unit;
-    const isSpecialUnit = profile?.data?.user?.is_special_unit === true;
-    
+    const isSpecialUnit = profile?.data?.user?.is_special_unit;
+
     const requiredFields = isSpecialUnit
       ? ["name", "comd"]
       : ["name", "bde", "div", "corps", "comd"];
-    
-    const missingFields = requiredFields.filter((field) => !unit?.[field]);
-    
+    const missingFields = requiredFields.filter((f) => !unit?.[f]);
     if (missingFields.length > 0) {
-      throw new Error(
-        `Incomplete unit profile. Please update the following fields in unit settings: ${missingFields.join(", ")}`
-      );
+      throw new Error(`Incomplete unit profile. Update: ${missingFields.join(", ")}`);
     }
 
-    const { award_type, parameters } = citation_fds;
+    const getMasterId = async (table, nameField, value) => {
+      if (!value) return null;
+      const res = await client.query(
+        `SELECT ${table}_id FROM ${table}_master WHERE ${nameField} = $1 AND is_active = true LIMIT 1`,
+        [value]
+      );
+      return res.rows.length ? res.rows[0][`${table}_id`] : null;
+    };
 
-    const paramResult = await db.query(
-      `SELECT param_id, name, subsubcategory, subcategory, category, per_unit_mark, max_marks, negative
+    const corps_id = await getMasterId("corps", "corps_name", citation_fds.corps);
+    const brigade_id = await getMasterId("brigade", "brigade_name", citation_fds.brigade);
+    const division_id = await getMasterId("division", "division_name", citation_fds.division);
+    const command_id = await getMasterId("command", "command_name", citation_fds.command);
+    const arms_service_id = await getMasterId("arms_service", "arms_service_name", citation_fds.arms_service);
+
+    const paramResult = await client.query(
+      `SELECT param_id, per_unit_mark, max_marks
        FROM Parameter_Master
        WHERE award_type = $1`,
-      [award_type]
+      [citation_fds.award_type]
     );
 
-    const paramList = paramResult.rows;
+    const paramMap = {};
+    paramResult.rows.forEach(p => { paramMap[p.param_id] = p; });
 
-    const findMatchedParam = (paramId) => {
-      for (const p of paramList) {
-        if (p.param_id === paramId) {
-          return p;
-        }
+    let isshortlisted = false,
+        last_approved_at = null,
+        last_approved_by_role = null,
+        is_mo_approved = false,
+        mo_approved_at = null,
+        is_ol_approved = false,
+        ol_approved_at = null;
+
+    if (isSpecialUnit && !isDraft) {
+      isshortlisted = true;
+      last_approved_at = new Date().toISOString();
+      last_approved_by_role = "command";
+      status_flag = "approved";
+      is_mo_approved = true;
+      mo_approved_at = new Date().toISOString();
+      is_ol_approved = true;
+      ol_approved_at = new Date().toISOString();
+    }
+
+    const citationInsert = await client.query(
+      `INSERT INTO citation_tab (
+        unit_id, date_init, status_flag, isshortlisted,
+        last_approved_at, last_approved_by_role,
+        is_mo_approved, mo_approved_at, is_ol_approved, ol_approved_at
+      ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)
+      RETURNING citation_id`,
+      [
+        user.unit_id,
+        date_init,
+        status_flag,
+        isshortlisted,
+        last_approved_at,
+        last_approved_by_role,
+        is_mo_approved,
+        mo_approved_at,
+        is_ol_approved,
+        ol_approved_at,
+      ]
+    );
+
+    const applicationId = citationInsert.rows[0].citation_id;
+
+    const fdsInsert = await client.query(
+      `INSERT INTO fds (
+        application_id, corps_id, brigade_id, command_id, division_id, location, last_date,
+        unit_type, award_type, matrix_unit, unit_remarks, arms_service_id,
+        cycle_period, accepted_members, applicationGraceMarks, applicationPriority, comments
+      ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17)
+      RETURNING fds_id`,
+      [
+        applicationId,
+        corps_id,
+        brigade_id,
+        command_id,
+        division_id,
+        citation_fds.location,
+        citation_fds.last_date,
+        citation_fds.unit_type,
+        citation_fds.award_type,
+        citation_fds.matrix_unit,
+        citation_fds.unitRemarks,
+        arms_service_id,
+        citation_fds.cycle_period,
+        JSON.stringify(citation_fds.accepted_members || []),
+        JSON.stringify(citation_fds.applicationGraceMarks || []),
+        JSON.stringify(citation_fds.applicationPriority || []),
+        JSON.stringify(citation_fds.comments || []),
+      ]
+    );
+
+    const fdsId = fdsInsert.rows[0].fds_id;
+
+    if (Array.isArray(citation_fds.awards) && citation_fds.awards.length > 0) {
+      for (const award of citation_fds.awards) {
+        const awardId = award.award_id || uuidv4();
+        await client.query(
+          `INSERT INTO fds_awards (fds_id, award_id, award_type, award_year, award_title)
+           VALUES ($1,$2,$3,$4,$5)`,
+          [fdsId, awardId, award.award_type || null, award.award_year || null, award.award_title || null]
+        );
       }
-      return undefined;
-    };
-const updatedParameters = parameters.map((p) => {
-  const matchedParam = findMatchedParam(p.id);
-  if (!matchedParam) {
-    throw new Error(
-      `Parameter "${p.name}" not found in master for award_type "${award_type}"`
-    );
-  }
+    }
 
-  const calculatedMarks = p.count * matchedParam.per_unit_mark;
-  const cappedMarks = Math.min(calculatedMarks, matchedParam.max_marks);
+    if (Array.isArray(citation_fds.parameters) && citation_fds.parameters.length > 0) {
+      for (const param of citation_fds.parameters) {
+        if (!paramMap[param.id]) continue; 
+        const marks = Math.min(param.count * paramMap[param.id].per_unit_mark, paramMap[param.id].max_marks);
+        await client.query(
+          `INSERT INTO fds_parameters (fds_id, param_id, count, marks, upload)
+           VALUES ($1,$2,$3,$4,$5)
+           ON CONFLICT (fds_id, param_id) DO NOTHING`,
+          [fdsId, param.id, param.count || 0, marks, JSON.stringify(param.upload || [])]
+        );
+      }
+    }
 
-  return {
-    ...p,
-    name: matchedParam.name,
-    subcategory: matchedParam.subcategory,
-    subsubcategory: matchedParam.subsubcategory,
-    category: matchedParam.category,
-    marks: cappedMarks,
-    negative:  matchedParam.negative,
-    info: `1 ${matchedParam.name} = ${matchedParam.per_unit_mark} marks (Max ${matchedParam.max_marks} marks)`,
-  };
-});
-
-    citation_fds.parameters = updatedParameters;
-let isshortlisted = false;
-let last_approved_at = null;
-let last_approved_by_role = null;
-let is_mo_approved = false;
-let mo_approved_at = null;
-let is_ol_approved = false;
-let ol_approved_at = null;
-
-if (isSpecialUnit && !isDraft) {
-  isshortlisted = true;
-  last_approved_at = new Date().toISOString();
-  last_approved_by_role = 'command';
-  status_flag = "approved";
-  is_mo_approved = true;
-  mo_approved_at = new Date().toISOString();
-  is_ol_approved = true;
-  ol_approved_at = new Date().toISOString();
-}
-
-// Insert citation into Citation_tab
-const citationResult = await db.query(
-  `INSERT INTO Citation_tab 
-  (unit_id, date_init, citation_fds, status_flag, isshortlisted, last_approved_at, last_approved_by_role, 
-   is_mo_approved, mo_approved_at, is_ol_approved, ol_approved_at)
-   VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
-   RETURNING citation_id`,
-  [
-    user.unit_id,
-    date_init,
-    JSON.stringify(citation_fds),
-    status_flag,
-    isshortlisted,
-    last_approved_at,
-    last_approved_by_role,
-    is_mo_approved,
-    mo_approved_at,
-    is_ol_approved,
-    ol_approved_at
-  ]
-);
-
-const citationId = citationResult.rows[0].citation_id;
-
-// Insert parameters into Citation_Parameter table
-for (const param of parameters) {
-  const matchedParam = findMatchedParam(param.id);
-  if (matchedParam) {
-    const cappedMarks = Math.min(
-      param.count * matchedParam.per_unit_mark,
-      matchedParam.max_marks
+    await client.query(
+      `UPDATE citation_tab SET fds_id = $1 WHERE citation_id = $2`,
+      [fdsId, applicationId]
     );
 
-    await db.query(`
-      INSERT INTO Citation_Parameter (
-        citation_id, parameter_id, parameter_name, parameter_value,
-        parameter_count, parameter_marks, parameter_negative, status
-      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
-    `, [
-      citationId,
-      matchedParam.param_id,
-      matchedParam.name,
-      param.count, // parameter_value
-      param.count, // parameter_count
-      cappedMarks, // parameter_marks
-      matchedParam.negative, // parameter_negative
-      'pending' // status
-    ]);
-  }
-}
+    return ResponseHelper.success(201, "Citation created", {
+      ...citationInsert.rows[0],
+      fds_id: fdsId,
+      application_id: applicationId,
+    });
 
-    return ResponseHelper.success(201, "Citation created", { citation_id: citationId });
   } catch (err) {
     return ResponseHelper.error(400, err.message);
+  } finally {
+    client.release();
   }
 };
 

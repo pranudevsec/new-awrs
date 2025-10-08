@@ -1,159 +1,141 @@
-const db = require("../db/army2-connection");
+const dbService = require("../utils/postgres/dbService");
 const ResponseHelper = require("../utils/responseHelper");
 const AuthService = require("../services/AuthService.js");
-// Create Appreciation
+const { v4: uuidv4 } = require('uuid');
+
 exports.createAppre = async (data, user) => {
+  const client = await dbService.getClient();
   try {
-    const { date_init, appre_fds, isDraft ,is_vcoas} = data;
-    let status_flag = isDraft === true ? "draft" : "in_review";
+    const { date_init, appre_fds, isDraft, is_vcoas } = data;
+    let status_flag = isDraft ? "draft" : "in_review";
 
     const profile = await AuthService.getProfile(user);
     const unit = profile?.data?.unit;
-    const isSpecialUnit = profile?.data?.user?.is_special_unit === true;
-    
+    const isSpecialUnit = profile?.data?.user?.is_special_unit;
+
     const requiredFields = isSpecialUnit
       ? ["name", "comd"]
       : ["name", "bde", "div", "corps", "comd"];
-    
-    const missingFields = requiredFields.filter((field) => !unit?.[field]);
-    
+    const missingFields = requiredFields.filter((f) => !unit?.[f]);
     if (missingFields.length > 0) {
-      throw new Error(
-        `Incomplete unit profile. Please update the following fields in unit settings: ${missingFields.join(", ")}`
-      );
+      throw new Error(`Incomplete unit profile. Please update: ${missingFields.join(", ")}`);
     }
-    
-    const { award_type, parameters } = appre_fds;
 
-    const paramResult = await db.query(
-      `SELECT param_id, name, subsubcategory, subcategory, category, per_unit_mark, max_marks, negative
+    const getMasterId = async (table, nameField, value) => {
+      if (!value) return null;
+      const res = await client.query(
+        `SELECT ${table}_id FROM ${table}_master WHERE ${nameField} = $1 AND is_active = true LIMIT 1`,
+        [value]
+      );
+      return res.rows.length ? res.rows[0][`${table}_id`] : null;
+    };
+
+    const corps_id = await getMasterId("corps", "corps_name", appre_fds.corps);
+    const brigade_id = await getMasterId("brigade", "brigade_name", appre_fds.brigade);
+    const division_id = await getMasterId("division", "division_name", appre_fds.division);
+    const command_id = await getMasterId("command", "command_name", appre_fds.command);
+    const arms_service_id = await getMasterId("arms_service", "arms_service_name", appre_fds.arms_service);
+
+    const paramResult = await client.query(
+      `SELECT param_id, per_unit_mark, max_marks
        FROM Parameter_Master
        WHERE award_type = $1`,
-      [award_type]
+      [appre_fds.award_type]
     );
+    const paramMap = {};
+    paramResult.rows.forEach(p => { paramMap[p.param_id] = p; });
 
-    const paramList = paramResult.rows;
 
-    const findMatchedParam = (frontendName) => {
-      if (!frontendName) return undefined;
-      const cleanName = frontendName.trim().toLowerCase();
-    
-      for (const p of paramList) {
-        const fieldsToCheck = [p.name, p.subsubcategory, p.subcategory, p.category];
-        for (const field of fieldsToCheck) {
-          if ((field || "").trim().toLowerCase() === cleanName) {
-            return p;
-          }
-        }
-      }
-      return undefined;
-    };
-
-    const enrichedParams = parameters.map((p) => {
-      const matchedParam = findMatchedParam(p.name);
-      if (!matchedParam) {
-        throw new Error(
-          `Parameter "${p.name}" not found in master for award_type "${award_type}"`
-        );
-      }
-
-      const calculatedMarks = p.count * matchedParam.per_unit_mark;
-      const cappedMarks = Math.min(calculatedMarks, matchedParam.max_marks);
-
-      return {
-        ...p,
-        name: matchedParam.name,
-        subcategory: matchedParam.subcategory,
-        subsubcategory: matchedParam.subsubcategory,
-        category: matchedParam.category,
-        marks: cappedMarks,
-        negative: matchedParam.negative,
-        info: `1 ${matchedParam.name} = ${matchedParam.per_unit_mark} marks (Max ${matchedParam.max_marks} marks)`,
-      };
+    const enrichedParams = (appre_fds.parameters || []).map(p => {
+      if (!paramMap[p.id]) throw new Error(`Parameter "${p.name}" not found`);
+      const marks = Math.min(p.count * paramMap[p.id].per_unit_mark, paramMap[p.id].max_marks);
+      return { ...p, marks };
     });
 
-    const finalFds = {
-      ...appre_fds,
-      parameters: enrichedParams,
-    };
+    // Flags
+    let isshortlisted = false, last_approved_at = null, last_approved_by_role = null;
+    let is_mo_approved = false, mo_approved_at = null;
+    let is_ol_approved = false, ol_approved_at = null;
 
-let isshortlisted = false;
-let last_approved_at = null;
-let last_approved_by_role = null;
-let is_mo_approved = false;
-let mo_approved_at = null;
-let is_ol_approved = false;
-let ol_approved_at = null;
+    if (isSpecialUnit && !isDraft) {
+      isshortlisted = true;
+      last_approved_at = new Date().toISOString();
+      last_approved_by_role = 'command';
+      status_flag = "approved";
+      is_mo_approved = true; mo_approved_at = new Date().toISOString();
+      is_ol_approved = true; ol_approved_at = new Date().toISOString();
+    }
 
-if (isSpecialUnit && !isDraft) {
-  isshortlisted = true;
-  last_approved_at = new Date().toISOString();
-  last_approved_by_role = 'command';
-  status_flag = "approved";
-  is_mo_approved = true;
-  mo_approved_at = new Date().toISOString();
-  is_ol_approved = true;
-  ol_approved_at = new Date().toISOString();
-}
-let isVcoas = false;
-if (is_vcoas === true) {
-  isVcoas = true;
-}
-// Insert appreciation into Appre_tab
-const appreciationResult = await db.query(
-  `INSERT INTO Appre_tab 
-   (unit_id, date_init, appre_fds, status_flag, isshortlisted, last_approved_at, last_approved_by_role, 
-    is_mo_approved, mo_approved_at, is_ol_approved, ol_approved_at, is_vcoas)
-   VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
-   RETURNING appreciation_id`,
-  [
-    user.unit_id,
-    date_init,
-    JSON.stringify(finalFds),
-    status_flag,
-    isshortlisted,
-    last_approved_at,
-    last_approved_by_role,
-    is_mo_approved,
-    mo_approved_at,
-    is_ol_approved,
-    ol_approved_at,
-    isVcoas
-  ]
-);
-
-const appreciationId = appreciationResult.rows[0].appreciation_id;
-
-// Insert parameters into Appreciation_Parameter table
-for (const param of parameters) {
-  const matchedParam = findMatchedParam(param.name);
-  if (matchedParam) {
-    const cappedMarks = Math.min(
-      param.count * matchedParam.per_unit_mark,
-      matchedParam.max_marks
+    const appreInsert = await client.query(
+      `INSERT INTO appre_tab 
+       (unit_id, date_init, status_flag, isshortlisted, last_approved_at, last_approved_by_role,
+        is_mo_approved, mo_approved_at, is_ol_approved, ol_approved_at, is_vcoas)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11)
+       RETURNING appreciation_id`,
+      [
+        user.unit_id, date_init, status_flag, isshortlisted, last_approved_at, last_approved_by_role,
+        is_mo_approved, mo_approved_at, is_ol_approved, ol_approved_at, !!is_vcoas
+      ]
     );
 
-    await db.query(`
-      INSERT INTO Appreciation_Parameter (
-        appreciation_id, parameter_id, parameter_name, parameter_value,
-        parameter_count, parameter_marks, parameter_negative, status
-      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
-    `, [
-      appreciationId,
-      matchedParam.param_id,
-      matchedParam.name,
-      param.count, // parameter_value
-      param.count, // parameter_count
-      cappedMarks, // parameter_marks
-      matchedParam.negative, // parameter_negative
-      'pending' // status
-    ]);
-  }
-}
+    const applicationId = appreInsert.rows[0].appreciation_id;
 
-    return ResponseHelper.success(201, "Appreciation created", { appreciation_id: appreciationId });
+    const fdsInsert = await client.query(
+      `INSERT INTO fds (
+        application_id, corps_id, brigade_id, command_id, division_id, location, last_date,
+        unit_type, award_type, matrix_unit, unit_remarks, arms_service_id,
+        cycle_period, accepted_members, applicationGraceMarks, applicationPriority, comments
+      ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17)
+      RETURNING fds_id`,
+      [
+        applicationId, corps_id, brigade_id, command_id, division_id,
+        appre_fds.location, appre_fds.last_date, appre_fds.unit_type,
+        appre_fds.award_type, appre_fds.matrix_unit, appre_fds.unitRemarks,
+        arms_service_id, appre_fds.cycle_period,
+        JSON.stringify(appre_fds.accepted_members || []),
+        JSON.stringify(appre_fds.applicationGraceMarks || []),
+        JSON.stringify(appre_fds.applicationPriority || []),
+        JSON.stringify(appre_fds.comments || [])
+      ]
+    );
+
+    const fdsId = fdsInsert.rows[0].fds_id;
+
+    if (Array.isArray(appre_fds.awards) && appre_fds.awards.length > 0) {
+      for (const award of appre_fds.awards) {
+        const awardId = award.award_id || uuidv4();
+        await client.query(
+          `INSERT INTO fds_awards (fds_id, award_id, award_type, award_year, award_title)
+           VALUES ($1,$2,$3,$4,$5)`,
+          [fdsId, awardId, award.award_type || null, award.award_year || null, award.award_title || null]
+        );
+      }
+    }
+
+    for (const param of enrichedParams) {
+      await client.query(
+        `INSERT INTO fds_parameters (fds_id, param_id, count, marks, upload)
+         VALUES ($1,$2,$3,$4,$5)
+         ON CONFLICT (fds_id, param_id) DO NOTHING`,
+        [fdsId, param.id, param.count || 0, param.marks || 0, JSON.stringify(param.upload || [])]
+      );
+    }
+
+    await client.query(
+      `UPDATE appre_tab SET fds_id = $1 WHERE appreciation_id = $2`,
+      [fdsId, applicationId]
+    );
+
+    return ResponseHelper.success(201, "Appreciation created", {
+      ...appreInsert.rows[0],
+      fds_id: fdsId,
+      application_id: applicationId
+    });
+
   } catch (err) {
     return ResponseHelper.error(400, err.message);
+  } finally {
+    client.release();
   }
 };
 

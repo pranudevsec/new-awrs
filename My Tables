@@ -1,0 +1,83 @@
+CREATE TABLE fds (
+    fds_id SERIAL PRIMARY KEY,
+    application_id INTEGER NOT NULL,
+
+    -- Reference master tables
+    corps_id INTEGER REFERENCES corps_master(corps_id) ON DELETE SET NULL,
+    brigade_id INTEGER REFERENCES brigade_master(brigade_id) ON DELETE SET NULL,
+    division_id INTEGER REFERENCES division_master(division_id) ON DELETE SET NULL,
+    command_id INTEGER REFERENCES command_master(command_id) ON DELETE SET NULL,
+
+    location VARCHAR(255),
+    last_date DATE,
+    unit_type VARCHAR(100),
+    award_type VARCHAR(100),
+    matrix_unit VARCHAR(100),
+    unit_remarks TEXT,
+    arms_service_id INTEGER REFERENCES arms_service_master(arms_service_id) ON DELETE SET NULL,
+    cycle_period VARCHAR(100),
+
+    -- store complex data parts as JSON
+    parameters JSON,
+    accepted_members JSON,
+    applicationGraceMarks JSON,
+    applicationPriority JSON,
+    comments JSON,
+
+    created_at TIMESTAMP DEFAULT NOW(),
+    updated_at TIMESTAMP DEFAULT NOW()
+);
+
+CREATE TABLE fds_awards (
+    fds_award_id SERIAL PRIMARY KEY,
+    fds_id INTEGER NOT NULL REFERENCES fds(fds_id) ON DELETE CASCADE,
+    award_id UUID NOT NULL,
+    award_type VARCHAR(100),
+    award_year VARCHAR(10),
+    award_title VARCHAR(255),
+    created_at TIMESTAMP DEFAULT NOW(),
+    updated_at TIMESTAMP DEFAULT NOW()
+);
+CREATE TABLE fds_parameters (
+    fds_parameter_id SERIAL PRIMARY KEY,
+    fds_id INTEGER NOT NULL REFERENCES fds(fds_id) ON DELETE CASCADE,
+    param_id INTEGER NOT NULL,           -- Corresponds to parameter_master.param_id
+    count INTEGER NOT NULL DEFAULT 0,
+    marks INTEGER NOT NULL DEFAULT 0,
+    upload JSON,                         -- Store uploaded files as JSON array
+    created_at TIMESTAMP DEFAULT NOW(),
+    updated_at TIMESTAMP DEFAULT NOW(),
+    UNIQUE(fds_id, param_id)             -- Prevent duplicate entries for same parameter
+);
+
+ALTER TABLE citation_tab
+ADD COLUMN fds_id INTEGER;
+
+ALTER TABLE citation_tab
+ADD CONSTRAINT fk_citation_fds
+FOREIGN KEY (fds_id) REFERENCES fds(fds_id)
+ON DELETE SET NULL;
+
+CREATE INDEX idx_citation_fds_id ON citation_tab(fds_id);
+
+-- 1️⃣ Add fds_id column to appre_tab
+ALTER TABLE appre_tab
+ADD COLUMN fds_id INTEGER;
+
+-- 2️⃣ Add foreign key constraint to reference fds(fds_id)
+ALTER TABLE appre_tab
+ADD CONSTRAINT fk_appre_fds
+FOREIGN KEY (fds_id) REFERENCES fds(fds_id)
+ON DELETE SET NULL;
+
+-- 3️⃣ Create an index for faster lookups on fds_id
+CREATE INDEX idx_appre_fds_id ON appre_tab(fds_id);
+
+ 
+    -- store complex data parts as JSON
+    awards JSON,
+    parameters JSON,
+    accepted_members JSON,
+    applicationGraceMarks JSON,
+    applicationPriority JSON,
+    comments JSON,
