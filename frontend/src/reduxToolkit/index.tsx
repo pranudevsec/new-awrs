@@ -11,6 +11,7 @@ import applicationReducer from './slices/application/applicationSlice';
 import clarificationReducer from './slices/clarification/clarificationSlice';
 import commandPanelReducer from './slices/command-panel/commandPanelSlice';
 import brigadeReducer from './slices/command-panel/BrigadeSlice';
+import masterReducer from './slices/master/masterSlice';
 
 const getConfig = (key: string, whitelist: string[]) => {
     return {
@@ -29,7 +30,8 @@ const reducer = combineReducers({
     application: applicationReducer,
     clarification: clarificationReducer,
     commandPanel: commandPanelReducer,
-    brigade: brigadeReducer
+    brigade: brigadeReducer,
+    master: masterReducer
 });
 
 export const store = configureStore({

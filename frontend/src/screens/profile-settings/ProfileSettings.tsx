@@ -12,7 +12,8 @@ import FormInput from "../../components/form/FormInput";
 import type { UpdateUnitProfileRequest } from "../../reduxToolkit/services/auth/authInterface";
 import { useAppSelector, useAppDispatch } from "../../reduxToolkit/hooks";
 import { getProfile, reqToUpdateUnitProfile } from "../../reduxToolkit/services/auth/authService";
-import { unitOptions, brigadeOptions, divisionOptions, corpsOptions, commandOptions, hierarchicalStructure, unitTypeOptions, matrixUnitOptions, rank } from "../../data/options";
+import { hierarchicalStructure, unitTypeOptions, matrixUnitOptions, rank } from "../../data/options";
+import { useMasterData } from "../../hooks/useMasterData";
 
 interface Officer {
   id?: string;
@@ -39,6 +40,18 @@ const ProfileSettings = () => {
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
   const { profile } = useAppSelector((state) => state.admin);
+  
+  // Get master data from APIs
+  const {
+    brigadeOptions,
+    corpsOptions,
+    commandOptions,
+    divisionOptions,
+    armsServiceOptions,
+    roleOptions,
+    deploymentOptions,
+    unitOptions
+  } = useMasterData();
 
   const isMember = profile?.user?.is_member ?? false;
   const role = profile?.user?.user_role?.toLowerCase() ?? "";
@@ -200,6 +213,9 @@ const ProfileSettings = () => {
     division: divisionOptions,
     corps: corpsOptions,
     command: commandOptions,
+    arms_service: armsServiceOptions,
+    role: roleOptions,
+    deployment: deploymentOptions,
     unit_type: unitTypeOptions,
     matrix_unit: matrixUnitOptions,
   };

@@ -43,6 +43,7 @@ const ApplicationRoutes = require("./src/routes/ApplicationRoutes");
 const ClarificationRoutes = require("./src/routes/ClarificationRoutes");
 const DashboardRoutes = require("./src/routes/DashboardRoutes");
 const ChatbotRoutes = require("./src/routes/ChatbotRoutes");
+const MasterRoutes = require("./src/routes/MasterRoutes");
 
 // Use routes
 app.use("/api/auth", AuthRoutes);
@@ -55,6 +56,7 @@ app.use("/api/applications", ApplicationRoutes);
 app.use("/api/clarification", ClarificationRoutes);
 app.use("/api/dashboard", DashboardRoutes);
 app.use("/api/chatbot", ChatbotRoutes);
+app.use("/api/master", MasterRoutes);
 
 // Handle uncaught exceptions
 process.on("uncaughtException", (err) => {

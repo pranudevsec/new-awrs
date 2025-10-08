@@ -1,9 +1,8 @@
-const dbService = require("../utils/postgres/dbService");
+const db = require("../db/army2-connection");
 const ResponseHelper = require("../utils/responseHelper");
 const AuthService = require("../services/AuthService.js");
 
 exports.createCitation = async (data, user) => {
-  const client = await dbService.getClient();
   try {
     const { date_init, citation_fds, isDraft } = data;
     let status_flag = isDraft === true ? "draft" : "in_review";
@@ -26,8 +25,8 @@ exports.createCitation = async (data, user) => {
 
     const { award_type, parameters } = citation_fds;
 
-    const paramResult = await client.query(
-      `SELECT param_id, name, subsubcategory, subcategory, category, per_unit_mark, max_marks,negative
+    const paramResult = await db.query(
+      `SELECT param_id, name, subsubcategory, subcategory, category, per_unit_mark, max_marks, negative
        FROM Parameter_Master
        WHERE award_type = $1`,
       [award_type]
@@ -86,12 +85,13 @@ if (isSpecialUnit && !isDraft) {
   ol_approved_at = new Date().toISOString();
 }
 
-const result = await client.query(
+// Insert citation into Citation_tab
+const citationResult = await db.query(
   `INSERT INTO Citation_tab 
   (unit_id, date_init, citation_fds, status_flag, isshortlisted, last_approved_at, last_approved_by_role, 
    is_mo_approved, mo_approved_at, is_ol_approved, ol_approved_at)
    VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
-   RETURNING *`,
+   RETURNING citation_id`,
   [
     user.unit_id,
     date_init,
@@ -107,11 +107,38 @@ const result = await client.query(
   ]
 );
 
-    return ResponseHelper.success(201, "Citation created", result.rows[0]);
+const citationId = citationResult.rows[0].citation_id;
+
+// Insert parameters into Citation_Parameter table
+for (const param of parameters) {
+  const matchedParam = findMatchedParam(param.id);
+  if (matchedParam) {
+    const cappedMarks = Math.min(
+      param.count * matchedParam.per_unit_mark,
+      matchedParam.max_marks
+    );
+
+    await db.query(`
+      INSERT INTO Citation_Parameter (
+        citation_id, parameter_id, parameter_name, parameter_value,
+        parameter_count, parameter_marks, parameter_negative, status
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+    `, [
+      citationId,
+      matchedParam.param_id,
+      matchedParam.name,
+      param.count, // parameter_value
+      param.count, // parameter_count
+      cappedMarks, // parameter_marks
+      matchedParam.negative, // parameter_negative
+      'pending' // status
+    ]);
+  }
+}
+
+    return ResponseHelper.success(201, "Citation created", { citation_id: citationId });
   } catch (err) {
     return ResponseHelper.error(400, err.message);
-  } finally {
-    client.release();
   }
 };
 
