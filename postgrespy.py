@@ -4,10 +4,10 @@ from urllib.parse import quote_plus
 import json
 
 # Static configuration
-DB_HOST = "aws-0-ap-southeast-1.pooler.supabase.com"
+DB_HOST = "aws-1-ap-south-1.pooler.supabase.com"
 DB_PORT = "5432"
-DB_USER = "postgres.sdkchxdqfxjhuygnkkjb"
-DB_PASSWORD = "Ansh@4018"  # contains special char '@'
+DB_USER = "postgres.fwmcvptwobhoxcmiimnj"
+DB_PASSWORD = "xGPVdEFscC25TPKB"  # contains special char '@'
 DB_NAME = "postgres"
 
 # Excel file path

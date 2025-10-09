@@ -7,7 +7,7 @@ const army2Pool = new Pool({
   port: config.postgres.port,
   user: config.postgres.user,
   password: config.postgres.password,
-  database: "army-2", // Use army-2 database
+  database: config.postgres.database, // Use army-2 database
   ssl: config.postgres.ssl
 });
 
