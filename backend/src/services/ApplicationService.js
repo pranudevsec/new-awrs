@@ -2,7 +2,10 @@ const dbService = require("../utils/postgres/dbService");
 const ResponseHelper = require("../utils/responseHelper");
 const AuthService = require("../services/AuthService.js");
 const { application } = require("express");
-const { attachFdsToApplications, attachSingleFdsToApplication } = require("./commonService.js");
+const {
+  attachFdsToApplications,
+  attachSingleFdsToApplication,
+} = require("./commonService.js");
 
 exports.getAllApplicationsForUnit = async (user, query) => {
   const client = await dbService.getClient();
@@ -17,6 +20,7 @@ exports.getAllApplicationsForUnit = async (user, query) => {
         'citation' AS type,
         unit_id,
         date_init,
+        fds_id,
         status_flag
       FROM Citation_tab
       WHERE unit_id = $1
@@ -30,6 +34,7 @@ exports.getAllApplicationsForUnit = async (user, query) => {
         appreciation_id AS id,
         'appreciation' AS type,
         unit_id,
+       fds_id,
         date_init,
         status_flag
       FROM Appre_tab
@@ -40,7 +45,6 @@ exports.getAllApplicationsForUnit = async (user, query) => {
 
     let allApps = [...citations.rows, ...appreciations.rows];
     allApps = await attachFdsToApplications(allApps);
-
     if (award_type) {
       allApps = allApps.filter(
         (app) => app.fds?.award_type?.toLowerCase() === award_type.toLowerCase()
@@ -56,20 +60,48 @@ exports.getAllApplicationsForUnit = async (user, query) => {
       const searchLower = normalize(search);
       allApps = allApps.filter((app) => {
         const idMatch = app.id.toString().toLowerCase().includes(searchLower);
-        const cycleMatch = normalize(app.fds?.cycle_period || "").includes(searchLower);
-        
+        const cycleMatch = normalize(app.fds?.cycle_period || "").includes(
+          searchLower
+        );
+
         // Search in fds fields that actually exist
-        const awardTypeMatch = normalize(app.fds?.award_type || "").includes(searchLower);
-        const commandMatch = normalize(app.fds?.command || "").includes(searchLower);
-        const brigadeMatch = normalize(app.fds?.brigade || "").includes(searchLower);
-        const divisionMatch = normalize(app.fds?.division || "").includes(searchLower);
-        const corpsMatch = normalize(app.fds?.corps || "").includes(searchLower);
-        const unitTypeMatch = normalize(app.fds?.unit_type || "").includes(searchLower);
-        const matrixUnitMatch = normalize(app.fds?.matrix_unit || "").includes(searchLower);
-        const locationMatch = normalize(app.fds?.location || "").includes(searchLower);
-        
-        return idMatch || cycleMatch || awardTypeMatch || commandMatch || brigadeMatch || 
-               divisionMatch || corpsMatch || unitTypeMatch || matrixUnitMatch || locationMatch;
+        const awardTypeMatch = normalize(app.fds?.award_type || "").includes(
+          searchLower
+        );
+        const commandMatch = normalize(app.fds?.command || "").includes(
+          searchLower
+        );
+        const brigadeMatch = normalize(app.fds?.brigade || "").includes(
+          searchLower
+        );
+        const divisionMatch = normalize(app.fds?.division || "").includes(
+          searchLower
+        );
+        const corpsMatch = normalize(app.fds?.corps || "").includes(
+          searchLower
+        );
+        const unitTypeMatch = normalize(app.fds?.unit_type || "").includes(
+          searchLower
+        );
+        const matrixUnitMatch = normalize(app.fds?.matrix_unit || "").includes(
+          searchLower
+        );
+        const locationMatch = normalize(app.fds?.location || "").includes(
+          searchLower
+        );
+
+        return (
+          idMatch ||
+          cycleMatch ||
+          awardTypeMatch ||
+          commandMatch ||
+          brigadeMatch ||
+          divisionMatch ||
+          corpsMatch ||
+          unitTypeMatch ||
+          matrixUnitMatch ||
+          locationMatch
+        );
       });
     }
 
@@ -244,20 +276,48 @@ exports.getAllApplicationsForHQ = async (user, query) => {
       const searchLower = normalize(search);
       allApps = allApps.filter((app) => {
         const idMatch = app.id.toString().toLowerCase().includes(searchLower);
-        const cycleMatch = normalize(app.fds?.cycle_period || "").includes(searchLower);
-        
+        const cycleMatch = normalize(app.fds?.cycle_period || "").includes(
+          searchLower
+        );
+
         // Search in fds fields that actually exist
-        const awardTypeMatch = normalize(app.fds?.award_type || "").includes(searchLower);
-        const commandMatch = normalize(app.fds?.command || "").includes(searchLower);
-        const brigadeMatch = normalize(app.fds?.brigade || "").includes(searchLower);
-        const divisionMatch = normalize(app.fds?.division || "").includes(searchLower);
-        const corpsMatch = normalize(app.fds?.corps || "").includes(searchLower);
-        const unitTypeMatch = normalize(app.fds?.unit_type || "").includes(searchLower);
-        const matrixUnitMatch = normalize(app.fds?.matrix_unit || "").includes(searchLower);
-        const locationMatch = normalize(app.fds?.location || "").includes(searchLower);
-        
-        return idMatch || cycleMatch || awardTypeMatch || commandMatch || brigadeMatch || 
-               divisionMatch || corpsMatch || unitTypeMatch || matrixUnitMatch || locationMatch;
+        const awardTypeMatch = normalize(app.fds?.award_type || "").includes(
+          searchLower
+        );
+        const commandMatch = normalize(app.fds?.command || "").includes(
+          searchLower
+        );
+        const brigadeMatch = normalize(app.fds?.brigade || "").includes(
+          searchLower
+        );
+        const divisionMatch = normalize(app.fds?.division || "").includes(
+          searchLower
+        );
+        const corpsMatch = normalize(app.fds?.corps || "").includes(
+          searchLower
+        );
+        const unitTypeMatch = normalize(app.fds?.unit_type || "").includes(
+          searchLower
+        );
+        const matrixUnitMatch = normalize(app.fds?.matrix_unit || "").includes(
+          searchLower
+        );
+        const locationMatch = normalize(app.fds?.location || "").includes(
+          searchLower
+        );
+
+        return (
+          idMatch ||
+          cycleMatch ||
+          awardTypeMatch ||
+          commandMatch ||
+          brigadeMatch ||
+          divisionMatch ||
+          corpsMatch ||
+          unitTypeMatch ||
+          matrixUnitMatch ||
+          locationMatch
+        );
       });
     }
 
@@ -449,8 +509,8 @@ exports.getSingleApplicationForUnit = async (
     }
 
     const res = await client.query(query, params);
-    let  application = res.rows[0];
-    application=await attachSingleFdsToApplication(application);
+    let application = res.rows[0];
+    application = await attachSingleFdsToApplication(application);
     if (!application) {
       return ResponseHelper.error(404, "Application not found");
     }
@@ -570,18 +630,44 @@ exports.getApplicationsOfSubordinates = async (user, query) => {
 
     const lowerRole = hierarchy[currentIndex - 1];
     const subordinateFieldMap = {
-      brigade: "bde",
-      division: "div",
-      corps: "corps",
-      command: "comd",
+      brigade: {
+        table: "brigade_master",
+        idCol: "brigade_id",
+        nameCol: "brigade_name",
+      },
+      division: {
+        table: "division_master",
+        idCol: "division_id",
+        nameCol: "division_name",
+      },
+      corps: {
+        table: "corps_master",
+        idCol: "corps_id",
+        nameCol: "corps_name",
+      },
+      command: {
+        table: "command_master",
+        idCol: "command_id",
+        nameCol: "command_name",
+      },
     };
+    const { table, idCol, nameCol } =
+      subordinateFieldMap[user_role.toLowerCase()];
+    if (!table || !unit?.name)
+      throw new Error("Unit data or hierarchy mapping missing");
+
     const matchField = subordinateFieldMap[user_role.toLowerCase()];
     if (!matchField || !unit?.name) {
       throw new Error("Unit data or hierarchy mapping missing");
     }
 
     const subUnitsRes = await client.query(
-      `SELECT unit_id FROM Unit_tab WHERE ${matchField} = $1`,
+      `
+      SELECT u.unit_id
+      FROM unit_tab u
+      JOIN ${table} m ON u.${idCol} = m.${idCol}
+      WHERE m.${nameCol} = $1
+      `,
       [unit.name]
     );
     const unitIds = subUnitsRes.rows.map((u) => u.unit_id);
@@ -642,7 +728,6 @@ exports.getApplicationsOfSubordinates = async (user, query) => {
         'citation' AS type,
         unit_id,
         date_init,
-        citation_fds AS fds,
         status_flag,
         last_approved_by_role,
         last_approved_at,
@@ -659,7 +744,6 @@ exports.getApplicationsOfSubordinates = async (user, query) => {
         'appreciation' AS type,
         unit_id,
         date_init,
-        appre_fds AS fds,
         status_flag,
         last_approved_by_role,
         last_approved_at,
@@ -676,7 +760,7 @@ exports.getApplicationsOfSubordinates = async (user, query) => {
       client.query(appreQuery, queryParams),
     ]);
     let allApps = [...citations.rows, ...appreciations.rows];
-
+    allApps = await attachFdsToApplications(allApps);
     const normalize = (str) =>
       str?.toString().toLowerCase().replace(/[\s-]/g, "");
 
@@ -690,20 +774,48 @@ exports.getApplicationsOfSubordinates = async (user, query) => {
       const searchLower = normalize(search);
       allApps = allApps.filter((app) => {
         const idMatch = app.id.toString().toLowerCase().includes(searchLower);
-        const cycleMatch = normalize(app.fds?.cycle_period || "").includes(searchLower);
-        
+        const cycleMatch = normalize(app.fds?.cycle_period || "").includes(
+          searchLower
+        );
+
         // Search in fds fields that actually exist
-        const awardTypeMatch = normalize(app.fds?.award_type || "").includes(searchLower);
-        const commandMatch = normalize(app.fds?.command || "").includes(searchLower);
-        const brigadeMatch = normalize(app.fds?.brigade || "").includes(searchLower);
-        const divisionMatch = normalize(app.fds?.division || "").includes(searchLower);
-        const corpsMatch = normalize(app.fds?.corps || "").includes(searchLower);
-        const unitTypeMatch = normalize(app.fds?.unit_type || "").includes(searchLower);
-        const matrixUnitMatch = normalize(app.fds?.matrix_unit || "").includes(searchLower);
-        const locationMatch = normalize(app.fds?.location || "").includes(searchLower);
-        
-        return idMatch || cycleMatch || awardTypeMatch || commandMatch || brigadeMatch || 
-               divisionMatch || corpsMatch || unitTypeMatch || matrixUnitMatch || locationMatch;
+        const awardTypeMatch = normalize(app.fds?.award_type || "").includes(
+          searchLower
+        );
+        const commandMatch = normalize(app.fds?.command || "").includes(
+          searchLower
+        );
+        const brigadeMatch = normalize(app.fds?.brigade || "").includes(
+          searchLower
+        );
+        const divisionMatch = normalize(app.fds?.division || "").includes(
+          searchLower
+        );
+        const corpsMatch = normalize(app.fds?.corps || "").includes(
+          searchLower
+        );
+        const unitTypeMatch = normalize(app.fds?.unit_type || "").includes(
+          searchLower
+        );
+        const matrixUnitMatch = normalize(app.fds?.matrix_unit || "").includes(
+          searchLower
+        );
+        const locationMatch = normalize(app.fds?.location || "").includes(
+          searchLower
+        );
+
+        return (
+          idMatch ||
+          cycleMatch ||
+          awardTypeMatch ||
+          commandMatch ||
+          brigadeMatch ||
+          divisionMatch ||
+          corpsMatch ||
+          unitTypeMatch ||
+          matrixUnitMatch ||
+          locationMatch
+        );
       });
     }
 
@@ -1090,7 +1202,7 @@ exports.getApplicationsScoreboard = async (user, query) => {
     // Pagination
     const totalItems = allApps.length;
     const paginatedData = allApps.slice(0, limitInt);
-    
+
     const pagination = {
       totalItems,
       totalPages: Math.ceil(totalItems / limitInt),
@@ -1131,12 +1243,10 @@ exports.updateApplicationStatus = async (
       citation: {
         table: "Citation_tab",
         column: "citation_id",
-        fdsColumn: "citation_fds",
       },
       appreciation: {
         table: "Appre_tab",
         column: "appreciation_id",
-        fdsColumn: "appre_fds",
       },
     };
     const config = validTypes[type];
@@ -1220,11 +1330,13 @@ exports.updateApplicationStatus = async (
     let isMemberStatusUpdate = false;
     if (statusLower === "approved" || member) {
       const fetchRes = await client.query(
-        `SELECT ${config.fdsColumn} FROM ${config.table} WHERE ${config.column} = $1`,
+        `SELECT * FROM ${config.table} WHERE ${config.column} = $1`,
         [id]
       );
       if (fetchRes.rowCount === 0) throw new Error("Application not found");
-      const fds = fetchRes.rows[0][config.fdsColumn];
+      let appData=fetchRes.rows[0];
+      appData=await attachSingleFdsToApplication(appData)
+      const fds = appData?.fds;
 
       // Clarification handling for approved status
       if (statusLower === "approved" && Array.isArray(fds?.parameters)) {
@@ -1241,9 +1353,64 @@ exports.updateApplicationStatus = async (
           return param;
         });
       }
-
       // Member signature logic
       if (member && !iscdr) {
+        const now = new Date();
+        const existingRes = await client.query(
+          `SELECT * FROM fds_accepted_members WHERE fds_id = $1 AND member_id = $2`,
+          [appData.fds_id, member.member_id]
+        );
+        const memberObjForDB = {
+          fds_id: appData.fds_id,
+          member_id: member.member_id,
+          name: member.name,
+          ic_number: member.ic_number,
+          member_type: member.member_type,
+          is_signature_added: member.is_signature_added ?? false,
+          sign_digest: member.sign_digest || null,
+        };
+        if (existingRes.rows.length > 0) {
+          // Update existing member
+          await client.query(
+            `
+            UPDATE fds_accepted_members
+            SET name = $1,
+                ic_number = $2,
+                member_type = $3,
+                is_signature_added = $4,
+                sign_digest = $5,
+                updated_at = NOW()
+            WHERE fds_id = $6 AND member_id = $7
+            `,
+            [
+              memberObjForDB.name,
+              memberObjForDB.ic_number,
+              memberObjForDB.member_type,
+              memberObjForDB.is_signature_added,
+              memberObjForDB.sign_digest,
+              appData.fds_id,
+              member.member_id,
+            ]
+          );
+        } else {
+          // Insert new member
+          await client.query(
+            `
+            INSERT INTO fds_accepted_members
+              (fds_id, member_id, name, ic_number, member_type, is_signature_added, sign_digest)
+            VALUES ($1, $2, $3, $4, $5, $6, $7)
+            `,
+            [
+              appData.fds_id,
+              memberObjForDB.member_id,
+              memberObjForDB.name,
+              memberObjForDB.ic_number,
+              memberObjForDB.member_type,
+              memberObjForDB.is_signature_added,
+              memberObjForDB.sign_digest,
+            ]
+          );
+        }
         if (!Array.isArray(fds.accepted_members)) fds.accepted_members = [];
         const existingIndex = fds.accepted_members.findIndex(
           (m) => m.member_id === member.member_id
@@ -1272,7 +1439,7 @@ exports.updateApplicationStatus = async (
             const accepted = acceptedMap.get(unitMember.id);
             return accepted?.is_signature_added === true;
           });
-
+console.log("allSigned----=======",allSigned)
           if (allSigned) {
             if (user.user_role === "cw2") {
               const now = new Date().toISOString();
@@ -1308,12 +1475,12 @@ exports.updateApplicationStatus = async (
         }
       }
       updatedFds = fds;
-      await client.query(
-        `UPDATE ${config.table}
-         SET ${config.fdsColumn} = $1
-         WHERE ${config.column} = $2`,
-        [updatedFds, id]
-      );
+      // await client.query(
+      //   `UPDATE ${config.table}
+      //    SET ${config.fdsColumn} = $1
+      //    WHERE ${config.column} = $2`,
+      //   [updatedFds, id]
+      // );
     }
 
     // Status update logic
@@ -1386,7 +1553,6 @@ exports.updateApplicationStatus = async (
   }
 };
 
-
 exports.approveApplicationMarks = async (user, body) => {
   const client = await dbService.getClient();
   try {
@@ -1403,77 +1569,196 @@ exports.approveApplicationMarks = async (user, body) => {
       return ResponseHelper.error(400, "Invalid type provided");
     }
 
-    const tableName = type === "citation" ? "Citation_tab" : "Appre_tab";
-    const idColumn = type === "citation" ? "citation_id" : "appreciation_id";
-    const fdsColumn = type === "citation" ? "citation_fds" : "appre_fds";
+    // Select base query
+    let query;
+    if (type === "citation") {
+      query = `
+        SELECT 
+          c.citation_id AS id,
+          c.fds_id AS fds_id,
+          'citation' AS type,
+          c.unit_id,
+          u.name AS unit_name,
+          c.date_init,
+          c.last_approved_by_role,
+          c.last_approved_at,
+          c.status_flag,
+          c.isShortlisted,
+          c.is_mo_approved,
+          c.mo_approved_at,
+          c.is_ol_approved,
+          c.ol_approved_at,
+          c.is_hr_review,
+          c.is_dv_review,
+          c.is_mp_review,
+          c.isfinalized,
+          c.last_rejected_by_role,
+          c.remarks
+        FROM Citation_tab c
+        JOIN Unit_tab u ON c.unit_id = u.unit_id
+        WHERE c.citation_id = $1
+      `;
+    } else {
+      query = `
+        SELECT 
+          a.appreciation_id AS id,
+                    a.fds_id AS fds_id,
+          'appreciation' AS type,
+          a.unit_id,
+          u.name AS unit_name,
+          a.date_init,
+          a.last_approved_by_role,
+          a.last_approved_at,
+          a.status_flag,
+          a.isShortlisted,
+          a.is_mo_approved,
+          a.mo_approved_at,
+          a.is_ol_approved,
+          a.ol_approved_at,
+          a.is_hr_review,
+          a.is_dv_review,
+          a.is_mp_review,
+          a.isfinalized,
+          a.last_rejected_by_role,
+          a.remarks
+        FROM Appre_tab a
+        JOIN Unit_tab u ON a.unit_id = u.unit_id
+        WHERE a.appreciation_id = $1
+      `;
+    }
 
-    // Get existing application
-    const res = await client.query(
-      `SELECT ${idColumn}, ${fdsColumn} AS fds, remarks FROM ${tableName} WHERE ${idColumn} = $1`,
-      [application_id]
-    );
+    // Fetch application
+    const res = await client.query(query, [application_id]);
     if (res.rowCount === 0) {
       return ResponseHelper.error(404, "Application not found");
     }
 
-    let fds = res.rows[0].fds;
-    let remarks = res.rows[0].remarks || [];
+    // Attach FDS
+    const application = await attachSingleFdsToApplication(res.rows[0]);
+    const fds = application.fds;
     const now = new Date();
 
-    // Helper for updating marks
-    function updateParameterMarks(params, approvedParams) {
+    // ✅ Update parameters both in-memory and in DB
+    async function updateParameterMarks(params, approvedParams) {
       if (!Array.isArray(params) || !Array.isArray(approvedParams))
         return params;
-      return params.map((param) => {
-        const approvedParam = approvedParams.find((p) => p.id === param.id);
+      for (const param of params) {
+        const approvedParam = approvedParams.find((p) => p.id == param.id);
         if (approvedParam) {
-          return {
-            ...param,
-            approved_marks: approvedParam.approved_marks,
-            approved_count: approvedParam.approved_count,
-            approved_marks_documents: approvedParam.approved_marks_documents || [],
-            approved_marks_reason: approvedParam.approved_marks_reason,
-            approved_by_user: user.user_id,
-            approved_by_role: user.user_role,
-            approved_marks_at: now,
-          };
+          // Update local param object
+          param.approved_marks = approvedParam.approved_marks ?? 0;
+          param.approved_count = approvedParam.approved_count ?? 0;
+          param.approved_marks_documents =
+            approvedParam.approved_marks_documents || [];
+          param.approved_marks_reason =
+            approvedParam.approved_marks_reason || "";
+          param.approved_by_user = user.user_id;
+          param.approved_by_role = user.user_role;
+          param.approved_marks_at = now;
+
+          // 🔥 Update the fds_parameters table
+          await client.query(
+            `
+            UPDATE fds_parameters
+            SET 
+              approved_marks = $1,
+              approved_count = $2,
+              approved_marks_documents = $3,
+              approved_marks_reason = $4,
+              approved_by_user = $5,
+              approved_by_role = $6,
+              approved_marks_at = $7,
+              updated_at = NOW()
+            WHERE fds_id = $8 AND param_id = $9
+            `,
+            [
+              param.approved_marks,
+              param.approved_count,
+              JSON.stringify(param.approved_marks_documents || []),
+              param.approved_marks_reason,
+              user.user_id,
+              user.user_role,
+              now,
+              application.fds_id,
+              param.id, // param.id corresponds to param_id in fds_parameters
+            ]
+          );
         }
-        return param;
-      });
+      }
+
+      return params;
     }
 
     // Helper for updating grace marks
-    function updateGraceMarks(graceMarksArr, marks) {
+    async function updateGraceMarks( fds_id, graceMarksArr, marks) {
       if (marks === undefined) return graceMarksArr;
+      const now = new Date().toISOString();
+    
       if (!Array.isArray(graceMarksArr)) graceMarksArr = [];
+    
+      // Find if current role already exists
       const existingIndex = graceMarksArr.findIndex(
         (entry) => entry.role === user.user_role
       );
+    
       const graceEntry = {
         role: user.user_role,
         marksBy: user.user_id,
         marksAddedAt: now,
         marks,
       };
+    
       if (existingIndex !== -1) {
+        // Update local array
         graceMarksArr[existingIndex] = graceEntry;
+    
+        // Update DB
+        await client.query(
+          `
+          UPDATE fds_grace_marks
+          SET 
+            marks = $1,
+            marks_by = $2,
+            marks_added_at = $3,
+            updated_at = NOW()
+          WHERE fds_id = $4 AND role = $5
+          `,
+          [marks, user.user_id, now, fds_id, user.user_role]
+        );
       } else {
+        // Add new entry locally
         graceMarksArr.push(graceEntry);
+    
+        // Insert new record in DB
+        await client.query(
+          `
+          INSERT INTO fds_grace_marks (fds_id, role, marks_by, marks_added_at, marks, created_at, updated_at)
+          VALUES ($1, $2, $3, $4, $5, NOW(), NOW())
+          `,
+          [fds_id, user.user_role, user.user_id, now, marks]
+        );
       }
+    
       return graceMarksArr;
     }
+    
 
     // Helper for updating priority points
-    function updatePriority(priorityArr, points) {
+    async function updatePriorityDB(fds_id, priorityArr, points) {
+      const now = new Date().toISOString();
+    
       if (points === undefined) return priorityArr;
       if (!Array.isArray(priorityArr)) priorityArr = [];
-      const existingPriorityIndex = priorityArr.findIndex((entry) => {
+    
+      // Check if there is an existing entry for this role (and cw2_type if applicable)
+      const existingIndex = priorityArr.findIndex((entry) => {
         if (entry.role !== user.user_role) return false;
         if (user.user_role === "cw2") {
           return entry.cw2_type === user.cw2_type;
         }
         return true;
       });
+    
       const priorityEntry = {
         role: user.user_role,
         priority: points,
@@ -1482,33 +1767,78 @@ exports.approveApplicationMarks = async (user, body) => {
           ? { cw2_type: user.cw2_type }
           : {}),
       };
-      if (existingPriorityIndex !== -1) {
-        priorityArr[existingPriorityIndex] = priorityEntry;
+    
+      if (existingIndex !== -1) {
+        priorityArr[existingIndex] = priorityEntry;
+    
+        // 🔥 Update the DB
+        await client.query(
+          `
+          UPDATE fds_application_priority
+          SET priority = $1, priority_added_at = $2, updated_at = NOW()
+          WHERE fds_id = $3 AND role = $4
+          ${user.user_role === "cw2" ? "AND cw2_type = $5" : ""}
+          `,
+          user.user_role === "cw2"
+            ? [points, now, fds_id, user.user_role, user.cw2_type]
+            : [points, now, fds_id, user.user_role]
+        );
       } else {
         priorityArr.push(priorityEntry);
+    
+        // 🔥 Insert new row into DB
+        await client.query(
+          `
+          INSERT INTO fds_application_priority
+            (fds_id, role, priority, priority_added_at, created_at, updated_at${user.user_role === "cw2" ? ", cw2_type" : ""})
+          VALUES
+            ($1, $2, $3, $4, NOW(), NOW()${user.user_role === "cw2" ? ", $5" : ""})
+          `,
+          user.user_role === "cw2"
+            ? [fds_id, user.user_role, points, now, user.cw2_type]
+            : [fds_id, user.user_role, points, now]
+        );
       }
+    
       return priorityArr;
     }
+    
 
     // Helper for updating remarks
-    function updateRemarks(remarksArr, remarkStr) {
-      if (!remarkStr || typeof remarkStr !== "string") return remarksArr;
-      if (!Array.isArray(remarksArr)) remarksArr = [];
-      const newRemark = {
-        remarks: remarkStr,
-        remark_added_by_role: user.user_role,
-        remark_added_by: user.user_id,
-        remark_added_at: now,
-      };
-      const existingIndex = remarksArr.findIndex(
-        (r) => r.remark_added_by_role === user.user_role
-      );
-      if (existingIndex !== -1) {
-        remarksArr[existingIndex] = newRemark;
-      } else {
-        remarksArr.push(newRemark);
+    async function updateRemarks(remarkStr) {
+      if (!remarkStr || typeof remarkStr !== "string") return;
+
+      const now = new Date();
+
+      try {
+        // Upsert remark: insert if not exists, update if exists for same application, type, and role
+        const upsertQuery = `
+          INSERT INTO application_remarks
+            (application_id, type, remarks, remark_added_by, remark_added_by_role, remark_added_at)
+          VALUES ($1, $2, $3, $4, $5, $6)
+          ON CONFLICT (application_id, type, remark_added_by_role)
+          DO UPDATE SET
+            remarks = EXCLUDED.remarks,
+            remark_added_by = EXCLUDED.remark_added_by,
+            remark_added_at = EXCLUDED.remark_added_at
+          RETURNING *;
+        `;
+
+        const res = await client.query(upsertQuery, [
+          application_id,
+          type,
+          remarkStr,
+          user.user_id,
+          user.user_role,
+          now,
+        ]);
+
+        console.log("Remark upserted successfully:", res.rows[0]);
+        return res.rows[0];
+      } catch (err) {
+        console.error("Error in updateRemarks:", err);
+        throw err; // or return some error object
       }
-      return remarksArr;
     }
 
     // Update FDS and remarks
@@ -1516,14 +1846,16 @@ exports.approveApplicationMarks = async (user, body) => {
       fds.parameters = updateParameterMarks(fds.parameters, parameters);
     }
     fds.applicationGraceMarks = updateGraceMarks(
+      application.fds_id,
       fds.applicationGraceMarks,
       applicationGraceMarks
     );
-    fds.applicationPriority = updatePriority(
+    fds.applicationPriority = updatePriorityDB(
+      application.fds_id,
       fds.applicationPriority,
       applicationPriorityPoints
     );
-    remarks = updateRemarks(remarks, remark);
+    remarks = updateRemarks(remark);
 
     await client.query(
       `UPDATE ${tableName}
@@ -2034,10 +2366,10 @@ exports.getApplicationsHistory = async (user, query) => {
         updated_at
       FROM Unit_tab
     ) u ON c.unit_id = u.unit_id
-    WHERE ${baseFilters.replace(/unit_id/g, 'c.unit_id')}
+    WHERE ${baseFilters.replace(/unit_id/g, "c.unit_id")}
   `;
-  
-  const appreQuery = `
+
+    const appreQuery = `
     SELECT 
       a.appreciation_id AS id,
       'appreciation' AS type,
@@ -2076,14 +2408,14 @@ exports.getApplicationsHistory = async (user, query) => {
         updated_at
       FROM Unit_tab
     ) u ON a.unit_id = u.unit_id
-    WHERE ${baseFilters.replace(/unit_id/g, 'a.unit_id')}
+    WHERE ${baseFilters.replace(/unit_id/g, "a.unit_id")}
   `;
-  
-  const [citations, appreciations] = await Promise.all([
-    client.query(citationQuery, queryParams),
-    client.query(appreQuery, queryParams)
-  ]);
-  
+
+    const [citations, appreciations] = await Promise.all([
+      client.query(citationQuery, queryParams),
+      client.query(appreQuery, queryParams),
+    ]);
+
     let allApps = [...citations.rows, ...appreciations.rows];
 
     if (award_type) {
@@ -2179,20 +2511,24 @@ exports.getAllApplications = async (user, query) => {
       if (currentIndex === -1) throw new Error("Invalid user role");
 
       const subordinateFieldMap = {
-        brigade: "bde",
-        division: "div",
-        corps: "corps",
-        command: "comd",
+        unit: "unit_id",
+        brigade: "brigade_id",
+        division: "division_id",
+        corps: "corps_id",
+        command: "command_id",
       };
 
       if (currentRole === "unit") {
         unitIds = [unit.unit_id];
       } else {
         const matchField = subordinateFieldMap[currentRole];
+
+        // Make sure unit[matchField] contains the ID, not the name
         const subUnitsRes = await client.query(
           `SELECT unit_id FROM Unit_tab WHERE ${matchField} = $1`,
-          [unit.name]
+          [unit[matchField]] // e.g., unit.brigade_id, unit.division_id
         );
+
         unitIds = subUnitsRes.rows.map((u) => u.unit_id);
       }
 
@@ -2280,9 +2616,9 @@ exports.getAllApplications = async (user, query) => {
         updated_at
       FROM Unit_tab
     ) u ON c.unit_id = u.unit_id
-    WHERE ${baseFilters.replace(/unit_id/g, 'c.unit_id')}
+    WHERE ${baseFilters.replace(/unit_id/g, "c.unit_id")}
     `;
-    
+
     const appreQuery = `
     SELECT 
       a.appreciation_id AS id,
@@ -2323,9 +2659,8 @@ exports.getAllApplications = async (user, query) => {
         updated_at
       FROM Unit_tab
     ) u ON a.unit_id = u.unit_id
-    WHERE ${baseFilters.replace(/unit_id/g, 'a.unit_id')}
+    WHERE ${baseFilters.replace(/unit_id/g, "a.unit_id")}
     `;
-    
 
     const [citations, appreciations] = await Promise.all([
       client.query(citationQuery, queryParams),
@@ -2366,7 +2701,7 @@ exports.getAllApplications = async (user, query) => {
     if (search) {
       const searchNorm = normalize(search);
       allApps = allApps.filter(
-        (app) => 
+        (app) =>
           app.id.toString().toLowerCase().includes(searchNorm) ||
           normalize(app.fds?.cycle_period || "").includes(searchNorm) ||
           normalize(app.fds?.award_type || "").includes(searchNorm) ||
@@ -2379,7 +2714,6 @@ exports.getAllApplications = async (user, query) => {
           normalize(app.fds?.location || "").includes(searchNorm)
       );
     }
-
 
     // Clarifications linking
     const clarificationIds = [];
@@ -2534,20 +2868,16 @@ exports.getAllApplications = async (user, query) => {
   }
 };
 
-
-
-
-
 // In the same file where both APIs live (service module)
 
 exports.getApplicationStats = async (user, _query) => {
   const client = await dbService.getClient();
   try {
     const { user_role } = user || {};
-    const roleLc = (user_role || '').toLowerCase();
+    const roleLc = (user_role || "").toLowerCase();
     let s;
-if(user && user.user_role==='headquarter'){
-  const { rows } = await client.query(`
+    if (user && user.user_role === "headquarter") {
+      const { rows } = await client.query(`
     SELECT 
       -- total
       (SELECT COUNT(*) FROM Citation_tab) +
@@ -2574,10 +2904,11 @@ if(user && user.user_role==='headquarter'){
       (SELECT COUNT(*) FROM Appre_tab   WHERE last_approved_by_role = 'command') AS approvedApplications
   `);
 
-   s = rows[0];
-}else{
- // Base aggregates (unchanged)
- const { rows } = await client.query(`
+      s = rows[0];
+    } else {
+      // Base aggregates (unchanged)
+      const { rows } = await client.query(
+        `
   WITH unit_data AS (
     SELECT name 
     FROM Unit_tab 
@@ -2613,36 +2944,42 @@ if(user && user.user_role==='headquarter'){
     -- approved by command
     (SELECT COUNT(*) FROM Citation_tab WHERE last_approved_by_role = 'command') +
     (SELECT COUNT(*) FROM Appre_tab   WHERE last_approved_by_role = 'command') AS approvedApplications
-`, [user.unit_id]);
- s = rows[0];
-}
-       let totalFromApi = parseInt(s.totalapplications, 10);
+`,
+        [user.unit_id]
+      );
+      s = rows[0];
+    }
+    let totalFromApi = parseInt(s.totalapplications, 10);
     try {
-      const totalRes = await exports.getAllApplications(user, { ..._query, page: 1, limit: 1000 });
-      const ok = totalRes && ((totalRes.statusCode || totalRes.status) === 200);
+      const totalRes = await exports.getAllApplications(user, {
+        ..._query,
+        page: 1,
+        limit: 1000,
+      });
+      const ok = totalRes && (totalRes.statusCode || totalRes.status) === 200;
       if (ok) {
-        totalFromApi = totalRes.data.length
-          
+        totalFromApi = totalRes.data.length;
       }
     } catch (_) {
       // fallback to DB total already in totalFromApi
     }
     // --- recommendedApplications ---
     let recommendedApplications = 0;
-    if (roleLc === 'headquarter') {
+    if (roleLc === "headquarter") {
       // HQ: recommended == approved by command
       recommendedApplications = parseInt(s.approvedapplications, 10);
     } else if (roleLc) {
       // Non-HQ: use subordinate listing as source of truth
       const subRes = await exports.getApplicationsOfSubordinates(user, {
         page: 1,
-        limit: 100,           // use meta.totalItems to avoid fetching everything
-        isShortlisted: true // matches your "recommended" listing logic
+        limit: 100, // use meta.totalItems to avoid fetching everything
+        isShortlisted: true, // matches your "recommended" listing logic
       });
 
-      const ok = (subRes.data !=[] && ((subRes.statusCode || subRes.status) === 200));
+      const ok =
+        subRes.data != [] && (subRes.statusCode || subRes.status) === 200;
       if (ok) {
-        recommendedApplications = subRes.data.length
+        recommendedApplications = subRes.data.length;
       }
     }
 
@@ -2650,51 +2987,51 @@ if(user && user.user_role==='headquarter'){
     // HQ: keep SQL pending
     // Non-HQ: total - rejected - recommended
     let totalPendingApplications = parseInt(s.pendingapplications, 10);
-    if (roleLc && roleLc !== 'headquarter') {
+    if (roleLc && roleLc !== "headquarter") {
       const pendRes = await exports.getApplicationsOfSubordinates(user, {
         page: 1,
-        limit: 100,                 // use meta.totalItems
-        isGetNotClarifications: true
+        limit: 100, // use meta.totalItems
+        isGetNotClarifications: true,
       });
-      const ok = pendRes && ((pendRes.statusCode || pendRes.status) === 200);
+      const ok = pendRes && (pendRes.statusCode || pendRes.status) === 200;
       if (ok) {
-        totalPendingApplications = pendRes.data.length
-       
-      }}
-    
-  
+        totalPendingApplications = pendRes.data.length;
+      }
+    }
 
     // --- acceptedApplications ---
     // Non-HQ: acceptedApplications = recommendedApplications (your request)
     // HQ: acceptedApplications = approved by command (unchanged)
-    const acceptedApplications = (roleLc && roleLc !== 'headquarter')
-      ? recommendedApplications
-      : parseInt(s.approvedapplications, 10);
-if(totalFromApi==0){
-  s.rejectedapplications =0
-}
-    return ResponseHelper.success(200, 'Application stats', {
-      clarificationRaised:     totalFromApi,       // total
-      totalPendingApplications,                                          // pending (role-aware)
-      rejected:                 parseInt(s.rejectedapplications, 10),    // rejected
-      approved:                 parseInt(s.finalisedapplications, 10),   // finalised (unchanged)
-      acceptedApplications,                                             // now role-aware                                         // new/role-aware
+    const acceptedApplications =
+      roleLc && roleLc !== "headquarter"
+        ? recommendedApplications
+        : parseInt(s.approvedapplications, 10);
+    if (totalFromApi == 0) {
+      s.rejectedapplications = 0;
+    }
+    return ResponseHelper.success(200, "Application stats", {
+      clarificationRaised: totalFromApi, // total
+      totalPendingApplications, // pending (role-aware)
+      rejected: parseInt(s.rejectedapplications, 10), // rejected
+      approved: parseInt(s.finalisedapplications, 10), // finalised (unchanged)
+      acceptedApplications, // now role-aware                                         // new/role-aware
     });
   } catch (err) {
-    return ResponseHelper.error(500, 'Failed to compute application stats', err.message);
+    return ResponseHelper.error(
+      500,
+      "Failed to compute application stats",
+      err.message
+    );
   } finally {
     client.release();
   }
 };
 
-
-
-
-async function loadApplications(whereSql = '', params = [],user) {
+async function loadApplications(whereSql = "", params = [], user) {
   const client = await dbService.getClient();
   try {
-    let citationQuery,appreQuery;
-    if (user && user?.user_role === 'headquarter') {
+    let citationQuery, appreQuery;
+    if (user && user?.user_role === "headquarter") {
       citationQuery = `
       SELECT 
         c.citation_id AS id,
@@ -2718,10 +3055,10 @@ async function loadApplications(whereSql = '', params = [],user) {
           is_mp_review, created_at, updated_at
         FROM Unit_tab
       ) u ON c.unit_id = u.unit_id
-      ${whereSql ? `WHERE ${whereSql.replace(/^\s*AND\s*/i, '')}` : ''}
+      ${whereSql ? `WHERE ${whereSql.replace(/^\s*AND\s*/i, "")}` : ""}
     `;
 
-     appreQuery = `
+      appreQuery = `
       SELECT 
         a.appreciation_id AS id,
         'appreciation' AS type,
@@ -2744,10 +3081,10 @@ async function loadApplications(whereSql = '', params = [],user) {
           is_mp_review, created_at, updated_at
         FROM Unit_tab
       ) u ON a.unit_id = u.unit_id
-      ${whereSql ? `WHERE ${whereSql.replace(/^\s*AND\s*/i, '')}` : ''}
+      ${whereSql ? `WHERE ${whereSql.replace(/^\s*AND\s*/i, "")}` : ""}
     `;
-    }else{
-       citationQuery = `
+    } else {
+      citationQuery = `
       SELECT 
         c.citation_id AS id,
         'citation' AS type,
@@ -2768,7 +3105,7 @@ async function loadApplications(whereSql = '', params = [],user) {
         AND c.citation_fds->>'command' = $1
     `;
 
-     appreQuery = `
+      appreQuery = `
       SELECT 
         a.appreciation_id AS id,
         'appreciation' AS type,
@@ -2800,7 +3137,7 @@ async function loadApplications(whereSql = '', params = [],user) {
     // ----- Clarification linking -----
     const clarificationIds = [];
     for (const app of allApps) {
-      for (const p of (app.fds?.parameters || [])) {
+      for (const p of app.fds?.parameters || []) {
         if (p.clarification_id) clarificationIds.push(p.clarification_id);
       }
     }
@@ -2833,8 +3170,8 @@ async function loadApplications(whereSql = '', params = [],user) {
     // ----- Marks calculation -----
     const allParamNames = Array.from(
       new Set(
-        allApps.flatMap(
-          (app) => (app.fds?.parameters || []).map((p) => p.name?.trim().toLowerCase())
+        allApps.flatMap((app) =>
+          (app.fds?.parameters || []).map((p) => p.name?.trim().toLowerCase())
         )
       )
     );
@@ -2914,29 +3251,35 @@ exports.listAllApplications = async (user, query = {}) => {
     const unit = profile?.data?.unit;
 
     if (!unit) {
-      return ResponseHelper.error(400, 'User profile not found');
+      return ResponseHelper.error(400, "User profile not found");
     }
 
     // Build command-based filtering
     let unitIds = [];
-    let whereClause = '';
+    let whereClause = "";
 
     if (user_role.toLowerCase() === "headquarter") {
       // HQ can see all applications - no filtering needed
-      whereClause = '';
+      whereClause = "";
     } else {
       // For other roles, filter by command hierarchy
-      const ROLE_HIERARCHY = ["unit", "brigade", "division", "corps", "command"];
+      const ROLE_HIERARCHY = [
+        "unit",
+        "brigade",
+        "division",
+        "corps",
+        "command",
+      ];
       const currentRole = user_role.toLowerCase();
       const currentIndex = ROLE_HIERARCHY.indexOf(currentRole);
-      
+
       if (currentIndex === -1) {
         throw new Error("Invalid user role");
       }
 
       const subordinateFieldMap = {
         brigade: "bde",
-        division: "div", 
+        division: "div",
         corps: "corps",
         command: "comd",
       };
@@ -2964,11 +3307,18 @@ exports.listAllApplications = async (user, query = {}) => {
     }
 
     // Load applications with proper filtering
-    const allApps = await loadApplications(whereClause, unitIds.length > 0 ? [unitIds] : []);
+    const allApps = await loadApplications(
+      whereClause,
+      unitIds.length > 0 ? [unitIds] : []
+    );
     const { data, meta } = paginate(allApps, page, limit);
-    return ResponseHelper.success(200, 'All applications', data, meta);
+    return ResponseHelper.success(200, "All applications", data, meta);
   } catch (err) {
-    return ResponseHelper.error(500, 'Failed to list all applications', err.message);
+    return ResponseHelper.error(
+      500,
+      "Failed to list all applications",
+      err.message
+    );
   }
 };
 
@@ -2984,7 +3334,7 @@ exports.listPendingApplications = async (user, query = {}) => {
     const unit = profile?.data?.unit;
 
     if (!unit) {
-      return ResponseHelper.error(400, 'User profile not found');
+      return ResponseHelper.error(400, "User profile not found");
     }
 
     // Build command-based filtering
@@ -3002,17 +3352,23 @@ exports.listPendingApplications = async (user, query = {}) => {
       `;
     } else {
       // For other roles, filter by command hierarchy
-      const ROLE_HIERARCHY = ["unit", "brigade", "division", "corps", "command"];
+      const ROLE_HIERARCHY = [
+        "unit",
+        "brigade",
+        "division",
+        "corps",
+        "command",
+      ];
       const currentRole = user_role.toLowerCase();
       const currentIndex = ROLE_HIERARCHY.indexOf(currentRole);
-      
+
       if (currentIndex === -1) {
         throw new Error("Invalid user role");
       }
 
       const subordinateFieldMap = {
         brigade: "bde",
-        division: "div", 
+        division: "div",
         corps: "corps",
         command: "comd",
       };
@@ -3029,22 +3385,34 @@ exports.listPendingApplications = async (user, query = {}) => {
       }
 
       if (unitIds.length === 0) {
-        return ResponseHelper.success(200, "No pending applications found", [], {
-          totalItems: 0,
-          currentPage: parseInt(page),
-          itemsPerPage: parseInt(limit),
-        });
+        return ResponseHelper.success(
+          200,
+          "No pending applications found",
+          [],
+          {
+            totalItems: 0,
+            currentPage: parseInt(page),
+            itemsPerPage: parseInt(limit),
+          }
+        );
       }
 
       whereClause += ` AND unit_id = ANY($1)`;
     }
 
     // Load applications with proper filtering
-    const allApps = await loadApplications(whereClause, unitIds.length > 0 ? [unitIds] : []);
+    const allApps = await loadApplications(
+      whereClause,
+      unitIds.length > 0 ? [unitIds] : []
+    );
     const { data, meta } = paginate(allApps, page, limit);
-    return ResponseHelper.success(200, 'Pending applications', data, meta);
+    return ResponseHelper.success(200, "Pending applications", data, meta);
   } catch (err) {
-    return ResponseHelper.error(500, 'Failed to list pending applications', err.message);
+    return ResponseHelper.error(
+      500,
+      "Failed to list pending applications",
+      err.message
+    );
   }
 };
 
@@ -3053,10 +3421,10 @@ exports.listRejectedApplications = async (user, query = {}) => {
   try {
     let allApps;
 
-    if (user.user_role === 'headquarter') {
+    if (user.user_role === "headquarter") {
       const whereSql = `status_flag = 'rejected'`;
       // Pass empty array since there are no $1 placeholders
-      allApps = await loadApplications(whereSql,[],user);
+      allApps = await loadApplications(whereSql, [], user);
     } else {
       // Step 1: Get the user's unit and its COMD
       const unitRes = await dbService.query(
@@ -3064,7 +3432,7 @@ exports.listRejectedApplications = async (user, query = {}) => {
         [user.unit_id]
       );
       if (!unitRes.rows.length) {
-        return ResponseHelper.error(404, 'Unit not found');
+        return ResponseHelper.error(404, "Unit not found");
       }
       const userComd = unitRes.rows[0].name;
 
@@ -3076,14 +3444,17 @@ exports.listRejectedApplications = async (user, query = {}) => {
     }
 
     const { data, meta } = paginate(allApps, query.page, query.limit);
-    return ResponseHelper.success(200, 'Rejected applications', data, meta);
-
+    return ResponseHelper.success(200, "Rejected applications", data, meta);
   } catch (err) {
-    return ResponseHelper.error(500, 'Failed to list rejected applications', err.message);
+    return ResponseHelper.error(
+      500,
+      "Failed to list rejected applications",
+      err.message
+    );
   }
 };
 
-exports.listFinalisedApplications = async (user,query = {}) => {
+exports.listFinalisedApplications = async (user, query = {}) => {
   try {
     let whereSql = `is_ol_approved = true`;
 
@@ -3115,12 +3486,15 @@ exports.listApprovedApplications = async (query = {}) => {
     const whereSql = `last_approved_by_role = 'command'`;
     const allApps = await loadApplications(whereSql);
     const { data, meta } = paginate(allApps, query.page, query.limit);
-    return ResponseHelper.success(200, 'Approved applications', data, meta);
+    return ResponseHelper.success(200, "Approved applications", data, meta);
   } catch (err) {
-    return ResponseHelper.error(500, 'Failed to list approved applications', err.message);
+    return ResponseHelper.error(
+      500,
+      "Failed to list approved applications",
+      err.message
+    );
   }
 };
-
 
 exports.getApplicationsSummary = async (user, query) => {
   const client = await dbService.getClient();
@@ -3147,10 +3521,15 @@ exports.getApplicationsSummary = async (user, query) => {
       command: ["name"],
     };
     const requiredFields = roleFieldRequirements[user_role.toLowerCase()] || [];
-    const missingFields = requiredFields.filter((f) => !unit?.[f] || unit[f] === "");
+    const missingFields = requiredFields.filter(
+      (f) => !unit?.[f] || unit[f] === ""
+    );
     if (missingFields.length > 0) {
-      return ResponseHelper.error(400, "Please complete your unit profile before proceeding.",
-        "Missing fields: " + missingFields.join(", "));
+      return ResponseHelper.error(
+        400,
+        "Please complete your unit profile before proceeding.",
+        "Missing fields: " + missingFields.join(", ")
+      );
     }
 
     const ROLE_HIERARCHY = ["unit", "brigade", "division", "corps", "command"];
@@ -3167,27 +3546,38 @@ exports.getApplicationsSummary = async (user, query) => {
       const currentIndex = ROLE_HIERARCHY.indexOf(currentRole);
       if (currentIndex === -1) throw new Error("Invalid user role");
 
-      const subordinateFieldMap = { brigade: "bde", division: "div", corps: "corps", command: "comd" };
+      const subordinateFieldMap = {
+        brigade: "bde",
+        division: "div",
+        corps: "corps",
+        command: "comd",
+      };
       if (currentRole === "unit") {
         unitIds = [unit.unit_id];
       } else {
         const matchField = subordinateFieldMap[currentRole];
-        const subUnitsRes = await client.query(`SELECT unit_id FROM Unit_tab WHERE ${matchField} = $1`, [unit.name]);
+        const subUnitsRes = await client.query(
+          `SELECT unit_id FROM Unit_tab WHERE ${matchField} = $1`,
+          [unit.name]
+        );
         unitIds = subUnitsRes.rows.map((u) => u.unit_id);
       }
       if (unitIds.length === 0) {
-        return ResponseHelper.success(200, "Applications grouped", { x: [], y: [] });
+        return ResponseHelper.success(200, "Applications grouped", {
+          x: [],
+          y: [],
+        });
       }
       allowedRoles = ROLE_HIERARCHY.slice(0, currentIndex + 1);
     }
 
     // ---------- KEY CHANGE: build params conditionally ----------
-    const params = [unitIds];         // $1 always exists
+    const params = [unitIds]; // $1 always exists
     let baseAccess;
     if (currentRole === "headquarter") {
-      baseAccess = `apps.unit_id = ANY($1)`;                  // uses only $1
+      baseAccess = `apps.unit_id = ANY($1)`; // uses only $1
     } else {
-      params.push(allowedRoles);                               // now $2 exists
+      params.push(allowedRoles); // now $2 exists
       baseAccess = `
         (
           (
@@ -3218,27 +3608,41 @@ exports.getApplicationsSummary = async (user, query) => {
 
     const extra = [];
     if (award_type) {
-      params.push(award_type); p++;
+      params.push(award_type);
+      p++;
       extra.push(`LOWER(apps.fds->>'award_type') = LOWER($${p})`);
     }
     if (command_type) {
-      params.push(command_type); p++;
-      extra.push(`LOWER(COALESCE(NULLIF(apps.fds->>'command',''), u.comd)) = LOWER($${p})`);
+      params.push(command_type);
+      p++;
+      extra.push(
+        `LOWER(COALESCE(NULLIF(apps.fds->>'command',''), u.comd)) = LOWER($${p})`
+      );
     }
     if (corps_type) {
-      params.push(corps_type); p++;
-      extra.push(`LOWER(COALESCE(NULLIF(apps.fds->>'corps',''), u.corps)) = LOWER($${p})`);
+      params.push(corps_type);
+      p++;
+      extra.push(
+        `LOWER(COALESCE(NULLIF(apps.fds->>'corps',''), u.corps)) = LOWER($${p})`
+      );
     }
     if (division_type) {
-      params.push(division_type); p++;
-      extra.push(`LOWER(COALESCE(NULLIF(apps.fds->>'division',''), u.div)) = LOWER($${p})`);
+      params.push(division_type);
+      p++;
+      extra.push(
+        `LOWER(COALESCE(NULLIF(apps.fds->>'division',''), u.div)) = LOWER($${p})`
+      );
     }
     if (brigade_type) {
-      params.push(brigade_type); p++;
-      extra.push(`LOWER(COALESCE(NULLIF(apps.fds->>'brigade',''), u.bde)) = LOWER($${p})`);
+      params.push(brigade_type);
+      p++;
+      extra.push(
+        `LOWER(COALESCE(NULLIF(apps.fds->>'brigade',''), u.bde)) = LOWER($${p})`
+      );
     }
     if (search) {
-      params.push(`%${search}%`); p++;
+      params.push(`%${search}%`);
+      p++;
       extra.push(`(
         CAST(apps.id AS TEXT) ILIKE $${p} OR
         apps.fds->>'cycle_period' ILIKE $${p} OR
@@ -3248,18 +3652,26 @@ exports.getApplicationsSummary = async (user, query) => {
     }
 
     const key = String(group_by || "comd").toLowerCase();
-    const normKey = key === "brigade" || key === "brig" ? "bde" : key === "corp" ? "corps" : key;
+    const normKey =
+      key === "brigade" || key === "brig"
+        ? "bde"
+        : key === "corp"
+        ? "corps"
+        : key;
 
     const groupExprMap = {
       comd: "u.comd",
       corps: "u.corps",
       div: "u.div",
       bde: "u.bde",
-      arms_service: "NULLIF(apps.fds->>'arms_service','')"
+      arms_service: "NULLIF(apps.fds->>'arms_service','')",
     };
     const groupExpr = groupExprMap[normKey];
     if (!groupExpr) {
-      return ResponseHelper.error(400, "Invalid group_by. Use: comd | corps | div | bde | arms_service");
+      return ResponseHelper.error(
+        400,
+        "Invalid group_by. Use: comd | corps | div | bde | arms_service"
+      );
     }
 
     const whereAll = [baseAccess, ...extra].filter(Boolean).join(" AND ");
@@ -3283,16 +3695,25 @@ exports.getApplicationsSummary = async (user, query) => {
     `;
 
     const { rows } = await client.query(sql, params);
-    const x = rows.map(r => r.label);
-    const y = rows.map(r => Number(r.total));
+    const x = rows.map((r) => r.label);
+    const y = rows.map((r) => Number(r.total));
 
-    return ResponseHelper.success(200, "Applications grouped", { x, y }, {
-      group_by: normKey,
-      totalGroups: x.length,
-      totalApplications: y.reduce((a,b)=>a+b,0),
-    });
+    return ResponseHelper.success(
+      200,
+      "Applications grouped",
+      { x, y },
+      {
+        group_by: normKey,
+        totalGroups: x.length,
+        totalApplications: y.reduce((a, b) => a + b, 0),
+      }
+    );
   } catch (err) {
-    return ResponseHelper.error(500, "Failed to group applications", err.message);
+    return ResponseHelper.error(
+      500,
+      "Failed to group applications",
+      err.message
+    );
   } finally {
     client.release();
   }
@@ -3325,12 +3746,20 @@ exports.applicationFinalize = async (user, body) => {
 
     await client.query("COMMIT");
 
-    return ResponseHelper.success(200, "Applications finalized toggled successfully", {
-      updated: applicationsForFinalized.length,
-    });
+    return ResponseHelper.success(
+      200,
+      "Applications finalized toggled successfully",
+      {
+        updated: applicationsForFinalized.length,
+      }
+    );
   } catch (err) {
     await client.query("ROLLBACK");
-    return ResponseHelper.error(500, "Failed to toggle applications finalized state", err.message);
+    return ResponseHelper.error(
+      500,
+      "Failed to toggle applications finalized state",
+      err.message
+    );
   } finally {
     client.release();
   }

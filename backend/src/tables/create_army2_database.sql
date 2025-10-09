@@ -145,6 +145,19 @@ CREATE TABLE Unit_tab (
     corps_id INTEGER REFERENCES Corps_Master(corps_id)
 );
 
+CREATE TABLE Unit_Members (
+    member_id UUID PRIMARY KEY DEFAULT gen_random_uuid(), -- unique member ID
+    unit_id INTEGER NOT NULL REFERENCES Unit_tab(unit_id) ON DELETE CASCADE,
+    name VARCHAR NOT NULL,
+    rank VARCHAR,
+    ic_number VARCHAR,
+    appointment VARCHAR,
+    member_type VARCHAR,       -- e.g., presiding_officer, regular_member
+    member_order VARCHAR,      -- optional ordering field
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
 -- Parameter_Master with normalized structure
 CREATE TABLE Parameter_Master (
     param_id SERIAL PRIMARY KEY,

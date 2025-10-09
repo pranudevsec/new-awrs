@@ -1,5 +1,6 @@
 const dbService = require("../utils/postgres/dbService");
 const ResponseHelper = require("../utils/responseHelper");
+const { attachSingleFdsToApplication, attachFdsToApplications } = require("./commonService");
 
 exports.addClarification = async (user, data) => {
   const client = await dbService.getClient();
@@ -53,17 +54,20 @@ exports.addClarification = async (user, data) => {
     // Choose table and column based on type
     const table = type === "citation" ? "Citation_tab" : "Appre_tab";
     const jsonColumn = type === "citation" ? "citation_fds" : "appre_fds";
-
+    const idColumn = type === "citation" ? "citation_id" : "appreciation_id";
     // Get the current JSON field
-    const selectQuery = `SELECT ${jsonColumn} FROM ${table} WHERE ${type}_id = $1 FOR UPDATE`;
+    const selectQuery = `SELECT *, ${idColumn} AS id FROM ${table} WHERE ${idColumn} = $1 FOR UPDATE`;
     const jsonResult = await client.query(selectQuery, [application_id]);
 
     if (jsonResult.rowCount === 0) {
       throw new Error(`${type} record not found`);
     }
+let appData=jsonResult.rows[0]
 
-    const fds = jsonResult.rows[0][jsonColumn];
+appData=await attachSingleFdsToApplication(appData);
 
+    let fds = appData.fds;
+   
     // Modify the correct parameter
     const updatedFds = {
       ...fds,
@@ -77,17 +81,20 @@ exports.addClarification = async (user, data) => {
         return param;
       }),
     };
-
-    // Update the table with new JSON
-    const updateQuery = `
-        UPDATE ${table}
-        SET ${jsonColumn} = $1::jsonb
-        WHERE ${type}_id = $2;
-      `;
-    await client.query(updateQuery, [
-      JSON.stringify(updatedFds),
-      application_id,
-    ]);
+    const updateClarificationQuery = `
+    UPDATE fds_parameters
+    SET clarification_id = $1,
+        updated_at = NOW()
+    WHERE fds_id = $2
+      AND param_id = $3
+    RETURNING *;
+  `;
+  
+  await client.query(updateClarificationQuery, [
+    clarificationId,
+    appData.fds_id,
+    parameter_id,
+  ]);
 
     await client.query("COMMIT");
 
@@ -266,13 +273,15 @@ async function handleApplicationClarification(
 ) {
   const { appQuery, tableName, jsonField, idField } = getAppTableInfo(type);
 
-  const appRes = await client.query(appQuery, [id]);
+  let appRes = await client.query(appQuery, [id]);
   if (appRes.rowCount === 0) return;
-
-  const fds = appRes.rows[0][jsonField];
+let appData=appRes.rows[0];
+appData=await attachSingleFdsToApplication(appData)
+  const fds = appData.fds;
   if (!Array.isArray(fds?.parameters)) return;
 
   const updatedParams = updateFdsParameters(
+    client,
     fds.parameters,
     clarification_id,
     user,
@@ -295,14 +304,14 @@ async function handleApplicationClarification(
 function getAppTableInfo(application_type) {
   if (application_type === "citation") {
     return {
-      appQuery: `SELECT citation_fds FROM Citation_tab WHERE citation_id = $1`,
+      appQuery: `SELECT * FROM Citation_tab WHERE citation_id = $1`,
       tableName: "Citation_tab",
       jsonField: "citation_fds",
       idField: "citation_id",
     };
   } else if (application_type === "appreciation") {
     return {
-      appQuery: `SELECT appre_fds FROM Appre_tab WHERE appreciation_id = $1`,
+      appQuery: `SELECT * FROM Appre_tab WHERE appreciation_id = $1`,
       tableName: "Appre_tab",
       jsonField: "appre_fds",
       idField: "appreciation_id",
@@ -311,43 +320,71 @@ function getAppTableInfo(application_type) {
   throw new Error("Unsupported application type");
 }
 
-function updateFdsParameters(parameters, clarification_id, user, status) {
+async function updateFdsParameters(client, parameters, clarification_id, user, status) {
   let wasUpdated = false;
-  const updatedParams = parameters.map((param) => {
+
+  // Loop through parameters to update them both in memory and DB
+  for (const param of parameters) {
     if (param.clarification_id == clarification_id) {
       wasUpdated = true;
-      const { clarification_id, ...rest } = param;
+
+      // Prepare updated data
       const updatedParam = {
-        ...rest,
         last_clarification_handled_by: user.user_role,
         last_clarification_status: status,
         last_clarification_id: clarification_id,
       };
 
+      // If rejected → reset approval data
       if (status === "rejected") {
-        return {
-          ...updatedParam,
-          approved_marks: "8",
-          approved_by_role: user.user_role,
-          approved_by_user: user.id,
-          approved_marks_at: new Date().toISOString(),
-        };
+        updatedParam.approved_marks = 8; // or keep existing logic
+        updatedParam.approved_by_role = user.user_role;
+        updatedParam.approved_by_user = user.id;
+        updatedParam.approved_marks_at = new Date();
       } else {
-        const {
-          approved_marks,
-          approved_by_role,
-          approved_by_user,
-          approved_marks_at,
-          ...cleanedParam
-        } = updatedParam;
-        return cleanedParam;
+        // If not rejected → remove approval details
+        updatedParam.approved_marks = null;
+        updatedParam.approved_by_role = null;
+        updatedParam.approved_by_user = null;
+        updatedParam.approved_marks_at = null;
       }
+
+      // Update DB record
+      await client.query(
+        `
+        UPDATE fds_parameters
+        SET
+          last_clarification_handled_by = $1,
+          last_clarification_status = $2,
+          last_clarification_id = $3,
+          approved_marks = $4,
+          approved_by_role = $5,
+          approved_by_user = $6,
+          approved_marks_at = $7,
+          clarification_id = NULL,   -- clear the clarification_id
+          updated_at = NOW()
+        WHERE clarification_id = $8
+        `,
+        [
+          updatedParam.last_clarification_handled_by,
+          updatedParam.last_clarification_status,
+          updatedParam.last_clarification_id,
+          updatedParam.approved_marks,
+          updatedParam.approved_by_role,
+          updatedParam.approved_by_user,
+          updatedParam.approved_marks_at,
+          clarification_id,
+        ]
+      );
+      
+      // Reflect changes in local array
+      Object.assign(param, updatedParam);
     }
-    return param;
-  });
-  parameters.splice(0, parameters.length, ...updatedParams);
+  }
+
   return { wasUpdated };
 }
+
 
 async function updateFdsInApplication(
   client,
@@ -473,7 +510,6 @@ exports.getAllApplicationsWithClarificationsForUnit = async (user, query) => {
           'citation' AS type,
           unit_id,
           date_init,
-          citation_fds AS fds,
           status_flag
         FROM Citation_tab
         WHERE unit_id = $1
@@ -485,7 +521,6 @@ exports.getAllApplicationsWithClarificationsForUnit = async (user, query) => {
           'appreciation' AS type,
           unit_id,
           date_init,
-          appre_fds AS fds,
           status_flag
         FROM Appre_tab
         WHERE unit_id = $1
@@ -495,7 +530,7 @@ exports.getAllApplicationsWithClarificationsForUnit = async (user, query) => {
     const appreciations = await client.query(appreQuery, [unitId]);
 
     let allApps = [...citations.rows, ...appreciations.rows];
-
+    allApps=await attachFdsToApplications(allApps)
     // Filter by award_type if given
     if (award_type) {
       allApps = allApps.filter(
@@ -532,6 +567,7 @@ exports.getAllApplicationsWithClarificationsForUnit = async (user, query) => {
     const clarificationIdSet = new Set();
     allApps.forEach((app) => {
       app.fds?.parameters?.forEach((param) => {
+        console.log("param====",param)
         if (param.clarification_id) {
           clarificationIdSet.add(param.clarification_id);
         }
@@ -682,20 +718,26 @@ async function buildResponseData(client, clarifications, ownUnitName, matchingFi
   const responseData = [];
 
   const tableMap = {
-    citation: { table: "Citation_tab", idField: "citation_id", fdsField: "citation_fds" },
-    appreciation: { table: "Appre_tab", idField: "appreciation_id", fdsField: "appre_fds" },
+    citation: { table: "Citation_tab", idField: "citation_id" },
+    appreciation: { table: "Appre_tab", idField: "appreciation_id" },
   };
 
   for (const clarification of clarifications) {
     const { application_type, application_id, parameter_name } = clarification;
-    const { table, idField, fdsField } = tableMap[application_type];
+    const { table, idField } = tableMap[application_type];
 
-    const [appRes, unitRes] = await Promise.all([
-      client.query(`SELECT * FROM ${table} WHERE ${idField} = $1`, [application_id]),
-      client.query(`SELECT * FROM Unit_tab WHERE unit_id = (SELECT unit_id FROM ${table} WHERE ${idField} = $1)`, [application_id]),
-    ]);
-
+    // Fetch application
+    const appRes = await client.query(
+      `SELECT * FROM ${table} WHERE ${idField} = $1`,
+      [application_id]
+    );
     const application = appRes.rows[0];
+
+    // Fetch associated unit
+    const unitRes = await client.query(
+      `SELECT * FROM Unit_tab WHERE unit_id = $1`,
+      [application.unit_id]
+    );
     const unit = unitRes.rows[0];
     if (!application || !unit || unit[matchingField] !== ownUnitName) continue;
 

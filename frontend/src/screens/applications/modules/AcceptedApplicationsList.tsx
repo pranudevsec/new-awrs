@@ -580,16 +580,16 @@ const AcceptedApplicationsList = () => {
                     <p className="fw-4">{unit.unit_details?.location ?? "-"}</p>
                   </td>
                   <td style={{ width: 150, minWidth: 150, maxWidth: 150 }}>
-                    <p className="fw-4">{unit.unit_details?.bde ?? "-"}</p>
+                    <p className="fw-4">{unit.fds?.brigade ?? "-"}</p>
                   </td>
                   <td style={{ width: 150, minWidth: 150, maxWidth: 150 }}>
-                    <p className="fw-4">{unit.unit_details?.div ?? "-"}</p>
+                    <p className="fw-4">{unit.fds?.division ?? "-"}</p>
                   </td>
                   <td style={{ width: 150, minWidth: 150, maxWidth: 150 }}>
-                    <p className="fw-4">{unit.unit_details?.corps ?? "-"}</p>
+                    <p className="fw-4">{unit.fds?.corps ?? "-"}</p>
                   </td>
                   <td style={{ width: 150, minWidth: 150, maxWidth: 150 }}>
-                    <p className="fw-4">{unit.unit_details?.comd ?? "-"}</p>
+                    <p className="fw-4">{unit.fds?.command ?? "-"}</p>
                   </td>
                   {/* Tenure */}
                   <td style={{ width: 150, minWidth: 150, maxWidth: 150 }}>

@@ -203,13 +203,20 @@ exports.login = async (credentials) => {
 };
 exports.getProfile = async ({ user_id }) => {
   try {
-    const userQuery = `
-      SELECT u.*, rm.role_name 
-      FROM user_tab u 
-      LEFT JOIN role_master rm ON u.role_id = rm.role_id 
+    // Step 1: Fetch user details
+    const userResult = await db.query(
+      `
+      SELECT 
+        u.user_id, u.name AS user_name, u.username, u.pers_no, u.rank, u.cw2_type,
+        u.unit_id, u.is_special_unit, u.is_officer, u.is_member, u.is_member_added,
+        u.officer_id,
+        rm.role_name AS user_role
+      FROM User_tab u
+      LEFT JOIN role_master rm ON u.role_id = rm.role_id
       WHERE u.user_id = $1
-    `;
-    const userResult = await db.query(userQuery, [user_id]);
+      `,
+      [user_id]
+    );
 
     if (userResult.rows.length === 0) {
       return ResponseHelper.error(404, "User not found");
@@ -217,70 +224,118 @@ exports.getProfile = async ({ user_id }) => {
 
     const user = userResult.rows[0];
 
-    let unit = null;
-    if (user.unit_id) {
-      const unitQuery = `
-        SELECT u.*, 
-               b.brigade_name AS bde,
-               d.division_name AS div,
-               c.corps_name AS corps,
-               cm.command_name AS comd
-        FROM unit_tab u
+    let unitData = null;
+
+    // Step 2: Determine correct unit_id for fetching unit data
+    let effectiveUnitId = user.unit_id;
+
+    if (!effectiveUnitId && user.is_member && user.officer_id) {
+      const officerResult = await db.query(
+        `SELECT unit_id FROM User_tab WHERE user_id = $1`,
+        [user.officer_id]
+      );
+      if (officerResult.rows.length > 0) {
+        effectiveUnitId = officerResult.rows[0].unit_id;
+      }
+    }
+
+    // Step 3: Fetch unit details if unit_id found
+    if (effectiveUnitId) {
+      const unitResult = await db.query(
+        `
+        SELECT 
+          u.unit_id, u.sos_no, u.name, u.adm_channel, u.tech_channel, 
+          b.brigade_name AS bde, d.division_name AS div, c.corps_name AS corps, cm.command_name AS comd,
+          u.unit_type, u.matrix_unit, u.location, u.awards,
+          u.start_month, u.start_year, u.end_month, u.end_year
+        FROM Unit_tab u
         LEFT JOIN brigade_master b ON u.brigade_id = b.brigade_id
         LEFT JOIN division_master d ON u.division_id = d.division_id
         LEFT JOIN corps_master c ON u.corps_id = c.corps_id
         LEFT JOIN command_master cm ON u.command_id = cm.command_id
         WHERE u.unit_id = $1
-      `;
-      const unitResult = await db.query(unitQuery, [user.unit_id]);
+        `,
+        [effectiveUnitId]
+      );
+
       if (unitResult.rows.length > 0) {
-        unit = unitResult.rows[0];
+        const unit = unitResult.rows[0];
+
+        // Fetch members from Unit_Members table
+        const membersResult = await db.query(
+          `
+          SELECT member_id AS id, name, rank, ic_number, appointment, member_type, member_order
+          FROM Unit_Members
+          WHERE unit_id = $1
+          ORDER BY member_order ASC NULLS LAST, name ASC
+          `,
+          [unit.unit_id]
+        );
+
+        const members = membersResult.rows.map((m) => ({
+          id: m.id,
+          name: m.name || "",
+          rank: m.rank || "",
+          ic_number: m.ic_number || "",
+          appointment: m.appointment || "",
+          member_type: m.member_type || "",
+          member_order: m.member_order !== null ? m.member_order.toString() : "",
+        }));
+        
+        unitData = {
+          unit_id: unit.unit_id,
+          sos_no: unit.sos_no,
+          name: unit.name,
+          adm_channel: unit.adm_channel,
+          tech_channel: unit.tech_channel,
+          bde: unit.bde,
+          div: unit.div,
+          corps: unit.corps,
+          comd: unit.comd,
+          unit_type: unit.unit_type,
+          matrix_unit: unit.matrix_unit,
+          location: unit.location,
+          awards: unit.awards || [],
+          members, 
+          start_month: unit.start_month,
+          start_year: unit.start_year,
+          end_month: unit.end_month,
+          end_year: unit.end_year,
+        };
       }
     }
 
+    // Step 4: Fetch registered member's username if is_member_added is true
+    let memberUsername = null;
+    if (user.is_member_added) {
+      const memberResult = await db.query(
+        `SELECT username FROM User_tab WHERE officer_id = $1 LIMIT 1`,
+        [user.user_id]
+      );
+      if (memberResult.rows.length > 0) {
+        memberUsername = memberResult.rows[0].username;
+      }
+    }
+
+    // Step 5: Return structured response
     return ResponseHelper.success(200, "Successfully found.", {
       user: {
         user_id: user.user_id,
-        name: user.name,
+        name: user.user_name,
         username: user.username,
         pers_no: user.pers_no,
         rank: user.rank,
-        user_role: user.role_name,
+        user_role: user.user_role,
         cw2_type: user.cw2_type,
         is_special_unit: user.is_special_unit,
         is_officer: user.is_officer,
         is_member: user.is_member,
         is_member_added: user.is_member_added,
-        member_username: null,
+        member_username: memberUsername,
       },
-      unit: unit
-        ? {
-            unit_id: unit.unit_id,
-            sos_no: unit.sos_no,
-            name: unit.name,
-            adm_channel: unit.adm_channel,
-            tech_channel: unit.tech_channel,
-            bde: unit.bde,
-            div: unit.div,
-            corps: unit.corps,
-            comd: unit.comd,
-            unit_type: unit.unit_type,
-            matrix_unit: unit.matrix_unit,
-            location: unit.location,
-            awards: unit.awards || [],
-            members: unit.members || [],
-            start_month: unit.start_month || "",
-            start_year: unit.start_year || "",
-            end_month: unit.end_month || "",
-            end_year: unit.end_year || "",
-          }
-        : null,
+      unit: unitData,
     });
   } catch (error) {
-    return ResponseHelper.error(
-      500,
-      "Internal server error",
-      error.message
-    );
+    return ResponseHelper.error(500, "Internal server error", error.message);
   }
 };
