@@ -1,3 +1,5 @@
+ALTER TABLE citation_tab
+DROP COLUMN IF EXISTS citation_fds;
 ALTER TABLE appre_tab
 DROP COLUMN IF EXISTS appre_fds;
 
@@ -42,3 +44,26 @@ ALTER SEQUENCE fds_awards_fds_award_id_seq RESTART WITH 1;
 ALTER SEQUENCE fds_parameters_fds_parameter_id_seq RESTART WITH 1;
 ALTER SEQUENCE citation_tab_citation_id_seq RESTART WITH 1;
 ALTER SEQUENCE appre_tab_appreciation_id_seq RESTART WITH 1;
+
+
+ALTER TABLE fds_parameters
+ADD COLUMN approved_marks INTEGER DEFAULT 0,
+ADD COLUMN approved_count INTEGER DEFAULT 0,
+ADD COLUMN approved_marks_documents JSON DEFAULT '[]',
+ADD COLUMN approved_marks_reason TEXT,
+ADD COLUMN approved_by_user INTEGER REFERENCES user_tab(user_id) ON DELETE SET NULL,
+ADD COLUMN approved_by_role VARCHAR(50),
+ADD COLUMN approved_marks_at TIMESTAMP;
+ADD COLUMN clarification_id INTEGER;
+
+
+ALTER TABLE Citation_tab DROP COLUMN IF EXISTS remarks;
+ALTER TABLE Appre_tab DROP COLUMN IF EXISTS remarks;
+
+ALTER TABLE fds_parameters
+ADD COLUMN last_clarification_handled_by VARCHAR(50),
+ADD COLUMN last_clarification_status VARCHAR(50),
+ADD COLUMN last_clarification_id INTEGER;
+
+ALTER TABLE fds
+DROP COLUMN accepted_members;

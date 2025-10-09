@@ -195,21 +195,7 @@ const TrackApplicationDetails = () => {
     }
   };
 
-  const renderUploads = (upload: any) => {
-    let uploads: string[] = [];
 
-    if (Array.isArray(upload)) {
-      uploads = upload;
-    } else if (typeof upload === "string") {
-      uploads = upload.split(",");
-    }
-
-    return uploads.map((filePath: string) => (
-      <span key={filePath} style={{ display: "block" }}>
-        {filePath.trim().split("/").pop()}
-      </span>
-    ));
-  };
   const renderParameterRow = (param: any, display: any) => {
     const rows: JSX.Element[] = [];
 

@@ -18,9 +18,6 @@ CREATE TABLE fds (
     cycle_period VARCHAR(100),
 
     -- store complex data parts as JSON
-    parameters JSON,
-    accepted_members JSON,
-    applicationGraceMarks JSON,
     applicationPriority JSON,
     comments JSON,
 
@@ -42,14 +39,89 @@ CREATE TABLE fds_parameters (
     fds_parameter_id SERIAL PRIMARY KEY,
     fds_id INTEGER NOT NULL REFERENCES fds(fds_id) ON DELETE CASCADE,
     param_id INTEGER NOT NULL,           -- Corresponds to parameter_master.param_id
+
+    -- Original fields
     count INTEGER NOT NULL DEFAULT 0,
     marks INTEGER NOT NULL DEFAULT 0,
     upload JSON,                         -- Store uploaded files as JSON array
+
+    -- New approval-related fields
+    approved_marks INTEGER DEFAULT 0,
+    approved_count INTEGER DEFAULT 0,
+    approved_marks_documents JSON DEFAULT '[]',
+    approved_marks_reason TEXT,
+    approved_by_user INTEGER REFERENCES user_tab(user_id) ON DELETE SET NULL,
+    approved_by_role VARCHAR(50),
+    approved_marks_at TIMESTAMP,
+
+    clarification_id INTEGER,
+last_clarification_handled_by VARCHAR(50),
+last_clarification_status VARCHAR(50),
+last_clarification_id INTEGER,
+
     created_at TIMESTAMP DEFAULT NOW(),
     updated_at TIMESTAMP DEFAULT NOW(),
+
     UNIQUE(fds_id, param_id)             -- Prevent duplicate entries for same parameter
 );
+CREATE TABLE fds_accepted_members (
+    fds_accepted_member_id SERIAL PRIMARY KEY,
+    fds_id INTEGER NOT NULL REFERENCES fds(fds_id) ON DELETE CASCADE,
+    member_id UUID NOT NULL,
+    name VARCHAR(255) NOT NULL,
+    ic_number VARCHAR(50),
+    member_type VARCHAR(100),
+    is_signature_added BOOLEAN DEFAULT FALSE,
+    sign_digest TEXT,
+    created_at TIMESTAMP DEFAULT NOW(),
+    updated_at TIMESTAMP DEFAULT NOW()
+);
 
+CREATE TABLE Unit_Members (
+    member_id UUID PRIMARY KEY DEFAULT gen_random_uuid(), -- unique member ID
+    unit_id INTEGER NOT NULL REFERENCES Unit_tab(unit_id) ON DELETE CASCADE,
+    name VARCHAR NOT NULL,
+    rank VARCHAR,
+    ic_number VARCHAR,
+    appointment VARCHAR,
+    member_type VARCHAR,       -- e.g., presiding_officer, regular_member
+    member_order VARCHAR,      -- optional ordering field
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE application_remarks (
+    remark_id SERIAL PRIMARY KEY,
+    application_id INTEGER NOT NULL,      -- ID of citation or appreciation
+    type VARCHAR(50) NOT NULL,            -- 'citation' or 'appreciation'
+    remarks TEXT NOT NULL,                -- Remark text
+    remark_added_by INTEGER REFERENCES user_tab(user_id) ON DELETE SET NULL,
+    remark_added_by_role VARCHAR(50),     -- Role of the user who added the remark
+    remark_added_at TIMESTAMP DEFAULT NOW(),
+    created_at TIMESTAMP DEFAULT NOW(),
+    updated_at TIMESTAMP DEFAULT NOW(),
+    CONSTRAINT uq_application_remarks UNIQUE (application_id, type, remark_added_by_role)
+);
+
+CREATE TABLE fds_grace_marks (
+    fds_grace_mark_id SERIAL PRIMARY KEY,
+    fds_id INTEGER NOT NULL REFERENCES fds(fds_id) ON DELETE CASCADE,
+    role VARCHAR(100) NOT NULL,            -- e.g., brigade, division
+    marks_by INTEGER NOT NULL,             -- user_id or similar
+    marks_added_at TIMESTAMP NOT NULL DEFAULT NOW(),
+    marks INTEGER NOT NULL DEFAULT 0,
+    created_at TIMESTAMP DEFAULT NOW(),
+    updated_at TIMESTAMP DEFAULT NOW()
+);
+CREATE TABLE fds_application_priority (
+    fds_application_priority_id SERIAL PRIMARY KEY,
+    fds_id INTEGER NOT NULL REFERENCES fds(fds_id) ON DELETE CASCADE,
+    role VARCHAR(100) NOT NULL,             -- e.g., brigade, division
+    priority INTEGER NOT NULL DEFAULT 0,    -- priority value
+    priority_added_at TIMESTAMP NOT NULL DEFAULT NOW(),
+    created_at TIMESTAMP DEFAULT NOW(),
+    updated_at TIMESTAMP DEFAULT NOW()
+);
 ALTER TABLE citation_tab
 ADD COLUMN fds_id INTEGER;
 
