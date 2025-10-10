@@ -84,20 +84,27 @@ exports.createAppre = async (data, user) => {
       `INSERT INTO fds (
         application_id, corps_id, brigade_id, command_id, division_id, location, last_date,
         unit_type, award_type, matrix_unit, unit_remarks, arms_service_id,
-        cycle_period, accepted_members, applicationGraceMarks, applicationPriority, comments
-      ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17)
+        cycle_period, comments
+      ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14)
       RETURNING fds_id`,
       [
-        applicationId, corps_id, brigade_id, command_id, division_id,
-        appre_fds.location, appre_fds.last_date, appre_fds.unit_type,
-        appre_fds.award_type, appre_fds.matrix_unit, appre_fds.unitRemarks,
-        arms_service_id, appre_fds.cycle_period,
-        JSON.stringify(appre_fds.accepted_members || []),
-        JSON.stringify(appre_fds.applicationGraceMarks || []),
-        JSON.stringify(appre_fds.applicationPriority || []),
-        JSON.stringify(appre_fds.comments || [])
+        applicationId,
+        corps_id,
+        brigade_id,
+        command_id,
+        division_id,
+        appre_fds.location,
+        appre_fds.last_date,
+        appre_fds.unit_type,
+        appre_fds.award_type,
+        appre_fds.matrix_unit,
+        appre_fds.unitRemarks,
+        arms_service_id,
+        appre_fds.cycle_period,
+        JSON.stringify(appre_fds.comments || []),
       ]
     );
+    
 
     const fdsId = fdsInsert.rows[0].fds_id;
 

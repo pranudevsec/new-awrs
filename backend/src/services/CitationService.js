@@ -93,8 +93,8 @@ exports.createCitation = async (data, user) => {
       `INSERT INTO fds (
         application_id, corps_id, brigade_id, command_id, division_id, location, last_date,
         unit_type, award_type, matrix_unit, unit_remarks, arms_service_id,
-        cycle_period, accepted_members, applicationGraceMarks, applicationPriority, comments
-      ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17)
+        cycle_period, comments
+      ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14)
       RETURNING fds_id`,
       [
         applicationId,
@@ -110,12 +110,10 @@ exports.createCitation = async (data, user) => {
         citation_fds.unitRemarks,
         arms_service_id,
         citation_fds.cycle_period,
-        JSON.stringify(citation_fds.accepted_members || []),
-        JSON.stringify(citation_fds.applicationGraceMarks || []),
-        JSON.stringify(citation_fds.applicationPriority || []),
         JSON.stringify(citation_fds.comments || []),
       ]
     );
+    
 
     const fdsId = fdsInsert.rows[0].fds_id;
 
@@ -160,7 +158,6 @@ exports.createCitation = async (data, user) => {
     client.release();
   }
 };
-
 exports.getAllCitations = async () => {
   const client = await dbService.getClient();
   try {
