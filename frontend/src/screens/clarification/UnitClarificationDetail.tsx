@@ -139,40 +139,31 @@ const UnitClarificationDetail = () => {
         <p className="fw-5">{param.marks}</p>
       </td>
       <td style={{ width: 200 }}>
-        {param.upload ? (
-          <button
-            onClick={() => handleDocumentDownload(param.upload, param.upload.split("/").pop() || "document")}
-            style={{ 
-              fontSize: 14, 
-              wordBreak: "break-word",
-              background: "none",
-              border: "none",
-              color: "#1d4ed8",
-              textDecoration: "underline",
-              cursor: "pointer",
-              padding: 0,
-              textAlign: "left"
-            }}
-          >
-            {Array.isArray(param?.upload)
-              ? param.upload.map((filePath: any) => (
-                <span key={filePath} style={{ display: "block" }}>
-                  {filePath.split("/").pop()}
-                </span>
-              ))
-              : param?.upload
-                ?.toString()
-                .split(",")
-                .map((filePath: any) => (
-                  <span key={filePath} style={{ display: "block" }}>
-                    {filePath.trim().split("/").pop()}
-                  </span>
-                ))}
-          </button>
-        ) : (
-          "--"
-        )}
-      </td>
+  {Array.isArray(param?.upload) && param.upload.length > 0 ? (
+    param.upload.map((filePath: string) => (
+      <button
+        key={filePath}
+        onClick={() => handleDocumentDownload(filePath, filePath.split("/").pop() || "document")}
+        style={{ 
+          fontSize: 14, 
+          wordBreak: "break-word",
+          background: "none",
+          border: "none",
+          color: "#1d4ed8",
+          textDecoration: "underline",
+          cursor: "pointer",
+          padding: 0,
+          textAlign: "left",
+          display: "block",
+        }}
+      >
+        {filePath.split("/").pop()}
+      </button>
+    ))
+  ) : (
+    "--"
+  )}
+</td>
       <td style={{ width: 200, wordWrap: "break-word", wordBreak: "break-word", overflowWrap: "break-word" }}>
         <div 
           className="position-relative"

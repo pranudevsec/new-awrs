@@ -11,11 +11,18 @@ exports.register = async ({ rank, name, user_role, username, password }) => {
     const hashedPassword = await bcrypt.hash(password, 10);
     const pers_no = Math.floor(1000000 + Math.random() * 9000000).toString();
 
-    //  Handle cw2_* roles
+    // Handle cw2_* roles
     let cw2_type = null;
     if (user_role && user_role.startsWith("cw2_")) {
       cw2_type = user_role.split("_")[1];
       user_role = "cw2";
+    }
+
+    // Handle special_unit
+    let is_special_unit = false;
+    if (user_role === "special_unit") {
+      is_special_unit = true;
+      user_role = "unit"; // map to existing unit role
     }
 
     // Check if username exists
@@ -44,11 +51,11 @@ exports.register = async ({ rank, name, user_role, username, password }) => {
       roleId = newRoleResult.rows[0].role_id;
     }
 
-    //  Insert user
+    // Insert user
     const insertQuery = `
-      INSERT INTO User_tab (pers_no, rank, name, username, password, role_id, cw2_type)
-      VALUES ($1, $2, $3, $4, $5, $6, $7)
-      RETURNING user_id, pers_no, rank, name, username, is_active, created_at, role_id, cw2_type
+      INSERT INTO User_tab (pers_no, rank, name, username, password, role_id, cw2_type, is_special_unit)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+      RETURNING user_id, pers_no, rank, name, username, is_active, created_at, role_id, cw2_type, is_special_unit
     `;
 
     const result = await db.query(insertQuery, [
@@ -59,12 +66,12 @@ exports.register = async ({ rank, name, user_role, username, password }) => {
       hashedPassword,
       roleId,
       cw2_type,
+      is_special_unit
     ]);
 
     const userData = result.rows[0];
-    const userId = userData.user_id;
 
-    //  Role-specific inserts
+    // Role-specific inserts
     if (user_role === "unit") {
       await db.query(
         `INSERT INTO Unit_tab (name, unit_type, sos_no, location)
@@ -97,7 +104,7 @@ exports.register = async ({ rank, name, user_role, username, password }) => {
       );
     }
 
-    //  Add role name to response
+    // Add role name to response
     const roleNameResult = await db.query(
       "SELECT role_name FROM Role_Master WHERE role_id = $1",
       [roleId]
@@ -105,6 +112,7 @@ exports.register = async ({ rank, name, user_role, username, password }) => {
 
     userData.user_role = roleNameResult.rows[0].role_name;
     userData.cw2_type = cw2_type;
+    userData.is_special_unit = is_special_unit;
 
     return ResponseHelper.success(201, MSG.REGISTER_SUCCESS, userData);
   } catch (error) {
@@ -238,7 +246,7 @@ exports.getProfile = async ({ user_id }) => {
           u.unit_id, u.sos_no, u.name, u.adm_channel, u.tech_channel, 
           b.brigade_name AS bde, d.division_name AS div, c.corps_name AS corps, cm.command_name AS comd,
           u.unit_type, u.matrix_unit, u.location, u.awards,
-          u.start_month, u.start_year, u.end_month, u.end_year
+          u.start_month, u.start_year, u.end_month,u.brigade_id,u.command_id,u.division_id,u.corps_id, u.end_year
         FROM Unit_tab u
         LEFT JOIN brigade_master b ON u.brigade_id = b.brigade_id
         LEFT JOIN division_master d ON u.division_id = d.division_id
@@ -284,6 +292,7 @@ exports.getProfile = async ({ user_id }) => {
           div: unit.div,
           corps: unit.corps,
           comd: unit.comd,
+          brigade_id: unit.brigade_id,
           unit_type: unit.unit_type,
           matrix_unit: unit.matrix_unit,
           location: unit.location,

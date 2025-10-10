@@ -53,7 +53,6 @@ exports.addClarification = async (user, data) => {
 
     // Choose table and column based on type
     const table = type === "citation" ? "Citation_tab" : "Appre_tab";
-    const jsonColumn = type === "citation" ? "citation_fds" : "appre_fds";
     const idColumn = type === "citation" ? "citation_id" : "appreciation_id";
     // Get the current JSON field
     const selectQuery = `SELECT *, ${idColumn} AS id FROM ${table} WHERE ${idColumn} = $1 FOR UPDATE`;

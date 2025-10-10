@@ -60,6 +60,7 @@ exports.attachFdsToApplications = async (applications) => {
         approved_by_role: p.approved_by_role || null,
         approved_marks_at: p.approved_marks_at || null,
         clarification_id: p.clarification_id || null,
+
       });
     });
 
@@ -263,6 +264,7 @@ exports.attachSingleFdsToApplication = async (application) => {
       approved_by_role: p.approved_by_role || null,
       approved_marks_at: p.approved_marks_at || null,
       clarification_id: p.clarification_id || null,
+      info: `1 ${p.param_name} = ${p.per_unit_mark} marks (Max ${p.max_marks} marks)`,
     }));
 
     // STEP 3: Fetch awards

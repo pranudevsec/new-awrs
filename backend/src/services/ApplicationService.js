@@ -998,9 +998,13 @@ exports.getApplicationsScoreboard = async (user, query) => {
     if (user_role.toLowerCase() === "command") {
       if (!unitName) throw new Error("Command unit name not found in profile");
       const res = await client.query(
-        `SELECT unit_id FROM Unit_tab WHERE comd = $1`,
-        [unitName]
+        `SELECT u.unit_id, u.name, u.brigade_id, u.division_id, u.corps_id
+         FROM Unit_tab u
+         JOIN Command_Master c ON u.command_id = c.command_id
+         WHERE c.command_name = $1`,
+        [unitName] // your command name
       );
+
       unitIds = res.rows.map((u) => u.unit_id);
       if (unitIds.length === 0) {
         return ResponseHelper.success(200, "No subordinate units found", [], {
@@ -1022,22 +1026,6 @@ exports.getApplicationsScoreboard = async (user, query) => {
       } else {
         clauses.push(`${table}.status_flag = 'approved'`);
         clauses.push(`${table}.last_approved_by_role = 'cw2'`);
-      }
-      if (award_type) {
-        clauses.push(
-          `LOWER(${table}.${
-            table === "c" ? "citation_fds" : "appre_fds"
-          }->>'award_type') = LOWER($2)`
-        );
-      }
-      if (search) {
-        clauses.push(
-          `(CAST(${table}.${
-            table === "c" ? "citation_id" : "appreciation_id"
-          } AS TEXT) ILIKE $3 OR LOWER(${table}.${
-            table === "c" ? "citation_fds" : "appre_fds"
-          }->>'cycle_period') ILIKE $3)`
-        );
       }
       return clauses.join(" AND ");
     }
@@ -1071,7 +1059,6 @@ exports.getApplicationsScoreboard = async (user, query) => {
           'citation' AS type,
           c.unit_id,
           c.date_init,
-          c.citation_fds AS fds,
           c.status_flag,
           c.last_approved_by_role,
           c.last_approved_at,
@@ -1098,7 +1085,6 @@ exports.getApplicationsScoreboard = async (user, query) => {
           'appreciation' AS type,
           a.unit_id,
           a.date_init,
-          a.appre_fds AS fds,
           a.status_flag,
           a.last_approved_by_role,
           a.last_approved_at,
@@ -1125,6 +1111,7 @@ exports.getApplicationsScoreboard = async (user, query) => {
 
     const dataResult = await client.query(dataQuery, dataParams);
     let allApps = dataResult.rows;
+    allApps = await attachFdsToApplications(allApps);
 
     // Clarifications
     const clarificationIds = [];
@@ -1207,11 +1194,35 @@ exports.getApplicationsScoreboard = async (user, query) => {
       currentPage: pageInt,
       itemsPerPage: limitInt,
     };
+    let filteredApps = paginatedData.filter((app) => {
+      // Skip apps without fds
+      if (!app.fds) return false;
+
+      let match = true;
+
+      //  Filter by award_type
+      if (award_type) {
+        match =
+          match &&
+          app.fds.award_type?.toLowerCase() === award_type.toLowerCase();
+      }
+
+      //  Filter by search (matches id or cycle_period)
+      if (search) {
+        const s = search.toLowerCase();
+        const idStr =
+          (app.type === "citation" ? app.id : app.id)?.toString() || "";
+        const cyclePeriod = app.fds.cycle_period?.toLowerCase() || "";
+        match = match && (idStr.includes(s) || cyclePeriod.includes(s));
+      }
+
+      return match;
+    });
 
     return ResponseHelper.success(
       200,
       "Fetched approved applications",
-      paginatedData,
+      filteredApps,
       pagination
     );
   } catch (err) {
@@ -1963,77 +1974,78 @@ exports.addApplicationSignature = async (user, body) => {
   }
 };
 
-exports.addApplicationComment = async (user, body) => {
-  const client = await dbService.getClient();
-  try {
-    const { type, application_id, parameters } = body;
+// exports.addApplicationComment = async (user, body) => {
+//   const client = await dbService.getClient();
+//   try {
+//     const { type, application_id, parameters } = body;
 
-    if (!["citation", "appreciation"].includes(type)) {
-      return ResponseHelper.error(400, "Invalid type provided");
-    }
+//     if (!["citation", "appreciation"].includes(type)) {
+//       return ResponseHelper.error(400, "Invalid type provided");
+//     }
 
-    const tableName = type === "citation" ? "Citation_tab" : "Appre_tab";
-    const idColumn = type === "citation" ? "citation_id" : "appreciation_id";
-    const fdsColumn = type === "citation" ? "citation_fds" : "appre_fds";
+//     const tableName = type === "citation" ? "Citation_tab" : "Appre_tab";
+//     const idColumn = type === "citation" ? "citation_id" : "appreciation_id";
+//     const fdsColumn = type === "citation" ? "citation_fds" : "appre_fds";
 
-    const res = await client.query(
-      `SELECT ${idColumn}, ${fdsColumn} AS fds FROM ${tableName} WHERE ${idColumn} = $1`,
-      [application_id]
-    );
+//     const res = await client.query(
+//       `SELECT ${idColumn}, ${fdsColumn} AS fds FROM ${tableName} WHERE ${idColumn} = $1`,
+//       [application_id]
+//     );
 
-    if (res.rowCount === 0) {
-      return ResponseHelper.error(404, "Application not found");
-    }
+//     if (res.rowCount === 0) {
+//       return ResponseHelper.error(404, "Application not found");
+//     }
 
-    let fds = res.rows[0].fds;
-    const now = new Date();
+//     let fds = res.rows[0].fds;
+//     const now = new Date();
 
-    if (!Array.isArray(parameters) || parameters.length === 0) {
-      return ResponseHelper.error(400, "Parameters array is required");
-    }
+//     if (!Array.isArray(parameters) || parameters.length === 0) {
+//       return ResponseHelper.error(400, "Parameters array is required");
+//     }
 
-    fds.parameters = fds.parameters.map((param) => {
-      const incomingParam = parameters.find((p) => p.name === param.name);
-      if (incomingParam) {
-        if (!Array.isArray(param.comments)) {
-          param.comments = [];
-        }
+//     fds.parameters = fds.parameters.map((param) => {
+//       const incomingParam = parameters.find((p) => p.name === param.name);
+//       if (incomingParam) {
+//         if (!Array.isArray(param.comments)) {
+//           param.comments = [];
+//         }
 
-        const existingCommentIndex = param.comments.findIndex(
-          (c) => c.commented_by === user.user_id
-        );
+//         const existingCommentIndex = param.comments.findIndex(
+//           (c) => c.commented_by === user.user_id
+//         );
 
-        const newComment = {
-          comment: incomingParam.comment || "",
-          commented_by_role_type: user.cw2_type || null,
-          commented_by_role: user.user_role || null,
-          commented_at: now,
-          commented_by: user.user_id,
-        };
+//         const newComment = {
+//           comment: incomingParam.comment || "",
+//           commented_by_role_type: user.cw2_type || null,
+//           commented_by_role: user.user_role || null,
+//           commented_at: now,
+//           commented_by: user.user_id,
+//         };
 
-        if (existingCommentIndex >= 0) {
-          param.comments[existingCommentIndex] = newComment;
-        } else {
-          param.comments.push(newComment);
-        }
-      }
-      return param;
-    });
+//         if (existingCommentIndex >= 0) {
+//           param.comments[existingCommentIndex] = newComment;
+//         } else {
+//           param.comments.push(newComment);
+//         }
+//       }
+//       return param;
+//     });
 
-    await client.query(
-      `UPDATE ${tableName}
-         SET ${fdsColumn} = $1
-         WHERE ${idColumn} = $2`,
-      [fds, application_id]
-    );
+//     await client.query(
+//       `UPDATE ${tableName}
+//          SET ${fdsColumn} = $1
+//          WHERE ${idColumn} = $2`,
+//       [fds, application_id]
+//     );
 
-    return ResponseHelper.success(200, "Comment added successfully");
-  } catch (error) {
-    return ResponseHelper.error(500, "Failed to add comments", error.message);
-  } finally {
-    client.release();
-  }
-};
+//     return ResponseHelper.success(200, "Comment added successfully");
+//   } catch (error) {
+//     return ResponseHelper.error(500, "Failed to add comments", error.message);
+//   } finally {
+//     client.release();
+//   }
+// };
+
 exports.addApplicationComment = async (user, body) => {
   const client = await dbService.getClient();
 
@@ -2047,7 +2059,6 @@ exports.addApplicationComment = async (user, body) => {
 
     const tableName = type === "citation" ? "Citation_tab" : "Appre_tab";
     const idColumn = type === "citation" ? "citation_id" : "appreciation_id";
-    const fdsColumn = type === "citation" ? "citation_fds" : "appre_fds";
 
     //  Fetch FDS data
     const res = await client.query(
@@ -2473,13 +2484,35 @@ exports.getAllApplications = async (user, query) => {
     let allowedRoles = [];
 
     if (currentRole === "headquarter") {
-      const allUnitsRes = await client.query(`SELECT unit_id FROM Unit_tab`);
+      // Headquarter sees all units
+      const allUnitsRes = await client.query(`
+        SELECT 
+          u.unit_id,
+          u.name AS unit_name,
+          u.sos_no,
+          u.unit_type,
+          u.matrix_unit,
+          u.location,
+          u.awards,
+          u.members,
+          c.command_name,
+          b.brigade_name,
+          d.division_name,
+          co.corps_name
+        FROM Unit_tab u
+        LEFT JOIN Command_Master c ON u.command_id = c.command_id
+        LEFT JOIN Brigade_Master b ON u.brigade_id = b.brigade_id
+        LEFT JOIN Division_Master d ON u.division_id = d.division_id
+        LEFT JOIN Corps_Master co ON u.corps_id = co.corps_id
+      `);
+    
       unitIds = allUnitsRes.rows.map((u) => u.unit_id);
       allowedRoles = ROLE_HIERARCHY;
     } else {
+      // Other roles see subordinate units
       const currentIndex = ROLE_HIERARCHY.indexOf(currentRole);
       if (currentIndex === -1) throw new Error("Invalid user role");
-
+    
       const subordinateFieldMap = {
         unit: "unit_id",
         brigade: "brigade_id",
@@ -2487,29 +2520,36 @@ exports.getAllApplications = async (user, query) => {
         corps: "corps_id",
         command: "command_id",
       };
-
+    
       if (currentRole === "unit") {
+        // Only their own unit
         unitIds = [unit.unit_id];
       } else {
         const matchField = subordinateFieldMap[currentRole];
-
-        // Make sure unit[matchField] contains the ID, not the name
-        const subUnitsRes = await client.query(
-          `SELECT unit_id FROM Unit_tab WHERE ${matchField} = $1`,
-          [unit[matchField]] // e.g., unit.brigade_id, unit.division_id
-        );
-
+ 
+        // Fetch subordinate units using foreign keys
+        const subUnitsRes = await client.query(`
+          SELECT u.unit_id
+          FROM Unit_tab u
+          LEFT JOIN Command_Master c ON u.command_id = c.command_id
+          LEFT JOIN Brigade_Master b ON u.brigade_id = b.brigade_id
+          LEFT JOIN Division_Master d ON u.division_id = d.division_id
+          LEFT JOIN Corps_Master co ON u.corps_id = co.corps_id
+          WHERE u.${matchField} = $1
+        `, [unit[matchField]]);
+    
         unitIds = subUnitsRes.rows.map((u) => u.unit_id);
       }
-
+    
       if (unitIds.length === 0) {
         return ResponseHelper.success(200, "No applications found", [], {
           totalItems: 0,
         });
       }
-
+    
       allowedRoles = ROLE_HIERARCHY.slice(0, currentIndex + 1);
     }
+    
 
     let baseFilters;
     let queryParams = [unitIds];
@@ -2553,7 +2593,6 @@ exports.getAllApplications = async (user, query) => {
       c.unit_id,
       row_to_json(u) AS unit_details,
       c.date_init,
-      c.citation_fds AS fds,
       c.status_flag,
       c.is_mo_approved,
       c.mo_approved_at,
@@ -2570,10 +2609,6 @@ exports.getAllApplications = async (user, query) => {
         name,
         adm_channel,
         tech_channel,
-        bde,
-        div,
-        corps,
-        comd,
         unit_type,
         matrix_unit,
         location,
@@ -2596,7 +2631,6 @@ exports.getAllApplications = async (user, query) => {
       a.unit_id,
       row_to_json(u) AS unit_details,
       a.date_init,
-      a.appre_fds AS fds,
       a.status_flag,
       a.is_mo_approved,
       a.mo_approved_at,
@@ -2613,10 +2647,6 @@ exports.getAllApplications = async (user, query) => {
         name,
         adm_channel,
         tech_channel,
-        bde,
-        div,
-        corps,
-        comd,
         unit_type,
         matrix_unit,
         location,
@@ -2638,7 +2668,7 @@ exports.getAllApplications = async (user, query) => {
     ]);
 
     let allApps = [...citations.rows, ...appreciations.rows];
-
+    allApps=await attachFdsToApplications(allApps)
     // Filtering helpers
     const normalize = (s) => s?.toLowerCase().replace(/[\s-]/g, "");
     if (award_type) {

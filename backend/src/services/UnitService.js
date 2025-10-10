@@ -202,7 +202,7 @@ exports.createOrUpdateUnitForUser = async (userId, data, user) => {
       unit_type || "",
       matrix_unit && Array.isArray(matrix_unit)
         ? JSON.stringify(matrix_unit)
-        : "[]",
+        : matrix_unit,
       location || "",
       awards && Array.isArray(awards) ? JSON.stringify(awards) : "[]",
       start_month || "",

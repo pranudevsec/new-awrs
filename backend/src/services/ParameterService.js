@@ -6,7 +6,9 @@ exports.createParameter = async (data) => {
   const client = await dbService.getClient();
   try {
     const {
-      comd,
+      comd,           // command name
+      arms_service,   // arms_service name
+      deployment,     // deployment name (or ID if you have it)
       award_type,
       applicability,
       name,
@@ -17,32 +19,77 @@ exports.createParameter = async (data) => {
       weightage,
       param_sequence,
       param_mark,
+      per_unit_mark,
       category,
+      subcategory,
+      subsubcategory
     } = data;
 
+    // 1. Get command_id
+    let command_id = null;
+    if (comd) {
+      const cmdRes = await client.query(
+        `SELECT command_id FROM Command_Master WHERE LOWER(command_name) = LOWER($1)`,
+        [comd]
+      );
+      if (cmdRes.rows.length > 0) command_id = cmdRes.rows[0].command_id;
+      else throw new Error(`Command not found: ${comd}`);
+    }
+
+    // 2. Get arms_service_id
+    let arms_service_id = null;
+    if (arms_service) {
+      const amsRes = await client.query(
+        `SELECT arms_service_id FROM Arms_Service_Master WHERE LOWER(arms_service_name) = LOWER($1)`,
+        [arms_service]
+      );
+      if (amsRes.rows.length > 0) arms_service_id = amsRes.rows[0].arms_service_id;
+      else throw new Error(`Arms Service not found: ${arms_service}`);
+    }
+
+    // 3. Get deployment_id (optional)
+    let deployment_id = null;
+    if (deployment) {
+      const depRes = await client.query(
+        `SELECT deployment_id FROM Deployment_Master WHERE LOWER(name) = LOWER($1)`,
+        [deployment]
+      );
+      if (depRes.rows.length > 0) deployment_id = depRes.rows[0].deployment_id;
+      else throw new Error(`Deployment not found: ${deployment}`);
+    }
+
+    // 4. Insert into Parameter_Master
     const result = await client.query(
       `INSERT INTO Parameter_Master 
-      (comd, award_type, applicability, name, description, negative, max_marks, 
-       proof_reqd, weightage, param_sequence, param_mark, category)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11 , $12)
+      (award_type, applicability, category, subcategory, subsubcategory, name, description, 
+       negative, per_unit_mark, max_marks, proof_reqd, weightage, param_sequence, param_mark, 
+       command_id, arms_service_id, deployment_id)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17)
        RETURNING *`,
       [
-        comd,
         award_type,
         applicability,
+        category || null,
+        subcategory || null,
+        subsubcategory || null,
         name,
         description,
         negative,
+        per_unit_mark || 1,
         max_marks,
         proof_reqd,
         weightage,
         param_sequence,
         param_mark,
-        category,
+        command_id,
+        arms_service_id,
+        deployment_id
       ]
     );
 
     return ResponseHelper.success(201, "Parameter created", result.rows[0]);
+  } catch (err) {
+    return ResponseHelper.error(500, "Failed to create parameter", err.message);
   } finally {
     client.release();
   }
@@ -59,7 +106,7 @@ exports.getAllParameters = async (query) => {
       comd,
       unit_type,
       page = 1,
-      limit = 10,
+      limit = 10
     } = query;
 
     const pageInt = parseInt(page);
@@ -70,84 +117,74 @@ exports.getAllParameters = async (query) => {
     const values = [];
     const orConditions = [];
 
+    const joins = [];
+    const selectExtras = [];
+
     // awardType filter
     if (awardType) {
       values.push(awardType);
       filters.push(`pm.award_type = $${values.length}`);
     }
 
+    // command filter
     if (comd) {
-      const cmdRes = await client.query(
-        `SELECT command_id FROM command_master WHERE command_name = $1 LIMIT 1`,
-        [comd]
-      );
-      if (cmdRes.rows.length) {
-        const commandId = cmdRes.rows[0].command_id;
-        values.push(commandId);
-        filters.push(`pm.command_id = $${values.length}`);
-      } else {
-        return ResponseHelper.success(
-          200,
-          "Fetched parameters",
-          [],
-          { totalItems: 0, totalPages: 0, currentPage: pageInt, itemsPerPage: limitInt }
-        );
-      }
+      joins.push("JOIN Command_Master cm ON pm.command_id = cm.command_id");
+      values.push(comd);
+      filters.push(`LOWER(cm.command_name) = LOWER($${values.length})`);
+      selectExtras.push("cm.command_name");
     }
 
-    // name search filter
+    // arms_service filter
+    if (unit_type || matrix_unit) {
+      joins.push("JOIN Arms_Service_Master ams ON pm.arms_service_id = ams.arms_service_id");
+
+      if (unit_type) {
+        values.push(unit_type);
+        orConditions.push(`TRIM(LOWER(ams.arms_service_name)) = TRIM(LOWER($${values.length}))`);
+      }
+
+      if (matrix_unit) {
+        const units = matrix_unit.split(',').map(u => u.trim()).filter(Boolean);
+        units.forEach(unit => {
+          values.push(unit);
+          orConditions.push(`TRIM(LOWER(ams.arms_service_name)) = TRIM(LOWER($${values.length}))`);
+        });
+      }
+
+      // always include 'ALL'
+      orConditions.push(`TRIM(LOWER(ams.arms_service_name)) = 'all'`);
+      selectExtras.push("ams.arms_service_name");
+    }
+
+    // Add OR conditions
+    if (orConditions.length > 0) {
+      filters.push(`(${orConditions.join(" OR ")})`);
+    }
+
+    // search filter
     if (search) {
       values.push(`%${search.toLowerCase()}%`);
       filters.push(`LOWER(pm.name) LIKE $${values.length}`);
     }
 
-    if (unit_type) {
-      values.push(unit_type);
-      orConditions.push(
-        `TRIM(LOWER(asm.arms_service_name)) = TRIM(LOWER($${values.length}))`
-      );
-    }
-
-    if (matrix_unit) {
-      const units = matrix_unit
-        .split(",")
-        .map((u) => u.trim())
-        .filter(Boolean);
-
-      units.forEach((unit) => {
-        values.push(unit);
-        orConditions.push(
-          `TRIM(LOWER(asm.arms_service_name)) = TRIM(LOWER($${values.length}))`
-        );
-      });
-    }
-
-    // Add arms_service_name = 'ALL'
-    orConditions.push(`TRIM(LOWER(asm.arms_service_name)) = 'all'`);
-
-    if (orConditions.length > 0) {
-      filters.push(`(${orConditions.join(" OR ")})`);
-    }
-
     const whereClause = filters.length ? `WHERE ${filters.join(" AND ")}` : "";
 
-    // Count query
+    // COUNT query
     const countQuery = `
       SELECT COUNT(*) 
-      FROM parameter_master pm
-      LEFT JOIN arms_service_master asm
-      ON pm.arms_service_id = asm.arms_service_id
+      FROM Parameter_Master pm
+      ${joins.join(" ")}
       ${whereClause}
     `;
     const countResult = await client.query(countQuery, values);
     const totalItems = parseInt(countResult.rows[0].count);
 
-    // Data query
+    // DATA query
+    const selectClause = ["pm.*", ...selectExtras].join(", ");
     const dataQuery = `
-      SELECT pm.*, asm.arms_service_name 
-      FROM parameter_master pm
-      LEFT JOIN arms_service_master asm
-      ON pm.arms_service_id = asm.arms_service_id
+      SELECT ${selectClause}
+      FROM Parameter_Master pm
+      ${joins.join(" ")}
       ${whereClause}
       ORDER BY pm.param_id DESC
       LIMIT $${values.length + 1} OFFSET $${values.length + 2}
@@ -162,12 +199,7 @@ exports.getAllParameters = async (query) => {
       itemsPerPage: limitInt,
     };
 
-    return ResponseHelper.success(
-      200,
-      "Fetched parameters",
-      dataResult.rows,
-      pagination
-    );
+    return ResponseHelper.success(200, "Fetched parameters", dataResult.rows, pagination);
   } catch (err) {
     return ResponseHelper.error(500, "Failed to fetch parameters", err.message);
   } finally {
