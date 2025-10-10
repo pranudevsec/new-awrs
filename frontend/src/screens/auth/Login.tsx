@@ -31,11 +31,11 @@ const roleCredentials: Record<string, { username: string; password: string }> =
   command: { username: "ncomd", password: "12345678" },
   command_member: { username: "ncomd_member", password: "12345678" },
   headquarter: { username: "testheadquarter", password: "12345678" },
-  cw2_mo: { username: "testcw2_mo", password: "12345678" },
-  cw2_ol: { username: "testcw2_ol", password: "12345678" },
-  cw2_hr: { username: "testcw2_hr", password: "12345678" },
-  cw2_dv: { username: "testcw2_dv", password: "12345678" },
-  cw2_mp: { username: "testcw2_mp", password: "12345678" },
+  cw2_mo: { username: "testcw2mo", password: "12345678" },
+  cw2_ol: { username: "testcw2ol", password: "12345678" },
+  cw2_hr: { username: "testcw2hr", password: "12345678" },
+  cw2_dv: { username: "testcw2dv", password: "12345678" },
+  cw2_mp: { username: "testcw2mp", password: "12345678" },
 };
 
 const Login = () => {
@@ -56,8 +56,8 @@ const Login = () => {
       const payload: any = { ...values };
 
       // handle cw2 role
-      if (payload.user_role.startsWith("cw2_")) {
-        payload.cw2_type = payload.user_role.split("cw2_")[1];
+      if (payload.user_role.startsWith("cw2")) {
+        payload.cw2_type = payload.user_role.split("cw2")[1];
         payload.user_role = "cw2";
       }
 

@@ -29,7 +29,7 @@ for (table,) in tables:
         writer.writerow(colnames)
         writer.writerows(cur2.fetchall())
         cur2.close()
-    print(f"✅ Exported {table}.csv")
+    print(f" Exported {table}.csv")
 
 cur.close()
 conn.close()

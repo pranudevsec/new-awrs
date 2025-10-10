@@ -128,7 +128,6 @@ exports.getAllApplicationsForUnit = async (user, query) => {
         return acc;
       }, {});
     }
-
     allApps = allApps.map((app) => {
       const updatedParams = app.fds?.parameters?.map((param) => {
         if (param.clarification_id) {
@@ -184,7 +183,7 @@ exports.getAllApplicationsForUnit = async (user, query) => {
 
     allApps.sort((a, b) => new Date(b.date_init) - new Date(a.date_init));
 
-    // ✅ Pagination logic
+    //  Pagination logic
     const pageInt = parseInt(page);
     const limitInt = parseInt(limit);
     const startIndex = (pageInt - 1) * limitInt;
@@ -223,7 +222,6 @@ exports.getAllApplicationsForHQ = async (user, query) => {
         'citation' AS type,
         unit_id,
         date_init,
-        citation_fds AS fds,
         status_flag,
         last_approved_by_role,
         is_hr_review,
@@ -244,7 +242,6 @@ exports.getAllApplicationsForHQ = async (user, query) => {
         'appreciation' AS type,
         unit_id,
         date_init,
-        appre_fds AS fds,
         status_flag,
         last_approved_by_role,
         is_hr_review,
@@ -260,6 +257,7 @@ exports.getAllApplicationsForHQ = async (user, query) => {
     `);
 
     let allApps = [...citations.rows, ...appreciations.rows];
+    allApps = await attachFdsToApplications(allApps);
 
     // Filter by award_type if provided
     if (award_type) {
@@ -321,7 +319,7 @@ exports.getAllApplicationsForHQ = async (user, query) => {
       });
     }
 
-    // ✅ Additional filtering based on CW2 role and type
+    //  Additional filtering based on CW2 role and type
     if (user.user_role === "cw2") {
       const cw2TypeFieldMap = {
         hr: "is_hr_review",
@@ -1334,8 +1332,8 @@ exports.updateApplicationStatus = async (
         [id]
       );
       if (fetchRes.rowCount === 0) throw new Error("Application not found");
-      let appData=fetchRes.rows[0];
-      appData=await attachSingleFdsToApplication(appData)
+      let appData = fetchRes.rows[0];
+      appData = await attachSingleFdsToApplication(appData);
       const fds = appData?.fds;
 
       // Clarification handling for approved status
@@ -1439,7 +1437,6 @@ exports.updateApplicationStatus = async (
             const accepted = acceptedMap.get(unitMember.id);
             return accepted?.is_signature_added === true;
           });
-console.log("allSigned----=======",allSigned)
           if (allSigned) {
             if (user.user_role === "cw2") {
               const now = new Date().toISOString();
@@ -1637,8 +1634,7 @@ exports.approveApplicationMarks = async (user, body) => {
     const application = await attachSingleFdsToApplication(res.rows[0]);
     const fds = application.fds;
     const now = new Date();
-
-    // ✅ Update parameters both in-memory and in DB
+    //  Update parameters both in-memory and in DB
     async function updateParameterMarks(params, approvedParams) {
       if (!Array.isArray(params) || !Array.isArray(approvedParams))
         return params;
@@ -1688,30 +1684,29 @@ exports.approveApplicationMarks = async (user, body) => {
 
       return params;
     }
-
     // Helper for updating grace marks
-    async function updateGraceMarks( fds_id, graceMarksArr, marks) {
+    async function updateGraceMarks(fds_id, graceMarksArr, marks) {
       if (marks === undefined) return graceMarksArr;
       const now = new Date().toISOString();
-    
+
       if (!Array.isArray(graceMarksArr)) graceMarksArr = [];
-    
+
       // Find if current role already exists
       const existingIndex = graceMarksArr.findIndex(
         (entry) => entry.role === user.user_role
       );
-    
+
       const graceEntry = {
         role: user.user_role,
         marksBy: user.user_id,
         marksAddedAt: now,
         marks,
       };
-    
+
       if (existingIndex !== -1) {
         // Update local array
         graceMarksArr[existingIndex] = graceEntry;
-    
+
         // Update DB
         await client.query(
           `
@@ -1728,7 +1723,7 @@ exports.approveApplicationMarks = async (user, body) => {
       } else {
         // Add new entry locally
         graceMarksArr.push(graceEntry);
-    
+
         // Insert new record in DB
         await client.query(
           `
@@ -1738,18 +1733,16 @@ exports.approveApplicationMarks = async (user, body) => {
           [fds_id, user.user_role, user.user_id, now, marks]
         );
       }
-    
+
       return graceMarksArr;
     }
-    
-
     // Helper for updating priority points
     async function updatePriorityDB(fds_id, priorityArr, points) {
       const now = new Date().toISOString();
-    
+
       if (points === undefined) return priorityArr;
       if (!Array.isArray(priorityArr)) priorityArr = [];
-    
+
       // Check if there is an existing entry for this role (and cw2_type if applicable)
       const existingIndex = priorityArr.findIndex((entry) => {
         if (entry.role !== user.user_role) return false;
@@ -1758,7 +1751,7 @@ exports.approveApplicationMarks = async (user, body) => {
         }
         return true;
       });
-    
+
       const priorityEntry = {
         role: user.user_role,
         priority: points,
@@ -1767,10 +1760,10 @@ exports.approveApplicationMarks = async (user, body) => {
           ? { cw2_type: user.cw2_type }
           : {}),
       };
-    
+
       if (existingIndex !== -1) {
         priorityArr[existingIndex] = priorityEntry;
-    
+
         // 🔥 Update the DB
         await client.query(
           `
@@ -1785,25 +1778,27 @@ exports.approveApplicationMarks = async (user, body) => {
         );
       } else {
         priorityArr.push(priorityEntry);
-    
+
         // 🔥 Insert new row into DB
         await client.query(
           `
           INSERT INTO fds_application_priority
-            (fds_id, role, priority, priority_added_at, created_at, updated_at${user.user_role === "cw2" ? ", cw2_type" : ""})
+            (fds_id, role, priority, priority_added_at, created_at, updated_at${
+              user.user_role === "cw2" ? ", cw2_type" : ""
+            })
           VALUES
-            ($1, $2, $3, $4, NOW(), NOW()${user.user_role === "cw2" ? ", $5" : ""})
+            ($1, $2, $3, $4, NOW(), NOW()${
+              user.user_role === "cw2" ? ", $5" : ""
+            })
           `,
           user.user_role === "cw2"
             ? [fds_id, user.user_role, points, now, user.cw2_type]
             : [fds_id, user.user_role, points, now]
         );
       }
-    
+
       return priorityArr;
     }
-    
-
     // Helper for updating remarks
     async function updateRemarks(remarkStr) {
       if (!remarkStr || typeof remarkStr !== "string") return;
@@ -1833,7 +1828,6 @@ exports.approveApplicationMarks = async (user, body) => {
           now,
         ]);
 
-        console.log("Remark upserted successfully:", res.rows[0]);
         return res.rows[0];
       } catch (err) {
         console.error("Error in updateRemarks:", err);
@@ -1856,15 +1850,9 @@ exports.approveApplicationMarks = async (user, body) => {
       applicationPriorityPoints
     );
     remarks = updateRemarks(remark);
-
-    await client.query(
-      `UPDATE ${tableName}
-       SET ${fdsColumn} = $1, remarks = $2
-       WHERE ${idColumn} = $3`,
-      [JSON.stringify(fds), JSON.stringify(remarks), application_id]
-    );
     return ResponseHelper.success(200, "Marks approved successfully");
   } catch (error) {
+    console.log(error);
     return ResponseHelper.error(500, "Failed to approve marks", error.message);
   } finally {
     client.release();
@@ -2048,9 +2036,11 @@ exports.addApplicationComment = async (user, body) => {
 };
 exports.addApplicationComment = async (user, body) => {
   const client = await dbService.getClient();
-  try {
-    const { type, application_id, parameters, comment } = body;
 
+  try {
+    const { type, application_id, comment } = body;
+
+    //  Validate type
     if (!["citation", "appreciation"].includes(type)) {
       return ResponseHelper.error(400, "Invalid type provided");
     }
@@ -2059,84 +2049,66 @@ exports.addApplicationComment = async (user, body) => {
     const idColumn = type === "citation" ? "citation_id" : "appreciation_id";
     const fdsColumn = type === "citation" ? "citation_fds" : "appre_fds";
 
+    //  Fetch FDS data
     const res = await client.query(
-      `SELECT ${idColumn}, ${fdsColumn} AS fds FROM ${tableName} WHERE ${idColumn} = $1`,
+      `SELECT * FROM ${tableName} WHERE ${idColumn} = $1`,
       [application_id]
     );
 
     if (res.rowCount === 0) {
       return ResponseHelper.error(404, "Application not found");
     }
+    let appData = res.rows[0];
+    appData = await attachSingleFdsToApplication(appData);
 
-    let fds = res.rows[0].fds;
+    const fds = appData.fds;
+    const fdsId = appData?.fds_id;
+
+    if (!fdsId) {
+      return ResponseHelper.error(
+        400,
+        "FDS reference not found for this application"
+      );
+    }
+
+    //  Validate comment
+    if (!comment || typeof comment !== "string" || comment.trim() === "") {
+      return ResponseHelper.error(400, "Comment text is required");
+    }
+
     const now = new Date();
 
-    // ✅ Application-level comment (stored as array)
-    if (typeof comment === "string" && comment.trim() !== "") {
-      if (!Array.isArray(fds.comments)) {
-        fds.comments = [];
-      }
-
-      const newAppComment = {
-        comment: comment.trim(),
-        commented_by_role_type: user.cw2_type || null,
-        commented_by_role: user.user_role || null,
-        commented_at: now,
-        commented_by: user.user_id,
-      };
-
-      const existingAppCommentIndex = fds.comments.findIndex(
-        (c) => c.commented_by === user.user_id
-      );
-
-      if (existingAppCommentIndex >= 0) {
-        fds.comments[existingAppCommentIndex] = newAppComment;
-      } else {
-        fds.comments.push(newAppComment);
-      }
-    }
-
-    // ✅ Parameter-level comments
-    if (Array.isArray(parameters) && parameters.length > 0) {
-      fds.parameters = fds.parameters.map((param) => {
-        const incomingParam = parameters.find((p) => p.name === param.name);
-        if (incomingParam) {
-          if (!Array.isArray(param.comments)) {
-            param.comments = [];
-          }
-
-          const newParamComment = {
-            comment: incomingParam.comment || "",
-            commented_by_role_type: user.cw2_type || null,
-            commented_by_role: user.user_role || null,
-            commented_at: now,
-            commented_by: user.user_id,
-          };
-
-          const existingCommentIndex = param.comments.findIndex(
-            (c) => c.commented_by === user.user_id
-          );
-
-          if (existingCommentIndex >= 0) {
-            param.comments[existingCommentIndex] = newParamComment;
-          } else {
-            param.comments.push(newParamComment);
-          }
-        }
-        return param;
-      });
-    }
-
+    //  Upsert comment in `fds_comments`
     await client.query(
-      `UPDATE ${tableName}
-         SET ${fdsColumn} = $1
-         WHERE ${idColumn} = $2`,
-      [fds, application_id]
+      `
+      INSERT INTO fds_comments (
+        fds_id,
+        comment,
+        commented_by,
+        commented_by_role,
+        commented_by_role_type,
+        commented_at
+      )
+      VALUES ($1, $2, $3, $4, $5, $6)
+      ON CONFLICT (fds_id, commented_by, commented_by_role, commented_by_role_type)
+      DO UPDATE
+      SET comment = EXCLUDED.comment,
+          commented_at = EXCLUDED.commented_at,
+          updated_at = NOW();
+      `,
+      [
+        fdsId,
+        comment.trim(),
+        user.user_id,
+        user.user_role || null,
+        user.cw2_type || null,
+        now,
+      ]
     );
 
-    return ResponseHelper.success(200, "Comment added successfully");
+    return ResponseHelper.success(200, "Comment added or updated successfully");
   } catch (error) {
-    return ResponseHelper.error(500, "Failed to add comments", error.message);
+    return ResponseHelper.error(500, "Failed to add comment", error.message);
   } finally {
     client.release();
   }
@@ -2334,7 +2306,6 @@ exports.getApplicationsHistory = async (user, query) => {
       c.unit_id,
       row_to_json(u) AS unit_details,
       c.date_init,
-      c.citation_fds AS fds,
       c.status_flag,
       c.is_mo_approved,
       c.mo_approved_at,
@@ -2376,7 +2347,6 @@ exports.getApplicationsHistory = async (user, query) => {
       a.unit_id,
       row_to_json(u) AS unit_details,
       a.date_init,
-      a.appre_fds AS fds,
       a.status_flag,
       a.is_mo_approved,
       a.mo_approved_at,
@@ -2417,7 +2387,7 @@ exports.getApplicationsHistory = async (user, query) => {
     ]);
 
     let allApps = [...citations.rows, ...appreciations.rows];
-
+    allApps = await attachFdsToApplications(allApps);
     if (award_type) {
       allApps = allApps.filter(
         (app) => app.fds?.award_type?.toLowerCase() === award_type.toLowerCase()
@@ -3039,7 +3009,6 @@ async function loadApplications(whereSql = "", params = [], user) {
         c.unit_id,
         row_to_json(u) AS unit_details,
         c.date_init,
-        c.citation_fds AS fds,
         c.status_flag,
         c.is_mo_approved,
         c.mo_approved_at,
@@ -3065,7 +3034,6 @@ async function loadApplications(whereSql = "", params = [], user) {
         a.unit_id,
         row_to_json(u) AS unit_details,
         a.date_init,
-        a.appre_fds AS fds,
         a.status_flag,
         a.is_mo_approved,
         a.mo_approved_at,
@@ -3091,7 +3059,6 @@ async function loadApplications(whereSql = "", params = [], user) {
         c.unit_id,
         row_to_json(u) AS unit_details,
         c.date_init,
-        c.citation_fds AS fds,
         c.status_flag,
         c.is_mo_approved,
         c.mo_approved_at,
@@ -3102,7 +3069,6 @@ async function loadApplications(whereSql = "", params = [], user) {
       FROM Citation_tab c
       LEFT JOIN Unit_tab u ON c.unit_id = u.unit_id
       WHERE c.status_flag = 'rejected' 
-        AND c.citation_fds->>'command' = $1
     `;
 
       appreQuery = `
@@ -3112,7 +3078,6 @@ async function loadApplications(whereSql = "", params = [], user) {
         a.unit_id,
         row_to_json(u) AS unit_details,
         a.date_init,
-        a.appre_fds AS fds,
         a.status_flag,
         a.is_mo_approved,
         a.mo_approved_at,
@@ -3123,7 +3088,6 @@ async function loadApplications(whereSql = "", params = [], user) {
       FROM Appre_tab a
       LEFT JOIN Unit_tab u ON a.unit_id = u.unit_id
       WHERE a.status_flag = 'rejected' 
-        AND a.appre_fds->>'command' = $1
     `;
     }
 
@@ -3133,7 +3097,7 @@ async function loadApplications(whereSql = "", params = [], user) {
     ]);
 
     let allApps = [...citations.rows, ...appreciations.rows];
-
+    allApps = await attachFdsToApplications(allApps);
     // ----- Clarification linking -----
     const clarificationIds = [];
     for (const app of allApps) {

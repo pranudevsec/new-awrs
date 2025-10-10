@@ -55,6 +55,7 @@ const ProfileSettings = () => {
 
   const isMember = profile?.user?.is_member ?? false;
   const role = profile?.user?.user_role?.toLowerCase() ?? "";
+  const cw2_type = profile?.user?.cw2_type?.toLowerCase() ?? "";
 
   const currentYear = new Date().getFullYear();
   const yearOptions = Array.from({ length: 79 }, (_, i) => `${currentYear - i}`);
@@ -849,7 +850,7 @@ const ProfileSettings = () => {
               </button>
             </div>
           )}
-          {!isMember && (
+          {!isMember && !["mo", "ol"].includes(cw2_type) && (
             <div className="col-12 mt-3">
               <div className="form-check">
                 <input

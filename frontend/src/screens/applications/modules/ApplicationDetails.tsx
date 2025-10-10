@@ -746,11 +746,12 @@ const ApplicationDetails = () => {
 
   const handleDecisionClick = (member: any, decision: string) => {
     if (isCW2Role && (profile.user.cw2_type === "mo" || profile.user.cw2_type === "ol")) {
-      if (!priority || priority.trim() === "") {
+      if (!priority || String(priority).trim() === "") {
         setPriorityError("Please Fill First Priority...");
         return;
       }
     }
+
     setPendingDecision({ member, decision });
     setShowDisclaimerModal(true);
   };

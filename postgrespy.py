@@ -44,4 +44,4 @@ for sheet_name in xlsx.sheet_names:
     # Write to database
     df.to_sql("parameter_master", engine, if_exists='replace', index=False)
 
-print("\n✅ Import completed with JSON logs.")
+print("\n Import completed with JSON logs.")

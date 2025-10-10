@@ -60,11 +60,13 @@ app.use("/api/master", MasterRoutes);
 
 // Handle uncaught exceptions
 process.on("uncaughtException", (err) => {
+  console.log(err)
   process.exit(1);
 });
 
 // Handle unhandled promise rejections
 process.on("unhandledRejection", (reason, promise) => {
+  console.log(reason)
   process.exit(1);
 });
 

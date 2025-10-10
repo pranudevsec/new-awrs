@@ -3,6 +3,7 @@ const { approveApplicationMarks } = require("./ApplicationService");
 
 exports.attachFdsToApplications = async (applications) => {
   const client = await dbService.getClient();
+
   try {
     const applicationIds = applications.map((app) => app.id);
     if (!applicationIds.length) return applications;
@@ -112,7 +113,7 @@ exports.attachFdsToApplications = async (applications) => {
       });
     });
 
-    // STEP 6: Fetch application priority **NEW**
+    // STEP 6: Fetch application priority
     const priorityRes = await client.query(
       `SELECT * FROM fds_application_priority WHERE fds_id = ANY($1)`,
       [fdsIds]
@@ -124,10 +125,28 @@ exports.attachFdsToApplications = async (applications) => {
         role: p.role,
         priority: p.priority,
         priorityAddedAt: p.priority_added_at,
+        cw2_type: p.cw2_type,
       });
     });
 
-    // STEP 7: Fetch master tables
+    // STEP 7: Fetch comments (NEW)
+    const commentsRes = await client.query(
+      `SELECT * FROM fds_comments WHERE fds_id = ANY($1) ORDER BY commented_at ASC`,
+      [fdsIds]
+    );
+    const commentsMap = {};
+    commentsRes.rows.forEach((c) => {
+      if (!commentsMap[c.fds_id]) commentsMap[c.fds_id] = [];
+      commentsMap[c.fds_id].push({
+        comment: c.comment,
+        commented_by_role_type: c.commented_by_role_type,
+        commented_by_role: c.commented_by_role,
+        commented_at: c.commented_at,
+        commented_by: c.commented_by,
+      });
+    });
+
+    // STEP 8: Fetch master tables
     const [corpsRes, brigadeRes, divisionRes, commandRes, armsServiceRes] =
       await Promise.all([
         client.query(`SELECT * FROM corps_master`),
@@ -137,13 +156,23 @@ exports.attachFdsToApplications = async (applications) => {
         client.query(`SELECT * FROM arms_service_master`),
       ]);
 
-    const corpsMap = Object.fromEntries(corpsRes.rows.map((r) => [r.corps_id, r.corps_name]));
-    const brigadeMap = Object.fromEntries(brigadeRes.rows.map((r) => [r.brigade_id, r.brigade_name]));
-    const divisionMap = Object.fromEntries(divisionRes.rows.map((r) => [r.division_id, r.division_name]));
-    const commandMap = Object.fromEntries(commandRes.rows.map((r) => [r.command_id, r.command_name]));
-    const armsServiceMap = Object.fromEntries(armsServiceRes.rows.map((r) => [r.arms_service_id, r.arms_service_name]));
+    const corpsMap = Object.fromEntries(
+      corpsRes.rows.map((r) => [r.corps_id, r.corps_name])
+    );
+    const brigadeMap = Object.fromEntries(
+      brigadeRes.rows.map((r) => [r.brigade_id, r.brigade_name])
+    );
+    const divisionMap = Object.fromEntries(
+      divisionRes.rows.map((r) => [r.division_id, r.division_name])
+    );
+    const commandMap = Object.fromEntries(
+      commandRes.rows.map((r) => [r.command_id, r.command_name])
+    );
+    const armsServiceMap = Object.fromEntries(
+      armsServiceRes.rows.map((r) => [r.arms_service_id, r.arms_service_name])
+    );
 
-    // STEP 8: Attach FDS to applications
+    // STEP 9: Attach FDS to applications
     return applications.map((app) => {
       const fdsList = fdsMap[app.id];
       if (!fdsList) return app;
@@ -170,8 +199,8 @@ exports.attachFdsToApplications = async (applications) => {
           awards: awardsMap[fds.fds_id] || [],
           accepted_members: membersMap[fds.fds_id] || [],
           applicationGraceMarks: graceMap[fds.fds_id] || [],
-          applicationPriority: priorityMap[fds.fds_id] || [], // << ADDED
-          comments: fds.comments || [],
+          applicationPriority: priorityMap[fds.fds_id] || [],
+          comments: commentsMap[fds.fds_id] || [], //  Added
         },
       };
     });
@@ -183,15 +212,19 @@ exports.attachFdsToApplications = async (applications) => {
   }
 };
 
-
 exports.attachSingleFdsToApplication = async (application) => {
   if (!application) return application;
   const client = await dbService.getClient();
+
   try {
-    const appId = application.id || application.citation_id || application.appreciation_id;
+    const appId =
+      application.id || application.citation_id || application.appreciation_id;
 
     // STEP 1: Fetch FDS
-    const fdsRes = await client.query(`SELECT * FROM fds WHERE application_id = $1`, [appId]);
+    const fdsRes = await client.query(
+      `SELECT * FROM fds WHERE application_id = $1`,
+      [appId]
+    );
     const fds = fdsRes.rows[0];
     if (!fds) return application;
 
@@ -205,6 +238,7 @@ exports.attachSingleFdsToApplication = async (application) => {
        WHERE fp.fds_id = $1`,
       [fdsId]
     );
+
     const parameters = paramsRes.rows.map((p) => ({
       id: p.param_id.toString(),
       name: p.param_name,
@@ -232,7 +266,10 @@ exports.attachSingleFdsToApplication = async (application) => {
     }));
 
     // STEP 3: Fetch awards
-    const awardsRes = await client.query(`SELECT * FROM fds_awards WHERE fds_id = $1`, [fdsId]);
+    const awardsRes = await client.query(
+      `SELECT * FROM fds_awards WHERE fds_id = $1`,
+      [fdsId]
+    );
     const awards = awardsRes.rows.map((a) => ({
       award_id: a.award_id,
       award_type: a.award_type,
@@ -241,7 +278,10 @@ exports.attachSingleFdsToApplication = async (application) => {
     }));
 
     // STEP 4: Fetch accepted members
-    const membersRes = await client.query(`SELECT * FROM fds_accepted_members WHERE fds_id = $1`, [fdsId]);
+    const membersRes = await client.query(
+      `SELECT * FROM fds_accepted_members WHERE fds_id = $1`,
+      [fdsId]
+    );
     const accepted_members = membersRes.rows.map((m) => ({
       member_id: m.member_id,
       name: m.name,
@@ -252,7 +292,10 @@ exports.attachSingleFdsToApplication = async (application) => {
     }));
 
     // STEP 5: Fetch grace marks
-    const graceMarksRes = await client.query(`SELECT * FROM fds_grace_marks WHERE fds_id = $1`, [fdsId]);
+    const graceMarksRes = await client.query(
+      `SELECT * FROM fds_grace_marks WHERE fds_id = $1`,
+      [fdsId]
+    );
     const applicationGraceMarks = graceMarksRes.rows.map((g) => ({
       role: g.role,
       marksBy: g.marks_by,
@@ -260,22 +303,38 @@ exports.attachSingleFdsToApplication = async (application) => {
       marks: g.marks,
     }));
 
-    // STEP 6: Fetch application priority **NEW**
-    const priorityRes = await client.query(`SELECT * FROM fds_application_priority WHERE fds_id = $1`, [fdsId]);
+    // STEP 6: Fetch application priority
+    const priorityRes = await client.query(
+      `SELECT * FROM fds_application_priority WHERE fds_id = $1`,
+      [fdsId]
+    );
     const applicationPriority = priorityRes.rows.map((p) => ({
       role: p.role,
       priority: p.priority,
       priorityAddedAt: p.priority_added_at,
+      cw2_type: p.cw2_type,
     }));
 
     // STEP 7: Fetch master tables
-    const [corpsRes, brigadeRes, divisionRes, commandRes, armsServiceRes] = await Promise.all([
-      client.query(`SELECT * FROM corps_master WHERE corps_id = $1`, [fds.corps_id]),
-      client.query(`SELECT * FROM brigade_master WHERE brigade_id = $1`, [fds.brigade_id]),
-      client.query(`SELECT * FROM division_master WHERE division_id = $1`, [fds.division_id]),
-      client.query(`SELECT * FROM command_master WHERE command_id = $1`, [fds.command_id]),
-      client.query(`SELECT * FROM arms_service_master WHERE arms_service_id = $1`, [fds.arms_service_id]),
-    ]);
+    const [corpsRes, brigadeRes, divisionRes, commandRes, armsServiceRes] =
+      await Promise.all([
+        client.query(`SELECT * FROM corps_master WHERE corps_id = $1`, [
+          fds.corps_id,
+        ]),
+        client.query(`SELECT * FROM brigade_master WHERE brigade_id = $1`, [
+          fds.brigade_id,
+        ]),
+        client.query(`SELECT * FROM division_master WHERE division_id = $1`, [
+          fds.division_id,
+        ]),
+        client.query(`SELECT * FROM command_master WHERE command_id = $1`, [
+          fds.command_id,
+        ]),
+        client.query(
+          `SELECT * FROM arms_service_master WHERE arms_service_id = $1`,
+          [fds.arms_service_id]
+        ),
+      ]);
 
     const corps = corpsRes.rows[0]?.corps_name || null;
     const brigade = brigadeRes.rows[0]?.brigade_name || null;
@@ -293,7 +352,24 @@ exports.attachSingleFdsToApplication = async (application) => {
     );
     const remarks = remarksRes.rows || [];
 
-    // STEP 9: Attach FDS and remarks
+    //  STEP 9: Fetch comments from fds_comments
+    const commentsRes = await client.query(
+      `SELECT comment, commented_by, commented_by_role, commented_by_role_type, commented_at
+       FROM fds_comments
+       WHERE fds_id = $1
+       ORDER BY commented_at ASC`,
+      [fdsId]
+    );
+
+    const comments = commentsRes.rows.map((c) => ({
+      comment: c.comment,
+      commented_by_role_type: c.commented_by_role_type,
+      commented_by_role: c.commented_by_role,
+      commented_at: c.commented_at,
+      commented_by: c.commented_by,
+    }));
+
+    // STEP 10: Combine all into final response
     return {
       ...application,
       fds: {
@@ -312,14 +388,14 @@ exports.attachSingleFdsToApplication = async (application) => {
         parameters,
         awards,
         accepted_members,
-        applicationGraceMarks,    // fetched from fds_grace_marks
-        applicationPriority,      // fetched from fds_application_priority
-        comments: fds.comments || [],
+        applicationGraceMarks,
+        applicationPriority,
+        comments, //  now attached from fds_comments table
       },
       remarks,
     };
   } catch (err) {
-    console.error("Error in attachFdsToApplication:", err);
+    console.error("Error in attachSingleFdsToApplication:", err);
     throw err;
   } finally {
     client.release();

@@ -79,7 +79,7 @@ const SidebarMenu = ({ onToggleCollapse }: SidebarMenuProps) => {
     ? sidebarStructure.filter(item => item.label === dashboardLabel)
     : [];
 
-  let filteredStructure = filterSidebarStructure(userRole, alwaysVisible)
+  let filteredStructure = filterSidebarStructure(userRole, alwaysVisible,cw2_type)
     .filter(item => !extraDashboardLabels.includes(item.label));
 
   if (["brigade", "division", "corps", "command"].includes(userRole)) {
@@ -287,7 +287,7 @@ const getAlwaysVisible = (userRole: string): string[] => {
   return visible;
 };
 
-const filterSidebarStructure = (userRole: string, alwaysVisible: string[]) => {
+const filterSidebarStructure = (userRole: string, alwaysVisible: string[],cw2_type:any) => {
   return sidebarStructure.filter(item => {
     if (["brigade", "division", "corps"].includes(userRole)) {
       if (extraDashboardLabels.includes(item.label)) return true;
@@ -297,7 +297,7 @@ const filterSidebarStructure = (userRole: string, alwaysVisible: string[]) => {
     if (alwaysVisible.includes(item.label)) return true;
 
     if (["command", "cw2"].includes(userRole)) {
-      if (userRole === "cw2") {
+      if (userRole === "cw2" && ["hr", "dv","mp"].includes(cw2_type)) {
         return commandExtraLabels
           .filter(label => label !== "Profile Settings")
           .includes(item.label);

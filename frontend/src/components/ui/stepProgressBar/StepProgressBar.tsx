@@ -10,9 +10,19 @@ const StepProgressBar: React.FC<StepProgressBarProps> = ({
   isCommand = false,
 }) => {
   // Base steps
-  let steps :any= isCommand
-    ? [{ label: "Brigade" }, { label: "Division" }, { label: "Corps" }, { label: "Command" }]
-    : [{ label: "Brigade" }, { label: "Division" }, { label: "Corps" }, { label: "Command" }];
+  let steps: any = isCommand
+    ? [
+        { label: "Brigade" },
+        { label: "Division" },
+        { label: "Corps" },
+        { label: "Command" },
+      ]
+    : [
+        { label: "Brigade" },
+        { label: "Division" },
+        { label: "Corps" },
+        { label: "Command" },
+      ];
 
   // Handle MO / OL dynamic order
   if (!isCommand) {
@@ -20,7 +30,10 @@ const StepProgressBar: React.FC<StepProgressBarProps> = ({
     const olStep = { label: "OL", date: unitDetail?.ol_approved_at };
 
     if (unitDetail?.is_mo_approved && unitDetail?.is_ol_approved) {
-      if (new Date(unitDetail.mo_approved_at) <= new Date(unitDetail.ol_approved_at)) {
+      if (
+        new Date(unitDetail.mo_approved_at) <=
+        new Date(unitDetail.ol_approved_at)
+      ) {
         steps.push(moStep, olStep);
       } else {
         steps.push(olStep, moStep);
@@ -34,16 +47,16 @@ const StepProgressBar: React.FC<StepProgressBarProps> = ({
     }
   }
 
-  // ✅ Always add CW2 at the end
-if (!isCommand) {
-  steps.push({ label: "CW2", date: unitDetail?.finalized_at });
-}
+  //  Always add CW2 at the end
+  if (!isCommand) {
+    steps.push({ label: "CW2", date: unitDetail?.finalized_at });
+  }
   const getCurrentStep = () => {
     if (!unitDetail) return 0;
 
     if (unitDetail?.status_flag === "rejected") {
       const rejectedRole = unitDetail?.last_rejected_by_role?.toLowerCase();
-      const rejectedIndex = steps.findIndex((step:any) =>
+      const rejectedIndex = steps.findIndex((step: any) =>
         step.label.toLowerCase().includes(rejectedRole)
       );
       if (rejectedIndex >= 0) return rejectedIndex;
@@ -61,11 +74,12 @@ if (!isCommand) {
 
     if (unitDetail.is_mo_approved || unitDetail.is_ol_approved) {
       if (unitDetail.is_mo_approved && !unitDetail.is_ol_approved) step = 5;
-      else if (!unitDetail.is_mo_approved && unitDetail.is_ol_approved) step = 5;
+      else if (!unitDetail.is_mo_approved && unitDetail.is_ol_approved)
+        step = 5;
       else if (unitDetail.is_mo_approved && unitDetail.is_ol_approved) step = 6;
     }
 
-    // ✅ CW2 step is only marked if isfinalized is true
+    //  CW2 step is only marked if isfinalized is true
     if (unitDetail.isfinalized) step = steps.length;
 
     return step;
@@ -82,12 +96,17 @@ if (!isCommand) {
     if (lowerLabel.includes("ol") && unitDetail.ol_approved_at) {
       return format(new Date(unitDetail.ol_approved_at), "dd MMM yyyy");
     }
-    if (lowerLabel.includes("cw2") && unitDetail.isfinalized && unitDetail.finalized_at) {
+    if (
+      lowerLabel.includes("cw2") &&
+      unitDetail.isfinalized &&
+      unitDetail.finalized_at
+    ) {
       return format(new Date(unitDetail.finalized_at), "dd MMM yyyy");
     }
 
     const applicationPriority = unitDetail?.fds?.applicationPriority;
-    if (!applicationPriority || !Array.isArray(applicationPriority)) return null;
+    if (!applicationPriority || !Array.isArray(applicationPriority))
+      return null;
 
     const found = applicationPriority.find(
       (p: any) => p.role?.toLowerCase() === lowerLabel
@@ -104,7 +123,7 @@ if (!isCommand) {
 
   return (
     <div className="step-progress-container d-flex align-items-center justify-content-center position-relative">
-{steps.map((step: any, index: number) => {
+      {steps.map((step: any, index: number) => {
         let rejectedRole = unitDetail?.last_rejected_by_role?.toLowerCase();
         if (rejectedRole === "cw2_mo") rejectedRole = "medical officer (mo)";
         if (rejectedRole === "cw2_ol") rejectedRole = "operational leader (ol)";
@@ -129,7 +148,10 @@ if (!isCommand) {
         const stepCircleClass = `step-circle d-flex align-items-center justify-content-center fw-6 ${stepStatusClass}`;
 
         return (
-          <div className="step-item position-relative text-center" key={step.label}>
+          <div
+            className="step-item position-relative text-center"
+            key={step.label}
+          >
             <div className={stepCircleClass}>
               {isRejected ? "✘" : isCompleted ? "✔" : index + 1}
             </div>
@@ -144,7 +166,9 @@ if (!isCommand) {
 
             <div className="step-label">
               <div>{step.label}</div>
-              <div className={`small ${isRejected ? "text-danger" : "text-muted"}`}>
+              <div
+                className={`small ${isRejected ? "text-danger" : "text-muted"}`}
+              >
                 {isRejected ? "Rejected" : getStepDate(step.label) ?? "Pending"}
               </div>
             </div>

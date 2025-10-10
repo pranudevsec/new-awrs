@@ -567,7 +567,6 @@ exports.getAllApplicationsWithClarificationsForUnit = async (user, query) => {
     const clarificationIdSet = new Set();
     allApps.forEach((app) => {
       app.fds?.parameters?.forEach((param) => {
-        console.log("param====",param)
         if (param.clarification_id) {
           clarificationIdSet.add(param.clarification_id);
         }
@@ -731,7 +730,7 @@ async function buildResponseData(client, clarifications, ownUnitName, matchingFi
       `SELECT * FROM ${table} WHERE ${idField} = $1`,
       [application_id]
     );
-    const application = appRes.rows[0];
+    let application = appRes.rows[0];
 
     // Fetch associated unit
     const unitRes = await client.query(
@@ -739,9 +738,10 @@ async function buildResponseData(client, clarifications, ownUnitName, matchingFi
       [application.unit_id]
     );
     const unit = unitRes.rows[0];
-    if (!application || !unit || unit[matchingField] !== ownUnitName) continue;
+    if (!application || !unit) continue;
 
-    const fds = typeof application[fdsField] === "string" ? JSON.parse(application[fdsField]) : application[fdsField];
+    application = await attachSingleFdsToApplication(application);
+    const fds = application?.fds;
     let clarifications_count = 0;
 
     if (Array.isArray(fds.parameters)) {

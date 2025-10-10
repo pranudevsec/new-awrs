@@ -9,19 +9,25 @@ const db = require("../db/army2-connection");
 exports.register = async ({ rank, name, user_role, username, password }) => {
   try {
     const hashedPassword = await bcrypt.hash(password, 10);
-
     const pers_no = Math.floor(1000000 + Math.random() * 9000000).toString();
 
+    //  Handle cw2_* roles
+    let cw2_type = null;
+    if (user_role && user_role.startsWith("cw2_")) {
+      cw2_type = user_role.split("_")[1];
+      user_role = "cw2";
+    }
+
+    // Check if username exists
     const userExists = await db.query(
       "SELECT * FROM User_tab WHERE username = $1",
       [username]
     );
-
     if (userExists.rows.length > 0) {
       return ResponseHelper.error(400, MSG.USER_ALREADY_EXISTS);
     }
 
-    // Get or create role reference
+    // Get or create Role_Master entry
     let roleId;
     const roleResult = await db.query(
       "SELECT role_id FROM Role_Master WHERE role_name = $1",
@@ -31,7 +37,6 @@ exports.register = async ({ rank, name, user_role, username, password }) => {
     if (roleResult.rows.length > 0) {
       roleId = roleResult.rows[0].role_id;
     } else {
-      // Create new role if it doesn't exist
       const newRoleResult = await db.query(
         "INSERT INTO Role_Master (role_name) VALUES ($1) RETURNING role_id",
         [user_role]
@@ -39,10 +44,11 @@ exports.register = async ({ rank, name, user_role, username, password }) => {
       roleId = newRoleResult.rows[0].role_id;
     }
 
+    //  Insert user
     const insertQuery = `
-      INSERT INTO User_tab (pers_no, rank, name, username, password, role_id)
-      VALUES ($1, $2, $3, $4, $5, $6)
-      RETURNING user_id, pers_no, rank, name, username, is_active, created_at, role_id
+      INSERT INTO User_tab (pers_no, rank, name, username, password, role_id, cw2_type)
+      VALUES ($1, $2, $3, $4, $5, $6, $7)
+      RETURNING user_id, pers_no, rank, name, username, is_active, created_at, role_id, cw2_type
     `;
 
     const result = await db.query(insertQuery, [
@@ -51,69 +57,54 @@ exports.register = async ({ rank, name, user_role, username, password }) => {
       name,
       username,
       hashedPassword,
-      roleId
+      roleId,
+      cw2_type,
     ]);
 
     const userData = result.rows[0];
     const userId = userData.user_id;
 
-    // Create entry in role-specific tables based on user_role
-    if (user_role === 'unit') {
-      // Create entry in Unit_tab
-      await db.query(`
-        INSERT INTO Unit_tab (name, unit_type, sos_no, location)
-        VALUES ($1, $2, $3, $4)
-      `, [
-        name, // name
-        'Regular', // unit_type
-        pers_no, // sos_no (using pers_no as sos_no)
-        'Not Specified' // location
-      ]);
-    } else if (user_role === 'brigade') {
-      // Create entry in Brigade_Master
-      await db.query(`
-        INSERT INTO Brigade_Master (brigade_name, brigade_code)
-        VALUES ($1, $2)
-      `, [
-        name, // brigade_name
-        pers_no.substring(0, 10) // brigade_code (truncated to 10 chars)
-      ]);
-    } else if (user_role === 'division') {
-      // Create entry in Division_Master
-      await db.query(`
-        INSERT INTO Division_Master (division_name, division_code)
-        VALUES ($1, $2)
-      `, [
-        name, // division_name
-        pers_no.substring(0, 10) // division_code (truncated to 10 chars)
-      ]);
-    } else if (user_role === 'corps') {
-      // Create entry in Corps_Master
-      await db.query(`
-        INSERT INTO Corps_Master (corps_name, corps_code)
-        VALUES ($1, $2)
-      `, [
-        name, // corps_name
-        pers_no.substring(0, 10) // corps_code (truncated to 10 chars)
-      ]);
-    } else if (user_role === 'command') {
-      // Create entry in Command_Master
-      await db.query(`
-        INSERT INTO Command_Master (command_name, command_code)
-        VALUES ($1, $2)
-      `, [
-        name, // command_name
-        pers_no.substring(0, 10) // command_code (truncated to 10 chars)
-      ]);
+    //  Role-specific inserts
+    if (user_role === "unit") {
+      await db.query(
+        `INSERT INTO Unit_tab (name, unit_type, sos_no, location)
+         VALUES ($1, $2, $3, $4)`,
+        [name, "Regular", pers_no, "Not Specified"]
+      );
+    } else if (user_role === "brigade") {
+      await db.query(
+        `INSERT INTO Brigade_Master (brigade_name, brigade_code)
+         VALUES ($1, $2)`,
+        [name, pers_no.substring(0, 10)]
+      );
+    } else if (user_role === "division") {
+      await db.query(
+        `INSERT INTO Division_Master (division_name, division_code)
+         VALUES ($1, $2)`,
+        [name, pers_no.substring(0, 10)]
+      );
+    } else if (user_role === "corps") {
+      await db.query(
+        `INSERT INTO Corps_Master (corps_name, corps_code)
+         VALUES ($1, $2)`,
+        [name, pers_no.substring(0, 10)]
+      );
+    } else if (user_role === "command") {
+      await db.query(
+        `INSERT INTO Command_Master (command_name, command_code)
+         VALUES ($1, $2)`,
+        [name, pers_no.substring(0, 10)]
+      );
     }
 
-    // Get role name for response
+    //  Add role name to response
     const roleNameResult = await db.query(
       "SELECT role_name FROM Role_Master WHERE role_id = $1",
       [roleId]
     );
 
     userData.user_role = roleNameResult.rows[0].role_name;
+    userData.cw2_type = cw2_type;
 
     return ResponseHelper.success(201, MSG.REGISTER_SUCCESS, userData);
   } catch (error) {
@@ -172,11 +163,11 @@ exports.login = async (credentials) => {
 
     // Generate JWT with role information
     const token = jwt.sign(
-      { 
-        id: user.user_id, 
-        username: user.username, 
+      {
+        id: user.user_id,
+        username: user.username,
         user_role: user.role_name,
-        role_id: user.role_id
+        role_id: user.role_id,
       },
       config.jwtSecret,
       { expiresIn: "1d" }
@@ -184,16 +175,16 @@ exports.login = async (credentials) => {
 
     // Return user data with role information
     return ResponseHelper.success(200, MSG.LOGIN_SUCCESS, {
-      user: { 
-        name: user.name, 
-        username: user.username, 
-        rank: user.rank, 
+      user: {
+        name: user.name,
+        username: user.username,
+        rank: user.rank,
         user_role: user.role_name,
         role_id: user.role_id,
         unit_id: user.unit_id,
         is_special_unit: user.is_special_unit,
         is_member: user.is_member,
-        is_officer: user.is_officer
+        is_officer: user.is_officer,
       },
       token,
     });
@@ -279,9 +270,10 @@ exports.getProfile = async ({ user_id }) => {
           ic_number: m.ic_number || "",
           appointment: m.appointment || "",
           member_type: m.member_type || "",
-          member_order: m.member_order !== null ? m.member_order.toString() : "",
+          member_order:
+            m.member_order !== null ? m.member_order.toString() : "",
         }));
-        
+
         unitData = {
           unit_id: unit.unit_id,
           sos_no: unit.sos_no,
@@ -296,7 +288,7 @@ exports.getProfile = async ({ user_id }) => {
           matrix_unit: unit.matrix_unit,
           location: unit.location,
           awards: unit.awards || [],
-          members, 
+          members,
           start_month: unit.start_month,
           start_year: unit.start_year,
           end_month: unit.end_month,
