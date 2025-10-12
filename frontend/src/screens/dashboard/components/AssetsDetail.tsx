@@ -114,8 +114,8 @@ const AssetsDetail: React.FC<ProductDetailProps> = ({
       ? [
           ...baseCards,
           {
-            title: "Finalized Applications",
-            value: dashboardStats?.approved ?? 0,
+            title: "Shortlisted Applications",
+            value: dashboardStats?.shortlistedApplications ?? 0,
             bgColor: "#0a6e21ff",
             textColor: "#000501ff",
             borderColor: "#c3e6cb",

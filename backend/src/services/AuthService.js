@@ -318,7 +318,145 @@ exports.getProfile = async ({ user_id }) => {
       }
     }
 
-    // Step 5: Return structured response
+    // Step 5: Add master data matching for brigade, corps, division, command roles
+    let masterData = null;
+    console.log("=== MASTER DATA DEBUG ===");
+    console.log("User role:", user.user_role);
+    console.log("Unit data:", unitData);
+    
+    if (['brigade', 'corps', 'division', 'command'].includes(user.user_role?.toLowerCase())) {
+      try {
+        let masterQuery = '';
+        let masterParams = [];
+        
+        // For members, find the officer with same name but is_member = false
+        let searchUsername = user.username;
+        if (user.is_member) {
+          // First try to find by officer_id
+          if (user.officer_id) {
+            const officerResult = await db.query(
+              `SELECT username FROM User_tab WHERE user_id = $1`,
+              [user.officer_id]
+            );
+            if (officerResult.rows.length > 0) {
+              searchUsername = officerResult.rows[0].username;
+            }
+          } else {
+            // If no officer_id, find by name where is_member = false
+            const officerResult = await db.query(
+              `SELECT username FROM User_tab WHERE name = $1 AND is_member = false LIMIT 1`,
+              [user.name]
+            );
+            if (officerResult.rows.length > 0) {
+              searchUsername = officerResult.rows[0].username;
+            }
+          }
+        }
+        
+        // For command role, match user name with command name
+        if (user.user_role?.toLowerCase() === 'command') {
+          console.log("=== COMMAND MASTER DEBUG ===");
+          console.log("User role:", user.user_role);
+          console.log("User name:", user.user_name);
+          
+          const commandResult = await db.query(
+            `SELECT command_id, command_name FROM command_master WHERE command_name = $1`,
+            [user.user_name]
+          );
+          
+          console.log("Command query result:", commandResult.rows);
+          
+          if (commandResult.rows.length > 0) {
+            const command = commandResult.rows[0];
+            masterData = {
+              id: command.command_id,
+              name: command.command_name,
+              role: 'command'
+            };
+            console.log("Master data set:", masterData);
+          } else {
+            console.log("No command found with name:", user.user_name);
+          }
+        }
+        
+        if (user.user_role?.toLowerCase() === 'brigade') {
+          console.log("=== BRIGADE MASTER DEBUG ===");
+          console.log("User role:", user.user_role);
+          console.log("User name:", user.user_name);
+          
+          const brigadeResult = await db.query(
+            `SELECT brigade_id, brigade_name FROM brigade_master WHERE brigade_name = $1`,
+            [user.user_name]
+          );
+          
+          console.log("Brigade query result:", brigadeResult.rows);
+          
+          if (brigadeResult.rows.length > 0) {
+            const brigade = brigadeResult.rows[0];
+            masterData = {
+              id: brigade.brigade_id,
+              name: brigade.brigade_name,
+              role: 'brigade'
+            };
+            console.log("Master data set:", masterData);
+          } else {
+            console.log("No brigade found with name:", user.user_name);
+          }
+        } else if (user.user_role?.toLowerCase() === 'corps') {
+          console.log("=== CORPS MASTER DEBUG ===");
+          console.log("User role:", user.user_role);
+          console.log("User name:", user.user_name);
+          
+          const corpsResult = await db.query(
+            `SELECT corps_id, corps_name FROM corps_master WHERE corps_name = $1`,
+            [user.user_name]
+          );
+          
+          console.log("Corps query result:", corpsResult.rows);
+          
+          if (corpsResult.rows.length > 0) {
+            const corps = corpsResult.rows[0];
+            masterData = {
+              id: corps.corps_id,
+              name: corps.corps_name,
+              role: 'corps'
+            };
+            console.log("Master data set:", masterData);
+          } else {
+            console.log("No corps found with name:", user.user_name);
+          }
+        } else if (user.user_role?.toLowerCase() === 'division') {
+          console.log("=== DIVISION MASTER DEBUG ===");
+          console.log("User role:", user.user_role);
+          console.log("User name:", user.user_name);
+          
+          const divisionResult = await db.query(
+            `SELECT division_id, division_name FROM division_master WHERE division_name = $1`,
+            [user.user_name]
+          );
+          
+          console.log("Division query result:", divisionResult.rows);
+          
+          if (divisionResult.rows.length > 0) {
+            const division = divisionResult.rows[0];
+            masterData = {
+              id: division.division_id,
+              name: division.division_name,
+              role: 'division'
+            };
+            console.log("Master data set:", masterData);
+          } else {
+            console.log("No division found with name:", user.user_name);
+          }
+        }
+
+      } catch (error) {
+        console.error('Error fetching master data:', error);
+        // Continue without master data if there's an error
+      }
+    }
+
+    // Step 6: Return structured response
     return ResponseHelper.success(200, "Successfully found.", {
       user: {
         user_id: user.user_id,
@@ -335,6 +473,7 @@ exports.getProfile = async ({ user_id }) => {
         member_username: memberUsername,
       },
       unit: unitData,
+      master: masterData,
     });
   } catch (error) {
     return ResponseHelper.error(500, "Internal server error", error.message);

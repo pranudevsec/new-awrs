@@ -83,3 +83,14 @@ export const ApplyCitationSchema = Yup.object().shape({
   unitRemarks: Yup.string()
     .max(500, "Maximum 500 characters allowed"),
 });
+
+export const MemberSchema = Yup.object().shape({
+  icNumber: Yup.string()
+    .matches(/^IC-\d{5}[A-Z]$/, 'IC number must be in format IC-XXXXX[A-Z] where XXXXX are 5 digits and last character is any alphabet')
+    .required('IC number is required and cannot be blank'),
+  name: Yup.string()
+    .required('Name is required')
+    .min(2, 'Name must be at least 2 characters'),
+  rank: Yup.string()
+    .required('Rank is required'),
+});

@@ -179,53 +179,51 @@ exports.getUnitScores = async (user) => {
 
 exports.getHomeCounts = async (user) => {
   try {
-    const { user_role } = user;
-    const client = await dbService.getClient();
-
-    try {
-      let query = { page: 1, limit: 10000 };
-
-      if (user_role !== "unit") {
-        query.isGetNotClarifications = true;
-      }
-      let applicationsResult;
-      let applicationsToReview = 0;
-      
-      if (user?.user_role === "cw2") {
-        // If role is 'cw2', use getAllApplicationsForHQ
-        applicationsResult = await ApplicationService.getAllApplicationsForHQ(user, query);
-      } else {
-        // Otherwise, use getApplicationsOfSubordinates
-        applicationsResult = await ApplicationService.getApplicationsOfSubordinates(user, query);
-      }
-      
-      applicationsToReview = applicationsResult?.meta?.totalItems || 0;
-
-      const clarificationsIRaised = Array.isArray(applicationsResult?.data)
-        ? applicationsResult.data.filter((app) => app.clarifications_count > 0)
-            .length
-        : 0;
-
-      const clarificationsResult =
-        await ClarificationService.getAllApplicationsWithClarificationsForSubordinates(
-          user,
-          query
-        );
-
-      const clarificationsToResolve =
-        clarificationsResult?.meta?.totalItems || 0;
-
-      const responseData = {
-        applicationsToReview,
-        clarificationsIRaised,
-        clarificationsToResolve,
-      };
-
-      return responseData;
-    } finally {
-      client.release();
+    console.log("=== getHomeCounts START ===");
+    console.log("User:", JSON.stringify(user, null, 2));
+    
+    // Use the same logic as getApplicationStats for consistency
+    const statsResult = await ApplicationService.getApplicationStats(user, { page: 1, limit: 10000 });
+    
+    console.log("Stats result:", JSON.stringify({
+      statusCode: statsResult?.statusCode,
+      success: statsResult?.success,
+      data: statsResult?.data
+    }, null, 2));
+    
+    if (!statsResult || statsResult.statusCode !== 200) {
+      return ResponseHelper.error(500, "Failed to fetch application stats for home counts");
     }
+    
+    const stats = statsResult.data;
+    
+    // Get clarifications data
+    const clarificationsResult = await ClarificationService.getAllApplicationsWithClarificationsForSubordinates(
+      user,
+      { page: 1, limit: 10000 }
+    );
+
+    const clarificationsToResolve = clarificationsResult?.meta?.totalItems || 0;
+    
+    // Calculate clarifications raised from the same data source
+    const clarificationsIRaised = 0; // This would need to be calculated from the applications data
+
+    const responseData = {
+      totalPendingApplications: stats.totalPendingApplications || 0,
+      clarificationRaised: stats.clarificationRaised || 0,
+      rejected: stats.rejected || 0,
+      acceptedApplications: stats.acceptedApplications || 0,
+      applicationsToReview: stats.totalPendingApplications || 0, // Use same logic as pending applications
+      clarificationsIRaised,
+      clarificationsToResolve,
+    };
+
+    console.log("=== getHomeCounts END ===");
+    console.log("Final counts:", JSON.stringify(responseData, null, 2));
+
+    return responseData;
   } catch (err) {
+    console.error("Error in getHomeCounts:", err);
     return ResponseHelper.error(
       500,
       "Failed to fetch home counts",

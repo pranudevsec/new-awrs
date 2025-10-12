@@ -9,6 +9,7 @@ import FormSelect from "../../components/form/FormSelect";
 import Breadcrumb from "../../components/ui/breadcrumb/Breadcrumb";
 import Loader from "../../components/ui/loader/Loader";
 import FormInput from "../../components/form/FormInput";
+import ICNumberInput from "../../components/form/ICNumberInput";
 import type { UpdateUnitProfileRequest } from "../../reduxToolkit/services/auth/authInterface";
 import { useAppSelector, useAppDispatch } from "../../reduxToolkit/hooks";
 import { getProfile, reqToUpdateUnitProfile } from "../../reduxToolkit/services/auth/authService";
@@ -905,11 +906,18 @@ const ProfileSettings = () => {
                   if (
                     !presidingOfficer.icNumber ||
                     !presidingOfficer.rank ||
-                    !presidingOfficer.name
+                    !presidingOfficer.name ||
+                    !presidingOfficer.appointment
                   ) {
                     toast.error(
-                      "Please fill IC Number, Rank, and Name for Presiding Officer."
+                      "Please fill all required fields (IC Number, Rank, Name, and Appointment) for Presiding Officer."
                     );
+                    return;
+                  }
+
+                  // Validate IC number format
+                  if (presidingOfficer.icNumber && !/^IC-\d{5}[A-Z]$/.test(presidingOfficer.icNumber)) {
+                    toast.error("Invalid IC number format. Must be in format IC-XXXXX[A-Z] where XXXXX are 5 digits and last character is any alphabet.");
                     return;
                   }
 
@@ -945,15 +953,14 @@ const ProfileSettings = () => {
               >
                 <div className="row">
                   <div className="col-sm-6 mb-3">
-                    <FormInput
+                    <ICNumberInput
                       label="IC Number"
                       name="icNumber"
-                      placeholder="Enter IC Number"
+                      placeholder="Enter 5 digits and alphabet (e.g., 87878K)"
                       value={presidingOfficer.icNumber}
-                      onChange={(e) =>
-                        handlePresidingChange("icNumber", e.target.value)
+                      onChange={(value) =>
+                        handlePresidingChange("icNumber", value)
                       }
-                      type="password"
                     />
                   </div>
                   <div className="col-sm-6 mb-3">
@@ -1010,6 +1017,29 @@ const ProfileSettings = () => {
                     return;
                   }
 
+                  // Validate all officers have required fields
+                  const invalidOfficers = officers.filter(officer => 
+                    !officer.icNumber || officer.icNumber.trim() === "" ||
+                    !officer.rank || officer.rank.trim() === "" ||
+                    !officer.name || officer.name.trim() === "" ||
+                    !officer.appointment || officer.appointment.trim() === ""
+                  );
+
+                  if (invalidOfficers.length > 0) {
+                    toast.error("All Member Officers must have complete information (IC Number, Rank, Name, and Appointment). Please fill all required fields.");
+                    return;
+                  }
+
+                  // Validate IC number format
+                  const invalidICNumbers = officers.filter(officer => 
+                    officer.icNumber && !/^IC-\d{5}[A-Z]$/.test(officer.icNumber)
+                  );
+
+                  if (invalidICNumbers.length > 0) {
+                    toast.error("Invalid IC number format. Must be in format IC-XXXXX[A-Z] where XXXXX are 5 digits and last character is any alphabet.");
+                    return;
+                  }
+
                   const officersPayload: UpdateUnitProfileRequest["members"] =
                     officers.map((officer, index) => ({
                       ...(officer.id ? { id: officer.id } : {}),
@@ -1044,15 +1074,14 @@ const ProfileSettings = () => {
                     </div>
                     <div className="row">
                       <div className="col-sm-6 mb-3">
-                        <FormInput
+                        <ICNumberInput
                           label="IC Number"
                           name={`icNumber-${index}`}
-                          placeholder="Enter IC Number"
+                          placeholder="Enter 5 digits and alphabet (e.g., 87878K)"
                           value={officer.icNumber}
-                          onChange={(e) =>
-                            handleChange(index, "icNumber", e.target.value)
+                          onChange={(value) =>
+                            handleChange(index, "icNumber", value)
                           }
-                          type="password"
                         />
                       </div>
                       <div className="col-sm-6 mb-3">

@@ -263,7 +263,50 @@ exports.createOrUpdateUnitForUser = async (userId, data, user) => {
 
     // Only process members if provided
     if (members && Array.isArray(members) && members.length > 0) {
-      for (const m of members) {
+      console.log("=== MEMBER VALIDATION DEBUG ===");
+      console.log("Total members received:", members.length);
+      console.log("Members data:", JSON.stringify(members, null, 2));
+      
+      // Filter out empty members first
+      const validMembers = members.filter(m => 
+        m.name && m.name.trim() !== "" && 
+        m.rank && m.rank.trim() !== "" && 
+        m.ic_number && m.ic_number.trim() !== "" && 
+        m.appointment && m.appointment.trim() !== ""
+      );
+      
+      console.log("Valid members after filtering:", validMembers.length);
+      console.log("Valid members data:", JSON.stringify(validMembers, null, 2));
+      
+      // If we have members in the array but none are valid, throw error
+      if (members.length > 0 && validMembers.length === 0) {
+        throw new Error(`All member data is incomplete. All fields (Name, Rank, IC Number, Appointment) are required and cannot be blank.`);
+      }
+      
+      // If no valid members, skip processing
+      if (validMembers.length === 0) {
+        return ResponseHelper.success(200, "Unit profile updated successfully", {
+          unit: unitResult,
+          members: []
+        });
+      }
+      
+      for (const m of validMembers) {
+        // Validate member data - prevent blank members
+        const hasRequiredFields = m.name && m.name.trim() !== "" && 
+                                 m.rank && m.rank.trim() !== "" && 
+                                 m.ic_number && m.ic_number.trim() !== "" && 
+                                 m.appointment && m.appointment.trim() !== "";
+        
+        if (!hasRequiredFields) {
+          throw new Error(`Member data is incomplete. All fields (Name, Rank, IC Number, Appointment) are required and cannot be blank.`);
+        }
+
+        // Validate IC number format
+        if (m.ic_number && !/^IC-\d{5}[A-Z]$/.test(m.ic_number)) {
+          throw new Error(`Invalid IC number format: ${m.ic_number}. Must be in format IC-XXXXX[A-Z] where XXXXX are 5 digits and last character is any alphabet.`);
+        }
+
         if (m.id) {
           // Update existing member if type matches
           await client.query(
@@ -273,10 +316,10 @@ exports.createOrUpdateUnitForUser = async (userId, data, user) => {
         WHERE member_id=$6 AND unit_id=$7 AND member_type=$8
         `,
             [
-              m.name || "",
-              m.rank || "",
-              m.ic_number || "",
-              m.appointment || "",
+              m.name.trim(),
+              m.rank.trim(),
+              m.ic_number.trim(),
+              m.appointment.trim(),
               m.member_order || "",
               m.id,
               unitResult.unit_id,
@@ -293,10 +336,10 @@ exports.createOrUpdateUnitForUser = async (userId, data, user) => {
         `,
             [
               unitResult.unit_id,
-              m.name || "",
-              m.rank || "",
-              m.ic_number || "",
-              m.appointment || "",
+              m.name.trim(),
+              m.rank.trim(),
+              m.ic_number.trim(),
+              m.appointment.trim(),
               m.member_type,
               m.member_order || "",
             ]

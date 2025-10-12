@@ -855,7 +855,9 @@ const ApplicationDetails = () => {
   const renderParameterRow = (param: any, display: any) => {
     const rows: JSX.Element[] = [];
 
-    const isRejected = param?.clarification_details?.clarification_status === "rejected";
+    // Check if the application is rejected (not just parameter clarification)
+    const isApplicationRejected = unitDetail?.status_flag === "rejected";
+    const isRejected = param?.clarification_details?.clarification_status === "rejected" || isApplicationRejected;
     
     // Apply same logic as citation form for negative parameters
     let approvedMarksValue = isRejected ? "0" : approvedMarksState[param.id] ?? "";
@@ -919,7 +921,7 @@ const ApplicationDetails = () => {
           )}
         </td>
 
-        {!isUnitRole && !isHeadquarter && (
+        {!isUnitRole && !isHeadquarter && !isApplicationRejected && (
           <>
             <td style={{ width: 200 }}>
               <input
@@ -1557,6 +1559,7 @@ const handleDownloadPDF = () => {
                           (m: any) => m.member_id === member.id
                         );
                         const isSignatureAdded = foundMember?.is_signature_added === true;
+                        const isApplicationRejected = unitDetail?.status_flag === "rejected";
 
                         return (
                           <tr key={member.id}>
@@ -1604,7 +1607,7 @@ const handleDownloadPDF = () => {
                                         </button>
                                       )}
 
-                                    {isSignatureAdded && (
+                                    {isSignatureAdded && !isApplicationRejected && (
                                       <span className="text-success fw-semibold text-nowrap d-flex align-items-center gap-1">
                                         <FaCheckCircle className="fs-5" /> Signature Added
                                       </span>
@@ -1612,15 +1615,15 @@ const handleDownloadPDF = () => {
                                   </>
                                 ) : (
                                   <>
-                                    {isSignatureAdded ? (
+                                    {isSignatureAdded && !isApplicationRejected ? (
                                       <span className="text-success fw-semibold text-nowrap d-flex align-items-center gap-1">
                                         <FaCheckCircle className="fs-5" /> Signature Added
                                       </span>
-                                    ) : (
+                                    ) : !isApplicationRejected ? (
                                       <span className="text-danger fw-semibold text-nowrap">
                                         Signature Not Added
                                       </span>
-                                    )}
+                                    ) : null}
                                   </>
                                 )}
                               </div>
@@ -1683,7 +1686,11 @@ const handleDownloadPDF = () => {
                           <p className="fw-4">{category}</p>
                         </td>
                         <td>
-                          {isAlreadySent ? (
+                          {unitDetail?.isFinalized ? (
+                            <span className="text-success fw-semibold">
+                              Finalized
+                            </span>
+                          ) : isAlreadySent ? (
                             <span className="text-danger fw-semibold">
                               Sent
                             </span>

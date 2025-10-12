@@ -95,7 +95,7 @@ const SidebarMenu = ({ onToggleCollapse }: SidebarMenuProps) => {
     }
     if (!isMember) {
       filteredStructure.push(
-        // createSidebarItem("History", SVGICON.sidebar.history, "/history"),
+        createSidebarItem("History", SVGICON.sidebar.history, "/history"),
         createSidebarItem("Recommended Application", SVGICON.sidebar.profile, "/application/accepted")
       );
     }
