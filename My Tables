@@ -119,23 +119,9 @@ CREATE TABLE fds_application_priority (
     role VARCHAR(100) NOT NULL,             -- e.g., brigade, division
     priority INTEGER NOT NULL DEFAULT 0,    -- priority value
     priority_added_at TIMESTAMP NOT NULL DEFAULT NOW(),
-    cw2_type VARCHAR(50),
     created_at TIMESTAMP DEFAULT NOW(),
     updated_at TIMESTAMP DEFAULT NOW()
 );
-CREATE TABLE fds_comments (
-  fds_comment_id SERIAL PRIMARY KEY,
-  fds_id INTEGER NOT NULL REFERENCES fds(fds_id) ON DELETE CASCADE,
-  comment TEXT NOT NULL,
-  commented_by INTEGER NOT NULL,
-  commented_by_role VARCHAR(100) NOT NULL,
-  commented_by_role_type VARCHAR(50),
-  commented_at TIMESTAMP NOT NULL DEFAULT NOW(),
-  created_at TIMESTAMP DEFAULT NOW(),
-  updated_at TIMESTAMP DEFAULT NOW(),
-  CONSTRAINT unique_fds_comment_entry UNIQUE (fds_id, commented_by, commented_by_role, commented_by_role_type)
-);
-
 ALTER TABLE citation_tab
 ADD COLUMN fds_id INTEGER;
 
