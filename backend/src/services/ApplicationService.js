@@ -50,7 +50,7 @@ exports.getAllApplicationsForUnit = async (user, query) => {
         (app) => app.fds?.award_type?.toLowerCase() === award_type.toLowerCase()
       );
     }
-
+    
     function normalize(input) {
       if (input == null) return "";
       const str = String(input).toLowerCase();
@@ -63,7 +63,7 @@ exports.getAllApplicationsForUnit = async (user, query) => {
         const cycleMatch = normalize(app.fds?.cycle_period || "").includes(
           searchLower
         );
-
+        
         // Search in fds fields that actually exist
         const awardTypeMatch = normalize(app.fds?.award_type || "").includes(
           searchLower
@@ -104,7 +104,7 @@ exports.getAllApplicationsForUnit = async (user, query) => {
         );
       });
     }
-
+    
     const clarificationIdSet = new Set();
     allApps.forEach((app) => {
       app.fds?.parameters?.forEach((param) => {
@@ -113,16 +113,16 @@ exports.getAllApplicationsForUnit = async (user, query) => {
         }
       });
     });
-
+    
     const clarificationIds = Array.from(clarificationIdSet);
     let clarificationsMap = {};
-
+    
     if (clarificationIds.length > 0) {
       const clarRes = await client.query(
         `SELECT * FROM Clarification_tab WHERE clarification_id = ANY($1)`,
         [clarificationIds]
       );
-
+      
       clarificationsMap = clarRes.rows.reduce((acc, row) => {
         acc[row.clarification_id] = row;
         return acc;
@@ -138,7 +138,7 @@ exports.getAllApplicationsForUnit = async (user, query) => {
         }
         return param;
       });
-
+      
       return {
         ...app,
         fds: {
@@ -147,7 +147,7 @@ exports.getAllApplicationsForUnit = async (user, query) => {
         },
       };
     });
-
+    
     if (user.user_role === "unit") {
       allApps = allApps.map(({ status_flag, ...rest }) => {
         if (status_flag === "draft") {
@@ -156,8 +156,9 @@ exports.getAllApplicationsForUnit = async (user, query) => {
         return rest;
       });
     }
+    console.log("🚀 ~ allApps:", allApps)
     let total_pending_clarifications = 0;
-    allApps = allApps.map((app) => {
+    allApps = allApps?.map((app) => {
       let clarifications_count = 0;
       const cleanedParameters = app.fds.parameters.map((param) => {
         const newParam = { ...param };
@@ -169,7 +170,7 @@ exports.getAllApplicationsForUnit = async (user, query) => {
         delete newParam.clarification_id;
         return newParam;
       });
-
+      
       return {
         ...app,
         clarifications_count,
@@ -180,9 +181,9 @@ exports.getAllApplicationsForUnit = async (user, query) => {
         },
       };
     });
-
+    
     allApps.sort((a, b) => new Date(b.date_init) - new Date(a.date_init));
-
+    
     //  Pagination logic
     const pageInt = parseInt(page);
     const limitInt = parseInt(limit);
@@ -381,29 +382,34 @@ exports.getAllApplicationsForHQ = async (user, query) => {
 
     // Count and clean clarifications
     let total_pending_clarifications = 0;
+    console.log("allAppsallAppsallAppsallApps", allApps);
+    
     allApps = allApps.map((app) => {
       let clarifications_count = 0;
-      const cleanedParameters = app.fds.parameters.map((param) => {
-        const newParam = { ...param };
-        if (newParam.clarification?.clarification_status === "pending") {
-          clarifications_count++;
-          total_pending_clarifications++;
-        }
-        delete newParam.clarification;
-        delete newParam.clarification_id;
-        return newParam;
-      });
-
+    
+      const cleanedParameters = Array.isArray(app.fds?.parameters)
+        ? app.fds.parameters.map((param) => {
+            const newParam = { ...param };
+            if (newParam.clarification?.clarification_status === "pending") {
+              clarifications_count++;
+              total_pending_clarifications++;
+            }
+            delete newParam.clarification;
+            delete newParam.clarification_id;
+            return newParam;
+          })
+        : [];
+        
       return {
         ...app,
         clarifications_count,
         total_pending_clarifications,
-        fds: {
-          ...app.fds,
-          parameters: cleanedParameters,
-        },
+        fds: app.fds
+          ? { ...app.fds, parameters: cleanedParameters }
+          : { parameters: [] },
       };
     });
+
 
     // Sort descending by date_init
     allApps.sort((a, b) => new Date(b.date_init) - new Date(a.date_init));
@@ -429,6 +435,7 @@ exports.getAllApplicationsForHQ = async (user, query) => {
       pagination
     );
   } catch (err) {
+    console.log("🚀 ~ err:", err)
     return ResponseHelper.error(
       500,
       "Failed to fetch HQ applications",
@@ -844,9 +851,9 @@ exports.getApplicationsOfSubordinates = async (user, query) => {
         parameters: (app.fds?.parameters || []).map((param) =>
           param.clarification_id
             ? {
-                ...param,
-                clarification: clarificationMap[param.clarification_id] || null,
-              }
+              ...param,
+              clarification: clarificationMap[param.clarification_id] || null,
+            }
             : param
         ),
       },
@@ -1299,11 +1306,10 @@ exports.updateApplicationStatus = async (
             withdraw_approved_by_role = $2,
             withdraw_approved_by_user_id = $3,
             withdraw_approved_at = $4
-            ${
-              withdraw_status === "approved"
-                ? ", status_flag = 'withdrawed'"
-                : ""
-            }
+            ${withdraw_status === "approved"
+          ? ", status_flag = 'withdrawed'"
+          : ""
+        }
         WHERE ${config.column} = $5
         RETURNING *;
       `;
@@ -1794,13 +1800,11 @@ exports.approveApplicationMarks = async (user, body) => {
         await client.query(
           `
           INSERT INTO fds_application_priority
-            (fds_id, role, priority, priority_added_at, created_at, updated_at${
-              user.user_role === "cw2" ? ", cw2_type" : ""
-            })
+            (fds_id, role, priority, priority_added_at, created_at, updated_at${user.user_role === "cw2" ? ", cw2_type" : ""
+          })
           VALUES
-            ($1, $2, $3, $4, NOW(), NOW()${
-              user.user_role === "cw2" ? ", $5" : ""
-            })
+            ($1, $2, $3, $4, NOW(), NOW()${user.user_role === "cw2" ? ", $5" : ""
+          })
           `,
           user.user_role === "cw2"
             ? [fds_id, user.user_role, points, now, user.cw2_type]
@@ -1896,8 +1900,7 @@ exports.addApplicationSignature = async (user, body) => {
 
     // Fetch existing application
     const res = await client.query(
-      `SELECT ${idColumn}, ${
-        type === "citation" ? "citation_fds" : "appre_fds"
+      `SELECT ${idColumn}, ${type === "citation" ? "citation_fds" : "appre_fds"
       } AS fds FROM ${tableName} WHERE ${idColumn} = $1`,
       [application_id]
     );
@@ -2220,8 +2223,8 @@ exports.getApplicationsHistory = async (user, query) => {
         user.cw2_type === "mo"
           ? "is_mo_approved"
           : user.cw2_type === "ol"
-          ? "is_ol_approved"
-          : null;
+            ? "is_ol_approved"
+            : null;
       if (!approvalField) throw new Error("Invalid cw2_type for CW2 user.");
 
       const [citationsRes, appreciationsRes] = await Promise.all([
@@ -2264,30 +2267,34 @@ exports.getApplicationsHistory = async (user, query) => {
       );
     }
 
-    // For other roles
-    const ROLE_HIERARCHY = ["unit", "brigade", "division", "corps", "command"];
-    const currentRole = user_role.toLowerCase();
-    const currentIndex = ROLE_HIERARCHY.indexOf(currentRole);
-    if (currentIndex === -1) throw new Error("Invalid user role");
-
     const subordinateFieldMap = {
-      brigade: "bde",
-      division: "div",
-      corps: "corps",
-      command: "comd",
+      brigade: "brigade_id",
+      division: "division_id",
+      corps: "corps_id",
+      command: "command_id",
     };
 
     let unitIds = [];
-    if (currentRole === "unit") {
+    if (user_role.toLowerCase() === "unit") {
       unitIds = [unit.unit_id];
     } else {
-      const matchField = subordinateFieldMap[currentRole];
+      const matchField = subordinateFieldMap[user_role.toLowerCase()];
+      if (!matchField) throw new Error(`Invalid mapping for role: ${user_role.toLowerCase()}`);
+
+      const parentId = unit[matchField]; 
+
       const subUnitsRes = await client.query(
-        `SELECT unit_id FROM Unit_tab WHERE ${matchField} = $1`,
-        [unit.name]
+        `SELECT unit_id FROM Unit_tab WHERE "${matchField}" = $1`,
+        [parentId]
       );
+
       unitIds = subUnitsRes.rows.map((u) => u.unit_id);
     }
+
+
+
+
+
     if (unitIds.length === 0) {
       return ResponseHelper.success(200, "No applications found", [], {
         totalItems: 0,
@@ -2433,6 +2440,7 @@ exports.getApplicationsHistory = async (user, query) => {
       pagination
     );
   } catch (err) {
+    console.log("🚀 ~ err:", err)
     return ResponseHelper.error(
       500,
       "Failed to fetch applications history",
@@ -2505,14 +2513,14 @@ exports.getAllApplications = async (user, query) => {
         LEFT JOIN Division_Master d ON u.division_id = d.division_id
         LEFT JOIN Corps_Master co ON u.corps_id = co.corps_id
       `);
-    
+
       unitIds = allUnitsRes.rows.map((u) => u.unit_id);
       allowedRoles = ROLE_HIERARCHY;
     } else {
       // Other roles see subordinate units
       const currentIndex = ROLE_HIERARCHY.indexOf(currentRole);
       if (currentIndex === -1) throw new Error("Invalid user role");
-    
+
       const subordinateFieldMap = {
         unit: "unit_id",
         brigade: "brigade_id",
@@ -2520,13 +2528,13 @@ exports.getAllApplications = async (user, query) => {
         corps: "corps_id",
         command: "command_id",
       };
-    
+
       if (currentRole === "unit") {
         // Only their own unit
         unitIds = [unit.unit_id];
       } else {
         const matchField = subordinateFieldMap[currentRole];
- 
+
         // Fetch subordinate units using foreign keys
         const subUnitsRes = await client.query(`
           SELECT u.unit_id
@@ -2537,19 +2545,19 @@ exports.getAllApplications = async (user, query) => {
           LEFT JOIN Corps_Master co ON u.corps_id = co.corps_id
           WHERE u.${matchField} = $1
         `, [unit[matchField]]);
-    
+
         unitIds = subUnitsRes.rows.map((u) => u.unit_id);
       }
-    
+
       if (unitIds.length === 0) {
         return ResponseHelper.success(200, "No applications found", [], {
           totalItems: 0,
         });
       }
-    
+
       allowedRoles = ROLE_HIERARCHY.slice(0, currentIndex + 1);
     }
-    
+
 
     let baseFilters;
     let queryParams = [unitIds];
@@ -2668,7 +2676,7 @@ exports.getAllApplications = async (user, query) => {
     ]);
 
     let allApps = [...citations.rows, ...appreciations.rows];
-    allApps=await attachFdsToApplications(allApps)
+    allApps = await attachFdsToApplications(allApps)
     // Filtering helpers
     const normalize = (s) => s?.toLowerCase().replace(/[\s-]/g, "");
     if (award_type) {
@@ -3650,8 +3658,8 @@ exports.getApplicationsSummary = async (user, query) => {
       key === "brigade" || key === "brig"
         ? "bde"
         : key === "corp"
-        ? "corps"
-        : key;
+          ? "corps"
+          : key;
 
     const groupExprMap = {
       comd: "u.comd",
