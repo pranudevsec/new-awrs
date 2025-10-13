@@ -165,25 +165,7 @@ const UnitDashboard = ({ level }: { level: "brigade" | "division" | "corps" | "c
       <div className="d-flex flex-sm-row flex-column align-items-sm-center justify-content-between mb-4">
         <Breadcrumb title={"Dashboard"} />
       </div>
-      <div className="row mb-4">
-        <div className="col-lg-6 col-md-6 col-12 mb-3">
-          <FormSelect
-            label="Award Type Filter"
-            name="awardTypeFilter"
-            options={awardTypeOptions}
-            value={awardTypeOptions.find((opt) => opt.value === awardTypeFilter) ?? null}
-            onChange={(selectedOption) => setAwardTypeFilter(selectedOption?.value ?? "All")}
-            placeholder="Select Award Type"
-          />
-        </div>
-        {pendingUnits.length > 0 && (
-          <div className="col-lg-6 col-md-6 col-12 mb-3 d-flex align-items-end justify-content-end">
-            <button className="_btn _btn-lg primary" onClick={handleExportPDF}>
-              Download PDF Report
-            </button>
-          </div>
-        )}
-      </div>
+      {/* Filters and export removed for brigade/division/corps dashboards as requested */}
       <AssetsDetail dashboardStats={stats} />
       <div className="row mb-4 row-gap-4">
         {unitMetrics.length === 0 ? (

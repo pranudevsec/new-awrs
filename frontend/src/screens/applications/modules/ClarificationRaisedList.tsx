@@ -17,7 +17,7 @@ const ClarificationRaisedList = () => {
   const { profile } = useAppSelector((state) => state.admin);
   const { units, loading, meta } = useAppSelector((state) => state.application);
 
-  // States
+  // States (filters removed)
   const [awardType, setAwardType] = useState<string | null>(null);
   const [search, setSearch] = useState<string>('');
   const [page, setPage] = useState<number>(1);
@@ -28,8 +28,6 @@ const ClarificationRaisedList = () => {
 
     const fetchData = () => {
       const params = {
-        ...(awardType && awardType !== "All" ? { award_type: awardType } : {}),
-        search,
         page,
         limit
       };
@@ -61,27 +59,7 @@ const ClarificationRaisedList = () => {
         />
       </div>
 
-      <div className="filter-wrapper d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
-        <div className="search-wrapper position-relative">
-          <button className="border-0 bg-transparent position-absolute translate-middle-y top-50">
-            {SVGICON.app.search}
-          </button>
-          <input
-            type="text"
-            placeholder="search..."
-            className="form-control"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-          />
-        </div>
-        <FormSelect
-          name="awardType"
-          options={awardTypeOptions}
-          value={awardTypeOptions.find((opt) => opt.value === awardType) ?? null}
-          placeholder="Select Type"
-          onChange={(option) => setAwardType(option?.value ?? null)}
-        />
-      </div>
+      {/* Search and award type filter removed */}
 
       <div className="table-responsive">
         <table className="table-style-2 w-100">

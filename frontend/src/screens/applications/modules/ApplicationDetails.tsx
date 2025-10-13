@@ -888,7 +888,7 @@ const ApplicationDetails = () => {
     }
 
     rows.push(
-      <tr key={display.main}>
+      <tr key={`${param.id || display.main || 'row'}`}>
         <td style={{ width: 150 }}>
           <p className="fw-5 mb-0">{display.main}</p>
         </td>

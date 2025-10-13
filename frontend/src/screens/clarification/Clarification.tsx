@@ -19,21 +19,17 @@ const Clarification = () => {
   const { loading, unitClarifications, meta } = useAppSelector((state) => state.clarification);
 
   // States 
-  const [awardType, setAwardType] = useState<string | null>("");
+  // Filters removed as requested
+  const [awardType, setAwardType] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState<string>("");
   const [debouncedSearch, setDebouncedSearch] = useState<string>("");
   const [page, setPage] = useState<number>(1);
   const [limit, setLimit] = useState<number>(10);
 
+  // Remove debounced search (no search input anymore)
   useEffect(() => {
-    const handler = setTimeout(() => {
-      setDebouncedSearch(searchTerm);
-    }, 500);
-
-    return () => {
-      clearTimeout(handler);
-    };
-  }, [searchTerm]);
+    setDebouncedSearch("");
+  }, []);
 
   useEffect(() => {
     if (profile?.user?.user_role) {
@@ -50,27 +46,7 @@ const Clarification = () => {
       <div className="d-flex flex-sm-row flex-column align-items-sm-center justify-content-between mb-4">
         <Breadcrumb title="Clarification to Resolve" />
       </div>
-      <div className="filter-wrapper d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
-        <div className="search-wrapper position-relative">
-          <button className="border-0 bg-transparent position-absolute translate-middle-y top-50">
-            {SVGICON.app.search}
-          </button>
-          <input
-            type="text"
-            placeholder="search..."
-            className="form-control"
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-          />
-        </div>
-        <FormSelect
-          name="awardType"
-          options={awardTypeOptions}
-          value={awardTypeOptions.find((opt) => opt.value === awardType) ?? null}
-          onChange={(option) => setAwardType(option?.value ?? null)}
-          placeholder="Select Type"
-        />
-      </div>
+      {/* Search and award type filter removed */}
       <div className="table-responsive">
         <table className="table-style-2 w-100">
           <thead style={{ backgroundColor: "#007bff" }}>

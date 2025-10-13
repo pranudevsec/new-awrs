@@ -662,32 +662,30 @@ const AcceptedApplicationsList = () => {
         <td style={{ width: 200, minWidth: 200, maxWidth: 200 }}>
   <input
     type="number"
+    inputMode="numeric"
     className="form-control"
-    placeholder="Enter discretionary points"
+    placeholder="Enter discretionary points (1-10)"
     autoComplete="off"
+    min={1}
+    max={10}
+    step={1}
     value={graceMarksValues[String(unit.id)]?.[unit.type] ?? ""}
     onChange={(e) => {
       const value = e.target.value;
-
-      // Prevent single 0
-      if (value === "0") {
-        toast.error("Value cannot be 0");
+      // Allow clearing for UX
+      if (value === "") {
+        handleGraceMarksChange(String(unit.id), value, unit.type);
         return;
       }
-
-      // Prevent multiple zeros like 00, 000, etc.
-      if (/^0{2,}$/.test(value)) {
-        toast.error("Value cannot be multiple zeros");
+      // Only allow integers 1-10, no negatives or decimals
+      if (!/^\d+$/.test(value)) {
         return;
       }
-
       const numValue = Number(value);
-
-      if (numValue > 10) {
-        toast.error("Value cannot be more than 10");
+      if (numValue < 1 || numValue > 10) {
+        toast.error("Value must be an integer between 1 and 10", { id: "grace-int-range" });
         return;
       }
-
       handleGraceMarksChange(String(unit.id), value, unit.type);
     }}
   />
@@ -728,6 +726,7 @@ const AcceptedApplicationsList = () => {
 <td style={{ width: 200, minWidth: 200, maxWidth: 200 }}>
   <input
     type="number"
+    inputMode="numeric"
     className="form-control"
     placeholder="Enter priority (1-1000)"
     autoComplete="off"
@@ -737,10 +736,8 @@ const AcceptedApplicationsList = () => {
     onChange={(e) => {
       const value = e.target.value;
 
-      // Only allow numbers
-      if (value && !/^\d+$/.test(value)) {
-        return;
-      }
+      // Only allow integers
+      if (value && !/^\d+$/.test(value)) return;
 
       // Update local state immediately for UI responsiveness
       setPriorityValues((prev) => ({
@@ -756,6 +753,8 @@ const AcceptedApplicationsList = () => {
         const numValue = Number(value);
         if (numValue >= 1 && numValue <= 1000) {
           debouncedHandlePriorityChange(unit, value);
+        } else {
+          toast.error("Priority must be an integer between 1 and 1000", { id: "priority-int-range" });
         }
       }
     }}

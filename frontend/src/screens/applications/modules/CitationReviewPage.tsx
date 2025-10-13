@@ -124,13 +124,8 @@ const CitationReviewPage = () => {
   };
 
   const getParamDisplay = (param: any) => {
-    if (param.name != "no") {
-      return {
-        main: param.name,
-        header: param.subcategory ?? null,
-        subheader: param.subsubcategory ?? null,
-      };
-    } else if (param.subsubcategory) {
+    // Do not show name from parameter_master; use hierarchy fields only
+    if (param.subsubcategory) {
       return {
         main: param.subsubcategory,
         header: param.subcategory ?? null,
