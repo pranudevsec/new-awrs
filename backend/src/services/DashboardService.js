@@ -7,7 +7,7 @@ const ClarificationService = require("../services/ClarificationService");
 exports.getDashboardStats = async (user) => {
   const client = await dbService.getClient();
   try {
-    // Step 1: Get user profile to extract unit name
+
     const profile = await AuthService.getProfile(user);
     const unitName = profile?.data?.unit?.name;
     let approved;
@@ -17,7 +17,7 @@ exports.getDashboardStats = async (user) => {
         throw new Error("User unit name not found in profile.");
       }
 
-      // Step 2: Get unit IDs where comd matches user unit name
+
       const unitsRes = await client.query(
         `SELECT unit_id FROM Unit_tab WHERE comd = $1`,
         [unitName]
@@ -28,7 +28,7 @@ exports.getDashboardStats = async (user) => {
         throw new Error("No subordinate units found for this command.");
       }
 
-      // Step 3: Count approved and rejected applications from both tables
+
       const approvedQuery = `
     SELECT
       (SELECT COUNT(*) FROM Citation_tab WHERE unit_id = ANY($1) AND status_flag = 'approved' AND last_approved_by_role = 'command') AS citation_approved,
@@ -52,8 +52,8 @@ exports.getDashboardStats = async (user) => {
         parseInt(rejectedRes.rows[0].citation_rejected) +
         parseInt(rejectedRes.rows[0].appre_rejected);
     }
-    // Step 4: Fetch pending applications via service
-    // Step 4: Fetch pending applications based on user role
+
+
     const query = { page: 1, limit: 10000 };
 
     let result;
@@ -118,7 +118,7 @@ exports.getUnitScores = async (user) => {
       );
     }
 
-    // Fetch all approved applications with high limit
+
     const result = await ApplicationService.getApplicationsScoreboard(user, {
       page: 1,
       limit: 10000, // large limit to ensure all data is fetched
@@ -130,7 +130,7 @@ exports.getUnitScores = async (user) => {
 
     const applications = result.data;
 
-    // Aggregate total marks by unit_id
+
     const unitScoresMap = {};
     applications.forEach((app) => {
       const { unit_id, total_marks } = app;
@@ -142,13 +142,13 @@ exports.getUnitScores = async (user) => {
       unitScoresMap[unit_id] += total_marks || 0;
     });
 
-    // Convert to array and sort
+
     const unitScores = Object.entries(unitScoresMap)
       .map(([unit_id, score]) => ({ unit_id: parseInt(unit_id), score }))
       .sort((a, b) => b.score - a.score)
       .slice(0, 5);
 
-    // Fetch unit names from DB
+
     const client = await dbService.getClient();
     try {
       const unitScoreData = await Promise.all(
@@ -179,13 +179,10 @@ exports.getUnitScores = async (user) => {
 
 exports.getHomeCounts = async (user) => {
   try {
-    console.log("=== getHomeCounts START ===");
-    console.log("User:", JSON.stringify(user, null, 2));
     
-    // Use the same logic as getApplicationStats for consistency
+
     const statsResult = await ApplicationService.getApplicationStats(user, { page: 1, limit: 10000 });
     
-    console.log("Stats result:", JSON.stringify({
       statusCode: statsResult?.statusCode,
       success: statsResult?.success,
       data: statsResult?.data
@@ -197,7 +194,7 @@ exports.getHomeCounts = async (user) => {
     
     const stats = statsResult.data;
     
-    // Get clarifications data
+
     const clarificationsResult = await ClarificationService.getAllApplicationsWithClarificationsForSubordinates(
       user,
       { page: 1, limit: 10000 }
@@ -205,7 +202,7 @@ exports.getHomeCounts = async (user) => {
 
     const clarificationsToResolve = clarificationsResult?.meta?.totalItems || 0;
     
-    // Calculate clarifications raised from the same data source
+
     const clarificationsIRaised = 0; // This would need to be calculated from the applications data
 
     const responseData = {
@@ -218,8 +215,6 @@ exports.getHomeCounts = async (user) => {
       clarificationsToResolve,
     };
 
-    console.log("=== getHomeCounts END ===");
-    console.log("Final counts:", JSON.stringify(responseData, null, 2));
 
     return responseData;
   } catch (err) {

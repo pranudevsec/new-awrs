@@ -11,7 +11,7 @@ const ClarificationDetail = () => {
   const { application_id } = useParams();
   const { profile } = useAppSelector((state) => state.admin);
 
-  // States
+
   const award_type = searchParams.get("award_type") ?? "";
   const numericAppId = Number(application_id);
   const [unitDetail, setUnitDetail] = useState<any>(null);
@@ -24,7 +24,7 @@ const ClarificationDetail = () => {
         .unwrap()
         .then((res: any) => {
           setUnitDetail(res.data);
-          // Initialize approved count and marks from existing data
+
           const initialCount: Record<string, string> = {};
           const initialMarks: Record<string, string> = {};
           res.data?.fds?.parameters?.forEach((param: any) => {
@@ -39,9 +39,9 @@ const ClarificationDetail = () => {
     }
   }, [award_type, numericAppId]);
 
-  // Handle approved count change - same logic as citation
+
   const handleApprovedCountChange = (paramId: string, value: string) => {
-    // Only allow numbers (same validation as citation)
+
     if (!/^\d*$/.test(value)) return;
     
     setApprovedCount(prev => ({
@@ -49,7 +49,7 @@ const ClarificationDetail = () => {
       [paramId]: value
     }));
     
-    // Calculate approved marks automatically (same logic as citation)
+
     const countNum = value === "" ? 0 : Number(value);
     const param = unitDetail?.fds?.parameters?.find((p: any) => p.id === paramId);
     if (param) {
@@ -64,7 +64,7 @@ const ClarificationDetail = () => {
     }
   };
 
-  // Handle approved marks change
+
   const handleApprovedMarksChange = (paramId: string, value: string) => {
     setApprovedMarks(prev => ({
       ...prev,
@@ -72,7 +72,7 @@ const ClarificationDetail = () => {
     }));
   };
 
-  // Check if user can edit approved marks (officers only)
+
   const canEditApprovedMarks = profile?.user?.user_role && 
     ["brigade", "division", "corps", "command"].includes(profile.user.user_role);
 

@@ -22,7 +22,7 @@ const TrackApplications = () => {
   const { units, loading, meta } = useAppSelector((state) => state.application);
   const role = profile?.user?.user_role?.toLowerCase() ?? "";
 
-  // States
+
   const [awardType, setAwardType] = useState<string | null>(null);
   const [commandType, setCommandType] = useState<string | null>(null);
   const [corpsType, setCorpsType] = useState<string | null>(null);
@@ -74,7 +74,7 @@ const TrackApplications = () => {
   const handleExportPDF = () => {
     const doc = new jsPDF({ orientation: "landscape", unit: "pt", format: "a4" });
 
-    // Create simplified headers for PDF
+
     const headers = [
       "S. No",
       "Award Type", 
@@ -87,11 +87,11 @@ const TrackApplications = () => {
       "Total Marks"
     ];
 
-    // Create simplified rows for PDF
+
     const rows = units.map((unit: any, index: number) => {
       let totalMarks = 0;
 
-      // Calculate total marks from parameters
+
       (unit.fds?.parameters ?? []).forEach((p: any) => {
         const marksVal = p.approved_marks ?? p.marks ?? 0;
         const numVal = Number(marksVal) || 0;
@@ -102,7 +102,7 @@ const TrackApplications = () => {
         }
       });
 
-      // Add grace marks
+
       const roleOrder = ["brigade", "division", "corps", "command"];
       for (let i = roleOrder.length - 1; i >= 0; i--) {
         const role = roleOrder[i];
@@ -126,11 +126,11 @@ const TrackApplications = () => {
       ];
     });
 
-    // Add title
+
     doc.setFontSize(16);
     doc.text("Applications Report", 14, 22);
 
-    // Create table
+
     autoTable(doc, {
       head: [headers],
       body: rows,
@@ -146,126 +146,126 @@ const TrackApplications = () => {
     doc.save("applications.pdf");
   };
 
-  // const handleExportFMNExcel = () => {
-  //   // Updated matric units
-  //   const matricUnits = [
-  //     { label: "CI/CT", value: "HINTERLAND" },
-  //     { label: "LC", value: "LC" },
-  //     { label: "AIOS", value: "AIOS" },
-  //     { label: "LAC", value: "LAC" },
-  //     { label: "HAA", value: "HAA" },
-  //     { label: "AGPL", value: "AGPL" },
-  //     { label: "Internal Security (IS)", value: "IS" },
-  //   ];
 
-  //   // Updated non-matric units for matching matrix_unit values
-  //   const nonMatricUnits = [
-  //     { label: "Non Metrics (NM)", value: "NM" },
-  //     { label: "Peace/Mod Fd", value: "Peace" },
-  //   ];
 
-  //   // Group by FMN
-  //   const groupedByFMN: any = {};
 
-  //   units.forEach(unit => {
-  //     const fmn = unit.fds.command || "Unknown FMN";
-  //     if (!groupedByFMN[fmn]) {
-  //       groupedByFMN[fmn] = {
-  //         matricCounts: matricUnits.reduce((acc: any, u) => {
-  //           acc[u.label] = 0;
-  //           return acc;
-  //         }, {}),
-  //         nonMatricCounts: nonMatricUnits.reduce((acc: any, u) => {
-  //           acc[u.label] = 0;
-  //           return acc;
-  //         }, {}),
-  //         unitCitations: 0,
-  //         unitAppreciations: 0,
-  //         total: 0,
-  //       };
-  //     }
-  //     const fmnGroup = groupedByFMN[fmn];
 
-  //     // Count matric units based on fds.matrix_unit matching matric units
-  //     const isMatric = matricUnits.some(({ value }) => value === unit.fds.matrix_unit);
-  //     if (isMatric) {
-  //       matricUnits.forEach(({ label, value }) => {
-  //         if (unit.fds.matrix_unit === value) {
-  //           if (unit.type === "citation") {
-  //             fmnGroup.matricCounts[label]++;
-  //             fmnGroup.unitCitations++;
-  //           } else if (unit.type === "appreciation") {
-  //             fmnGroup.matricCounts[label]++;
-  //             fmnGroup.unitAppreciations++;
-  //           }
-  //         }
-  //       });
-  //     } else {
-  //       // For non-matric units, only count if matrix_unit matches any of nonMatricUnits values
-  //       const matchedNonMatric = nonMatricUnits.find(({ value }) => value === unit.fds.matrix_unit);
-  //       if (matchedNonMatric) {
-  //         if (unit.type === "citation") {
-  //           fmnGroup.nonMatricCounts[matchedNonMatric.label]++;
-  //           fmnGroup.unitCitations++;
-  //         } else if (unit.type === "appreciation") {
-  //           fmnGroup.nonMatricCounts[matchedNonMatric.label]++;
-  //           fmnGroup.unitAppreciations++;
-  //         }
-  //       }
-  //     }
 
-  //     fmnGroup.total++;
-  //   });
 
-  //   // Prepare header rows
-  //   const headerRow1 = [
-  //     "FMN",
-  //     "Matric Units", "", "", "", "", "", "",
-  //     "Non-Matric Units", "",
-  //     "Unit Citations",
-  //     "Unit Appreciations",
-  //     "Total",
-  //   ];
 
-  //   const headerRow2 = [
-  //     "",
-  //     "CI/CT", "LC", "AIOS", "LAC", "HAA", "AGPL", "Internal Security (IS)", 
-  //     "Non Metrics (NM)", "Peace/Mod Fd", 
-  //     "", "", "",
-  //   ];
 
-  //   // Data rows
-  //   const dataRows = Object.entries(groupedByFMN).map(([fmn, counts]: any) => [
-  //     fmn,
-  //     ...matricUnits.map(({ label }) => counts.matricCounts[label] > 0 ? counts.matricCounts[label] : "-"),
-  //     ...nonMatricUnits.map(({ label }) => counts.nonMatricCounts[label] > 0 ? counts.nonMatricCounts[label] : "-"),
-  //     counts.unitCitations,
-  //     counts.unitAppreciations,
-  //     counts.total,
-  //   ]);
 
-  //   const worksheetData = [headerRow1, headerRow2, ...dataRows];
 
-  //   // Create worksheet
-  //   const worksheet = XLSX.utils.aoa_to_sheet(worksheetData);
 
-  //   // Merge cells for grouped headers
-  //   worksheet["!merges"] = [
-  //     { s: { r: 0, c: 1 }, e: { r: 0, c: 7 } },  // B1:H1 Matric Units (unchanged)
-  //     { s: { r: 0, c: 8 }, e: { r: 0, c: 9 } },  // I1:J1 Non-Matric Units (reduced by 1)
-  //     { s: { r: 0, c: 0 }, e: { r: 1, c: 0 } },  // A1:A2 FMN
-  //     { s: { r: 0, c: 10 }, e: { r: 1, c: 10 } }, // K1:K2 Unit Citations (shifted left by 1)
-  //     { s: { r: 0, c: 11 }, e: { r: 1, c: 11 } }, // L1:L2 Unit Appreciations (shifted left by 1)
-  //     { s: { r: 0, c: 12 }, e: { r: 1, c: 12 } }, // M1:M2 Total (shifted left by 1)
-  //   ];
 
-  //   // Create workbook and append sheet
-  //   const workbook = XLSX.utils.book_new();
-  //   XLSX.utils.book_append_sheet(workbook, worksheet, "FMN Report");
 
-  //   // Export Excel file
-  //   XLSX.writeFile(workbook, "FMN_Report.xlsx");
-  // };
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
   return (
     <div className="clarification-section">

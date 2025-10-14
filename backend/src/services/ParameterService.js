@@ -1,7 +1,6 @@
 const dbService = require("../utils/postgres/dbService");
 const ResponseHelper = require("../utils/responseHelper");
 
-// Create Parameter
 exports.createParameter = async (data) => {
   const client = await dbService.getClient();
   try {
@@ -25,7 +24,7 @@ exports.createParameter = async (data) => {
       subsubcategory
     } = data;
 
-    // 1. Get command_id
+
     let command_id = null;
     if (comd) {
       const cmdRes = await client.query(
@@ -36,7 +35,7 @@ exports.createParameter = async (data) => {
       else throw new Error(`Command not found: ${comd}`);
     }
 
-    // 2. Get arms_service_id
+
     let arms_service_id = null;
     if (arms_service) {
       const amsRes = await client.query(
@@ -47,7 +46,7 @@ exports.createParameter = async (data) => {
       else throw new Error(`Arms Service not found: ${arms_service}`);
     }
 
-    // 3. Get deployment_id (optional)
+
     let deployment_id = null;
     if (deployment) {
       const depRes = await client.query(
@@ -58,7 +57,7 @@ exports.createParameter = async (data) => {
       else throw new Error(`Deployment not found: ${deployment}`);
     }
 
-    // 4. Insert into Parameter_Master
+
     const result = await client.query(
       `INSERT INTO Parameter_Master 
       (award_type, applicability, category, subcategory, subsubcategory, name, description, 
@@ -95,7 +94,6 @@ exports.createParameter = async (data) => {
   }
 };
 
-// Get All Parameters
 exports.getAllParameters = async (query) => {
   const client = await dbService.getClient();
   try {
@@ -120,13 +118,13 @@ exports.getAllParameters = async (query) => {
     const joins = [];
     const selectExtras = [];
 
-    // awardType filter
+
     if (awardType) {
       values.push(awardType);
       filters.push(`pm.award_type = $${values.length}`);
     }
 
-    // command filter
+
     if (comd) {
       joins.push("JOIN Command_Master cm ON pm.command_id = cm.command_id");
       values.push(comd);
@@ -134,7 +132,7 @@ exports.getAllParameters = async (query) => {
       selectExtras.push("cm.command_name");
     }
 
-    // arms_service filter
+
     if (unit_type || matrix_unit) {
       joins.push("JOIN Arms_Service_Master ams ON pm.arms_service_id = ams.arms_service_id");
 
@@ -151,17 +149,17 @@ exports.getAllParameters = async (query) => {
         });
       }
 
-      // always include 'ALL'
+
       orConditions.push(`TRIM(LOWER(ams.arms_service_name)) = 'all'`);
       selectExtras.push("ams.arms_service_name");
     }
 
-    // Add OR conditions
+
     if (orConditions.length > 0) {
       filters.push(`(${orConditions.join(" OR ")})`);
     }
 
-    // search filter
+
     if (search) {
       values.push(`%${search.toLowerCase()}%`);
       filters.push(`LOWER(pm.name) LIKE $${values.length}`);
@@ -169,7 +167,7 @@ exports.getAllParameters = async (query) => {
 
     const whereClause = filters.length ? `WHERE ${filters.join(" AND ")}` : "";
 
-    // COUNT query
+
     const countQuery = `
       SELECT COUNT(*) 
       FROM Parameter_Master pm
@@ -179,7 +177,7 @@ exports.getAllParameters = async (query) => {
     const countResult = await client.query(countQuery, values);
     const totalItems = parseInt(countResult.rows[0].count);
 
-    // DATA query
+
     const selectClause = ["pm.*", ...selectExtras].join(", ");
     const dataQuery = `
       SELECT ${selectClause}
@@ -207,7 +205,6 @@ exports.getAllParameters = async (query) => {
   }
 };
 
-// Get Parameter by ID
 exports.getParameterById = async (id) => {
   const client = await dbService.getClient();
   try {
@@ -223,7 +220,6 @@ exports.getParameterById = async (id) => {
   }
 };
 
-// Update Parameter
 exports.updateParameter = async (id, data) => {
   const client = await dbService.getClient();
   try {
@@ -241,7 +237,7 @@ exports.updateParameter = async (id, data) => {
       "param_mark",
     ];
 
-    // Filter only provided fields
+
     const keys = Object.keys(data).filter((key) => allowedFields.includes(key));
     if (keys.length === 0) {
       return ResponseHelper.error(400, "No valid fields provided to update");
@@ -265,7 +261,6 @@ exports.updateParameter = async (id, data) => {
   }
 };
 
-// Delete Parameter
 exports.deleteParameter = async (id) => {
   const client = await dbService.getClient();
   try {

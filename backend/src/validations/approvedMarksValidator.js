@@ -14,15 +14,15 @@ const validateApprovedMarksAgainstLimits = (param, approvedMarks) => {
   const original = Number(param.marks) || 0;
   const maxMarks = Number(param.max_marks) || 0;
 
-  // Check if approved marks is a valid number
+
   if (isNaN(approved) || approved < 0) {
     throw new Error('Approved marks must be a valid non-negative number');
   }
 
-  // Use the same logic as citation/appreciation: Math.min(original, max_marks)
+
   const effectiveMax = Math.min(original, maxMarks);
   
-  // Check if approved marks exceed the effective maximum
+
   if (approved > effectiveMax) {
     throw new Error(`Approved marks (${approved}) cannot exceed the effective maximum (${effectiveMax})`);
   }
@@ -40,7 +40,7 @@ exports.validateApprovedMarksUpdate = [
       
       parameters.forEach((param, index) => {
         if (param.approved_marks !== undefined) {
-          // Validate approved marks against limits using same logic as citation/appreciation
+
           validateApprovedMarksAgainstLimits(param, param.approved_marks);
         }
       });
@@ -51,10 +51,10 @@ exports.validateApprovedMarksUpdate = [
   body("approved_marks")
     .optional()
     .custom((value, { req }) => {
-      // If approved_marks is provided directly (not in parameters array)
+
       if (value !== undefined) {
-        // This would need the original parameter data to validate
-        // For now, just validate it's a valid number
+
+
         const approved = Number(value);
         if (isNaN(approved) || approved < 0) {
           throw new Error('Approved marks must be a valid non-negative number');

@@ -133,7 +133,7 @@ exports.createOrUpdateUnitForUser = async (userId, data, user) => {
       members, // <- new field
     } = data;
 
-    // 1. Create member user if credentials are provided
+
     if (memberUsername && memberPassword) {
       const memberResult = await createMemberUser(
         client,
@@ -149,7 +149,7 @@ exports.createOrUpdateUnitForUser = async (userId, data, user) => {
       );
     }
 
-    // 2. Map human-readable names to IDs for foreign keys (insert if not exists)
+
     const getOrCreateId = async (table, column, value, idCol) => {
       if (!value) return null;
       let res = await client.query(
@@ -191,7 +191,7 @@ exports.createOrUpdateUnitForUser = async (userId, data, user) => {
       if (res.rows.length) command_id = res.rows[0].command_id;
     }
 
-    // 3. Check if user already has a unit
+
     const currentUnitId = await getCurrentUnitId(client, userId);
     let unitResult;
 
@@ -216,7 +216,7 @@ exports.createOrUpdateUnitForUser = async (userId, data, user) => {
     ];
 
     if (!currentUnitId) {
-      // Create new unit
+
       const insertQuery = `
         INSERT INTO unit_tab 
           (name, adm_channel, tech_channel, unit_type, matrix_unit, location, awards,
@@ -228,13 +228,13 @@ exports.createOrUpdateUnitForUser = async (userId, data, user) => {
       const res = await client.query(insertQuery, values);
       unitResult = res.rows[0];
 
-      // Link new unit to user
+
       await client.query(
         `UPDATE user_tab SET unit_id = $1 WHERE user_id = $2`,
         [unitResult.unit_id, userId]
       );
     } else {
-      // Update existing unit
+
       const updateQuery = `
         UPDATE unit_tab
         SET 
@@ -261,13 +261,10 @@ exports.createOrUpdateUnitForUser = async (userId, data, user) => {
       unitResult = res.rows[0];
     }
 
-    // Only process members if provided
+
     if (members && Array.isArray(members) && members.length > 0) {
-      console.log("=== MEMBER VALIDATION DEBUG ===");
-      console.log("Total members received:", members.length);
-      console.log("Members data:", JSON.stringify(members, null, 2));
       
-      // Filter out empty members first
+
       const validMembers = members.filter(m => 
         m.name && m.name.trim() !== "" && 
         m.rank && m.rank.trim() !== "" && 
@@ -275,15 +272,13 @@ exports.createOrUpdateUnitForUser = async (userId, data, user) => {
         m.appointment && m.appointment.trim() !== ""
       );
       
-      console.log("Valid members after filtering:", validMembers.length);
-      console.log("Valid members data:", JSON.stringify(validMembers, null, 2));
       
-      // If we have members in the array but none are valid, throw error
+
       if (members.length > 0 && validMembers.length === 0) {
         throw new Error(`All member data is incomplete. All fields (Name, Rank, IC Number, Appointment) are required and cannot be blank.`);
       }
       
-      // If no valid members, skip processing
+
       if (validMembers.length === 0) {
         return ResponseHelper.success(200, "Unit profile updated successfully", {
           unit: unitResult,
@@ -292,7 +287,7 @@ exports.createOrUpdateUnitForUser = async (userId, data, user) => {
       }
       
       for (const m of validMembers) {
-        // Validate member data - prevent blank members
+
         const hasRequiredFields = m.name && m.name.trim() !== "" && 
                                  m.rank && m.rank.trim() !== "" && 
                                  m.ic_number && m.ic_number.trim() !== "" && 
@@ -302,13 +297,13 @@ exports.createOrUpdateUnitForUser = async (userId, data, user) => {
           throw new Error(`Member data is incomplete. All fields (Name, Rank, IC Number, Appointment) are required and cannot be blank.`);
         }
 
-        // Validate IC number format
+
         if (m.ic_number && !/^IC-\d{5}[A-Z]$/.test(m.ic_number)) {
           throw new Error(`Invalid IC number format: ${m.ic_number}. Must be in format IC-XXXXX[A-Z] where XXXXX are 5 digits and last character is any alphabet.`);
         }
 
         if (m.id) {
-          // Update existing member if type matches
+
           await client.query(
             `
         UPDATE unit_members
@@ -327,7 +322,7 @@ exports.createOrUpdateUnitForUser = async (userId, data, user) => {
             ]
           );
         } else {
-          // Insert new member
+
           await client.query(
             `
         INSERT INTO unit_members
@@ -347,7 +342,7 @@ exports.createOrUpdateUnitForUser = async (userId, data, user) => {
         }
       }
     }
-    // If no members array is sent, existing members are left untouched
+
 
     await client.query("COMMIT");
     return ResponseHelper.success(
@@ -376,7 +371,6 @@ async function getRoleId(client, roleCode) {
   return res.rows[0].role_id;
 }
 
-// START HELPER OF createOrUpdateUnitForUser
 async function createMemberUser(client, user, username, password) {
   const existingUser = await client.query(
     "SELECT user_id FROM user_tab WHERE username = $1",
@@ -386,7 +380,7 @@ async function createMemberUser(client, user, username, password) {
 
   const hashedPassword = await bcrypt.hash(password, 10);
 
-  // Get role ID for members
+
   const memberRoleId = await getRoleId(client, user.user_role); 
 
   const res = await client.query(
@@ -422,4 +416,3 @@ async function getCurrentUnitId(client, userId) {
   return res.rows[0].unit_id;
 }
 
-// END HELPER OF createOrUpdateUnitForUser

@@ -14,7 +14,6 @@ let isConnected = false;
 
 pool.on("connect", () => {
   if (!isConnected) {
-    console.log("Connected to PostgreSQL database successfully!");
     isConnected = true;
   }
 });

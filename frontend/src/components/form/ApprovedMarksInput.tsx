@@ -26,7 +26,7 @@ const ApprovedMarksInput: React.FC<ApprovedMarksInputProps> = ({
   const [isValid, setIsValid] = useState<boolean>(true);
   const [showValidation, setShowValidation] = useState<boolean>(false);
 
-  // Validate on value change - same logic as citation/appreciation
+
   useEffect(() => {
     if (value && value.toString().trim() !== "") {
       const validation = validateApprovedMarks(value, originalMarks, maxMarks);
@@ -53,7 +53,7 @@ const ApprovedMarksInput: React.FC<ApprovedMarksInputProps> = ({
     setShowValidation(false);
   };
 
-  // Use the same Math.min logic as citation/appreciation
+
   const effectiveMax = getEffectiveMaxMarks(originalMarks, maxMarks);
   const maxDisplayText = getMaxMarksDisplayText(originalMarks, maxMarks);
 

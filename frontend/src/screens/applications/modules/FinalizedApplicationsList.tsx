@@ -9,7 +9,6 @@ import { useAppSelector } from "../../../reduxToolkit/hooks";
 import Axios from "../../../reduxToolkit/helper/axios";
 import { SVGICON } from "../../../constants/iconsList";  // Import the SVGICON
 
-// Define interfaces for the application data
 interface FinalizedApplication {
   id: number;
   type: string;
@@ -54,7 +53,7 @@ const FinalizedApplicationsList = () => {
   const profile = useAppSelector((state) => state.admin.profile);
   const role = profile?.user?.user_role?.toLowerCase() ?? "";
 
-  // States
+
   const [applications, setApplications] = useState<FinalizedApplication[]>([]);
   const [loading, setLoading] = useState(false);
   const [meta, setMeta] = useState<FinalizedApplicationsResponse['meta'] | null>(null);
@@ -66,10 +65,10 @@ const handleCheckboxChange = (application: FinalizedApplication) => {
   setSelectedApplications((prev:any) => {
     const exists = prev.some((app:any) => app.id === application.id);
     if (exists) {
-      // remove if already selected
+
       return prev.filter((app:any) => app.id !== application.id);
     } else {
-      // add the full object
+
       return [...prev, application];
     }
   });
@@ -105,7 +104,7 @@ const handleCheckboxChange = (application: FinalizedApplication) => {
   };
 
   const handleExport = () => {
-    // Export functionality can be added here
+
     toast.success("Export functionality will be implemented");
   };
 

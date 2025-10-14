@@ -129,7 +129,6 @@ exports.validateCreateParameter = [
       customMessage: MSG.VALIDATION_ERROR,
     }),
   ];
-// 🛠️ Update Validations (All Optional)
 exports.validateUpdateParameter = [
   baseValidations.comd,
   baseValidations.award_type,

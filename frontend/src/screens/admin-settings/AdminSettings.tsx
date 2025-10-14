@@ -15,10 +15,10 @@ const AdminSettings = () => {
 
   const { config } = useAppSelector((state) => state.config);
 
-  // States
+
   const [firstLoad, setFirstLoad] = useState(true);
 
-  // Formik form
+
   const formik = useFormik({
     initialValues: {
       lastDate: config?.deadline ? config.deadline.split("T")[0] : "",
@@ -63,7 +63,7 @@ const AdminSettings = () => {
     }
   }
 
-  // Show loader
+
   if (firstLoad) return <Loader />;
 
   return (

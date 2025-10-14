@@ -10,7 +10,7 @@
 export const countWords = (text: string): number => {
   if (!text || typeof text !== 'string') return 0;
   
-  // Trim whitespace and split by whitespace, filtering out empty strings
+
   return text.trim().split(/\s+/).filter(word => word.length > 0).length;
 };
 
@@ -57,7 +57,7 @@ export const validateWordCount = (
  * @returns Object with validation result and details
  */
 export const validateClarificationText = (text: string): { isValid: boolean; wordCount: number; message?: string } => {
-  // Check if text is empty or only whitespace
+
   if (!text || !text.trim()) {
     return {
       isValid: false,
@@ -66,7 +66,7 @@ export const validateClarificationText = (text: string): { isValid: boolean; wor
     };
   }
   
-  // Check minimum length (at least 10 characters)
+
   if (text.trim().length < 10) {
     return {
       isValid: false,
@@ -75,7 +75,7 @@ export const validateClarificationText = (text: string): { isValid: boolean; wor
     };
   }
   
-  // Check word count (maximum 200 words)
+
   return validateWordCount(text, 200, 1);
 };
 
@@ -85,7 +85,7 @@ export const validateClarificationText = (text: string): { isValid: boolean; wor
  * @returns Object with validation result and details
  */
 export const validateReviewerComment = (text: string): { isValid: boolean; wordCount: number; message?: string } => {
-  // Check if text is empty or only whitespace
+
   if (!text || !text.trim()) {
     return {
       isValid: false,
@@ -94,7 +94,7 @@ export const validateReviewerComment = (text: string): { isValid: boolean; wordC
     };
   }
   
-  // Check minimum length (at least 10 characters)
+
   if (text.trim().length < 10) {
     return {
       isValid: false,
@@ -103,6 +103,6 @@ export const validateReviewerComment = (text: string): { isValid: boolean; wordC
     };
   }
   
-  // Check word count (maximum 200 words)
+
   return validateWordCount(text, 200, 1);
 };

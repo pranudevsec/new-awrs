@@ -12,7 +12,6 @@ import { useAppSelector } from "../../../reduxToolkit/hooks";
 
 const COLORS = ["#FFE089", "#1A7262", "#7AD9D2", "#21438D"];
 
-// ---- Robust HQ detector ----
 function isHQRole(roleRaw: unknown): boolean {
   const roleText = String(roleRaw ?? "")
     .normalize("NFKD")
@@ -20,7 +19,7 @@ function isHQRole(roleRaw: unknown): boolean {
     .replace(/[_-]/g, " ")
     .replace(/\s+/g, " ")
     .trim();
-  // Matches: hq, hqrs, headquarter, head quarter, headquarters (with extra text allowed)
+
   const hqRegex = /\b(hq|hqrs|head\s?quarter(s)?)\b/;
   return hqRegex.test(roleText);
 }
@@ -67,13 +66,13 @@ const ApplicationStatus: React.FC<ProductDetailProps> = ({ dashboardStats }) => 
   const roleRaw = profile?.user?.user_role;
   const isHQ = isHQRole(roleRaw);
 
-  // Raw values
+
   const rawPending = Number(dashboardStats?.totalPendingApplications ?? 0);
   const approved = Number(dashboardStats?.finalizedApproved ?? 0);
   const rejected = Number(dashboardStats?.rejected ?? 0);
   const totalReported = Number(dashboardStats?.clarificationRaised ?? 0);
 
-  // Adjust pending if mismatch
+
   let pending = rawPending;
   const sumParts = rawPending + approved + rejected;
   if (totalReported > sumParts) {
@@ -99,7 +98,7 @@ const ApplicationStatus: React.FC<ProductDetailProps> = ({ dashboardStats }) => 
     [data]
   );
 
-  // Gate render only for HQ roles
+
   if (!profile || !isHQ) return null;
 
   return (

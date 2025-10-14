@@ -8,33 +8,33 @@ const TopWinnersList = () => {
   const { units, loading } = useAppSelector((state) => state.application);
   const role = profile?.user?.user_role?.toLowerCase() ?? "";
   const navigate = useNavigate();
-  // const dispatch = useAppDispatch();
-  // const [awardType, setAwardType] = useState<string | null>(null);
+
+
 
   useEffect(() => {
     if (!profile?.user?.user_role) return;
-    // const fetchData = async () => {
-    //   const params = {
-    //     ...(awardType && awardType !== "All" ? { award_type: awardType } : {}),
-    //   };
-    //   try {
-    //     await dispatch(fetchAllApplications(params)).unwrap();
-    //   } catch (error: any) {
-    //     const errorMessage =
-    //       error?.errors ?? error?.message ?? "An error occurred.";
-    //     if (
-    //       error?.errors ===
-    //       "Please complete your unit profile before proceeding."
-    //     ) {
-    //       navigate("/profile-settings");
-    //       toast.error(errorMessage);
-    //     } else {
-    //       toast.error(errorMessage);
-    //     }
-    //   }
-    // };
 
-    // fetchData();
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
   }, []);
 
   return (

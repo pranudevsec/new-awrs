@@ -43,7 +43,7 @@ const AcceptedApplicationsList = () => {
   const appr_count = units.filter((unit) => unit.fds.award_type === "appreciation").length;
   const role = profile?.user?.user_role?.toLowerCase() ?? "";
 
-  // States
+
   const [showSignatureModal, setShowSignatureModal] = useState(false);
   const [awardType, setAwardType] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState<string>("");
@@ -125,28 +125,33 @@ const AcceptedApplicationsList = () => {
         (acc: number, item: any) => acc + (item?.marks ?? 0),
         0
       ) ?? 0;
+    
+    let totalPositiveMarks = 0;
     let totalNegativeMarks = 0;
-    const totalParameterMarks = parameters.reduce((acc: number, param: any) => {
+    
+    parameters.forEach((param: any) => {
       const isRejected =
         param?.clarification_details?.clarification_status === "rejected";
 
-      if (isRejected) return acc;
+      if (isRejected) return;
 
-      const hasValidApproved =
-        param?.approved_marks !== undefined &&
+
+      const hasApprovedMarks = param?.approved_marks !== undefined &&
         param?.approved_marks !== null &&
         param?.approved_marks !== "" &&
-        !isNaN(Number(param?.approved_marks));
-      const approved = hasValidApproved ? Number(param.approved_marks) : null;
-      let original = 0;
+        !isNaN(Number(param?.approved_marks)) &&
+        param?.approved_by_user !== null;
+
+      const marksToUse = hasApprovedMarks ? Number(param.approved_marks) : Number(param?.marks ?? 0);
+      
       if (param?.negative) {
-        totalNegativeMarks += Number(param?.marks ?? 0);
+        totalNegativeMarks += marksToUse;
       } else {
-        original = Number(param?.marks ?? 0);
+        totalPositiveMarks += marksToUse;
       }
-      return acc + (approved ?? original);
-    }, 0);
-    return totalParameterMarks + graceMarks - totalNegativeMarks;
+    });
+    
+    return totalPositiveMarks + graceMarks - totalNegativeMarks;
   };
 
   const getDiscretionaryMarksByRole = (unit: any, role: string): number => {
@@ -164,7 +169,7 @@ const AcceptedApplicationsList = () => {
       return;
     }
 
-    // Validate priority range (1-1000)
+
     if (priorityPoints < 1 || priorityPoints > 1000) {
       toast.error("Priority must be between 1 and 1000");
       return;
@@ -186,7 +191,7 @@ const AcceptedApplicationsList = () => {
     }
   };
 
-  // Debounced version of handlePriorityChange
+
   const debouncedHandlePriorityChange = useDebounce(handlePriorityChange, 1000);
 
   const handleBulkApprove = async () => {
@@ -284,61 +289,61 @@ const AcceptedApplicationsList = () => {
     dispatch(approveMarks(body)).unwrap().then(() => { fetchData() });
   };
 
-  // const handleAddsignature = async (decision: string, unit: any) => {
-  //   const result = await dispatch(
-  //     TokenValidation({ inputPersID: profile?.user?.pers_no ?? "" })
-  //   );
 
-  //   if (TokenValidation.fulfilled.match(result)) {
-  //     const isValid = result.payload.vaildId;
-  //     if (!isValid) {
-  //       return;
-  //     }
 
-  //     const SignPayload = {
-  //       data: {
-  //         id: unit?.id,
-  //         user: profile?.user,
-  //         type: profile?.user?.user_role,
-  //       },
-  //     };
-  //     const response = await dispatch(getSignedData(SignPayload));
 
-  //     const updatePayload = {
-  //       id: unit?.id,
-  //       type: unit?.type,
-  //       member: {
-  //         name: profile?.user?.name,
-  //         ic_number: profile?.user?.pers_no,
-  //         member_type: profile?.user?.user_role,
-  //         iscdr: true,
-  //         member_id: profile?.user?.user_id,
-  //         is_signature_added: true,
-  //         sign_digest: response.payload,
-  //       },
-  //       level: profile?.user?.user_role,
-  //     };
-  //     if (decision === "approved") {
-  //       await dispatch(
-  //         updateApplication({
-  //           ...updatePayload,
-  //           status: "approved",
-  //         })
-  //       ).then(() => {
-  //         navigate("/applications/list");
-  //       });
-  //     } else if (decision === "rejected") {
-  //       dispatch(
-  //         updateApplication({
-  //           ...updatePayload,
-  //           status: "rejected",
-  //         })
-  //       ).then(() => {
-  //         navigate("/applications/list");
-  //       });
-  //     }
-  //   }
-  // };
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
   const handleExportPDF = () => {
   const doc = new jsPDF();
@@ -360,7 +365,7 @@ const AcceptedApplicationsList = () => {
     });
   }
 
-  // Add header and level
+
   doc.setFontSize(14);
   doc.text(docHeader, 14, 10);
 
@@ -672,12 +677,12 @@ const AcceptedApplicationsList = () => {
     value={graceMarksValues[String(unit.id)]?.[unit.type] ?? ""}
     onChange={(e) => {
       const value = e.target.value;
-      // Allow clearing for UX
+
       if (value === "") {
         handleGraceMarksChange(String(unit.id), value, unit.type);
         return;
       }
-      // Only allow integers 1-10, no negatives or decimals
+
       if (!/^\d+$/.test(value)) {
         return;
       }
@@ -736,10 +741,10 @@ const AcceptedApplicationsList = () => {
     onChange={(e) => {
       const value = e.target.value;
 
-      // Only allow integers
+
       if (value && !/^\d+$/.test(value)) return;
 
-      // Update local state immediately for UI responsiveness
+
       setPriorityValues((prev) => ({
         ...prev,
         [String(unit.id)]: {
@@ -748,7 +753,7 @@ const AcceptedApplicationsList = () => {
         },
       }));
 
-      // Only call debounced function if value is not empty and is a valid number
+
       if (value && !isNaN(Number(value))) {
         const numValue = Number(value);
         if (numValue >= 1 && numValue <= 1000) {
@@ -776,51 +781,51 @@ const AcceptedApplicationsList = () => {
                         </p>
                       </div>
                     ) : (
-                      // with token
-                      // <div className="d-flex align-items-center gap-2">
-                      //   <button
-                      //     className="_btn success"
-                      //     onClick={async () => {
-                      //       const priorityExists = unit?.fds?.applicationPriority?.some(
-                      //         (p: any) => p.role === role && p.priority != null
-                      //       );
 
-                      //       if (!priorityExists) {
-                      //         toast.error(`Please add priority for the ${role} role before approving.`);
-                      //         return;
-                      //       }
 
-                      //       try {
-                      //         const graceMarksExist = unit?.fds?.applicationGraceMarks?.some(
-                      //           (m: any) => m.role === role && m.marks != null
-                      //         );
 
-                      //         if (!graceMarksExist) {
-                      //           toast.error(
-                      //             `Please add Discretionary Points for the ${role} role before approving.`
-                      //           );
-                      //           return;
-                      //         }
-                      //         await handleAddsignature("approved", unit);
-                      //       } catch (error) {
-                      //         toast.error("Error while approving the application.");
-                      //       }
-                      //     }}
-                      //   >
-                      //     Approve
-                      //   </button>
 
-                      //   <button
-                      //     className="_btn danger"
-                      //     onClick={async () => {
-                      //       await handleAddsignature("rejected", unit);
-                      //     }}
-                      //   >
-                      //     Reject
-                      //   </button>
-                      // </div>
 
-                      // without token 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
                       <div className="d-flex align-items-center gap-2">
                         <button
                           className="_btn success"
@@ -852,7 +857,7 @@ const AcceptedApplicationsList = () => {
                                   status: "approved",
                                 })
                               ).unwrap();
-                              // If all checks pass, navigate
+
                               navigate("/applications/list");
                             } catch (error) {
                               toast.error("Error while approving the application.");

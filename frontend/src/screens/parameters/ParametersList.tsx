@@ -17,7 +17,7 @@ const ParametersList = () => {
 
     const { loading, parameters, meta } = useAppSelector((state) => state.parameter);
 
-    // States
+
     const [id, setId] = useState<string>("");
     const [awardType, setAwardType] = useState<string | null>("");
     const [deleteShow, setDeleteShow] = useState<boolean>(false);

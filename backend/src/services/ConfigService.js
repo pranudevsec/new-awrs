@@ -1,7 +1,6 @@
 const dbService = require("../utils/postgres/dbService");
 const ResponseHelper = require("../utils/responseHelper");
 
-// Get the first config record
 exports.getFirstConfig = async () => {
   const client = await dbService.getClient();
   try {
@@ -21,7 +20,6 @@ exports.getFirstConfig = async () => {
   }
 };
 
-// Update the first config record
 exports.updateFirstConfig = async (data) => {
   const client = await dbService.getClient();
   try {

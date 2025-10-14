@@ -17,7 +17,7 @@ const TrackApplicationDetails = () => {
   const profile = useAppSelector((state) => state.admin.profile);
   const { loading, unitDetail } = useAppSelector((state) => state.application);
 
-  // States
+
   const [graceMarks, setGraceMarks] = useState("");
   const [paramStats, setParamStats] = useState({
     totalParams: 0,
@@ -148,13 +148,13 @@ const TrackApplicationDetails = () => {
     }
   }, [unitDetail, role]);
 
-  // Function to handle document download with watermark
+
   const handleDocumentDownload = async (documentUrl: any, fileName: string) => {
     try {
       await downloadDocumentWithWatermark(documentUrl, fileName, baseURL);
       toast.success('Document downloaded with watermark');
     } catch (error) {      
-      // Show more specific error message for missing files
+
       if (error instanceof Error && error.message.includes('Document not found')) {
         toast.error(`File not found: ${fileName}. The file may have been deleted or moved.`);
       } else {
@@ -254,7 +254,7 @@ const TrackApplicationDetails = () => {
   };
 
 
-  // Show loader
+
   if (loading) return <Loader />;
 
   return (

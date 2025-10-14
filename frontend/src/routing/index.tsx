@@ -19,7 +19,6 @@ const ApplicationDetails = lazy(() => import("../screens/applications/modules/Ap
 const ClarificationList = lazy(() => import("../screens/applications/modules/ClarificationList"));
 const ClarificationDetails = lazy(() => import("../screens/applications/modules/ClarificationDetails"));
 const Thanks = lazy(() => import("../screens/applications/modules/Thanks"));
-// New application list components
 const PendingApplicationsList = lazy(() => import("../screens/applications/modules/PendingApplicationsList"));
 const RejectedApplicationsList = lazy(() => import("../screens/applications/modules/RejectedApplicationsList"));
 const ApprovedApplicationsList = lazy(() => import("../screens/applications/modules/ApprovedApplicationsList"));
@@ -66,7 +65,6 @@ export const publicRoutes: RouteConfig[] = [
   { path: "/authentication/sign-up", element: <SignUp /> },
 ];
 
-// Custom default route element for role-based redirect
 function RoleBasedDefaultRedirect() {
   const profile = useAppSelector((state) => state.admin.profile);
   const userRole = profile?.user?.user_role;
@@ -78,7 +76,7 @@ function RoleBasedDefaultRedirect() {
 }
 
 export const authProtectedRoutes: RouteConfig[] = [
-  // Applications
+
   { path: "/", element: <RoleBasedDefaultRedirect /> },
   { path: "/applications", element: <Applications /> },
   { path: "/applications/citation", element: <ApplyCitation /> },
@@ -102,46 +100,46 @@ export const authProtectedRoutes: RouteConfig[] = [
   { path: "/applications/clarification/list/:id", element: <ClarificationDetails /> },
   { path: "/applications/thanks", element: <Thanks /> },
 
-  // Profile
+
   { path: "/profile-settings", element: <ProfileSettings /> },
 
-  // Clarification
+
   { path: "/clarification", element: <Clarification /> },
   { path: "/clarification/unit/:application_id", element: <UnitClarificationDetail /> },
   { path: "/clarification/:id", element: <ClarificationDetail /> },
   { path: "/clarifications/raised-list", element: <ClarificationRaisedList /> },
 
-  // Command Panel
+
   { path: "/command-panel", element: <CommandPanel /> },
   { path: "/command-panel/:application_id", element: <CommandPanelDetail /> },
   { path: "/winners", element: <Winners /> },
 
-  // Admin setting
+
   { path: "/admin-settings", element: <AdminSettings /> },
 
-  // Parameters
+
   { path: "/parameters", element: <ParametersList /> },
   { path: "/parameters/add", element: <AddParameters /> },
   { path: "/parameters/:id", element: <EditParameters /> },
 
-  // Dashboard
+
   { path: "/dashboard", element: <Dashboard /> },
   { path: "/brigade-dashboard", element: <BrigadeDashboard /> },
   { path: "/division-dashboard", element: <DivisionDashboard /> },
   { path: "/corps-dashboard", element: <CorpsDashboard /> },
   { path: "/command-dashboard", element: <CommandDashboard /> },
 
-  // History
+
   { path: "/history", element: <History /> },
 
-  // All Applications
+
   { path: "/all-applications", element: <AllApplications /> },
   { path: "/all-applications/:application_id", element: <AllApplicationDetails /> },
 
-  // Tracking Applications
+
   { path: "/track-applications", element: <TrackApplications /> },
   { path: "/track-applications/:application_id", element: <TrackApplicationDetails /> },
 
-  // Withdraw Requests Applications
+
   { path: "/withdraw-quests", element: <Withdraw /> },
 ];

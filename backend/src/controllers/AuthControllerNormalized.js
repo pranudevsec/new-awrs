@@ -1,4 +1,3 @@
-// AuthControllerNormalized.js - For normalized army-2 database
 const AuthService = require("../services/AuthService.js");
 const MSG = require("../utils/MSG.js");
 const ResponseHelper = require("../utils/responseHelper.js");
@@ -55,7 +54,6 @@ exports.getProfile = async (req, res) => {
   }
 };
 
-// New endpoints for normalized structure
 exports.getRoles = async (req, res) => {
   try {
     const result = await AuthService.getRoles();

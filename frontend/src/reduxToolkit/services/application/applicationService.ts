@@ -549,7 +549,6 @@ export const fetchDashboardStats = createAsyncThunk<
   }
 });
 
-// Graph API interface
 interface ApplicationsGraphResponse {
   success: boolean;
   message: string;

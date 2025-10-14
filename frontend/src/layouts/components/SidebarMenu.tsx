@@ -3,7 +3,6 @@ import { NavLink } from "react-router-dom";
 import { GoSidebarExpand, GoSidebarCollapse } from "react-icons/go";
 import { sidebarStructure } from "./structure";
 import { SVGICON } from "../../constants/iconsList";
-import { Chatbot } from "../../screens/Chatbot/Chatbot";
 import { useAppDispatch, useAppSelector } from "../../reduxToolkit/hooks";
 import { getClarifications, getSubordinateClarifications } from "../../../src/reduxToolkit/services/clarification/clarificationService";
 import Axios from "../../reduxToolkit/helper/axios";
@@ -57,7 +56,7 @@ const SidebarMenu = ({ onToggleCollapse }: SidebarMenuProps) => {
     ).length
     : 0;
 
-  // Use the same data source as ClarificationRaisedList for accurate count
+
   const applicationUnits = useAppSelector((state) => state.application.units);
   const totalRaisedClarifications = Array.isArray(applicationUnits)
     ? applicationUnits.filter((unit: any) => (unit.clarifications_count ?? 0) > 0).length
@@ -67,7 +66,7 @@ const SidebarMenu = ({ onToggleCollapse }: SidebarMenuProps) => {
 
   const alwaysVisible = getAlwaysVisible(userRole);
 
-  // Dashboard items logic
+
   const dashboardLabelsMap: Record<string, string> = {
     brigade: "Brigade Dashboard",
     division: "Division Dashboard",
@@ -121,7 +120,7 @@ const SidebarMenu = ({ onToggleCollapse }: SidebarMenuProps) => {
     filteredStructure.push(createSidebarItem("History", SVGICON.sidebar.history, "/history"));
   }
 
-  // Helper to render sidebar item with badge
+
   const renderSidebarItemWithBadge = (item: any, badgeCount: number) => (
     <div key={item.to} className="position-relative">
       <NavLink
@@ -272,7 +271,6 @@ const SidebarMenu = ({ onToggleCollapse }: SidebarMenuProps) => {
             })}
           </div>
         </div>
-        {!isCollapsed && <Chatbot />}
       </div>
     </aside>
   );

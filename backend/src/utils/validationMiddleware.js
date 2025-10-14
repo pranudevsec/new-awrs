@@ -1,4 +1,3 @@
-// validationMiddleware.js
 const { validationResult } = require("express-validator");
 const ResponseHelper = require("./responseHelper");
 

@@ -11,14 +11,6 @@
  * @param maxMarks - The maximum allowed marks for this parameter
  * @returns The calculated and capped approved marks
  */
-// export const calculateApprovedMarks = (
-//   approvedCount: number,
-//   perUnitMark: number,
-//   maxMarks: number
-// ): number => {
-//   const calculatedMarks = approvedCount * perUnitMark;
-//   return Math.min(calculatedMarks, maxMarks);
-// };
 
 /**
  * Validates approved marks against the original parameter max marks
@@ -33,12 +25,12 @@ export const validateApprovedMarks = (
   originalMarks: string | number,
   maxMarks: string | number
 ): { isValid: boolean; message?: string; maxAllowed?: number } => {
-  // Convert all values to numbers
+
   const approved = Number(approvedMarks) || 0;
   const original = Number(originalMarks) || 0;
   const max = Number(maxMarks) || 0;
 
-  // Check if approved marks is a valid number
+
   if (isNaN(approved) || approved < 0) {
     return {
       isValid: false,
@@ -46,10 +38,10 @@ export const validateApprovedMarks = (
     };
   }
 
-  // Use the same logic as citation/appreciation: Math.min(original, max_marks)
+
   const effectiveMax = Math.min(original, max);
   
-  // Check if approved marks exceed the effective maximum
+
   if (approved > effectiveMax) {
     return {
       isValid: false,

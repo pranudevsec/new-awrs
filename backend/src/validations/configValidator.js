@@ -21,7 +21,6 @@ const baseValidations = {
     .withMessage("cycle_period must be a non-empty array"),
 };
 
-// 🔧 Create Config (all fields required)
 exports.validateCreateConfig = [
   body("deadline")
     .notEmpty()
@@ -46,7 +45,6 @@ exports.validateCreateConfig = [
   }),
 ];
 
-// 🛠️ Update Config (all fields optional)
 exports.validateUpdateConfig = [
   baseValidations.deadline,
   baseValidations.docu_path_base,

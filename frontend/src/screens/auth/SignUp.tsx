@@ -2,7 +2,6 @@ import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom"
 import { useFormik } from "formik";
 import { unwrapResult } from "@reduxjs/toolkit";
-// import ReCAPTCHA from "react-google-recaptcha";
 import FormInput from "../../components/form/FormInput";
 import FormSelect from "../../components/form/FormSelect";
 import bgimg from "../../assets/Picture7.webp";
@@ -15,11 +14,11 @@ const SignUp = () => {
     const navigate = useNavigate();
     const dispatch = useAppDispatch();
 
-    // States 
-    const [passwordType, setPasswordType] = useState<string>("password");
-    // const [captchaToken, setCaptchaToken] = useState<string | null>(null);
 
-    // Formik
+    const [passwordType, setPasswordType] = useState<string>("password");
+
+
+
     const formik = useFormik({
         initialValues: {
             rank: "",
@@ -28,11 +27,11 @@ const SignUp = () => {
             username: "",
             password: "",
             confirmPassword: "",
-            // captchaToken: ""
+
         },
         validationSchema: SignUpSchema,
         onSubmit: async (values, { resetForm }) => {
-            // if (!values.captchaToken) return;
+
             const resultAction = await dispatch(reqToSignUp(values));
             const result = unwrapResult(resultAction);
             if (result.success) {
@@ -42,10 +41,10 @@ const SignUp = () => {
         },
     });
 
-    // const handleCaptchaChange = (value: string | null) => {
-    //     setCaptchaToken(value);
-    //     formik.setFieldValue("captchaToken", value);
-    // };
+
+
+
+
 
     return (
         <div className="auth-section">

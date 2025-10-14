@@ -5,16 +5,13 @@ const ResponseHelper = require("../utils/responseHelper");
 const MSG = require("../utils/MSG");
 const army2Db = require("../db/army2-connection");
 
-// ============================================
-// NORMALIZED AUTH SERVICE FOR ARMY-2 DATABASE
-// ============================================
 
 exports.register = async ({ rank, name, user_role, username, password, unit_id, cw2_type, is_special_unit, is_member, officer_id, is_officer, is_member_added }) => {
   try {
     const hashedPassword = await bcrypt.hash(password, 10);
     const pers_no = Math.floor(1000000 + Math.random() * 9000000).toString();
 
-    // Check if user already exists
+
     const userExists = await army2Db.query(
       "SELECT * FROM User_tab WHERE username = $1",
       [username]
@@ -24,7 +21,7 @@ exports.register = async ({ rank, name, user_role, username, password, unit_id, 
       return ResponseHelper.error(400, MSG.USER_ALREADY_EXISTS);
     }
 
-    // Get or create role reference
+
     let roleId;
     const roleResult = await army2Db.query(
       "SELECT role_id FROM Role_Master WHERE role_name = $1",
@@ -34,7 +31,7 @@ exports.register = async ({ rank, name, user_role, username, password, unit_id, 
     if (roleResult.rows.length > 0) {
       roleId = roleResult.rows[0].role_id;
     } else {
-      // Create new role if it doesn't exist
+
       const newRoleResult = await army2Db.query(
         "INSERT INTO Role_Master (role_name) VALUES ($1) RETURNING role_id",
         [user_role]
@@ -42,7 +39,7 @@ exports.register = async ({ rank, name, user_role, username, password, unit_id, 
       roleId = newRoleResult.rows[0].role_id;
     }
 
-    // Insert user with normalized structure
+
     const insertQuery = `
       INSERT INTO User_tab (
         pers_no, rank, name, username, password, unit_id, cw2_type, 
@@ -68,7 +65,7 @@ exports.register = async ({ rank, name, user_role, username, password, unit_id, 
       roleId
     ]);
 
-    // Get role name for response
+
     const roleNameResult = await army2Db.query(
       "SELECT role_name FROM Role_Master WHERE role_id = $1",
       [roleId]
@@ -92,7 +89,7 @@ exports.login = async (credentials) => {
 
     let { user_role, username, password, is_member } = credentials;
 
-    // Build query with role reference
+
     let queryText = `
       SELECT u.*, rm.role_name 
       FROM User_tab u 
@@ -101,19 +98,19 @@ exports.login = async (credentials) => {
     `;
     let queryParams = [user_role, username];
 
-    // Handle special_unit case
+
     if (user_role === "special_unit") {
       user_role = "unit";
       queryText += " AND u.is_special_unit = TRUE";
       queryParams = [user_role, username];
     }
 
-    // Handle member case
+
     if (is_member === true) {
       queryText += " AND u.is_member = TRUE";
     }
 
-    // Find user with role information
+
     const userQuery = await army2Db.query(queryText, queryParams);
 
     if (userQuery.rows.length === 0) {
@@ -122,18 +119,18 @@ exports.login = async (credentials) => {
 
     const user = userQuery.rows[0];
 
-    // Double-check member status
+
     if (is_member === true && user.is_member !== true) {
       return ResponseHelper.error(401, "Unauthorized: User is not a member");
     }
 
-    // Validate password
+
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) {
       return ResponseHelper.error(401, MSG.INVALID_CREDENTIALS);
     }
 
-    // Generate JWT with role information
+
     const token = jwt.sign(
       { 
         id: user.user_id, 
@@ -145,7 +142,7 @@ exports.login = async (credentials) => {
       { expiresIn: "1d" }
     );
 
-    // Return user data with role information
+
     return ResponseHelper.success(200, MSG.LOGIN_SUCCESS, {
       user: { 
         name: user.name, 
@@ -183,7 +180,7 @@ exports.getProfile = async ({ user_id }) => {
 
     const user = result.rows[0];
     
-    // Return profile with role information
+
     return ResponseHelper.success(200, "Profile retrieved successfully", {
       user_id: user.user_id,
       pers_no: user.pers_no,
@@ -208,11 +205,7 @@ exports.getProfile = async ({ user_id }) => {
   }
 };
 
-// ============================================
-// HELPER FUNCTIONS FOR NORMALIZED STRUCTURE
-// ============================================
 
-// Get all available roles
 exports.getRoles = async () => {
   try {
     const result = await army2Db.query(
@@ -226,7 +219,6 @@ exports.getRoles = async () => {
   }
 };
 
-// Get users by role
 exports.getUsersByRole = async (role_name) => {
   try {
     const query = `
@@ -246,10 +238,9 @@ exports.getUsersByRole = async (role_name) => {
   }
 };
 
-// Update user role
 exports.updateUserRole = async (user_id, new_role_name) => {
   try {
-    // Get role_id for new role
+
     const roleResult = await army2Db.query(
       "SELECT role_id FROM Role_Master WHERE role_name = $1",
       [new_role_name]
@@ -261,7 +252,7 @@ exports.updateUserRole = async (user_id, new_role_name) => {
 
     const roleId = roleResult.rows[0].role_id;
 
-    // Update user role
+
     const updateResult = await army2Db.query(
       "UPDATE User_tab SET role_id = $1, updated_at = NOW() WHERE user_id = $2 RETURNING *",
       [roleId, user_id]

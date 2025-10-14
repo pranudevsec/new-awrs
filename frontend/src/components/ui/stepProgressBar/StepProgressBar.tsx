@@ -9,7 +9,7 @@ const StepProgressBar: React.FC<StepProgressBarProps> = ({
   unitDetail,
   isCommand = false,
 }) => {
-  // Base steps
+
   let steps: any = isCommand
     ? [
         { label: "Brigade" },
@@ -24,7 +24,7 @@ const StepProgressBar: React.FC<StepProgressBarProps> = ({
         { label: "Command" },
       ];
 
-  // Handle MO / OL dynamic order
+
   if (!isCommand) {
     const moStep = { label: "MO", date: unitDetail?.mo_approved_at };
     const olStep = { label: "OL", date: unitDetail?.ol_approved_at };
@@ -47,7 +47,7 @@ const StepProgressBar: React.FC<StepProgressBarProps> = ({
     }
   }
 
-  //  Always add CW2 at the end
+
   if (!isCommand) {
     steps.push({ label: "CW2", date: unitDetail?.finalized_at });
   }
@@ -79,7 +79,7 @@ const StepProgressBar: React.FC<StepProgressBarProps> = ({
       else if (unitDetail.is_mo_approved && unitDetail.is_ol_approved) step = 6;
     }
 
-    //  CW2 step is only marked if isfinalized is true
+
     if (unitDetail.isfinalized) step = steps.length;
 
     return step;

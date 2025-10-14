@@ -1,7 +1,6 @@
 import { useState, useCallback } from 'react';
 import { Navigate } from 'react-router-dom';
 import { useAppSelector } from '../reduxToolkit/hooks';
-import { Chatbot } from '../screens/Chatbot/Chatbot';
 import SidebarMenu from './components/SidebarMenu';
 import Header from './components/Header';
 import Topbar from './components/Topbar';
@@ -47,8 +46,6 @@ const AuthLayout = ({ children }: { children: React.ReactNode }) => {
             </div>
             {/* Footer */}
             <Footer />
-            {/* Chatbot */}
-            <Chatbot />
         </div>
     );
 };

@@ -50,7 +50,7 @@ const ApplyCitation = () => {
   const [searchParams] = useSearchParams();
   const id = searchParams.get("id") ?? "";
 
-  // States
+
   const [parameters, setParameters] = useState<Parameter[]>([]);
   const [counts, setCounts] = useState<Record<number, string>>({});
   const [marks, setMarks] = useState<Record<number, number>>({});
@@ -69,7 +69,7 @@ const ApplyCitation = () => {
     if (id) {
       dispatch(fetchCitationById(Number(id)));
     } else {
-      // Clear any existing draft data when starting a new citation
+
       clearDraftData();
     }
 
@@ -78,7 +78,7 @@ const ApplyCitation = () => {
     };
   }, [id]);
 
-  // 🔹 Helper to clear draft data when starting new citation
+
   const clearDraftData = () => {
     setCounts({});
     setMarks({});
@@ -93,14 +93,14 @@ const ApplyCitation = () => {
     localStorage.setItem("applyCitationUnitRemarks", unitRemarks);
   }, [unitRemarks]);
 
-  // Populate from API data
+
   useEffect(() => {
     if (id && draftData?.citation_fds?.parameters && parameters?.length > 0) {
       const newCounts: Record<number, string> = {};
       const newMarks: Record<number, number> = {};
       const newUploads: Record<number, string[]> = {};
 
-      // Map by param.id (from API) to param.param_id (from parameters)
+
       const idToParamIdMap = parameters.reduce(
         (acc: Record<string, number>, param: any) => {
           acc[String(param.id ?? param.param_id)] = param.param_id;
@@ -135,7 +135,7 @@ const ApplyCitation = () => {
       setMarks(newMarks);
       setUploadedFiles(newUploads);
 
-      // Set unit remarks if present
+
       if (typeof draftData.citation_fds.unitRemarks === "string") {
         setUnitRemarks(draftData.citation_fds.unitRemarks);
       }
@@ -333,12 +333,12 @@ const ApplyCitation = () => {
 
     if (!updatedFiles[paramId]) return;
 
-    // Remove file at index
+
     updatedFiles[paramId] = updatedFiles[paramId].filter(
       (_, idx) => idx !== index
     );
 
-    // If no files left, remove the paramId key
+
     if (updatedFiles[paramId].length === 0) {
       delete updatedFiles[paramId];
     }
@@ -348,13 +348,13 @@ const ApplyCitation = () => {
     toast.success("File removed");
   };
 
-  // Function to handle document download with watermark
+
   const handleDocumentDownload = async (documentUrl: any, fileName: string) => {
     try {
       await downloadDocumentWithWatermark(documentUrl, fileName, baseURL);
       toast.success('Document downloaded with watermark');
     } catch (error) {      
-      // Show more specific error message for missing files
+
       if (error instanceof Error && error.message.includes('Document not found')) {
         toast.error(`File not found: ${fileName}. The file may have been deleted or moved.`);
       } else {
@@ -363,7 +363,7 @@ const ApplyCitation = () => {
     }
   };
 
-  // Formik form
+
   const formik = useFormik({
     enableReinitialize: true,
     initialValues: {
@@ -409,12 +409,12 @@ const ApplyCitation = () => {
 
         let resultAction;
         if (id) {
-          // Update if `id` exists
+
           resultAction = await dispatch(
             updateCitation({ id: Number(id), ...payload })
           );
         } else {
-          // Otherwise, create new
+
           resultAction = await dispatch(createCitation(payload));
         }
 
@@ -554,12 +554,12 @@ const ApplyCitation = () => {
     localStorage.setItem(DRAFT_FILE_UPLOAD_KEY, JSON.stringify(uploadedFiles));
     localStorage.setItem(DRAFT_STORAGE_KEY, JSON.stringify({ counts, marks }));
 
-    // If all good, navigate
+
     navigate("/applications/citation-review");
   };
 
   const getParamDisplay = (param: any) => {
-    // Do not use name from parameter_master; derive label from hierarchy only
+
     if (param.subsubcategory) {
       return {
         main: param.subsubcategory,
@@ -595,7 +595,7 @@ const ApplyCitation = () => {
     }
   };
 
-  // Show loader
+
   if (loading || isLoadingParameters) return <Loader />;
 
   return (

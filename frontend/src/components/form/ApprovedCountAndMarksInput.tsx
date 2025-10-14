@@ -27,28 +27,28 @@ const ApprovedCountAndMarksInput: React.FC<ApprovedCountAndMarksInputProps> = ({
   const [countValidation, setCountValidation] = useState<string>("");
   const [marksValidation, setMarksValidation] = useState<string>("");
 
-  // Handle approved count change - same logic as citation
+
   const handleCountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
     
-    // Only allow numbers (same validation as citation)
+
     if (!/^\d*$/.test(value)) return;
     
     onCountChange(value);
     
-    // Calculate approved marks automatically (same logic as citation)
+
     const countNum = value === "" ? 0 : Number(value);
     const calculatedMarks = calculateApprovedMarks(countNum, perUnitMark, maxMarks);
     onMarksChange(calculatedMarks.toString());
   };
 
-  // Handle approved marks change (for manual override if needed)
+
   const handleMarksChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
     onMarksChange(value);
   };
 
-  // Validate count
+
   useEffect(() => {
     const count = Number(approvedCount) || 0;
     if (count < 0) {
@@ -58,7 +58,7 @@ const ApprovedCountAndMarksInput: React.FC<ApprovedCountAndMarksInputProps> = ({
     }
   }, [approvedCount]);
 
-  // Validate marks
+
   useEffect(() => {
     const marks = Number(approvedMarks) || 0;
     const max = Number(maxMarks) || 0;

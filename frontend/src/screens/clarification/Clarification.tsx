@@ -18,15 +18,15 @@ const Clarification = () => {
   const { profile } = useAppSelector((state) => state.admin);
   const { loading, unitClarifications, meta } = useAppSelector((state) => state.clarification);
 
-  // States 
-  // Filters removed as requested
+
+
   const [awardType, setAwardType] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState<string>("");
   const [debouncedSearch, setDebouncedSearch] = useState<string>("");
   const [page, setPage] = useState<number>(1);
   const [limit, setLimit] = useState<number>(10);
 
-  // Remove debounced search (no search input anymore)
+
   useEffect(() => {
     setDebouncedSearch("");
   }, []);

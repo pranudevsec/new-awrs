@@ -52,7 +52,7 @@ exports.createAppre = async (data, user) => {
       return { ...p, marks };
     });
 
-    // Flags
+
     let isshortlisted = false, last_approved_at = null, last_approved_by_role = null;
     let is_mo_approved = false, mo_approved_at = null;
     let is_ol_approved = false, ol_approved_at = null;
@@ -146,7 +146,6 @@ exports.createAppre = async (data, user) => {
   }
 };
 
-// Get all Appreciations
 exports.getAllAppres = async () => {
   const client = await dbService.getClient();
   try {
@@ -163,7 +162,6 @@ exports.getAllAppres = async () => {
   }
 };
 
-// Get Appreciation by ID
 exports.getAppreById = async (id) => {
   const client = await dbService.getClient();
   try {
@@ -179,7 +177,6 @@ exports.getAppreById = async (id) => {
   }
 };
 
-// Update Appreciation
 exports.updateAppre = async (id, data,user) => {
   const client = await dbService.getClient();
   try {
@@ -291,7 +288,6 @@ exports.updateAppre = async (id, data,user) => {
   }
 };
 
-// Delete Appreciation
 exports.deleteAppre = async (id) => {
   const client = await dbService.getClient();
   try {

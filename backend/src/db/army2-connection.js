@@ -1,7 +1,6 @@
 const { Pool } = require("pg");
 const config = require("../config/config");
 
-// Database connection for army-2 (normalized database)
 const army2Pool = new Pool({
   host: config.postgres.host,
   port: config.postgres.port,
@@ -15,7 +14,6 @@ let isConnected = false;
 
 army2Pool.on("connect", () => {
   if (!isConnected) {
-    console.log("Connected to army-2 (normalized) PostgreSQL database successfully!");
     isConnected = true;
   }
 });

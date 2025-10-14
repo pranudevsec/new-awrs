@@ -121,7 +121,7 @@ const ApplyAppreciation = () => {
   const { draftData } = useAppSelector((state) => state.appreciation);
   const { loading } = useAppSelector((state) => state.parameter);
 
-  // States
+
   const [parameters, setParameters] = useState<Parameter[]>([]);
   const [counts, setCounts] = useState<Record<number, string>>({});
   const [marks, setMarks] = useState<Record<number, number>>({});
@@ -136,7 +136,7 @@ const ApplyAppreciation = () => {
   const [uploadedFiles, setUploadedFiles] = useState<Record<number, string[]>>({});
   const [unitRemarks, setUnitRemarks] = useState("");
 
-  // 🔹 Helper to clear draft data when starting new appreciation
+
   const clearDraftData = () => {
     setCounts({});
     setMarks({});
@@ -152,7 +152,7 @@ const ApplyAppreciation = () => {
     if (id) {
       dispatch(fetchAppreciationById(Number(id)));
     } else {
-      // Clear any existing draft data when starting a new appreciation
+
       clearDraftData();
     }
 
@@ -390,13 +390,13 @@ const ApplyAppreciation = () => {
     toast.success("File removed");
   };
 
-  // Function to handle document download with watermark
+
   const handleDocumentDownload = async (documentUrl: any, fileName: string) => {
     try {
       await downloadDocumentWithWatermark(documentUrl, fileName, baseURL);
       toast.success('Document downloaded with watermark');
     } catch (error) {      
-      // Show more specific error message for missing files
+
       if (error instanceof Error && error.message.includes('Document not found')) {
         toast.error(`File not found: ${fileName}. The file may have been deleted or moved.`);
       } else {
@@ -417,7 +417,7 @@ const ApplyAppreciation = () => {
     }
   }, []);
 
-  // Formik form
+
   const formik = useFormik({
     enableReinitialize: true,
     initialValues: {
@@ -800,7 +800,7 @@ const ApplyAppreciation = () => {
     });
   };
 
-  // Show loader
+
   if (loading || isLoadingParameters) return <Loader />;
 
   return (

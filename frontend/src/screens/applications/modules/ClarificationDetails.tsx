@@ -8,7 +8,7 @@ import { SVGICON } from "../../../constants/iconsList";
 import { awardTypeOptions, cyclePeriodOptions } from "../../../data/options";
 
 const ClarificationDetails = () => {
-    // States
+
     const [clarificationShow, setClarificationShow] = useState(false);
 
     const handleFileChange = (e: ChangeEvent<HTMLInputElement>) => {

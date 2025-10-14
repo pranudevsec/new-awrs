@@ -27,10 +27,10 @@ import Axios, { baseURL } from "../../../reduxToolkit/helper/axios";
 import { useDebounce } from "../../../hooks/useDebounce";
 import { updateCitation } from "../../../reduxToolkit/services/citation/citationService";
 import { updateAppreciation } from "../../../reduxToolkit/services/appreciation/appreciationService";
-// Excel imports removed - using PDF instead
 import DisclaimerModal from "../../../modals/DisclaimerModal";
 import { DisclaimerText } from "../../../data/options";
-// import { TokenValidation,getSignedData } from "../../../reduxToolkit/services/application/applicationService";
+
+// Check if all clarifications for parameters have been resolved
 function areAllClarificationsResolved(unitDetail: any): boolean {
   const parameters = unitDetail?.fds?.parameters;
 
@@ -49,6 +49,7 @@ function areAllClarificationsResolved(unitDetail: any): boolean {
 
 const hierarchy = ["brigade", "division", "corps", "command", "headquarter"];
 
+// Main component for displaying application details with review functionality
 const ApplicationDetails = () => {
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
@@ -60,13 +61,14 @@ const ApplicationDetails = () => {
   const profile = useAppSelector((state) => state.admin.profile);
   const { loading, unitDetail } = useAppSelector((state) => state.application);
 
+  // Check if application is ready for submission (all clarifications resolved)
   const isReadyToSubmit = areAllClarificationsResolved(unitDetail);
 
   const raisedParam = searchParams.get("raised_clarifications");
   const isRaisedScreen = raisedParam === "true";
   let userPriority = "";
 
-  // States
+  // State for managing modal visibility and data refresh
   const [isRefreshData, setIsRefreshData] = useState(false);
   const [clarificationShow, setClarificationShow] = useState(false);
   const [reviewCommentsShow, setReviewCommentsShow] = useState(false);
@@ -85,7 +87,7 @@ const ApplicationDetails = () => {
   const [remarksError, setRemarksError] = useState<string | null>(null);
   const [graceMarks, setGraceMarks] = useState("");
   const [decisions, _setDecisions] = useState<{ [memberId: string]: string }>({});
-  // const [decisions, setDecisions] = useState<{ [memberId: string]: string }>({});
+
 
   const [priority, setPriority] = useState(userPriority);
   const [commentsState, setCommentsState] = useState<Record<string, string>>({});
@@ -112,6 +114,7 @@ const ApplicationDetails = () => {
   const [approvedMarksDocumentsState, setApprovedMarksDocumentsState] = useState<any>({});
   const [approvedMarksReasonState, setApprovedMarksReasonState] = useState<Record<string, string>>({});
   const [lastUploadedParam, setLastUploadedParam] = useState<string | null>(null);
+  const [lastErrorToastTime, setLastErrorToastTime] = useState<number>(0);
 
   const isUnitRole = ["unit", "cw2"].includes(profile?.user?.user_role ?? "");
   const isCW2Role = profile?.user?.user_role === "cw2";
@@ -149,42 +152,87 @@ const ApplicationDetails = () => {
     if (award_type && numericAppId) dispatch(fetchApplicationUnitDetail({ award_type, numericAppId }));
   }, [award_type, numericAppId, isRefreshData]);
 
+  // Calculate statistics for parameters including marks and counts
   const calculateParameterStats = (parameters: any[]) => {
     const totalParams = parameters.length;
     
+    // Count parameters that have been filled (count > 0 or marks > 0)
     const filledParams = parameters.filter(
       (param) => (param.count ?? 0) > 0 || (param.marks ?? 0) > 0
     ).length;
 
-    // Calculate positive marks (original positive parameters, excluding rejected)
-    const positiveMarks = parameters.reduce((acc, param) => {
+
+    // Calculate original positive marks (excluding rejected and negative parameters)
+    const originalPositiveMarks = parameters.reduce((acc, param) => {
       const isRejected = param.clarification_details?.clarification_status === "rejected";
       const isNegative = param.negative;
       if (isRejected || isNegative) return acc;
       return acc + (param.marks ?? 0);
     }, 0);
 
-    // Calculate negative marks (original negative parameters, excluding rejected)
-    // Note: negative marks are stored as positive values, so we make them negative
+    // Calculate original negative marks (only negative parameters, excluding rejected)
+    const originalNegativeMarks = parameters.reduce((acc, param) => {
+      const isRejected = param.clarification_details?.clarification_status === "rejected";
+      if (isRejected || !param.negative) return acc;
+      return acc + (param.marks ?? 0);
+    }, 0);
+
+
+    // Calculate positive marks using approved marks when available
+    const positiveMarks = parameters.reduce((acc, param) => {
+      const isRejected = param.clarification_details?.clarification_status === "rejected";
+      const isNegative = param.negative;
+      if (isRejected || isNegative) return acc;
+      
+      // Check if parameter has approved marks
+      const hasApprovedMarks = param.approved_marks !== null && 
+                               param.approved_marks !== undefined && 
+                               param.approved_marks !== "" &&
+                               !isNaN(Number(param.approved_marks)) &&
+                               param.approved_by_user !== null;
+      
+      // Handle case where approved_marks is 0 but not actually approved
+      const isZeroApproval = param.approved_marks === 0 && param.approved_by_user === null;
+      const finalHasApprovedMarks = hasApprovedMarks && !isZeroApproval;
+      
+      const marksToUse = finalHasApprovedMarks ? Number(param.approved_marks) : (param.marks ?? 0);
+      return acc + marksToUse;
+    }, 0);
+
+
     const negativeMarks = parameters.reduce((acc, param) => {
       const isRejected = param.clarification_details?.clarification_status === "rejected";
       if (isRejected || !param.negative) return acc;
-      return acc + (param.marks ?? 0); // Keep as positive value for display
+      
+
+      const hasApprovedMarks = param.approved_marks !== null && 
+                               param.approved_marks !== undefined && 
+                               param.approved_marks !== "" &&
+                               !isNaN(Number(param.approved_marks)) &&
+                               param.approved_by_user !== null;
+      
+
+      const isZeroApproval = param.approved_marks === 0 && param.approved_by_user === null;
+      const finalHasApprovedMarks = hasApprovedMarks && !isZeroApproval;
+      
+      const marksToUse = finalHasApprovedMarks ? Number(param.approved_marks) : (param.marks ?? 0);
+      return acc + marksToUse; // Keep as positive value for display
     }, 0);
 
-    // Calculate approved marks (sum of all approved marks, excluding rejected parameters)
-    // Only count if approved_marks is actually set (not null/undefined/empty)
+
+
     const approvedMarks = parameters.reduce((acc, param) => {
       const isRejected = param.clarification_details?.clarification_status === "rejected";
       if (isRejected) {
         return acc;
       }
       
-      // Only count if approved_marks is actually set and not empty
+
       const hasApprovedMarks = param.approved_marks !== null && 
                                param.approved_marks !== undefined && 
                                param.approved_marks !== "" &&
-                               !isNaN(Number(param.approved_marks));
+                               !isNaN(Number(param.approved_marks)) &&
+                               param.approved_by_user !== null;
       
       if (!hasApprovedMarks) {
         return acc;
@@ -192,29 +240,28 @@ const ApplicationDetails = () => {
       
       const approved_marks = Number(param.approved_marks);
       
-      // For negative parameters, use negative value for calculation
+
       const marksToAdd = param.negative ? -approved_marks : approved_marks;
       return acc + marksToAdd;
     }, 0);
 
-    // Calculate marks added/deducted by role (difference between approved and original)
+
     const originalTotalMarks = positiveMarks - negativeMarks;
-    // Only calculate marksByRole if there are actually approved marks
+
     const marksByRole = approvedMarks > 0 ? approvedMarks - originalTotalMarks : 0;
 
-    // Total marks = Positive marks - Negative marks + Marks by role + Grace marks
-    // For now, let's use the simple calculation: positive - negative
+
+
     let totalMarks = positiveMarks - negativeMarks;
     
-    // Only add approved marks and grace marks if they exist and are meaningful
-    if (marksByRole !== 0) {
-      totalMarks += marksByRole;
-    }
-    if (Number(graceMarks ?? 0) !== 0) {
-      totalMarks += Number(graceMarks ?? 0);
-    }
+
+    const allGraceMarks = unitDetail?.fds?.applicationGraceMarks?.reduce((acc: number, entry: any) => {
+      return acc + (Number(entry?.marks ?? 0));
+    }, 0) ?? 0;
     
-    // Get approved role information
+    totalMarks += allGraceMarks;
+    
+
     const approvedRole = parameters.find((param) => 
       param.approved_by_role && param.approved_marks && Number(param.approved_marks) > 0
     )?.approved_by_role;
@@ -226,6 +273,8 @@ const ApplicationDetails = () => {
       positiveMarks,
       negativeMarks,
       approvedMarks,
+      originalPositiveMarks,
+      originalNegativeMarks,
       marksByRole,
       totalMarks,
       approvedRole,
@@ -236,7 +285,7 @@ const ApplicationDetails = () => {
     const parameters = unitDetail?.fds?.parameters ?? [];
     const stats = calculateParameterStats(parameters);
     setParamStats(stats);
-  }, [unitDetail, graceMarks]);
+  }, [unitDetail]);
 
   useEffect(() => {
     if (unitDetail?.fds?.parameters && profile) {
@@ -284,7 +333,7 @@ const ApplicationDetails = () => {
     }
   }, [unitDetail, profile]);
 
-  const handleSave = async (paramId: string, approvedCountRaw: string, docsOverride?: string[]) => {
+  const handleSave = async (paramId: string, approvedCountRaw: string, docsOverride?: string[], calculatedMarks?: number) => {
     if (approvedCountRaw === undefined) return;
 
     const parameters = unitDetail?.fds?.parameters ?? [];
@@ -293,8 +342,8 @@ const ApplicationDetails = () => {
 
     const approved_count = Number(approvedCountRaw);
     
-    // Parse per_unit_mark and max_marks from the info string
-    // Format: "1 No of Coins = 2 marks (Max 25 marks)"
+
+
     let perUnitMark = 0;
     let maxMarks = 0;
     
@@ -306,10 +355,12 @@ const ApplicationDetails = () => {
       }
     }
 
-    // Use the same calculation logic as citation/appreciation
-    const finalApprovedMarks = Math.min(approved_count * perUnitMark, maxMarks);
+
+    const finalApprovedMarks = calculatedMarks !== undefined 
+      ? calculatedMarks 
+      : Math.min(approved_count * perUnitMark, maxMarks);
     
-    // For negative parameters, store the absolute value (same as citation form)
+
     const marksToStore = param.negative ? Math.abs(finalApprovedMarks) : finalApprovedMarks;
 
     const body = {
@@ -339,22 +390,57 @@ const ApplicationDetails = () => {
 
   const debouncedHandleSave = useDebounce(handleSave, 600);
 
+  const handleApproveMarks = async (paramId: string) => {
+    const parameters = unitDetail?.fds?.parameters ?? [];
+    const param = parameters.find((p: any) => p.id === paramId);
+    if (!param) return;
+
+    const approvedCount = approvedCountState[paramId];
+    if (!approvedCount || approvedCount === "0") {
+      toast.error("Please enter a valid approved count first");
+      return;
+    }
+
+    try {
+
+      const count = Number(approvedCount);
+      const perUnitMark = param.per_unit_mark || 0;
+      const calculatedMarks = count * perUnitMark;
+      
+
+      const finalMarks = param.negative ? -Math.abs(calculatedMarks) : calculatedMarks;
+      
+
+      setApprovedMarksState((prev) => ({ ...prev, [paramId]: finalMarks.toString() }));
+      
+
+      await handleSave(paramId, approvedCount, finalMarks);
+      
+      toast.success("Marks approved successfully");
+      
+
+      window.location.reload();
+    } catch (error) {
+      toast.error("Failed to approve marks");
+    }
+  };
+
   const handleCountChange = (paramId: string, value: string) => {
-    // Only allow numbers (including empty string for clearing)
+
     if (value !== "" && !/^\d+$/.test(value)) {
       return; // Reject non-numeric input
     }
     
     setApprovedCountState((prev) => ({ ...prev, [paramId]: value }));
 
-    // Also update the approved marks state for immediate UI feedback
+
     const parameters = unitDetail?.fds?.parameters ?? [];
     const param = parameters.find((p: any) => p.id === paramId);
     if (param) {
       const approved_count = Number(value);
       
-      // Parse per_unit_mark and max_marks from the info string
-      // Format: "1 No of Coins = 2 marks (Max 25 marks)"
+
+
       let perUnitMark = 0;
       let maxMarks = 0;
       
@@ -366,10 +452,10 @@ const ApplicationDetails = () => {
         }
       }
       
-      // Use the same calculation logic as citation/appreciation
+
       const finalApprovedMarks = Math.min(approved_count * perUnitMark, maxMarks);
       
-      // For negative parameters, store the absolute value (same as citation form)
+
       const marksToStore = param.negative ? Math.abs(finalApprovedMarks) : finalApprovedMarks;
       
       setApprovedMarksState((prev) => ({
@@ -378,7 +464,8 @@ const ApplicationDetails = () => {
       }));
     }
 
-    debouncedHandleSave(paramId, value);
+
+
   };
 
   useEffect(() => {
@@ -404,13 +491,13 @@ const ApplicationDetails = () => {
 
   const handleRemarksChange = (e:any) => {
   const newRemarks = e.target.value;
-  // Regular expression to allow only alphanumeric and space
+
   const regex = /^[A-Za-z0-9\s]*$/;
 
   if (regex.test(newRemarks) || newRemarks === "") {
     setUnitRemarks(newRemarks);
   } else {
-    // You can also show an error message if needed
+
     setRemarksError("Special characters and symbols are not allowed.");
   }
 };
@@ -485,11 +572,11 @@ const ApplicationDetails = () => {
 
   const handleApprovedMarksReasonChange = (paramId: any, value: any) => {
     setApprovedMarksReasonState((prev) => ({ ...prev, [paramId]: value }));
-    // Don't trigger save on every keystroke to prevent focus loss
-    // Save will be triggered when user finishes typing (on blur) or when they save the form
+
+
   };
 
-  // Debounce effect
+
   useEffect(() => {
     if (remarksError || unitRemarks.length === 0) return;
 
@@ -550,7 +637,7 @@ const ApplicationDetails = () => {
       return;
     }
 
-    // Validate priority range (1-1000)
+
     if (priorityPoints < 1 || priorityPoints > 1000) {
       toast.error("Priority must be between 1 and 1000");
       return;
@@ -571,7 +658,7 @@ const ApplicationDetails = () => {
     }
   };
 
-  // Debounced version of handlePriorityChange
+
   const debouncedHandlePriorityChange = useDebounce(handlePriorityChange, 1000);
 
   const debouncedHandleSaveComment = useDebounce(handleSaveComment, 600);
@@ -629,69 +716,12 @@ const ApplicationDetails = () => {
   };
  
 
-// const handleAddsignature = async (member: any, memberdecision: string) => {
-//   const newDecisions: { [memberId: string]: string } = {
-//     ...decisions,
-//     [member.id]: memberdecision,
-//   };
-//   setDecisions(newDecisions);
-
-//   const result = await dispatch(
-//     TokenValidation({ inputPersID: member.ic_number })
-//   );
-//   if (TokenValidation.fulfilled.match(result)) {
-//     const isValid = result.payload.vaildId;
-//     if (!isValid) {
-//       return;
-//     }
-//     const SignPayload = {
-//       data: {
-//         application_id,
-//         member,
-//         type: unitDetail?.type,
-//       },
-//     };
-//     const response = await dispatch(getSignedData(SignPayload));
-
-//     const updatePayload = {
-//       id: unitDetail?.id,
-//       type: unitDetail?.type,
-//       member: {
-//         name: member.name,
-//         ic_number: member.ic_number,
-//         member_type: member.member_type,
-//         member_id: member.id,
-//         is_signature_added: true,
-//         sign_digest: response.payload,
-//       },
-//       level: profile?.user?.user_role,
-//     };
-//     if (memberdecision === "accepted") {
-//       dispatch(updateApplication(updatePayload)).then(() => {
-//         dispatch(fetchApplicationUnitDetail({ award_type, numericAppId }));
-//         const allOthersAccepted = profile?.unit?.members
-//           .filter((m: any) => m.id !== member.id)
-//           .every((m: any) => decisions[m.id] === "accepted");
-
-//         if (allOthersAccepted && memberdecision === "accepted") {
-//           navigate("/applications/list");
-//         }
-//       });
-//     } else if (memberdecision === "rejected") {
-//       dispatch(
-//         updateApplication({
-//           ...updatePayload,
-//           status: "rejected",
-//         })
-//       ).then(() => {
-//         navigate("/applications/list");
-//       });
-//     }
-//   }
-// };
 
 
-  // without token
+
+
+
+
   const handleAddsignature = async (member: any, memberdecision: string) => {
     const updatePayload = {
       id: unitDetail?.id,
@@ -772,7 +802,7 @@ const ApplicationDetails = () => {
     } else if (typeof upload === "string") {
       uploads = upload.split(",");
     } else if (upload && typeof upload === 'object') {
-      // If it's an object, try to extract a URL property
+
       const url = upload.url || upload.path || upload.file || '';
       if (url) {
         uploads = [url];
@@ -786,7 +816,7 @@ const ApplicationDetails = () => {
     ));
   };
 
-  // Helper function to get file name from upload
+
   const getFileNameFromUpload = (upload: any): string => {    
     let uploads: string[] = [];
 
@@ -795,14 +825,14 @@ const ApplicationDetails = () => {
     } else if (typeof upload === "string") {
       uploads = upload.split(",");
     } else if (upload && typeof upload === 'object') {
-      // If it's an object, try to extract a URL property
+
       const url = upload.url || upload.path || upload.file || '';
       if (url) {
         uploads = [url];
       }
     }
 
-    // Return the first file name, or a default if none found
+
     if (uploads.length > 0) {
       const fileName = uploads[0].trim().split("/").pop() || "document";
       return fileName;
@@ -855,11 +885,11 @@ const ApplicationDetails = () => {
   const renderParameterRow = (param: any, display: any) => {
     const rows: JSX.Element[] = [];
 
-    // Check if the application is rejected (not just parameter clarification)
+
     const isApplicationRejected = unitDetail?.status_flag === "rejected";
     const isRejected = param?.clarification_details?.clarification_status === "rejected" || isApplicationRejected;
     
-    // Apply same logic as citation form for negative parameters
+
     let approvedMarksValue = isRejected ? "0" : approvedMarksState[param.id] ?? "";
     if (!isRejected && param.negative && approvedMarksValue && approvedMarksValue !== "0") {
       const marksNum = Number(approvedMarksValue);
@@ -890,15 +920,30 @@ const ApplicationDetails = () => {
     rows.push(
       <tr key={`${param.id || display.main || 'row'}`}>
         <td style={{ width: 150 }}>
-          <p className="fw-5 mb-0">{display.main}</p>
+          <p className="fw-5 mb-0"></p>
         </td>
 
         <td style={{ width: 100 }}>
-          <p className="fw-5">{param.count}</p>
+          <p className="fw-5">
+            {(() => {
+              const hasApprovedCount = param.approved_count !== undefined && 
+                                      param.approved_count !== null && 
+                                      param.approved_by_user !== null;
+              return hasApprovedCount ? param.approved_count : param.count;
+            })()}
+          </p>
         </td>
 
         <td style={{ width: 100 }}>
-          <p className="fw-5">{param.negative ? `-${param.marks}` : param.marks}</p>
+          <p className="fw-5">
+            {(() => {
+              const hasApprovedMarks = param.approved_marks !== undefined &&
+                param.approved_marks !== null &&
+                param.approved_by_user !== null;
+              const marksToShow = hasApprovedMarks ? param.approved_marks : param.marks;
+              return param.negative ? `-${marksToShow}` : marksToShow;
+            })()}
+          </p>
         </td>
 
         <td style={{ width: 200 }}>
@@ -929,21 +974,37 @@ const ApplicationDetails = () => {
                 className="form-control"
                 placeholder="Enter approved count"
                 autoComplete="off"
-                value={approvedCountValue}
+                value={approvedCountValue || ""}
                 disabled={isRejected}
                 onChange={(e) => handleCountChange(param.id, e.target.value)}
               />
             </td>
             <td style={{ width: 200 }}>
-              <input
-                type="text"
-                className="form-control"
-                placeholder="Enter approved marks"
-                autoComplete="off"
-                value={approvedMarksValue}
-                disabled={isRejected}
-                readOnly
-              />
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <input
+                  type="text"
+                  className="form-control"
+                  placeholder="Enter approved marks"
+                  autoComplete="off"
+                  value={approvedMarksValue || ""}
+                  disabled={isRejected}
+                  readOnly
+                  style={{ flex: 1 }}
+                />
+                <button
+                  type="button"
+                  className="btn btn-sm btn-primary"
+                  onClick={() => handleApproveMarks(param.id)}
+                  disabled={isRejected || !approvedCountValue}
+                  style={{ 
+                    fontSize: '12px', 
+                    padding: '4px 8px',
+                    whiteSpace: 'nowrap'
+                  }}
+                >
+                  Approve Marks
+                </button>
+              </div>
             </td>
             <td style={{ width: 200 }}>
               {(approvedMarksDocumentsState[param.id] || []).length > 0 &&
@@ -1093,43 +1154,43 @@ const ApplicationDetails = () => {
     return rows;
   };
 
-  // Function to add watermark to jsPDF documents (for PDF reports)
+
   const addWatermarkToJsPDF = (doc: any) => {
     const currentDateTime = new Date().toLocaleString();
     const userIP = window.location.hostname || "localhost";
 
-    // Add diagonal watermark - big size and black color
+
     doc.setFontSize(40);
     doc.setTextColor(0, 0, 0); // Black color
     
-    // Save current graphics state
+
     doc.saveGraphicsState();
     
-    // Set opacity for watermark
+
     doc.setGState(new (doc as any).GState({ opacity: 0.2 }));
     
-    // Calculate center position for diagonal watermark
+
     const pageWidth = doc.internal.pageSize.getWidth();
     const pageHeight = doc.internal.pageSize.getHeight();
     const centerX = pageWidth / 2;
     const centerY = pageHeight / 2;
     
-    // Draw diagonal watermark - IP first, then time, both centered
-    // Adjust positioning to account for diagonal rotation
+
+
     doc.text(`${userIP}`, centerX - 50, centerY - 30, { angle: 45 });
     doc.text(`${currentDateTime}`, centerX - 50, centerY + 30, { angle: 45 });
     
-    // Restore graphics state
+
     doc.restoreGraphicsState();
   };
 
-  // Function to download document with watermark using utility function
+
   const handleDocumentDownload = async (documentUrl: any, fileName: string) => {
     try {
       await downloadDocumentWithWatermark(documentUrl, fileName, baseURL);
       toast.success('Document downloaded with watermark');
     } catch (error) {      
-      // Show more specific error message for missing files
+
       if (error instanceof Error && error.message.includes('Document not found')) {
         toast.error(`File not found: ${fileName}. The file may have been deleted or moved.`);
       } else {
@@ -1138,29 +1199,28 @@ const ApplicationDetails = () => {
     }
   };
 
-  // Excel export handler
-// Excel function removed - using PDF instead
+
 const handleDownloadPDF = () => {
   const parameters = unitDetail?.fds?.parameters ?? [];
   
-  // Calculate summary statistics
+
   const stats = calculateParameterStats(parameters);
 
-  // Prepare parameter data with approved marks (remove name and subsubcategory columns, add dash for empty subcategories)
+
   const paramData = parameters.map((param: any) => [
     param.category ?? "-",
     param.subcategory ?? "-",
-    // Show negative sign for negative parameters (like HR Violation)
+
     param.negative ? (param.marks ? `-${Math.abs(param.marks)}` : "") : (param.marks ?? ""),
     param.approved_count ?? "",
-    // Show negative sign for approved marks of negative parameters
+
     param.negative && param.approved_marks ? `-${Math.abs(param.approved_marks)}` : (param.approved_marks ?? ""),
   ]);
 
-  // Create PDF
+
   const doc = new jsPDF();
 
-  // Add header
+
   doc.setFontSize(16);
   doc.text(`Application ID: #${unitDetail?.id ?? ""}`, 14, 30);
   doc.setFontSize(12);
@@ -1175,7 +1235,7 @@ const handleDownloadPDF = () => {
   );      
   doc.text(`Unit Name: ${unitDetail?.unit_name ?? ""}`, 14, 50);
 
-  // Parameters Table (moved up)
+
   if (paramData.length > 0) {
     doc.setFontSize(14);
     doc.text("Parameters Details", 14, 65);
@@ -1188,7 +1248,7 @@ const handleDownloadPDF = () => {
     });
   }
 
-  // Add summary statistics table (moved below parameters)
+
   const finalY = (doc as any).lastAutoTable.finalY || 90;
   doc.setFontSize(14);
   doc.text("Summary Statistics", 14, finalY + 15);
@@ -1200,7 +1260,7 @@ const handleDownloadPDF = () => {
     ["Total Marks", stats.totalMarks.toFixed(2)]
   ];
   
-  // Add marks by role if applicable
+
   if (stats.approvedRole && stats.marksByRole !== 0) {
     summaryData.push([
       `Marks ${stats.marksByRole > 0 ? 'added' : 'deducted'} by ${stats.approvedRole}`,
@@ -1216,13 +1276,13 @@ const handleDownloadPDF = () => {
     headStyles: { fillColor: [0, 123, 255] },
   });
 
-  // Add watermark using the reusable function
+
   addWatermarkToJsPDF(doc);
 
-  // Save PDF
+
   doc.save(`Application_${unitDetail?.id ?? ""}_Details.pdf`);
 };
-  // Show loader
+
   if (loading) return <Loader />;
 
   return (
@@ -1472,14 +1532,26 @@ const handleDownloadPDF = () => {
               </div>
               <div className="col-6 col-sm-2">
                 <span className="fw-medium text-muted">Positive Marks:</span>
-                <div className="fw-bold">{Number(paramStats.positiveMarks).toFixed(2)}</div>
+                <div className="fw-bold">
+                  {Number(paramStats.positiveMarks || 0).toFixed(2)}
+                  {paramStats.originalPositiveMarks !== paramStats.positiveMarks && paramStats.originalPositiveMarks !== undefined && (
+                    <small className="text-muted d-block">
+                      (Orig: {Number(paramStats.originalPositiveMarks).toFixed(2)})
+                    </small>
+                  )}
+                </div>
               </div>
-                  <div className="col-6 col-sm-2">
-  <span className="fw-medium text-muted">Negative Marks:</span>
-  <div className="fw-bold text-danger">
-    -{paramStats.negativeMarks}
-  </div>
-</div>
+              <div className="col-6 col-sm-2">
+                <span className="fw-medium text-muted">Negative Marks:</span>
+                <div className="fw-bold text-danger">
+                  -{paramStats.negativeMarks || 0}
+                  {paramStats.originalNegativeMarks !== paramStats.negativeMarks && paramStats.originalNegativeMarks !== undefined && (
+                    <small className="text-muted d-block">
+                      (Orig: -{paramStats.originalNegativeMarks})
+                    </small>
+                  )}
+                </div>
+              </div>
               {paramStats.approvedRole && paramStats.marksByRole !== 0 && (
                 <div className="col-6 col-sm-2">
                   <span className="fw-medium text-muted">
@@ -1560,6 +1632,17 @@ const handleDownloadPDF = () => {
                         );
                         const isSignatureAdded = foundMember?.is_signature_added === true;
                         const isApplicationRejected = unitDetail?.status_flag === "rejected";
+                        
+
+                        const memberOfficers = profile.unit.members.filter(
+                          (m) => m.member_type === "member_officer"
+                        );
+                        const allMemberOfficersSigned = memberOfficers.every((memberOfficer) => {
+                          const memberOfficerAccepted = acceptedMembers.find(
+                            (m: any) => m.member_id === memberOfficer.id
+                          );
+                          return memberOfficerAccepted?.is_signature_added === true;
+                        });
 
                         return (
                           <tr key={member.id}>
@@ -1577,11 +1660,27 @@ const handleDownloadPDF = () => {
                                     {member.member_type === "presiding_officer" &&
                                       !isSignatureAdded && (
                                         <>
-                                          {isReadyToSubmit && (
+                                          {isReadyToSubmit && allMemberOfficersSigned && (
                                             <button
                                               type="button"
                                               className="_btn success w-sm-auto"
                                               onClick={() => handleDecisionClick(member, "accepted")}
+                                            >
+                                              Recommend
+                                            </button>
+                                          )}
+                                          {isReadyToSubmit && !allMemberOfficersSigned && (
+                                            <button
+                                              type="button"
+                                              className="_btn success w-sm-auto"
+                                              onClick={() => {
+                                                const now = Date.now();
+
+                                                if (now - lastErrorToastTime > 3000) {
+                                                  toast.error("Member officers must sign first before presiding officer can recommend");
+                                                  setLastErrorToastTime(now);
+                                                }
+                                              }}
                                             >
                                               Recommend
                                             </button>
@@ -1658,7 +1757,7 @@ const handleDownloadPDF = () => {
             </div>
           </div>
         )}
-        {isHeadquarter && (
+        {isHeadquarter && !unitDetail?.isfinalized && (
           <div className="mt-4">
             <h5 className="mb-3">Send for Review</h5>
             <div className="table-responsive">
@@ -1782,14 +1881,14 @@ const handleDownloadPDF = () => {
                       onChange={(e) => {
                         const value = e.target.value;
                         
-                        // Only allow numbers
+
                         if (value && !/^\d+$/.test(value)) {
                           return;
                         }
                         
                         setPriority(value);
                         
-                        // Only call debounced function if value is not empty and is a valid number
+
                         if (value && !isNaN(Number(value))) {
                           const numValue = Number(value);
                           if (numValue >= 1 && numValue <= 1000) {

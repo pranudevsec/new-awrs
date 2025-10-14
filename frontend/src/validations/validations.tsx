@@ -24,7 +24,7 @@ export const SignUpSchema = Yup.object().shape({
   confirmPassword: Yup.string()
     .oneOf([Yup.ref("password")], "Passwords must match")
     .required("Confirm password is required"),
-  // captchaToken: Yup.string().required("Captcha is required"),
+
 });
 
 export const ParametersSchema = Yup.object().shape({

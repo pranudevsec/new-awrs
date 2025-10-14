@@ -3,29 +3,30 @@ const jwt = require("jsonwebtoken");
 const config = require("../config/config");
 const ResponseHelper = require("../utils/responseHelper");
 const MSG = require("../utils/MSG");
-// Using army-2 database connection for normalized structure
 const db = require("../db/army2-connection");
 
+// Register a new user with hashed password and generated personnel number
 exports.register = async ({ rank, name, user_role, username, password }) => {
   try {
     const hashedPassword = await bcrypt.hash(password, 10);
     const pers_no = Math.floor(1000000 + Math.random() * 9000000).toString();
 
-    // Handle cw2_* roles
+    // Handle CW2 type extraction (e.g., cw2_brigade -> cw2_type: brigade, user_role: cw2)
     let cw2_type = null;
     if (user_role && user_role.startsWith("cw2_")) {
       cw2_type = user_role.split("_")[1];
       user_role = "cw2";
     }
 
-    // Handle special_unit
+
+    // Handle special unit flag (special_unit role becomes unit with is_special_unit = true)
     let is_special_unit = false;
     if (user_role === "special_unit") {
       is_special_unit = true;
       user_role = "unit"; // map to existing unit role
     }
 
-    // Check if username exists
+
     const userExists = await db.query(
       "SELECT * FROM User_tab WHERE username = $1",
       [username]
@@ -34,7 +35,7 @@ exports.register = async ({ rank, name, user_role, username, password }) => {
       return ResponseHelper.error(400, MSG.USER_ALREADY_EXISTS);
     }
 
-    // Get or create Role_Master entry
+
     let roleId;
     const roleResult = await db.query(
       "SELECT role_id FROM Role_Master WHERE role_name = $1",
@@ -51,7 +52,7 @@ exports.register = async ({ rank, name, user_role, username, password }) => {
       roleId = newRoleResult.rows[0].role_id;
     }
 
-    // Insert user
+
     const insertQuery = `
       INSERT INTO User_tab (pers_no, rank, name, username, password, role_id, cw2_type, is_special_unit)
       VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
@@ -71,7 +72,7 @@ exports.register = async ({ rank, name, user_role, username, password }) => {
 
     const userData = result.rows[0];
 
-    // Role-specific inserts
+
     if (user_role === "unit") {
       await db.query(
         `INSERT INTO Unit_tab (name, unit_type, sos_no, location)
@@ -104,7 +105,7 @@ exports.register = async ({ rank, name, user_role, username, password }) => {
       );
     }
 
-    // Add role name to response
+
     const roleNameResult = await db.query(
       "SELECT role_name FROM Role_Master WHERE role_id = $1",
       [roleId]
@@ -128,7 +129,7 @@ exports.login = async (credentials) => {
 
     let { user_role, username, password, is_member } = credentials;
 
-    // Build query with role reference
+
     let queryText = `
       SELECT u.*, rm.role_name 
       FROM User_tab u 
@@ -137,19 +138,19 @@ exports.login = async (credentials) => {
     `;
     let queryParams = [user_role, username];
 
-    // Handle special_unit case
+
     if (user_role === "special_unit") {
       user_role = "unit";
       queryText += " AND u.is_special_unit = TRUE";
       queryParams = [user_role, username];
     }
 
-    // Handle member case
+
     if (is_member === true) {
       queryText += " AND u.is_member = TRUE";
     }
 
-    // Find user with role information
+
     const userQuery = await db.query(queryText, queryParams);
 
     if (userQuery.rows.length === 0) {
@@ -158,18 +159,18 @@ exports.login = async (credentials) => {
 
     const user = userQuery.rows[0];
 
-    // Double-check member status
+
     if (is_member === true && user.is_member !== true) {
       return ResponseHelper.error(401, "Unauthorized: User is not a member");
     }
 
-    // Validate password
+
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) {
       return ResponseHelper.error(401, MSG.INVALID_CREDENTIALS);
     }
 
-    // Generate JWT with role information
+
     const token = jwt.sign(
       {
         id: user.user_id,
@@ -181,7 +182,7 @@ exports.login = async (credentials) => {
       { expiresIn: "1d" }
     );
 
-    // Return user data with role information
+
     return ResponseHelper.success(200, MSG.LOGIN_SUCCESS, {
       user: {
         name: user.name,
@@ -202,7 +203,7 @@ exports.login = async (credentials) => {
 };
 exports.getProfile = async ({ user_id }) => {
   try {
-    // Step 1: Fetch user details
+
     const userResult = await db.query(
       `
       SELECT 
@@ -225,7 +226,7 @@ exports.getProfile = async ({ user_id }) => {
 
     let unitData = null;
 
-    // Step 2: Determine correct unit_id for fetching unit data
+
     let effectiveUnitId = user.unit_id;
 
     if (!effectiveUnitId && user.is_member && user.officer_id) {
@@ -238,7 +239,7 @@ exports.getProfile = async ({ user_id }) => {
       }
     }
 
-    // Step 3: Fetch unit details if unit_id found
+
     if (effectiveUnitId) {
       const unitResult = await db.query(
         `
@@ -260,7 +261,7 @@ exports.getProfile = async ({ user_id }) => {
       if (unitResult.rows.length > 0) {
         const unit = unitResult.rows[0];
 
-        // Fetch members from Unit_Members table
+
         const membersResult = await db.query(
           `
           SELECT member_id AS id, name, rank, ic_number, appointment, member_type, member_order
@@ -306,7 +307,7 @@ exports.getProfile = async ({ user_id }) => {
       }
     }
 
-    // Step 4: Fetch registered member's username if is_member_added is true
+
     let memberUsername = null;
     if (user.is_member_added) {
       const memberResult = await db.query(
@@ -318,21 +319,18 @@ exports.getProfile = async ({ user_id }) => {
       }
     }
 
-    // Step 5: Add master data matching for brigade, corps, division, command roles
+
     let masterData = null;
-    console.log("=== MASTER DATA DEBUG ===");
-    console.log("User role:", user.user_role);
-    console.log("Unit data:", unitData);
     
-    if (['brigade', 'corps', 'division', 'command'].includes(user.user_role?.toLowerCase())) {
+    if (['brigade', 'corps', 'division', 'command', 'headquarter'].includes(user.user_role?.toLowerCase())) {
       try {
         let masterQuery = '';
         let masterParams = [];
         
-        // For members, find the officer with same name but is_member = false
+
         let searchUsername = user.username;
         if (user.is_member) {
-          // First try to find by officer_id
+
           if (user.officer_id) {
             const officerResult = await db.query(
               `SELECT username FROM User_tab WHERE user_id = $1`,
@@ -342,7 +340,7 @@ exports.getProfile = async ({ user_id }) => {
               searchUsername = officerResult.rows[0].username;
             }
           } else {
-            // If no officer_id, find by name where is_member = false
+
             const officerResult = await db.query(
               `SELECT username FROM User_tab WHERE name = $1 AND is_member = false LIMIT 1`,
               [user.name]
@@ -353,18 +351,14 @@ exports.getProfile = async ({ user_id }) => {
           }
         }
         
-        // For command role, match user name with command name
+
         if (user.user_role?.toLowerCase() === 'command') {
-          console.log("=== COMMAND MASTER DEBUG ===");
-          console.log("User role:", user.user_role);
-          console.log("User name:", user.user_name);
           
           const commandResult = await db.query(
-            `SELECT command_id, command_name FROM command_master WHERE command_name = $1`,
+            `SELECT command_id, command_name FROM command_master WHERE LOWER(TRIM(command_name)) = LOWER(TRIM($1)) OR command_name ILIKE '%' || $1 || '%'`,
             [user.user_name]
           );
           
-          console.log("Command query result:", commandResult.rows);
           
           if (commandResult.rows.length > 0) {
             const command = commandResult.rows[0];
@@ -373,23 +367,17 @@ exports.getProfile = async ({ user_id }) => {
               name: command.command_name,
               role: 'command'
             };
-            console.log("Master data set:", masterData);
           } else {
-            console.log("No command found with name:", user.user_name);
           }
         }
         
         if (user.user_role?.toLowerCase() === 'brigade') {
-          console.log("=== BRIGADE MASTER DEBUG ===");
-          console.log("User role:", user.user_role);
-          console.log("User name:", user.user_name);
           
           const brigadeResult = await db.query(
-            `SELECT brigade_id, brigade_name FROM brigade_master WHERE brigade_name = $1`,
+            `SELECT brigade_id, brigade_name FROM brigade_master WHERE LOWER(TRIM(brigade_name)) = LOWER(TRIM($1)) OR brigade_name ILIKE '%' || $1 || '%'`,
             [user.user_name]
           );
           
-          console.log("Brigade query result:", brigadeResult.rows);
           
           if (brigadeResult.rows.length > 0) {
             const brigade = brigadeResult.rows[0];
@@ -398,21 +386,15 @@ exports.getProfile = async ({ user_id }) => {
               name: brigade.brigade_name,
               role: 'brigade'
             };
-            console.log("Master data set:", masterData);
           } else {
-            console.log("No brigade found with name:", user.user_name);
           }
         } else if (user.user_role?.toLowerCase() === 'corps') {
-          console.log("=== CORPS MASTER DEBUG ===");
-          console.log("User role:", user.user_role);
-          console.log("User name:", user.user_name);
           
           const corpsResult = await db.query(
-            `SELECT corps_id, corps_name FROM corps_master WHERE corps_name = $1`,
+            `SELECT corps_id, corps_name FROM corps_master WHERE LOWER(TRIM(corps_name)) = LOWER(TRIM($1)) OR corps_name ILIKE '%' || $1 || '%'`,
             [user.user_name]
           );
           
-          console.log("Corps query result:", corpsResult.rows);
           
           if (corpsResult.rows.length > 0) {
             const corps = corpsResult.rows[0];
@@ -421,21 +403,15 @@ exports.getProfile = async ({ user_id }) => {
               name: corps.corps_name,
               role: 'corps'
             };
-            console.log("Master data set:", masterData);
           } else {
-            console.log("No corps found with name:", user.user_name);
           }
         } else if (user.user_role?.toLowerCase() === 'division') {
-          console.log("=== DIVISION MASTER DEBUG ===");
-          console.log("User role:", user.user_role);
-          console.log("User name:", user.user_name);
           
           const divisionResult = await db.query(
-            `SELECT division_id, division_name FROM division_master WHERE division_name = $1`,
+            `SELECT division_id, division_name FROM division_master WHERE LOWER(TRIM(division_name)) = LOWER(TRIM($1)) OR division_name ILIKE '%' || $1 || '%'`,
             [user.user_name]
           );
           
-          console.log("Division query result:", divisionResult.rows);
           
           if (divisionResult.rows.length > 0) {
             const division = divisionResult.rows[0];
@@ -444,19 +420,26 @@ exports.getProfile = async ({ user_id }) => {
               name: division.division_name,
               role: 'division'
             };
-            console.log("Master data set:", masterData);
           } else {
-            console.log("No division found with name:", user.user_name);
           }
+        } else if (user.user_role?.toLowerCase() === 'headquarter') {
+          
+
+
+          masterData = {
+            id: user.user_id,
+            name: user.user_name,
+            role: 'headquarter'
+          };
         }
 
       } catch (error) {
         console.error('Error fetching master data:', error);
-        // Continue without master data if there's an error
+
       }
     }
 
-    // Step 6: Return structured response
+
     return ResponseHelper.success(200, "Successfully found.", {
       user: {
         user_id: user.user_id,

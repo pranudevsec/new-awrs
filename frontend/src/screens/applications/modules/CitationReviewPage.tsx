@@ -39,7 +39,7 @@ const CitationReviewPage = () => {
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const categoryRefs = useRef<{ [key: string]: HTMLDivElement | null }>({});
 
-  // States
+
   const [parameters, setParameters] = useState<Parameter[]>([]);
   const [counts, setCounts] = useState<Record<number, string>>({});
   const [marks, setMarks] = useState<Record<number, number>>({});
@@ -124,7 +124,7 @@ const CitationReviewPage = () => {
   };
 
   const getParamDisplay = (param: any) => {
-    // Do not show name from parameter_master; use hierarchy fields only
+
     if (param.subsubcategory) {
       return {
         main: param.subsubcategory,
@@ -184,13 +184,13 @@ const CitationReviewPage = () => {
     }
   };
 
-  // Function to handle document download with watermark
+
   const handleDocumentDownload = async (documentUrl: any, fileName: string) => {
     try {
       await downloadDocumentWithWatermark(documentUrl, fileName, baseURL);
       toast.success('Document downloaded with watermark');
     } catch (error) {      
-      // Show more specific error message for missing files
+
       if (error instanceof Error && error.message.includes('Document not found')) {
         toast.error(`File not found: ${fileName}. The file may have been deleted or moved.`);
       } else {
@@ -199,7 +199,7 @@ const CitationReviewPage = () => {
     }
   };
 
-  // Formik form
+
   const formik = useFormik({
     enableReinitialize: true,
     initialValues: {
@@ -311,7 +311,7 @@ const CitationReviewPage = () => {
     localStorage.setItem(DRAFT_STORAGE_KEY, JSON.stringify(draft));
   }, [counts, marks]);
 
-  // Total Fields Filled
+
   const filledFields = Object.values(counts).filter(
     (value) => value !== ""
   ).length;
@@ -440,7 +440,7 @@ const CitationReviewPage = () => {
   };
 
 
-  // Show loader
+
   if (loading) return <Loader />;
 
   return (

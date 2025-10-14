@@ -25,15 +25,10 @@ exports.getDashboardStats = async (req, res) => {
 
   exports.getHomeCounts = async (req, res) => {
     try {
-      console.log("=== getHomeCounts CONTROLLER START ===");
-      console.log("User:", JSON.stringify(req.user, null, 2));
       
       const user = req.user;
       const result = await DashboardService.getHomeCounts(user);
       
-      console.log("=== getHomeCounts CONTROLLER RESPONSE ===");
-      console.log("Response:", JSON.stringify(result, null, 2));
-      console.log("=== getHomeCounts CONTROLLER END ===");
       
       return res.status(200).json(ResponseHelper.success(200, "Home counts fetched", result));
     } catch (err) {

@@ -57,7 +57,7 @@ const SubmittedFormDetail = () => {
     const isRaisedScreen = raisedParam === "true";
     let userPriority = "";
 
-    // States
+
     const [isRefreshData, setIsRefreshData] = useState(false);
     const [approvedMarksState, setApprovedMarksState] = useState<Record<string, string>>({});
     const [remarksError, setRemarksError] = useState<string | null>(null);
@@ -276,7 +276,7 @@ const SubmittedFormDetail = () => {
         setLocalComment(value);
     };
 
-    // Debounce effect
+
     useEffect(() => {
         if (remarksError || unitRemarks.length === 0) return;
 
@@ -331,13 +331,13 @@ const SubmittedFormDetail = () => {
             .catch(() => { });
     };
 
-    // Function to handle document download with watermark
+
     const handleDocumentDownload = async (documentUrl: any, fileName: string) => {
         try {
             await downloadDocumentWithWatermark(documentUrl, fileName, baseURL);
             toast.success('Document downloaded with watermark');
         } catch (error) {      
-            // Show more specific error message for missing files
+
             if (error instanceof Error && error.message.includes('Document not found')) {
                 toast.error(`File not found: ${fileName}. The file may have been deleted or moved.`);
             } else {
@@ -354,7 +354,7 @@ const SubmittedFormDetail = () => {
             return;
         }
 
-        // Validate priority range (1-1000)
+
         if (priorityPoints < 1 || priorityPoints > 1000) {
             toast.error("Priority must be between 1 and 1000");
             return;
@@ -375,7 +375,7 @@ const SubmittedFormDetail = () => {
         }
     };
 
-    // Debounced version of handlePriorityChange
+
     const debouncedHandlePriorityChange = useDebounce(handlePriorityChange, 1000);
 
     const debouncedHandleSaveComment = useDebounce(handleSaveComment, 600);
@@ -655,7 +655,7 @@ const SubmittedFormDetail = () => {
     };
 
 
-    // Show loader
+
     if (loading) return <Loader />;
 
     return (
@@ -1075,7 +1075,7 @@ const SubmittedFormDetail = () => {
                     </div>
                 </div>
             )}
-            {isHeadquarter && (
+            {isHeadquarter && !unitDetail?.isfinalized && (
                 <div className="mt-4">
                     <h5 className="mb-3">Send for Review</h5>
                     <div className="table-responsive">
@@ -1195,14 +1195,14 @@ const SubmittedFormDetail = () => {
                                         onChange={(e) => {
                                             const value = e.target.value;
                                             
-                                            // Only allow numbers
+
                                             if (value && !/^\d+$/.test(value)) {
                                                 return;
                                             }
                                             
                                             setPriority(value);
                                             
-                                            // Only call debounced function if value is not empty and is a valid number
+
                                             if (value && !isNaN(Number(value))) {
                                                 const numValue = Number(value);
                                                 if (numValue >= 1 && numValue <= 1000) {

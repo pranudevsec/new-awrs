@@ -2,13 +2,11 @@ const { body } = require("express-validator");
 const handleValidationErrors = require("../utils/validationMiddleware");
 const MSG = require("../utils/MSG");
 
-// Helper function to count words
 const countWords = (text) => {
   if (!text || typeof text !== 'string') return 0;
   return text.trim().split(/\s+/).filter(word => word.length > 0).length;
 };
 
-// Helper function to validate word count
 const validateWordCount = (text, maxWords = 200) => {
   const wordCount = countWords(text);
   if (wordCount > maxWords) {

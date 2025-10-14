@@ -51,7 +51,7 @@ const ApprovedApplicationsList = () => {
   const profile = useAppSelector((state) => state.admin.profile);
   const role = profile?.user?.user_role?.toLowerCase() ?? "";
 
-  // States
+
   const [applications, setApplications] = useState<ApprovedApplication[]>([]);
   const [loading, setLoading] = useState(false);
   const [meta, setMeta] = useState<ApprovedApplicationsResponse['meta'] | null>(null);
@@ -109,7 +109,7 @@ const ApprovedApplicationsList = () => {
   };
 
   const handleExport = () => {
-    // Export functionality can be added here
+
     toast.success("Export functionality will be implemented");
   };
 

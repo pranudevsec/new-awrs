@@ -51,10 +51,10 @@ exports.addClarification = async (user, data) => {
     const result = await client.query(insertQuery, values);
     const clarificationId = result.rows[0].clarification_id;
 
-    // Choose table and column based on type
+
     const table = type === "citation" ? "Citation_tab" : "Appre_tab";
     const idColumn = type === "citation" ? "citation_id" : "appreciation_id";
-    // Get the current JSON field
+
     const selectQuery = `SELECT *, ${idColumn} AS id FROM ${table} WHERE ${idColumn} = $1 FOR UPDATE`;
     const jsonResult = await client.query(selectQuery, [application_id]);
 
@@ -67,7 +67,7 @@ appData=await attachSingleFdsToApplication(appData);
 
     let fds = appData.fds;
    
-    // Modify the correct parameter
+
     const updatedFds = {
       ...fds,
       parameters: fds.parameters.map((param) => {
@@ -133,7 +133,7 @@ exports.updateClarification = async (user, data, clarification_id) => {
 
     const { application_type, application_id, parameter_id } = clarificationRow;
     
-    // Validate approved count and marks if provided - uses same logic as citation/appreciation
+
     if (data.approved_count !== undefined || data.approved_marks !== undefined) {
       const validationResult = await validateApprovedCountAndMarks(
         client,
@@ -192,7 +192,6 @@ exports.updateClarification = async (user, data, clarification_id) => {
     client.release();
   }
 };
-// START HELPER OF updateClarification
 async function fetchClarificationRow(client, clarification_id) {
   const res = await client.query(
     `SELECT * FROM Clarification_tab WHERE clarification_id = $1`,
@@ -226,8 +225,8 @@ function buildUpdateFields(user, data) {
     values.push(clarification_status);
   }
 
-  // Handle approved count and marks for officers (brigade, division, corps, command)
-  // Uses the same validation logic as citation/appreciation
+
+
   if (["brigade", "division", "corps", "command"].includes(user.user_role)) {
     if (approved_count !== undefined) {
       updates.push(`approved_count = $${i++}`);
@@ -322,33 +321,33 @@ function getAppTableInfo(application_type) {
 async function updateFdsParameters(client, parameters, clarification_id, user, status) {
   let wasUpdated = false;
 
-  // Loop through parameters to update them both in memory and DB
+
   for (const param of parameters) {
     if (param.clarification_id == clarification_id) {
       wasUpdated = true;
 
-      // Prepare updated data
+
       const updatedParam = {
         last_clarification_handled_by: user.user_role,
         last_clarification_status: status,
         last_clarification_id: clarification_id,
       };
 
-      // If rejected → reset approval data
+
       if (status === "rejected") {
         updatedParam.approved_marks = 8; // or keep existing logic
         updatedParam.approved_by_role = user.user_role;
         updatedParam.approved_by_user = user.id;
         updatedParam.approved_marks_at = new Date();
       } else {
-        // If not rejected → remove approval details
+
         updatedParam.approved_marks = null;
         updatedParam.approved_by_role = null;
         updatedParam.approved_by_user = null;
         updatedParam.approved_marks_at = null;
       }
 
-      // Update DB record
+
       await client.query(
         `
         UPDATE fds_parameters
@@ -376,7 +375,7 @@ async function updateFdsParameters(client, parameters, clarification_id, user, s
         ]
       );
       
-      // Reflect changes in local array
+
       Object.assign(param, updatedParam);
     }
   }
@@ -412,7 +411,6 @@ async function logClarificationAction(client, clarification_id) {
     [JSON.stringify([entry]), clarification_id]
   );
 }
-// END HELPER OF updateClarification
 
 /**
  * Validates approved count and marks against the original parameter data
@@ -427,7 +425,7 @@ async function logClarificationAction(client, clarification_id) {
  */
 async function validateApprovedCountAndMarks(client, application_type, application_id, parameter_id, approved_count, approved_marks) {
   try {
-    // Get the application data
+
     const table = application_type === "citation" ? "Citation_tab" : "Appre_tab";
     const jsonColumn = application_type === "citation" ? "citation_fds" : "appre_fds";
     const idField = application_type === "citation" ? "citation_id" : "appreciation_id";
@@ -444,13 +442,13 @@ async function validateApprovedCountAndMarks(client, application_type, applicati
       return { isValid: false, message: "Application parameters not found" };
     }
     
-    // Find the specific parameter
+
     const parameter = fds.parameters.find(param => param.id === parameter_id);
     if (!parameter) {
       return { isValid: false, message: "Parameter not found" };
     }
     
-    // Validate approved count and marks using the same logic as citation/appreciation
+
     const approvedCountNum = Number(approved_count) || 0;
     const approvedMarksNum = Number(approved_marks) || 0;
     const originalCount = Number(parameter.count) || 0;
@@ -458,33 +456,33 @@ async function validateApprovedCountAndMarks(client, application_type, applicati
     const maxMarks = Number(parameter.max_marks) || 0;
     const perUnitMark = Number(parameter.per_unit_mark) || 0;
     
-    // Check if approved count is a valid number
+
     if (approved_count !== undefined && (isNaN(approvedCountNum) || approvedCountNum < 0)) {
       return { isValid: false, message: "Approved count must be a valid non-negative number" };
     }
     
-    // Check if approved marks is a valid number
+
     if (approved_marks !== undefined && (isNaN(approvedMarksNum) || approvedMarksNum < 0)) {
       return { isValid: false, message: "Approved marks must be a valid non-negative number" };
     }
     
-    // If both count and marks are provided, validate the relationship
+
     if (approved_count !== undefined && approved_marks !== undefined) {
-      // Calculate what the marks should be based on count (same logic as citation)
+
       const calculatedMarks = Math.min(approvedCountNum * perUnitMark, maxMarks);
       
-      // Check if the provided marks match the calculated marks
+
       if (Math.abs(approvedMarksNum - calculatedMarks) > 0.01) { // Allow small floating point differences
         return { isValid: false, message: `Approved marks (${approvedMarksNum}) should be ${calculatedMarks} based on approved count (${approvedCountNum})` };
       }
     }
     
-    // Check if approved count exceeds original count
+
     if (approved_count !== undefined && approvedCountNum > originalCount) {
       return { isValid: false, message: `Approved count (${approvedCountNum}) cannot exceed original count (${originalCount})` };
     }
     
-    // Check if approved marks exceed max marks
+
     if (approved_marks !== undefined && approvedMarksNum > maxMarks) {
       return { isValid: false, message: `Approved marks (${approvedMarksNum}) cannot exceed maximum marks (${maxMarks})` };
     }
@@ -502,7 +500,7 @@ exports.getAllApplicationsWithClarificationsForUnit = async (user, query) => {
     const unitId = user.unit_id;
     const { award_type, search, page = 1, limit = 10 } = query;
 
-    // Fetch citations
+
     const citationQuery = `
         SELECT 
           citation_id AS id,
@@ -513,7 +511,7 @@ exports.getAllApplicationsWithClarificationsForUnit = async (user, query) => {
         FROM Citation_tab
         WHERE unit_id = $1
       `;
-    // Fetch appreciations
+
     const appreQuery = `
         SELECT 
           appreciation_id AS id,
@@ -530,14 +528,14 @@ exports.getAllApplicationsWithClarificationsForUnit = async (user, query) => {
 
     let allApps = [...citations.rows, ...appreciations.rows];
     allApps=await attachFdsToApplications(allApps)
-    // Filter by award_type if given
+
     if (award_type) {
       allApps = allApps.filter(
         (app) => app.fds?.award_type?.toLowerCase() === award_type.toLowerCase()
       );
     }
 
-    // Filter by search keyword
+
     const normalize = (str) =>
       str?.toString().toLowerCase().replace(/[\s-]/g, "");
     
@@ -547,7 +545,7 @@ exports.getAllApplicationsWithClarificationsForUnit = async (user, query) => {
         const idMatch = app.id.toString().toLowerCase().includes(searchLower);
         const cycleMatch = normalize(app.fds?.cycle_period || "").includes(searchLower);
         
-        // Search in fds fields that actually exist
+
         const awardTypeMatch = normalize(app.fds?.award_type || "").includes(searchLower);
         const commandMatch = normalize(app.fds?.command || "").includes(searchLower);
         const brigadeMatch = normalize(app.fds?.brigade || "").includes(searchLower);
@@ -562,7 +560,7 @@ exports.getAllApplicationsWithClarificationsForUnit = async (user, query) => {
       });
     }
 
-    // Gather all clarification_ids from parameters
+
     const clarificationIdSet = new Set();
     allApps.forEach((app) => {
       app.fds?.parameters?.forEach((param) => {
@@ -585,7 +583,7 @@ exports.getAllApplicationsWithClarificationsForUnit = async (user, query) => {
       }, {});
     }
 
-    // Inject clarification data into parameters
+
     allApps = allApps.map((app) => {
       const updatedParams = app.fds?.parameters?.map((param) => {
         if (param.clarification_id) {
@@ -606,15 +604,15 @@ exports.getAllApplicationsWithClarificationsForUnit = async (user, query) => {
       };
     });
 
-    // Remove status_flag for 'unit' users
+
     if (user.user_role === "unit") {
       allApps = allApps.map(({ status_flag, ...rest }) => rest);
     }
 
-    // Sort by date_init descending
+
     allApps.sort((a, b) => new Date(b.date_init) - new Date(a.date_init));
 
-    // Filter to only apps where any parameter's clarification is by role 'brigade'
+
     const filteredApplications = allApps.filter((app) =>
       app.fds?.parameters?.some(
         (param) =>
@@ -623,7 +621,7 @@ exports.getAllApplicationsWithClarificationsForUnit = async (user, query) => {
       )
     );
 
-    // --- Pagination Logic ---
+
     const pageInt = parseInt(page, 10);
     const limitInt = parseInt(limit, 10);
     const totalItems = filteredApplications.length;
@@ -698,7 +696,6 @@ exports.getAllApplicationsWithClarificationsForSubordinates = async (user, query
   }
 };
 
-// START HELPER OF getAllApplicationsWithClarificationsForSubordinates
 async function getOwnUnitData(client, unit_id) {
   const res = await client.query(`SELECT * FROM Unit_tab WHERE unit_id = $1`, [unit_id]);
   return res.rows[0] || null;
@@ -724,14 +721,14 @@ async function buildResponseData(client, clarifications, ownUnitName, matchingFi
     const { application_type, application_id, parameter_name } = clarification;
     const { table, idField } = tableMap[application_type];
 
-    // Fetch application
+
     const appRes = await client.query(
       `SELECT * FROM ${table} WHERE ${idField} = $1`,
       [application_id]
     );
     let application = appRes.rows[0];
 
-    // Fetch associated unit
+
     const unitRes = await client.query(
       `SELECT * FROM Unit_tab WHERE unit_id = $1`,
       [application.unit_id]
@@ -801,4 +798,3 @@ function paginateData(data, page, limit) {
   const end = pageInt * limitInt;
   return data.slice(start, end);
 }
-// END HELPER OF getAllApplicationsWithClarificationsForSubordinates

@@ -27,7 +27,7 @@ const History = () => {
   const { units, loading, meta } = useAppSelector((state) => state.application);
   const role = profile?.user?.user_role?.toLowerCase() ?? "";
 
-  // States
+
   const [awardType, setAwardType] = useState<string | null>(null);
   const [commandType, setCommandType] = useState<string | null>(null);
   const [corpsType, setCorpsType] = useState<string | null>(null);
@@ -97,9 +97,7 @@ const History = () => {
   ]);
 
 
- // helper: public IP (fallback-friendly)
-// helper: public IP (fallback-friendly)
-// helper: public IP (fallback-friendly)
+
 const getPublicIP = async (): Promise<string> => {
   try {
     const r = await fetch("https://api.ipify.org?format=json", { cache: "no-store" });
@@ -111,11 +109,10 @@ const getPublicIP = async (): Promise<string> => {
     const j2 = await r2.json();
     if (j2?.ip) return j2.ip;
   } catch {}
-  // last resort: host (not true public IP, but better than blank)
+
   return window.location?.hostname || "Unknown IP";
 };
 
-// helper: IST timestamp
 const formatNowIST = (): string => {
   const dt = new Date();
   const p = new Intl.DateTimeFormat("en-GB", {
@@ -131,7 +128,6 @@ const formatNowIST = (): string => {
   return `${get("day")}/${get("month")}/${get("year")} ${get("hour")}:${get("minute")}`;
 };
 
-// helper: draw a light, diagonal watermark centered on the page (UNDER the table)
 const drawWatermark = (doc: jsPDF, text: string) => {
   const { width, height } = doc.internal.pageSize;
   const cx = width / 2;
@@ -139,19 +135,19 @@ const drawWatermark = (doc: jsPDF, text: string) => {
 
   (doc as any).saveGraphicsState?.();
 
-  // Slightly darker grey + opacity
+
   doc.setFont("helvetica", "bold");
   doc.setTextColor(0,0,0);
   let fontSize = 28;
   doc.setFontSize(fontSize);
 
-  // Use graphics state opacity if available (fallback safe)
+
   try {
     const GS = (doc as any).GState;
     if (GS) (doc as any).setGState(new GS({ opacity: 0.18 })); // tweak 0.15–0.22
   } catch {}
 
-  // Fit text to page diagonal so it won’t clip
+
   const txt = String(text ?? "");
   const textWidth = doc.getTextWidth(txt);
   const diagonalUsable = Math.hypot(width, height) - 72; // ~1" margin
@@ -160,7 +156,7 @@ const drawWatermark = (doc: jsPDF, text: string) => {
     doc.setFontSize(fontSize);
   }
 
-  // Single draw (no fake-bold double draw)
+
   (doc as any).text(txt, cx, cy, { align: "center", angle: -30 as any });
 
   (doc as any).restoreGraphicsState?.();
@@ -172,7 +168,7 @@ const handleExportPDF = async () => {
 
   const doc = new jsPDF({ orientation: "landscape", unit: "pt", format: "a4" });
 
-  // Create the table headers and rows as before
+
   const MARK_ROLES = ["brigade", "division", "corps", "command"] as const;
   const cap = (s: string) => (s ? s[0].toUpperCase() + s.slice(1) : s);
 
@@ -230,7 +226,7 @@ const handleExportPDF = async () => {
   const appMarksIdx = headers.indexOf("Application Marks");
   const totalMarksIdx = headers.indexOf("Total Marks");
 
-  // Render the table
+
   autoTable(doc, {
     head: [headers],
     body: rows,
@@ -244,12 +240,12 @@ const handleExportPDF = async () => {
     },
   });
 
-  // Now, add watermark after the table
+
   const paintWatermarkAfterTable = () => {
     drawWatermark(doc, stamp);  // Add watermark after the table
   };
 
-  // Call the function to paint watermark after the table
+
   paintWatermarkAfterTable();
 
   doc.save("applications.pdf");
@@ -262,9 +258,9 @@ const handleExportPDF = async () => {
   
   
   
-  // Excel function removed - using PDF instead
 
-  // Excel function removed - using PDF instead
+
+
 
   return (
     <div className="clarification-section">
@@ -458,16 +454,6 @@ const handleExportPDF = async () => {
               </th>
               <th
                 style={{
-                  width: 150,
-                  minWidth: 150,
-                  maxWidth: 150,
-                  color: "white",
-                }}
-              >
-                Current Stage
-              </th>
-              <th
-                style={{
                   width: 200,
                   minWidth: 200,
                   maxWidth: 200,
@@ -580,9 +566,6 @@ const handleExportPDF = async () => {
                           : unit.status_flag.charAt(0).toUpperCase() +
                             unit.status_flag.slice(1)}
                       </p>
-                    </td>
-                    <td style={{ width: 150, minWidth: 150, maxWidth: 150 }}>
-                      <p className="fw-4">{approverRole?.replace(/_/g," ")}</p>
                     </td>
                     <td style={{ width: 200, minWidth: 200, maxWidth: 200 }}>
                       <p className="fw-4">

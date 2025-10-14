@@ -3,10 +3,8 @@ const router = express.Router();
 const MasterController = require("../controllers/MasterController");
 const authMiddleware = require("../middlewares/authMiddleware");
 
-// Apply authentication middleware to all routes
 router.use(authMiddleware);
 
-// Master table listing routes
 router.get("/brigades", MasterController.getBrigades);
 router.get("/corps", MasterController.getCorps);
 router.get("/commands", MasterController.getCommands);

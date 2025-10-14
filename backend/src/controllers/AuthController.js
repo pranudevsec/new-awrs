@@ -1,6 +1,4 @@
-// AuthController.js
 const AuthService = require("../services/AuthService.js");
-// Utility modules for handling responses and status codes
 const MSG = require("../utils/MSG.js");
 const ResponseHelper = require("../utils/responseHelper.js");
 const { StatusCodes } = require("http-status-codes");

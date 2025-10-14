@@ -17,7 +17,7 @@ const ClarificationRaisedList = () => {
   const { profile } = useAppSelector((state) => state.admin);
   const { units, loading, meta } = useAppSelector((state) => state.application);
 
-  // States (filters removed)
+
   const [awardType, setAwardType] = useState<string | null>(null);
   const [search, setSearch] = useState<string>('');
   const [page, setPage] = useState<number>(1);

@@ -2,11 +2,9 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import toast from "react-hot-toast";
 import Breadcrumb from "../../../components/ui/breadcrumb/Breadcrumb";
-// import FormSelect from "../../../components/form/FormSelect";
 import EmptyTable from "../../../components/ui/empty-table/EmptyTable";
 import Loader from "../../../components/ui/loader/Loader";
 import Pagination from "../../../components/ui/pagination/Pagination";
-// import { awardTypeOptions } from "../../../data/options";
 import { SVGICON } from "../../../constants/iconsList";
 import { useAppSelector } from "../../../reduxToolkit/hooks";
 import Axios from "../../../reduxToolkit/helper/axios";
@@ -51,13 +49,13 @@ const RejectedApplicationsList = () => {
   const profile = useAppSelector((state) => state.admin.profile);
   const role = profile?.user?.user_role?.toLowerCase() ?? "";
 
-  // States
+
   const [applications, setApplications] = useState<RejectedApplication[]>([]);
   const [loading, setLoading] = useState(false);
   const [meta, setMeta] = useState<RejectedApplicationsResponse['meta'] | null>(null);
-    // const [awardType, setAwardType] = useState<string | null>(null);
-    //   const [searchTerm, setSearchTerm] = useState<string>("");
-    //   const [debouncedSearch, setDebouncedSearch] = useState<string>("");
+
+
+
   const [page, setPage] = useState<number>(1);
   const [limit, setLimit] = useState<number>(10);
 
@@ -71,12 +69,12 @@ const RejectedApplicationsList = () => {
       setLoading(true);
       const queryParams = new URLSearchParams();
 
-      // if (awardType && awardType !== "All") {
-      //   queryParams.append("award_type", awardType);
-      // }
-      // if (debouncedSearch) {
-      //   queryParams.append("search", debouncedSearch);
-      // }
+
+
+
+
+
+
       queryParams.append("page", String(page));
       queryParams.append("limit", String(limit));
 

@@ -1,4 +1,3 @@
-// Middleware to check if the user's role is allowed
 module.exports = function checkRole(allowedRoles = []) {
   return function (req, res, next) {
     try {
@@ -20,7 +19,7 @@ module.exports = function checkRole(allowedRoles = []) {
         });
       }
 
-      // Role is allowed
+
       next();
     } catch (err) {
       return res.status(500).json({

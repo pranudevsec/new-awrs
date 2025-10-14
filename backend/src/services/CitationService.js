@@ -208,7 +208,7 @@ exports.updateCitation = async (id, data, user) => {
       return ResponseHelper.error(400, "No valid fields to update");
     }
 
-    // Check for the 'isShortlisted' field and validate user role
+
     if (keys.includes("isShortlisted")) {
       const allowedRoles = ["command", "headquarter"];
       if (!allowedRoles.includes(user.user_role?.toLowerCase())) {
@@ -219,7 +219,7 @@ exports.updateCitation = async (id, data, user) => {
       }
     }
 
-    // Handle the 'citation_fds' field updates
+
     if (keys.includes("citation_fds")) {
       const { award_type, parameters } = data.citation_fds;
 
@@ -232,12 +232,12 @@ exports.updateCitation = async (id, data, user) => {
 
       const paramList = paramResult.rows;
 
-      // Find matching parameters from Parameter_Master
+
       const findMatchedParam = (paramId) => {
         return paramList.find(p => p.param_id === paramId);
       };
 
-      // Update the parameters with the matched data
+
       const updatedParameters = parameters.map((p) => {
         const matchedParam = findMatchedParam(p.id);
         if (!matchedParam) {
@@ -260,11 +260,11 @@ exports.updateCitation = async (id, data, user) => {
         };
       });
 
-      // Update the citation_fds with updated parameters
+
       data.citation_fds.parameters = updatedParameters;
     }
 
-    // Prepare the update query for the allowed fields
+
     const values = keys.map((key) =>
       key === "citation_fds" ? JSON.stringify(data[key]) : data[key]
     );
@@ -276,7 +276,7 @@ exports.updateCitation = async (id, data, user) => {
       [...values, id]
     );
 
-    // Return the updated citation or an error message if not found
+
     return result.rows[0]
       ? ResponseHelper.success(200, "Citation updated", result.rows[0])
       : ResponseHelper.error(404, "Citation not found");

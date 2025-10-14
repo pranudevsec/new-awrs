@@ -13,7 +13,7 @@ const UnitClarificationDetail = () => {
   const [searchParams] = useSearchParams();
   const { application_id } = useParams();
 
-  // States
+
   const [clarificationShow, setClarificationShow] = useState(false);
   const [unitDetail, setUnitDetail] = useState<any>(null);
   const [clarificationId, setClarificationId] = useState<number>(0);
@@ -66,13 +66,13 @@ const UnitClarificationDetail = () => {
     }
   };
 
-  // Function to handle document download with watermark
+
   const handleDocumentDownload = async (documentUrl: any, fileName: string) => {
     try {
       await downloadDocumentWithWatermark(documentUrl, fileName, baseURL);
       toast.success('Document downloaded with watermark');
     } catch (error) {      
-      // Show more specific error message for missing files
+
       if (error instanceof Error && error.message.includes('Document not found')) {
         toast.error(`File not found: ${fileName}. The file may have been deleted or moved.`);
       } else {

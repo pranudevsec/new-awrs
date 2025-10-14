@@ -10,7 +10,6 @@ import FormInput from "../../components/form/FormInput";
 import FormSelect from "../../components/form/FormSelect";
 import bgimg from "../../assets/Picture7.webp";
 
-// cw2_type options
 const cw2TypeOptions = [
   { label: "MO", value: "mo" },
   { label: "OL", value: "ol" },
@@ -55,13 +54,13 @@ const Login = () => {
     onSubmit: async (values, { resetForm }) => {
       const payload: any = { ...values };
 
-      // handle cw2 role
+
       if (payload.user_role.startsWith("cw2")) {
         payload.cw2_type = payload.user_role.split("cw2")[1];
         payload.user_role = "cw2";
       }
 
-      // handle member roles
+
       if (payload.user_role.endsWith("_member")) {
         payload.user_role = payload.user_role.replace("_member", "");
         payload.is_member = true;

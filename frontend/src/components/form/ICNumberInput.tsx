@@ -28,7 +28,7 @@ const ICNumberInput: React.FC<ICNumberInputProps> = ({
   const [displayValue, setDisplayValue] = useState("");
   const [userInput, setUserInput] = useState("");
 
-  // Initialize display value when component mounts or value changes
+
   useEffect(() => {
     if (value && value.startsWith("IC-")) {
       const userPart = value.substring(3); // Remove "IC-" prefix
@@ -46,18 +46,18 @@ const ICNumberInput: React.FC<ICNumberInputProps> = ({
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const inputValue = e.target.value;
     
-    // Remove "IC-" prefix if user tries to type it
+
     const cleanValue = inputValue.replace(/^IC-/, '');
     
-    // Only allow 5 digits followed by one alphabet
+
     const regex = /^[0-9]{0,5}[A-Z]?$/;
     
-    // More strict validation for complete input
+
     const completeRegex = /^[0-9]{5}[A-Z]$/;
     
     if (regex.test(cleanValue) || cleanValue === "") {
       setUserInput(cleanValue);
-      // Only show the user input, not the IC- prefix
+
       setDisplayValue(cleanValue);
       const fullValue = `IC-${cleanValue}`;
       onChange(fullValue);
@@ -65,14 +65,14 @@ const ICNumberInput: React.FC<ICNumberInputProps> = ({
   };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    // Prevent backspace from deleting "IC-" prefix
+
     if (e.key === 'Backspace' && userInput.length === 0) {
       e.preventDefault();
     }
   };
 
   const handleFocus = () => {
-    // Select only the user input part (after "IC-")
+
     const input = document.getElementById(name) as HTMLInputElement;
     if (input) {
       input.setSelectionRange(3, input.value.length);

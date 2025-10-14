@@ -46,7 +46,7 @@ const CommandPanel = () => {
 
   const { loading, scoreboard, meta } = useAppSelector((state) => state.commandPanel);
 
-  // States
+
   const [awardType, setAwardType] = useState<string | null>("");
   const [searchTerm, setSearchTerm] = useState<string>("");
   const [debouncedSearch, setDebouncedSearch] = useState<string>("");
@@ -124,11 +124,11 @@ const CommandPanel = () => {
 
     const doc = new jsPDF({ orientation: "landscape", unit: "pt", format: "a4" });
     
-    // Add title
+
     doc.setFontSize(16);
     doc.text("Top 5 Candidates Scoreboard", 14, 22);
 
-    // Create headers
+
     const roles = ["brigade", "division", "corps", "command"];
     const headers = [
       "S. No.",
@@ -150,7 +150,7 @@ const CommandPanel = () => {
       ...roles.map(role => `${capitalize(role)} Priority`),
     ];
 
-    // Create table
+
     autoTable(doc, {
       head: [headers],
       body: pdfData,

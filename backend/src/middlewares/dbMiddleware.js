@@ -1,4 +1,3 @@
-// dbMiddleware.js
 const db = require("../db/postgres-connection");
 
 const dbMiddleware = (req, res, next) => {

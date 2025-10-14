@@ -15,7 +15,7 @@ const CommandPanelDetail = () => {
   const profile = useAppSelector((state) => state.admin.profile);
   const { loading, unitDetail } = useAppSelector((state) => state.application);
 
-  // States
+
   const [clarificationShow, setClarificationShow] = useState(false);
   const [reqClarificationShow, setReqClarificationShow] = useState(false);
   const [isRefreshData, setIsRefreshData] = useState(false);
@@ -90,7 +90,7 @@ const CommandPanelDetail = () => {
     }
   };
 
-  // Show loader
+
   if (loading) return <Loader />;
 
   return (

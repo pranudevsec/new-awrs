@@ -25,7 +25,7 @@ exports.createAppreciation = async (data, user) => {
 
     const { award_type, parameters } = appre_fds;
 
-    // Get parameter details from Parameter_Master
+
     const paramResult = await db.query(
       `SELECT param_id, name, subsubcategory, subcategory, category, per_unit_mark, max_marks, negative
        FROM Parameter_Master
@@ -44,7 +44,7 @@ exports.createAppreciation = async (data, user) => {
       return undefined;
     };
 
-    // Process parameters and calculate marks
+
     const updatedParameters = parameters.map((p) => {
       const matchedParam = findMatchedParam(p.id);
       if (!matchedParam) {
@@ -84,7 +84,7 @@ exports.createAppreciation = async (data, user) => {
       last_approved_by_role = "unit";
     }
 
-    // Insert appreciation into Appre_tab
+
     const appreciationQuery = `
       INSERT INTO Appre_tab (
         unit_id, date_init, appre_fds, last_approved_by_role, 
@@ -111,7 +111,7 @@ exports.createAppreciation = async (data, user) => {
 
     const appreciationId = appreciationResult.rows[0].appreciation_id;
 
-    // Insert parameters into Appreciation_Parameter table
+
     for (const param of parameters) {
       const matchedParam = findMatchedParam(param.id);
       if (matchedParam) {
@@ -154,7 +154,7 @@ exports.updateAppreciation = async (appreciationId, data, user) => {
     const profile = await AuthService.getProfile(user);
     const unit = profile?.data?.unit;
 
-    // Check if appreciation exists and belongs to the unit
+
     const existingAppreciation = await db.query(
       "SELECT * FROM Appre_tab WHERE appreciation_id = $1 AND unit_id = $2",
       [appreciationId, unit.unit_id]
@@ -181,7 +181,7 @@ exports.updateAppreciation = async (appreciationId, data, user) => {
       return ResponseHelper.error(400, "No valid fields to update");
     }
 
-    // Handle the 'appre_fds' field updates
+
     if (keys.includes("appre_fds")) {
       const { award_type, parameters } = data.appre_fds;
 
@@ -194,12 +194,12 @@ exports.updateAppreciation = async (appreciationId, data, user) => {
 
       const paramList = paramResult.rows;
 
-      // Find matching parameters from Parameter_Master
+
       const findMatchedParam = (paramId) => {
         return paramList.find(p => p.param_id === paramId);
       };
 
-      // Update the parameters with the matched data
+
       const updatedParameters = parameters.map((p) => {
         const matchedParam = findMatchedParam(p.id);
         if (!matchedParam) {
@@ -223,14 +223,14 @@ exports.updateAppreciation = async (appreciationId, data, user) => {
         };
       });
 
-      // Update the appre_fds with updated parameters
+
       data.appre_fds.parameters = updatedParameters;
 
-      // Update Appreciation_Parameter table
-      // First, delete existing parameters for this appreciation
+
+
       await db.query("DELETE FROM Appreciation_Parameter WHERE appreciation_id = $1", [appreciationId]);
 
-      // Insert updated parameters
+
       for (const param of parameters) {
         const matchedParam = findMatchedParam(param.id);
         if (matchedParam) {
@@ -258,7 +258,7 @@ exports.updateAppreciation = async (appreciationId, data, user) => {
       }
     }
 
-    // Prepare the update query for the allowed fields
+
     const values = keys.map((key) =>
       key === "appre_fds" ? JSON.stringify(data[key]) : data[key]
     );

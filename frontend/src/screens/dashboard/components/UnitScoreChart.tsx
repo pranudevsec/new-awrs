@@ -12,7 +12,6 @@ import {
   ResponsiveContainer,
 } from "recharts";
 
-// ---------- Robust HQ detector ----------
 function isHQRole(roleRaw: unknown): boolean {
   const roleText = String(roleRaw ?? "")
     .normalize("NFKD")
@@ -20,7 +19,7 @@ function isHQRole(roleRaw: unknown): boolean {
     .replace(/[_-]/g, " ")
     .replace(/\s+/g, " ")
     .trim();
-  // matches: hq, hqrs, headquarter, head quarter, headquarters (anywhere in the string)
+
   const hqRegex = /\b(hq|hqrs|head\s?quarter(s)?)\b/;
   return hqRegex.test(roleText);
 }
@@ -86,18 +85,18 @@ const UnitScoreChart: React.FC<UnitScoreChartProps> = ({
   showFilter = true
 }) => {
   const dispatch = useAppDispatch();
-  // ---- Read profile & gate to HQ only ----
+
   const profile = useAppSelector((state) => state.admin.profile);
   const roleRaw = profile?.user?.user_role;
   const isHQ = isHQRole(roleRaw);
 
   const { graphData, loading } = useAppSelector((state) => state.application);
 
-  // Local state
+
   const [selectedGroupBy, setSelectedGroupBy] =
     useState<string>("arms_service");
 
-  // Fetch only for HQ
+
   useEffect(() => {
     if (!isHQ) return;
     dispatch(
@@ -109,7 +108,7 @@ const UnitScoreChart: React.FC<UnitScoreChartProps> = ({
     );
   }, [dispatch, selectedGroupBy, isHQ]);
 
-  // Transform data
+
   const chartData = useMemo(() => {
     const g = (graphData || {}) as GraphDataFormat;
     const xs = Array.isArray(g.x) ? g.x : [];
@@ -127,10 +126,10 @@ const UnitScoreChart: React.FC<UnitScoreChartProps> = ({
     return Math.max(10, ...values);
   }, [chartData]);
 
-  // ---- Hide entirely for non-HQ (no "restricted" card) ----
+
   if (!profile || !isHQ) return null;
 
-  // ---- Authorized UI ----
+
   return (
     <div
       style={{

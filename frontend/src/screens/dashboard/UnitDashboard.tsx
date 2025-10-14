@@ -18,16 +18,16 @@ const UnitDashboard = ({ level }: { level: "brigade" | "division" | "corps" | "c
   const [historyUnits, setHistoryUnits] = useState<any[]>([]);
   const [awardTypeFilter, setAwardTypeFilter] = useState<string>("All");
 
-  // Get data from redux
+
   const loading = useAppSelector(state => state.application.loading);
   const dashboardStats = useAppSelector(state => state.application.dashboardStats);
-  // const profile = useAppSelector(state => state.admin.profile);
 
-  // Fetch data on mount
+
+
   useEffect(() => {
     dispatch(getHomeCountStats());
     
-    // Fetch dashboard stats from API
+
     const dashboardParams = {
       page: 1,
       limit: 10,
@@ -55,7 +55,7 @@ const UnitDashboard = ({ level }: { level: "brigade" | "division" | "corps" | "c
     });
   }, [dispatch, level, awardTypeFilter]);
 
-  // Use dashboard stats from API if available, otherwise calculate from local data
+
   const stats = dashboardStats || {
     totalPendingApplications: pendingUnits.length,
     approved: historyUnits.filter((u: any) =>
@@ -69,7 +69,7 @@ const UnitDashboard = ({ level }: { level: "brigade" | "division" | "corps" | "c
     clarificationRaised: 0
   };
 
-  // Helper to calculate total marks for a unit (from AcceptedApplicationsList)
+
   const getTotalMarks = (unit: any): number => {
     const parameters = unit?.fds?.parameters ?? [];
     const graceMarks =
@@ -99,9 +99,9 @@ const UnitDashboard = ({ level }: { level: "brigade" | "division" | "corps" | "c
     return totalParameterMarks + graceMarks - totalNegativeMarks;
   };
 
-  // Prepare data for bar graph: use all pendingUnits
+
   const graphUnits = pendingUnits;
-  // Prepare metrics for each unit
+
   const unitMetrics = graphUnits.map((unit) => {
     const parameters = unit?.fds?.parameters ?? [];
     const totalNegativeMarks = parameters
@@ -118,7 +118,7 @@ const UnitDashboard = ({ level }: { level: "brigade" | "division" | "corps" | "c
     };
   });
 
-  // Export to PDF handler
+
   const handleExportPDF = () => {
     const pdfData = pendingUnits.map((unit: any) => {
       const parameters = unit?.fds?.parameters ?? [];
@@ -137,11 +137,11 @@ const UnitDashboard = ({ level }: { level: "brigade" | "division" | "corps" | "c
 
     const doc = new jsPDF({ orientation: "landscape", unit: "pt", format: "a4" });
     
-    // Add title
+
     doc.setFontSize(16);
     doc.text("Pending Applications Report", 14, 22);
 
-    // Create table
+
     autoTable(doc, {
       head: [['Application Id', 'Unit ID', 'Arm/Service', 'Total Marks', 'Total Negative Marks', 'Application Type']],
       body: pdfData,

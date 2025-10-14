@@ -22,7 +22,7 @@ const ApplicationsList = () => {
   const { units, loading, meta } = useAppSelector((state) => state.application);
   const role = profile?.user?.user_role?.toLowerCase() ?? "";
 
-  // States
+
   const [awardType, setAwardType] = useState<string | null>(null);
   const [commandType, setCommandType] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState<string>("");
@@ -111,7 +111,7 @@ const ApplicationsList = () => {
   const getTotalMarks = (unit: any): number => {
     const parameters = unit?.fds?.parameters ?? [];
     
-    // For unit role: only show original parameter marks, excluding grace marks and approved marks
+
     if (role === "unit") {
       let totalNegativeMarks = 0;
       const totalParameterMarks = parameters.reduce((acc: number, param: any) => {
@@ -119,45 +119,52 @@ const ApplicationsList = () => {
           param?.clarification_details?.clarification_status === "rejected";
         if (isRejected) return acc;
         
-        // Handle negative parameters - subtract their marks
+
         if (param?.negative) {
           totalNegativeMarks += Number(param?.marks ?? 0);
           return acc; // Don't add to positive marks
         }
         
-        // Only count original marks, not approved marks
+
         const originalMarks = Number(param?.marks ?? 0);
         return acc + originalMarks;
       }, 0);
       return totalParameterMarks - totalNegativeMarks;
     }
     
-    // For other roles: use the original logic with grace marks and approved marks
+
     const graceMarks =
       unit?.fds?.applicationGraceMarks?.reduce(
         (acc: number, item: any) => acc + (item?.marks ?? 0),
         0
       ) ?? 0;
+    
+    let totalPositiveMarks = 0;
     let totalNegativeMarks = 0;
-    const totalParameterMarks = parameters.reduce((acc: number, param: any) => {
+    
+    parameters.forEach((param: any) => {
       const isRejected =
         param?.clarification_details?.clarification_status === "rejected";
-      if (isRejected) return acc;
-      const hasValidApproved =
-        param?.approved_marks !== undefined &&
+
+      if (isRejected) return;
+
+
+      const hasApprovedMarks = param?.approved_marks !== undefined &&
         param?.approved_marks !== null &&
         param?.approved_marks !== "" &&
-        !isNaN(Number(param?.approved_marks));
-      const approved = hasValidApproved ? Number(param.approved_marks) : null;
-      let original = 0;
+        !isNaN(Number(param?.approved_marks)) &&
+        param?.approved_by_user !== null;
+
+      const marksToUse = hasApprovedMarks ? Number(param.approved_marks) : Number(param?.marks ?? 0);
+      
       if (param?.negative) {
-        totalNegativeMarks += Number(param?.marks ?? 0);
+        totalNegativeMarks += marksToUse;
       } else {
-        original = Number(param?.marks ?? 0);
+        totalPositiveMarks += marksToUse;
       }
-      return acc + (approved ?? original);
-    }, 0);
-    return totalParameterMarks + graceMarks - totalNegativeMarks;
+    });
+    
+    return totalPositiveMarks + graceMarks - totalNegativeMarks;
   };
 
   const getTotalNegativeMarks = (unit: any): number => {
@@ -183,11 +190,11 @@ const ApplicationsList = () => {
   const handleDownloadPDF = () => {
     const doc = new jsPDF({ orientation: "landscape", unit: "pt", format: "a4" });
     
-    // Add title
+
     doc.setFontSize(16);
     doc.text("Applications List Report", 14, 22);
 
-    // Create headers
+
     const headers = [
       "Application Id",
       "Unit ID",
@@ -201,7 +208,7 @@ const ApplicationsList = () => {
       ...(role === "unit" ? ["Status"] : []),
     ];
 
-    // Create rows
+
     const rows = units.map((unit: any) => [
       `#${unit.id}`,
       `#${unit.unit_id}`,
@@ -209,13 +216,13 @@ const ApplicationsList = () => {
       new Date(unit.date_init).toLocaleDateString(),
       unit.fds?.last_date ? new Date(unit.fds.last_date).toLocaleDateString() : "-",
       unit.type.charAt(0).toUpperCase() + unit.type.slice(1),
-      getTotalMarks(unit),
+      unit.netMarks ?? getTotalMarks(unit),
       getTotalNegativeMarks(unit),
       ...(role !== "brigade" && role !== "unit" ? [getLowerRolePriority(unit)] : []),
       ...(role === "unit" ? [unit?.status_flag ? unit.status_flag.charAt(0).toUpperCase() + unit.status_flag.slice(1) : "Submitted"] : []),
     ]);
 
-    // Create table
+
     autoTable(doc, {
       head: [headers],
       body: rows,
@@ -400,7 +407,12 @@ const ApplicationsList = () => {
             </p>
           </td>
           <td style={{ width: 150 }}>
-            <p className="fw-4">{getTotalMarks(unit).toFixed(2)}</p>
+            <p className="fw-4">
+              {(() => {
+                const netMarks = unit.netMarks?.toFixed(2) ?? getTotalMarks(unit).toFixed(2);
+                return netMarks;
+              })()}
+            </p>
           </td>
           <td style={{ width: 150 }}>
             <p className="fw-4">{unit.fds.command ?? "-"}</p>

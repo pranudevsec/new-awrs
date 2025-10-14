@@ -1,4 +1,3 @@
-// import { VscArchive } from "react-icons/vsc";
 
 export const awardTypeOptions: OptionType[] = [
   { value: "All", label: "All" },

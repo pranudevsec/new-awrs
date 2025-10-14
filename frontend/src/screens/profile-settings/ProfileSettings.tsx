@@ -23,7 +23,7 @@ interface Officer {
   rank: string;
   name: string;
   appointment: string;
-  // digitalSign: string;
+
 }
 interface Award {
   award_id?: string;
@@ -42,7 +42,7 @@ const ProfileSettings = () => {
   const navigate = useNavigate();
   const { profile } = useAppSelector((state) => state.admin);
   
-  // Get master data from APIs
+
   const {
     brigadeOptions,
     corpsOptions,
@@ -61,7 +61,7 @@ const ProfileSettings = () => {
   const currentYear = new Date().getFullYear();
   const yearOptions = Array.from({ length: 79 }, (_, i) => `${currentYear - i}`);
 
-  // States
+
   const [firstLoad, setFirstLoad] = useState(true);
   const [awards, setAwards] = useState<Award[]>(profile?.unit?.awards ?? []);
   const [presidingOfficer, setPresidingOfficer] = useState<Officer>({
@@ -71,7 +71,7 @@ const ProfileSettings = () => {
     rank: "",
     name: "",
     appointment: "",
-    // digitalSign: "",
+
   });
   const [officers, setOfficers] = useState<Officer[]>([{
     id: undefined,
@@ -80,7 +80,7 @@ const ProfileSettings = () => {
     rank: "",
     name: "",
     appointment: "",
-    // digitalSign: "",
+
   }]);
   const [isDeclarationChecked, setIsDeclarationChecked] = useState(false);
   const [errors, setErrors] = useState<any>([]);
@@ -117,7 +117,7 @@ const ProfileSettings = () => {
           rank: presiding.rank ?? "",
           name: presiding.name ?? "",
           appointment: presiding.appointment ?? "",
-          // digitalSign: presiding.digital_sign ?? "",
+
         });
       }
 
@@ -130,7 +130,7 @@ const ProfileSettings = () => {
           rank: member.rank ?? "",
           name: member.name ?? "",
           appointment: member.appointment ?? "",
-          // digitalSign: member.digital_sign ?? "",
+
         }));
 
       if (otherOfficers.length > 0) {
@@ -143,7 +143,7 @@ const ProfileSettings = () => {
           rank: "",
           name: "",
           appointment: "",
-          // digitalSign: "",
+
         }]);
       }
     }
@@ -249,7 +249,7 @@ const ProfileSettings = () => {
         rank: "",
         name: "",
         appointment: "",
-        // digitalSign: "",
+
       },
     ]);
   };
@@ -278,7 +278,7 @@ const ProfileSettings = () => {
         hasError = true;
       }
 
-      // Duplicate check only if title and year are both provided
+
       if (award.award_title && award.award_year) {
         const isDuplicate = awards.some(
           (a, i) =>
@@ -317,6 +317,56 @@ const ProfileSettings = () => {
       end_year: profile?.unit?.end_year ?? "",
     },
     enableReinitialize: true,
+    validationSchema: Yup.object().shape({
+      start_month: Yup.string().test('date-range', 'Start date cannot be after end date', function(value) {
+        const { start_year, end_month, end_year } = this.parent;
+        
+        if (!value || !start_year || !end_month || !end_year) {
+          return true; // Allow empty fields
+        }
+        
+        const startDate = new Date(parseInt(start_year), parseInt(value) - 1);
+        const endDate = new Date(parseInt(end_year), parseInt(end_month) - 1);
+        
+        return startDate <= endDate;
+      }),
+      start_year: Yup.string().test('date-range', 'Start date cannot be after end date', function(value) {
+        const { start_month, end_month, end_year } = this.parent;
+        
+        if (!value || !start_month || !end_month || !end_year) {
+          return true; // Allow empty fields
+        }
+        
+        const startDate = new Date(parseInt(value), parseInt(start_month) - 1);
+        const endDate = new Date(parseInt(end_year), parseInt(end_month) - 1);
+        
+        return startDate <= endDate;
+      }),
+      end_month: Yup.string().test('date-range', 'End date cannot be before start date', function(value) {
+        const { start_month, start_year, end_year } = this.parent;
+        
+        if (!value || !start_month || !start_year || !end_year) {
+          return true; // Allow empty fields
+        }
+        
+        const startDate = new Date(parseInt(start_year), parseInt(start_month) - 1);
+        const endDate = new Date(parseInt(end_year), parseInt(value) - 1);
+        
+        return endDate >= startDate;
+      }),
+      end_year: Yup.string().test('date-range', 'End date cannot be before start date', function(value) {
+        const { start_month, start_year, end_month } = this.parent;
+        
+        if (!value || !start_month || !start_year || !end_month) {
+          return true; // Allow empty fields
+        }
+        
+        const startDate = new Date(parseInt(start_year), parseInt(start_month) - 1);
+        const endDate = new Date(parseInt(value), parseInt(end_month) - 1);
+        
+        return endDate >= startDate;
+      })
+    }),
     onSubmit: async (values: any, { resetForm }) => {
       try {
         if (!isDeclarationChecked) {
@@ -357,7 +407,7 @@ const ProfileSettings = () => {
         payload["location"] = values.location;
         payload["awards"] = awards;
         
-        // Add period fields for unit role
+
         if (role === "unit") {
           payload["start_month"] = values.start_month;
           payload["start_year"] = values.start_year;
@@ -411,6 +461,26 @@ const ProfileSettings = () => {
     }));
   };
 
+
+  const validateDateRange = (startMonth: string, startYear: string, endMonth: string, endYear: string) => {
+    if (!startMonth || !startYear || !endMonth || !endYear) return true;
+    
+    const startDate = new Date(parseInt(startYear), parseInt(startMonth) - 1);
+    const endDate = new Date(parseInt(endYear), parseInt(endMonth) - 1);
+    
+    return startDate <= endDate;
+  };
+
+
+  const handleDateFieldChange = (field: string, value: string) => {
+    formik.setFieldValue(field, value);
+    
+
+    setTimeout(() => {
+      formik.validateForm();
+    }, 0);
+  };
+
   const buildUnitPayload = (
     members?: UpdateUnitProfileRequest["members"]
   ): UpdateUnitProfileRequest => ({
@@ -432,7 +502,7 @@ const ProfileSettings = () => {
 
   const isDisabled = !!isMember;
 
-  // Show loader
+
   if (firstLoad) return <Loader />;
 
   return (
@@ -614,7 +684,7 @@ const ProfileSettings = () => {
                       ].find((opt) => opt.value === formik.values.start_month) ?? null
                     }
                     onChange={(selectedOption) => {
-                      formik.setFieldValue("start_month", selectedOption?.value ?? "");
+                      handleDateFieldChange("start_month", selectedOption?.value ?? "");
                     }}
                     placeholder="Select Month"
                   />
@@ -641,7 +711,7 @@ const ProfileSettings = () => {
                       ].find((opt) => opt.value === formik.values.start_year) ?? null
                     }
                     onChange={(selectedOption) => {
-                      formik.setFieldValue("start_year", selectedOption?.value ?? "");
+                      handleDateFieldChange("start_year", selectedOption?.value ?? "");
                     }}
                     placeholder="Select Year"
                   />
@@ -687,7 +757,7 @@ const ProfileSettings = () => {
                       ].find((opt) => opt.value === formik.values.end_month) ?? null
                     }
                     onChange={(selectedOption) => {
-                      formik.setFieldValue("end_month", selectedOption?.value ?? "");
+                      handleDateFieldChange("end_month", selectedOption?.value ?? "");
                     }}
                     placeholder="Select Month"
                   />
@@ -714,7 +784,7 @@ const ProfileSettings = () => {
                       ].find((opt) => opt.value === formik.values.end_year) ?? null
                     }
                     onChange={(selectedOption) => {
-                      formik.setFieldValue("end_year", selectedOption?.value ?? "");
+                      handleDateFieldChange("end_year", selectedOption?.value ?? "");
                     }}
                     placeholder="Select Year"
                   />
@@ -915,7 +985,7 @@ const ProfileSettings = () => {
                     return;
                   }
 
-                  // Validate IC number format
+
                   if (presidingOfficer.icNumber && !/^IC-\d{5}[A-Z]$/.test(presidingOfficer.icNumber)) {
                     toast.error("Invalid IC number format. Must be in format IC-XXXXX[A-Z] where XXXXX are 5 digits and last character is any alphabet.");
                     return;
@@ -932,7 +1002,7 @@ const ProfileSettings = () => {
                       rank: presidingOfficer.rank,
                       name: presidingOfficer.name,
                       appointment: presidingOfficer.appointment,
-                      // digital_sign: presidingOfficer.digitalSign,
+
                     },
                   ];
 
@@ -1017,7 +1087,7 @@ const ProfileSettings = () => {
                     return;
                   }
 
-                  // Validate all officers have required fields
+
                   const invalidOfficers = officers.filter(officer => 
                     !officer.icNumber || officer.icNumber.trim() === "" ||
                     !officer.rank || officer.rank.trim() === "" ||
@@ -1030,7 +1100,7 @@ const ProfileSettings = () => {
                     return;
                   }
 
-                  // Validate IC number format
+
                   const invalidICNumbers = officers.filter(officer => 
                     officer.icNumber && !/^IC-\d{5}[A-Z]$/.test(officer.icNumber)
                   );
@@ -1049,7 +1119,7 @@ const ProfileSettings = () => {
                       rank: officer.rank,
                       name: officer.name,
                       appointment: officer.appointment,
-                      // digital_sign: officer.digitalSign,
+
                     }));
 
                   try {

@@ -9,7 +9,6 @@ import { useAppSelector } from "../../../reduxToolkit/hooks";
 import Axios from "../../../reduxToolkit/helper/axios";
 import { SVGICON } from "../../../constants/iconsList";  // Import the SVGICON
 
-// Define interfaces for the application data
 interface FinalizedApprovedApplication {
   id: number;
   type: string;
@@ -54,7 +53,7 @@ const FinalizedApprovedApplicationsList = () => {
   const profile = useAppSelector((state) => state.admin.profile);
   const role = profile?.user?.user_role?.toLowerCase() ?? "";
 
-  // States
+
   const [applications, setApplications] = useState<FinalizedApprovedApplication[]>([]);
   const [loading, setLoading] = useState(false);
   const [meta, setMeta] = useState<FinalizedApplicationsResponse['meta'] | null>(null);

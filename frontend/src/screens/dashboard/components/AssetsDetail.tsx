@@ -1,60 +1,9 @@
-// import type { DashboardStats } from "../../../reduxToolkit/services/command-panel/commandPanelInterface";
 
-// interface ProductDetailProps {
-//     dashboardStats: DashboardStats | null;
-// }
 
-// const AssetsDetail: React.FC<ProductDetailProps> = ({ dashboardStats }) => {
-//     return (
-//         <div className="assets-details-cards mb-4">
-//             <div className="row">
-//                 <div className="col-xl-3 col-sm-6 mb-xl-0 mb-sm-4 mb-3">
-//                     <div className="card bg-pending d-flex flex-row align-items-center justify-content-between h-100">
-//                         <div className="left-content d-flex flex-wrap flex-xxl-row flex-xl-column flex-md-row flex-sm-column align-items-center gap-2">
-//                             <div className="text ">
-//                                 <h6 className="fw-4 mb-2">Pending Applications</h6>
-//                                 <h4 className="fw-6 font-lexend color-pending">{dashboardStats?.totalPendingApplications ?? 0}</h4>
-//                             </div>
-//                         </div>
-//                     </div>
-//                 </div>
-//                 <div className="col-xl-3 col-sm-6 mb-xl-0 mb-sm-4 mb-3">
-//                     <div className="card bg-request d-flex flex-row align-items-center justify-content-between h-100">
-//                         <div className="left-content d-flex flex-wrap flex-xxl-row flex-xl-column flex-md-row flex-sm-column align-items-center gap-2">
-//                             <div className="text">
-//                                 <h6 className="fw-4 mb-2">Recommended Applications</h6>
-//                                 <h4 className="fw-6 font-lexend color-request">{dashboardStats?.acceptedApplications ?? 0}</h4>
-//                             </div>
-//                         </div>
-//                     </div>
-//                 </div>
-//                 <div className="col-xl-3 col-sm-6 mb-sm-0 mb-3">
-//                     <div className="card bg-raised d-flex flex-row align-items-center justify-content-between h-100">
-//                         <div className="left-content d-flex flex-wrap flex-xxl-row flex-xl-column flex-md-row flex-sm-column align-items-center gap-2">
-//                             <div className="text">
-//                                 <h6 className="fw-4 mb-2">Approved</h6>
-//                                 <h4 className="fw-6 font-lexend color-raised">{dashboardStats?.approved ?? 0}</h4>
-//                             </div>
-//                         </div>
-//                     </div>
-//                 </div>
-//                 <div className="col-xl-3 col-sm-6">
-//                     <div className="card bg-rejected d-flex flex-row align-items-center justify-content-between h-100">
-//                         <div className="left-content d-flex flex-wrap flex-xxl-row flex-xl-column flex-md-row flex-sm-column align-items-center gap-2">
-//                             <div className="text">
-//                                 <h6 className="fw-4 mb-2">Rejected</h6>
-//                                 <h4 className="fw-6 font-lexend color-rejected">{dashboardStats?.rejected ?? 0}</h4>
-//                             </div>
-//                         </div>
-//                     </div>
-//                 </div>
-//             </div>
-//         </div>
 
-//     )
-// }
 import type { DashboardStats } from "../../../reduxToolkit/services/command-panel/commandPanelInterface";
 import { useNavigate } from "react-router-dom";
+import { useAppSelector } from "../../../reduxToolkit/hooks";
 
 interface ProductDetailProps {
   dashboardStats: DashboardStats | null | any;
@@ -66,8 +15,10 @@ const AssetsDetail: React.FC<ProductDetailProps> = ({
   unitType = "unit",
 }) => {
   const navigate = useNavigate();
+  const profile = useAppSelector((state) => state.admin.profile);
+  const userRole = profile?.user?.user_role?.toLowerCase();
 
-  // Create base cards array
+
   const baseCards = [
     {
       title: "Total Applications",
@@ -93,11 +44,14 @@ const AssetsDetail: React.FC<ProductDetailProps> = ({
       borderColor: "#f5c6cb",
       route: "/applications/rejected",
     },
-    // Recommended Applications will be conditionally added later
+
   ];
 
-  // Add "Recommended Applications" only if NOT cw2
-  if (unitType !== "cw2") {
+
+  const restrictedRoles = ["brigade", "corps", "division", "command"];
+  const isRestrictedRole = restrictedRoles.includes(userRole || "");
+  
+  if (unitType !== "cw2" && !isRestrictedRole) {
     baseCards.push({
       title: "Recommended Applications",
       value: dashboardStats?.acceptedApplications ?? 0,
@@ -108,7 +62,7 @@ const AssetsDetail: React.FC<ProductDetailProps> = ({
     });
   }
 
-  // Add extra cards for cw2
+
   const cards =
     unitType === "cw2"
       ? [

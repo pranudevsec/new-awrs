@@ -25,7 +25,7 @@ exports.createCitation = async (data, user) => {
 
     const { award_type, parameters } = citation_fds;
 
-    // Get parameter details from Parameter_Master
+
     const paramResult = await db.query(
       `SELECT param_id, name, subsubcategory, subcategory, category, per_unit_mark, max_marks, negative
        FROM Parameter_Master
@@ -44,7 +44,7 @@ exports.createCitation = async (data, user) => {
       return undefined;
     };
 
-    // Process parameters and calculate marks
+
     const updatedParameters = parameters.map((p) => {
       const matchedParam = findMatchedParam(p.id);
       if (!matchedParam) {
@@ -84,7 +84,7 @@ exports.createCitation = async (data, user) => {
       last_approved_by_role = "unit";
     }
 
-    // Insert citation into Citation_tab
+
     const citationQuery = `
       INSERT INTO Citation_tab (
         unit_id, date_init, citation_fds, last_approved_by_role, 
@@ -111,7 +111,7 @@ exports.createCitation = async (data, user) => {
 
     const citationId = citationResult.rows[0].citation_id;
 
-    // Insert parameters into Citation_Parameter table
+
     for (const param of parameters) {
       const matchedParam = findMatchedParam(param.id);
       if (matchedParam) {
@@ -154,7 +154,7 @@ exports.updateCitation = async (citationId, data, user) => {
     const profile = await AuthService.getProfile(user);
     const unit = profile?.data?.unit;
 
-    // Check if citation exists and belongs to the unit
+
     const existingCitation = await db.query(
       "SELECT * FROM Citation_tab WHERE citation_id = $1 AND unit_id = $2",
       [citationId, unit.unit_id]
@@ -181,7 +181,7 @@ exports.updateCitation = async (citationId, data, user) => {
       return ResponseHelper.error(400, "No valid fields to update");
     }
 
-    // Handle the 'citation_fds' field updates
+
     if (keys.includes("citation_fds")) {
       const { award_type, parameters } = data.citation_fds;
 
@@ -194,12 +194,12 @@ exports.updateCitation = async (citationId, data, user) => {
 
       const paramList = paramResult.rows;
 
-      // Find matching parameters from Parameter_Master
+
       const findMatchedParam = (paramId) => {
         return paramList.find(p => p.param_id === paramId);
       };
 
-      // Update the parameters with the matched data
+
       const updatedParameters = parameters.map((p) => {
         const matchedParam = findMatchedParam(p.id);
         if (!matchedParam) {
@@ -223,14 +223,14 @@ exports.updateCitation = async (citationId, data, user) => {
         };
       });
 
-      // Update the citation_fds with updated parameters
+
       data.citation_fds.parameters = updatedParameters;
 
-      // Update Citation_Parameter table
-      // First, delete existing parameters for this citation
+
+
       await db.query("DELETE FROM Citation_Parameter WHERE citation_id = $1", [citationId]);
 
-      // Insert updated parameters
+
       for (const param of parameters) {
         const matchedParam = findMatchedParam(param.id);
         if (matchedParam) {
@@ -258,7 +258,7 @@ exports.updateCitation = async (citationId, data, user) => {
       }
     }
 
-    // Prepare the update query for the allowed fields
+
     const values = keys.map((key) =>
       key === "citation_fds" ? JSON.stringify(data[key]) : data[key]
     );

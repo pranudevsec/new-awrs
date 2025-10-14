@@ -2,7 +2,6 @@ const ResponseHelper = require("../utils/responseHelper");
 const { StatusCodes } = require("http-status-codes");
 const db = require("../db/army2-connection");
 
-// Get all Brigade entries
 exports.getBrigades = async (req, res) => {
   try {
     const result = await db.query(`
@@ -22,7 +21,6 @@ exports.getBrigades = async (req, res) => {
   }
 };
 
-// Get all Corps entries
 exports.getCorps = async (req, res) => {
   try {
     const result = await db.query(`
@@ -42,7 +40,6 @@ exports.getCorps = async (req, res) => {
   }
 };
 
-// Get all Command entries
 exports.getCommands = async (req, res) => {
   try {
     const result = await db.query(`
@@ -62,7 +59,6 @@ exports.getCommands = async (req, res) => {
   }
 };
 
-// Get all Division entries
 exports.getDivisions = async (req, res) => {
   try {
     const result = await db.query(`
@@ -82,7 +78,6 @@ exports.getDivisions = async (req, res) => {
   }
 };
 
-// Get all Arms Service entries
 exports.getArmsServices = async (req, res) => {
   try {
     const result = await db.query(`
@@ -102,7 +97,6 @@ exports.getArmsServices = async (req, res) => {
   }
 };
 
-// Get all Role entries
 exports.getRoles = async (req, res) => {
   try {
     const result = await db.query(`
@@ -122,7 +116,6 @@ exports.getRoles = async (req, res) => {
   }
 };
 
-// Get all Deployment entries
 exports.getDeployments = async (req, res) => {
   try {
     const result = await db.query(`
@@ -142,7 +135,6 @@ exports.getDeployments = async (req, res) => {
   }
 };
 
-// Get all Units
 exports.getUnits = async (req, res) => {
   try {
     const result = await db.query(`

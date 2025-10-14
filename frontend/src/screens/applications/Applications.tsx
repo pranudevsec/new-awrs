@@ -27,7 +27,7 @@ const Applications = () => {
   
     const fetchData = async () => {
       try {
-        // Citation params
+
         const citationRes = await dispatch(
           fetchParameters({
             awardType: "citation",
@@ -44,7 +44,7 @@ const Applications = () => {
           setCitationParams([...citationRes.data].reverse());
         }
   
-        // Appreciation params
+
         const appreciationRes = await dispatch(
           fetchParameters({
             awardType: "appreciation",
