@@ -23,6 +23,10 @@ export interface ApplicationDetail {
   date_init: string;
   fds: any;
   remarks: any;
+  status_flag: any;
+  rejected_reason: any;
+  isfinalized: any;
+  isFinalized?: any;
   clarifications_count: number;
   total_pending_clarifications: number;
   unit_name: string;
@@ -67,6 +71,8 @@ export interface UpdateApplicationParams {
   is_mo_ol_member?: boolean;
   member?: any;
   level?: string;
+  reason?: string;
+  [key: string]: any;
 }
 export interface UpdateApplicationResponse {
   success: boolean;

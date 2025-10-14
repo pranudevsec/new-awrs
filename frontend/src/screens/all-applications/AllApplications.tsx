@@ -488,28 +488,28 @@ const handleExportPDF = async () => {
             ) : (
               units.length > 0 &&
               units.map((unit: any) => {
-                let approverRole = "Unit";
-                if (
-                  unit?.status_flag === "rejected" &&
-                  unit?.last_rejected_by_role
-                ) {
-                  approverRole =
-                    unit.last_rejected_by_role.charAt(0).toUpperCase() +
-                    unit.last_rejected_by_role.slice(1);
-                } else if (
-                  unit?.status_flag === "shortlisted_approved" &&
-                  unit?.last_shortlisted_approved_role
-                ) {
-                  approverRole =
-                    unit.last_shortlisted_approved_role
-                      .charAt(0)
-                      .toUpperCase() +
-                    unit.last_shortlisted_approved_role.slice(1);
-                } else if (unit?.last_approved_by_role) {
-                  approverRole =
-                    unit.last_approved_by_role.charAt(0).toUpperCase() +
-                    unit.last_approved_by_role.slice(1);
-                }
+                // let approverRole = "Unit";
+                // if (
+                //   unit?.status_flag === "rejected" &&
+                //   unit?.last_rejected_by_role
+                // ) {
+                //   approverRole =
+                //     unit.last_rejected_by_role.charAt(0).toUpperCase() +
+                //     unit.last_rejected_by_role.slice(1);
+                // } else if (
+                //   unit?.status_flag === "shortlisted_approved" &&
+                //   unit?.last_shortlisted_approved_role
+                // ) {
+                //   approverRole =
+                //     unit.last_shortlisted_approved_role
+                //       .charAt(0)
+                //       .toUpperCase() +
+                //     unit.last_shortlisted_approved_role.slice(1);
+                // } else if (unit?.last_approved_by_role) {
+                //   approverRole =
+                //     unit.last_approved_by_role.charAt(0).toUpperCase() +
+                //     unit.last_approved_by_role.slice(1);
+                // }
 
                 return (
                   <tr

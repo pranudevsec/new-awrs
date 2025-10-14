@@ -485,6 +485,7 @@ exports.getSingleApplicationForUnit = async (
           c.is_mp_review,
           c.isfinalized,
           c.last_rejected_by_role,
+          c.rejected_reason,
           c.remarks
         FROM Citation_tab c
         JOIN Unit_tab u ON c.unit_id = u.unit_id
@@ -511,6 +512,7 @@ exports.getSingleApplicationForUnit = async (
           a.is_dv_review,
           a.is_mp_review,
              a.last_rejected_by_role,
+                       a.rejected_reason,
           a.remarks
         FROM Appre_tab a
         JOIN Unit_tab u ON a.unit_id = u.unit_id
@@ -1323,7 +1325,8 @@ exports.updateApplicationStatus = async (
   user,
   member = null,
   withdrawRequested = false,
-  withdraw_status = null
+  withdraw_status = null,
+  reason
 ) => {
   const client = await dbService.getClient();
   try {
@@ -1603,17 +1606,18 @@ exports.updateApplicationStatus = async (
           RETURNING *;
         `;
         values = [statusLower, id, user.user_role];
-      } else if (statusLower === "rejected") {
+      }else if (statusLower === "rejected") {
         query = `
           UPDATE ${config.table}
           SET status_flag = $1,
               last_rejected_by_role = $3,
-              last_rejected_at = $4
+              last_rejected_at = $4,
+              rejected_reason = $5
           WHERE ${config.column} = $2
           RETURNING *;
         `;
-        values = [statusLower, id, user.user_role, now];
-      } else if (statusLower) {
+        values = [statusLower, id, user.user_role, now, reason];
+      }else if (statusLower) {
         query = `
           UPDATE ${config.table}
           SET status_flag = $1
@@ -2269,7 +2273,6 @@ exports.getApplicationsHistory = async (user, query) => {
     const limitInt = parseInt(limit);
     const offset = (pageInt - 1) * limitInt;
 
-
     if (user_role.toLowerCase() === "cw2") {
       const approvalField =
         user.cw2_type === "mo"
@@ -2290,7 +2293,7 @@ exports.getApplicationsHistory = async (user, query) => {
         ),
       ]);
       let allApps = [...citationsRes.rows, ...appreciationsRes.rows];
-
+      allApps=await attachFdsToApplications(allApps)
       if (award_type) {
         allApps = allApps.filter(
           (app) =>
@@ -2319,33 +2322,45 @@ exports.getApplicationsHistory = async (user, query) => {
       );
     }
 
-    const subordinateFieldMap = {
-      brigade: "brigade_id",
-      division: "division_id",
-      corps: "corps_id",
-      command: "command_id",
-    };
-
+    const ROLE_HIERARCHY = [
+      "unit",
+      "brigade",
+      "division",
+      "corps",
+      "command",
+    ];
+    const currentRole = user_role.toLowerCase();
+    const currentIndex = ROLE_HIERARCHY.indexOf(currentRole);
     let unitIds = [];
     if (user_role.toLowerCase() === "unit") {
       unitIds = [unit.unit_id];
     } else {
-      const matchField = subordinateFieldMap[user_role.toLowerCase()];
-      if (!matchField) throw new Error(`Invalid mapping for role: ${user_role.toLowerCase()}`);
+const roleTableMap = {
+  brigade: { table: "Brigade_Master", idField: "brigade_id", nameField: "brigade_name" },
+  division: { table: "Division_Master", idField: "division_id", nameField: "division_name" },
+  corps: { table: "Corps_Master", idField: "corps_id", nameField: "corps_name" },
+  command: { table: "Command_Master", idField: "command_id", nameField: "command_name" },
+};
 
-      const parentId = unit[matchField]; 
+const { table, idField, nameField } = roleTableMap[user_role.toLowerCase()] || {};
+if (!table) throw new Error(`Invalid role: ${user_role}`);
 
-      const subUnitsRes = await client.query(
-        `SELECT unit_id FROM Unit_tab WHERE "${matchField}" = $1`,
-        [parentId]
-      );
+const masterRes = await client.query(
+  `SELECT ${idField} FROM ${table} WHERE ${nameField} = $1 LIMIT 1`,
+  [unit.name]
+);
+if (masterRes.rows.length === 0)
+  throw new Error(`No matching record found in ${table} for name: ${unit.name}`);
 
-      unitIds = subUnitsRes.rows.map((u) => u.unit_id);
+const parentId = masterRes.rows[0][idField];
+
+const subUnitsRes = await client.query(
+  `SELECT unit_id FROM Unit_tab WHERE ${idField} = $1`,
+  [parentId]
+);
+
+ unitIds = subUnitsRes.rows.map((u) => u.unit_id);
     }
-
-
-
-
 
     if (unitIds.length === 0) {
       return ResponseHelper.success(200, "No applications found", [], {
@@ -2368,13 +2383,14 @@ exports.getApplicationsHistory = async (user, query) => {
         (status_flag = 'withdrawed' AND withdraw_requested_by = ANY($4))
       )
     `;
+    console.log('baseFilters--------',baseFilters)
     const queryParams = [unitIds, allowedRoles, lowerRoles, [user.user_role]];
+    console.log('queryParams--------',queryParams)
     const citationQuery = `
     SELECT 
       c.citation_id AS id,
       'citation' AS type,
       c.unit_id,
-      row_to_json(u) AS unit_details,
       c.date_init,
       c.status_flag,
       c.is_mo_approved,
@@ -2388,34 +2404,17 @@ exports.getApplicationsHistory = async (user, query) => {
       SELECT 
         unit_id,
         sos_no,
-        name,
-        adm_channel,
-        tech_channel,
-        bde,
-        div,
-        corps,
-        comd,
-        unit_type,
-        matrix_unit,
-        location,
-        awards,
-        members,
-        is_hr_review,
-        is_dv_review,
-        is_mp_review,
-        created_at,
-        updated_at
+        name
       FROM Unit_tab
     ) u ON c.unit_id = u.unit_id
     WHERE ${baseFilters.replace(/unit_id/g, "c.unit_id")}
   `;
-
+  console.log('helloooo--------')
     const appreQuery = `
     SELECT 
       a.appreciation_id AS id,
       'appreciation' AS type,
       a.unit_id,
-      row_to_json(u) AS unit_details,
       a.date_init,
       a.status_flag,
       a.is_mo_approved,
@@ -2429,23 +2428,7 @@ exports.getApplicationsHistory = async (user, query) => {
       SELECT 
         unit_id,
         sos_no,
-        name,
-        adm_channel,
-        tech_channel,
-        bde,
-        div,
-        corps,
-        comd,
-        unit_type,
-        matrix_unit,
-        location,
-        awards,
-        members,
-        is_hr_review,
-        is_dv_review,
-        is_mp_review,
-        created_at,
-        updated_at
+        name
       FROM Unit_tab
     ) u ON a.unit_id = u.unit_id
     WHERE ${baseFilters.replace(/unit_id/g, "a.unit_id")}
@@ -2457,6 +2440,7 @@ exports.getApplicationsHistory = async (user, query) => {
     ]);
 
     let allApps = [...citations.rows, ...appreciations.rows];
+    console.log(allApps)
     allApps = await attachFdsToApplications(allApps);
     if (award_type) {
       allApps = allApps.filter(

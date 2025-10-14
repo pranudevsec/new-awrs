@@ -51,10 +51,7 @@ const ICNumberInput: React.FC<ICNumberInputProps> = ({
     
 
     const regex = /^[0-9]{0,5}[A-Z]?$/;
-    
-
-    const completeRegex = /^[0-9]{5}[A-Z]$/;
-    
+        
     if (regex.test(cleanValue) || cleanValue === "") {
       setUserInput(cleanValue);
 

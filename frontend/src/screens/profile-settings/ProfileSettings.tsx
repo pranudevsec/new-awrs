@@ -461,16 +461,14 @@ const ProfileSettings = () => {
     }));
   };
 
-
-  const validateDateRange = (startMonth: string, startYear: string, endMonth: string, endYear: string) => {
-    if (!startMonth || !startYear || !endMonth || !endYear) return true;
+  // const validateDateRange = (startMonth: string, startYear: string, endMonth: string, endYear: string) => {
+  //   if (!startMonth || !startYear || !endMonth || !endYear) return true;
     
-    const startDate = new Date(parseInt(startYear), parseInt(startMonth) - 1);
-    const endDate = new Date(parseInt(endYear), parseInt(endMonth) - 1);
+  //   const startDate = new Date(parseInt(startYear), parseInt(startMonth) - 1);
+  //   const endDate = new Date(parseInt(endYear), parseInt(endMonth) - 1);
     
-    return startDate <= endDate;
-  };
-
+  //   return startDate <= endDate;
+  // };
 
   const handleDateFieldChange = (field: string, value: string) => {
     formik.setFieldValue(field, value);

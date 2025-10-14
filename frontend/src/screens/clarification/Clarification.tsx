@@ -1,12 +1,10 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { SVGICON } from "../../constants/iconsList";
-import { awardTypeOptions } from "../../data/options";
 import { useAppDispatch, useAppSelector } from "../../reduxToolkit/hooks";
 import { getClarifications, getSubordinateClarifications } from "../../reduxToolkit/services/clarification/clarificationService";
 import type { Parameter } from "../../reduxToolkit/services/parameter/parameterInterface";
 import Breadcrumb from "../../components/ui/breadcrumb/Breadcrumb";
-import FormSelect from "../../components/form/FormSelect";
 import Loader from "../../components/ui/loader/Loader";
 import EmptyTable from "../../components/ui/empty-table/EmptyTable";
 import Pagination from "../../components/ui/pagination/Pagination";
@@ -21,7 +19,6 @@ const Clarification = () => {
 
 
   const [awardType, setAwardType] = useState<string | null>(null);
-  const [searchTerm, setSearchTerm] = useState<string>("");
   const [debouncedSearch, setDebouncedSearch] = useState<string>("");
   const [page, setPage] = useState<number>(1);
   const [limit, setLimit] = useState<number>(10);
@@ -32,6 +29,7 @@ const Clarification = () => {
   }, []);
 
   useEffect(() => {
+    setAwardType(null)
     if (profile?.user?.user_role) {
       if (profile?.user?.user_role?.trim() === "unit") {
         dispatch(getClarifications({ awardType: awardType ?? "", search: debouncedSearch, page, limit }));

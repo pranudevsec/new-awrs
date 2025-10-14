@@ -3,9 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { useAppDispatch, useAppSelector } from "../../../reduxToolkit/hooks";
 import { SVGICON } from "../../../constants/iconsList";
 import { fetchApplicationUnits, fetchSubordinates } from "../../../reduxToolkit/services/application/applicationService";
-import { awardTypeOptions } from "../../../data/options";
 import Breadcrumb from "../../../components/ui/breadcrumb/Breadcrumb";
-import FormSelect from "../../../components/form/FormSelect";
 import Loader from "../../../components/ui/loader/Loader";
 import EmptyTable from "../../../components/ui/empty-table/EmptyTable";
 import Pagination from "../../../components/ui/pagination/Pagination";
@@ -16,10 +14,6 @@ const ClarificationRaisedList = () => {
 
   const { profile } = useAppSelector((state) => state.admin);
   const { units, loading, meta } = useAppSelector((state) => state.application);
-
-
-  const [awardType, setAwardType] = useState<string | null>(null);
-  const [search, setSearch] = useState<string>('');
   const [page, setPage] = useState<number>(1);
   const [limit, setLimit] = useState<number>(10);
 
@@ -39,7 +33,7 @@ const ClarificationRaisedList = () => {
     };
 
     fetchData();
-  }, [awardType, search, profile, page, limit]);
+  }, [  profile, page, limit]);
 
   const filteredUnits = useMemo(() => {
     return Array.isArray(units)

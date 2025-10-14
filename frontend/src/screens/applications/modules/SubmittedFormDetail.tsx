@@ -720,6 +720,17 @@ const SubmittedFormDetail = () => {
                     </div>
                 </div>
             </div>
+            <div className="table-filter-area mb-4">
+                <div className="d-flex flex-wrap justify-content-between align-items-center gap-3">
+                {role === "unit" && unitDetail?.status_flag === "rejected" && unitDetail?.rejected_reason && (
+  <div className="text-danger fw-semibold text-center mt-3">
+    Your application has been rejected for the following reason:{" "}
+    <span className="fw-bold">{unitDetail?.rejected_reason}</span>
+  </div>
+)}
+
+                </div>
+            </div>
             {/* {unitDetail?.fds?.awards?.length > 0 && (
                     <div className="mt-4">
                         <h5 className="mb-3">Awards</h5>

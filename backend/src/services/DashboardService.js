@@ -182,12 +182,8 @@ exports.getHomeCounts = async (user) => {
     
 
     const statsResult = await ApplicationService.getApplicationStats(user, { page: 1, limit: 10000 });
-    
-      statusCode: statsResult?.statusCode,
-      success: statsResult?.success,
-      data: statsResult?.data
-    }, null, 2));
-    
+  
+  
     if (!statsResult || statsResult.statusCode !== 200) {
       return ResponseHelper.error(500, "Failed to fetch application stats for home counts");
     }

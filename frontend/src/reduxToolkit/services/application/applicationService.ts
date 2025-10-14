@@ -311,6 +311,7 @@ export const updateApplication = createAsyncThunk<
         iscdr: params.iscdr,
         withdrawRequested: params.withdrawRequested,
         withdraw_status: params.withdraw_status,
+        reason:params?.reason
       }
     );
 

@@ -21,6 +21,7 @@ import {
   updateApplication
 } from "../../../reduxToolkit/services/application/applicationService";
 import { useDebounce } from "../../../hooks/useDebounce";
+import RejectionReasonModal from "../../../modals/RejectionReasonModal";
 
 declare module "jspdf" {
   interface jsPDF {
@@ -52,6 +53,8 @@ const AcceptedApplicationsList = () => {
   const [limit, setLimit] = useState<number>(10);
   const [priorityValues, setPriorityValues] = useState<{ [key: string]: { [type: string]: string } }>({});
   const [graceMarksValues, setGraceMarksValues] = useState<{ [key: string]: { [type: string]: string } }>({});
+  const [showReasonModal, setShowReasonModal] = useState(false);
+  const [selectedUnit, setSelectedUnit] = useState(null as any);
 
   const lowerRole = hierarchy[hierarchy.indexOf(role) - 1] ?? null;
   const currentRole = profile?.user?.user_role?.toLowerCase() ?? "";
@@ -93,6 +96,21 @@ const AcceptedApplicationsList = () => {
 
     return () => { clearTimeout(handler) };
   }, [searchTerm]);
+
+  const handleReasonSubmit = (reason: string) => {
+    if (!selectedUnit) return;
+    dispatch(
+      updateApplication({
+        id: selectedUnit?.id,
+        type: selectedUnit?.type,
+        status: "rejected",
+        reason, 
+      } )
+    ).then(() => {
+      setShowReasonModal(false);
+      navigate("/applications/list");
+    });
+  };
 
   const fetchData = () => {
     const params = {
@@ -867,22 +885,17 @@ const AcceptedApplicationsList = () => {
                           Approve
                         </button>
 
-                        <button
-                          className="_btn danger"
-                          onClick={() => {
-                            dispatch(
-                              updateApplication({
-                                id: unit?.id,
-                                type: unit?.type,
-                                status: "rejected",
-                              })
-                            ).then(() => {
-                              navigate("/applications/list");
-                            });
-                          }}
-                        >
-                          Reject
-                        </button>
+                 <button
+        className="_btn danger"
+        onClick={() => {
+          setSelectedUnit(unit);
+          setShowReasonModal(true); 
+        }}
+      >
+        Reject
+      </button>
+
+
                       </div>
                     )}
                   </td>
@@ -915,6 +928,11 @@ const AcceptedApplicationsList = () => {
           handleBulkApprove();
           setShowSignatureModal(false);
         }}
+      />
+        <RejectionReasonModal
+        show={showReasonModal}
+        handleClose={() => setShowReasonModal(false)}
+        onSubmit={(reason) => handleReasonSubmit(reason)}
       />
     </div>
   );

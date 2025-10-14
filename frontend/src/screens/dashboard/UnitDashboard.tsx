@@ -5,12 +5,8 @@ import ApplicationStatus from "./components/ApplicationStatus";
 import AssetsDetail from "./components/AssetsDetail";
 import UnitScoreChart from "./components/UnitScoreChart";
 import Loader from "../../components/ui/loader/Loader";
-import FormSelect from "../../components/form/FormSelect";
 import { getHomeCountStats } from "../../reduxToolkit/services/command-panel/commandPanelService";
 import { fetchApplicationHistory, fetchSubordinates, fetchDashboardStats } from "../../reduxToolkit/services/application/applicationService";
-import { awardTypeOptions } from "../../data/options";
-import jsPDF from 'jspdf';
-import autoTable from 'jspdf-autotable';
 
 const UnitDashboard = ({ level }: { level: "brigade" | "division" | "corps" | "command"}) => {
   const dispatch = useAppDispatch();
@@ -18,15 +14,12 @@ const UnitDashboard = ({ level }: { level: "brigade" | "division" | "corps" | "c
   const [historyUnits, setHistoryUnits] = useState<any[]>([]);
   const [awardTypeFilter, setAwardTypeFilter] = useState<string>("All");
 
-
   const loading = useAppSelector(state => state.application.loading);
   const dashboardStats = useAppSelector(state => state.application.dashboardStats);
 
-
-
   useEffect(() => {
     dispatch(getHomeCountStats());
-    
+    setAwardTypeFilter("")
 
     const dashboardParams = {
       page: 1,
@@ -119,44 +112,44 @@ const UnitDashboard = ({ level }: { level: "brigade" | "division" | "corps" | "c
   });
 
 
-  const handleExportPDF = () => {
-    const pdfData = pendingUnits.map((unit: any) => {
-      const parameters = unit?.fds?.parameters ?? [];
-      const totalNegativeMarks = parameters
-        .filter((param: any) => param?.negative)
-        .reduce((acc: number, param: any) => acc + Number(param?.marks ?? 0), 0);
-      return [
-        unit.id,
-        unit.unit_id,
-        unit.fds.unit_type ?? '',
-        getTotalMarks(unit),
-        totalNegativeMarks,
-        unit.type ? unit.type.charAt(0).toUpperCase() + unit.type.slice(1) : '-',
-      ];
-    });
+  // const handleExportPDF = () => {
+  //   const pdfData = pendingUnits.map((unit: any) => {
+  //     const parameters = unit?.fds?.parameters ?? [];
+  //     const totalNegativeMarks = parameters
+  //       .filter((param: any) => param?.negative)
+  //       .reduce((acc: number, param: any) => acc + Number(param?.marks ?? 0), 0);
+  //     return [
+  //       unit.id,
+  //       unit.unit_id,
+  //       unit.fds.unit_type ?? '',
+  //       getTotalMarks(unit),
+  //       totalNegativeMarks,
+  //       unit.type ? unit.type.charAt(0).toUpperCase() + unit.type.slice(1) : '-',
+  //     ];
+  //   });
 
-    const doc = new jsPDF({ orientation: "landscape", unit: "pt", format: "a4" });
+  //   const doc = new jsPDF({ orientation: "landscape", unit: "pt", format: "a4" });
     
 
-    doc.setFontSize(16);
-    doc.text("Pending Applications Report", 14, 22);
+  //   doc.setFontSize(16);
+  //   doc.text("Pending Applications Report", 14, 22);
 
 
-    autoTable(doc, {
-      head: [['Application Id', 'Unit ID', 'Arm/Service', 'Total Marks', 'Total Negative Marks', 'Application Type']],
-      body: pdfData,
-      startY: 30,
-      theme: "grid",
-      headStyles: { fillColor: [41, 128, 185] },
-      styles: { fontSize: 8, cellPadding: 4, overflow: "linebreak" },
-      columnStyles: {
-        3: { cellWidth: 60, halign: "right" }, // Total Marks column
-        4: { cellWidth: 60, halign: "right" }, // Total Negative Marks column
-      },
-    });
+  //   autoTable(doc, {
+  //     head: [['Application Id', 'Unit ID', 'Arm/Service', 'Total Marks', 'Total Negative Marks', 'Application Type']],
+  //     body: pdfData,
+  //     startY: 30,
+  //     theme: "grid",
+  //     headStyles: { fillColor: [41, 128, 185] },
+  //     styles: { fontSize: 8, cellPadding: 4, overflow: "linebreak" },
+  //     columnStyles: {
+  //       3: { cellWidth: 60, halign: "right" }, // Total Marks column
+  //       4: { cellWidth: 60, halign: "right" }, // Total Negative Marks column
+  //     },
+  //   });
 
-    doc.save('Pending_Applications.pdf');
-  };
+  //   doc.save('Pending_Applications.pdf');
+  // };
 
   if (loading) return <Loader />;
 
