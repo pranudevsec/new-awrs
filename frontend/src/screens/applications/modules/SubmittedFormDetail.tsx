@@ -346,6 +346,28 @@ const SubmittedFormDetail = () => {
         }
     };
 
+    const renderUploadButtons = (uploads: string[]) => {
+        return uploads.map((filePath: string) => (
+            <button
+                key={filePath}
+                onClick={() => handleDocumentDownload(filePath, filePath.split("/").pop() || "document")}
+                style={{
+                    fontSize: 14,
+                    wordBreak: "break-word",
+                    background: "none",
+                    border: "none",
+                    color: "#1d4ed8",
+                    textDecoration: "underline",
+                    cursor: "pointer",
+                    padding: 0,
+                    textAlign: "left"
+                }}
+            >
+                {filePath.split("/").pop()}
+            </button>
+        ));
+    };
+
     const handlePriorityChange = async (value: string) => {
         const priorityPoints = parseInt(value);
 
@@ -575,25 +597,7 @@ const SubmittedFormDetail = () => {
                                 } else if (typeof param.upload === "string") {
                                     uploads = param.upload.split(",");
                                 }
-                                return uploads.map((filePath: string) => (
-                                    <button
-                                        key={filePath}
-                                        onClick={() => handleDocumentDownload(filePath, filePath.split("/").pop() || "document")}
-                                        style={{ 
-                                            fontSize: 14, 
-                                            wordBreak: "break-word",
-                                            background: "none",
-                                            border: "none",
-                                            color: "#1d4ed8",
-                                            textDecoration: "underline",
-                                            cursor: "pointer",
-                                            padding: 0,
-                                            textAlign: "left"
-                                        }}
-                                    >
-                                        {filePath.split("/").pop()}
-                                    </button>
-                                ));
+                                return renderUploadButtons(uploads);
                             })()}
                         </div>
                     )}

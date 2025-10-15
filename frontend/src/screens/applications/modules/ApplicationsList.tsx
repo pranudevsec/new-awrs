@@ -325,6 +325,7 @@ const ApplicationsList = () => {
           {role === "unit" && (
             <th style={{ width: 150, minWidth: 150, maxWidth: 150, color: "white" }}>Status</th>
           )}
+         
           <th style={{ width: 100, minWidth: 100, maxWidth: 100, color: "white" }}></th>
         </tr>
       </thead>
@@ -332,7 +333,7 @@ const ApplicationsList = () => {
   <tbody>
   {loading ? (
     <tr>
-      <td colSpan={role === "headquarter" ? 11 : (role === "unit" ? 8 : 10)}>
+      <td colSpan={role === "headquarter" ? 11 : (role === "unit" ? 9 : 10)}>
         <div className="d-flex justify-content-center py-5">
           <Loader inline size={40} />
         </div>
@@ -348,18 +349,24 @@ const ApplicationsList = () => {
         unit?.is_mo_approved === true &&
         unit?.is_ol_approved === true;
 
+      const onRowClick = () => {
+        if (unit.status_flag === "draft") return;
+        if (location.pathname === "/submitted-forms/list") {
+          navigate(`/submitted-forms/list/${unit.id}?award_type=${unit.type}`);
+        } else {
+          navigate(`/applications/list/${unit.id}?award_type=${unit.type}`);
+        }
+      };
+
+      const renderNetMarks = () => {
+        const netMarks = unit.netMarks?.toFixed(2) ?? getTotalMarks(unit).toFixed(2);
+        return netMarks;
+      };
+
       return (
         <tr
           key={unit.id}
-          onClick={() => {
-            if (unit.status_flag === "draft") return;
-
-            if (location.pathname === "/submitted-forms/list") {
-              navigate(`/submitted-forms/list/${unit.id}?award_type=${unit.type}`);
-            } else {
-              navigate(`/applications/list/${unit.id}?award_type=${unit.type}`);
-            }
-          }}
+          onClick={onRowClick}
           style={{ cursor: "pointer" }}
         >
          {role === "headquarter" && (
@@ -408,10 +415,7 @@ const ApplicationsList = () => {
           </td>
           <td style={{ width: 150 }}>
             <p className="fw-4">
-              {(() => {
-                const netMarks = unit.netMarks?.toFixed(2) ?? getTotalMarks(unit).toFixed(2);
-                return netMarks;
-              })()}
+              {renderNetMarks()}
             </p>
           </td>
           <td style={{ width: 150 }}>
@@ -433,11 +437,30 @@ const ApplicationsList = () => {
 
           {role === "unit" && (
             <td style={{ width: 150 }}>
-              <p className="fw-4">
-                {unit?.status_flag
-                  ? unit.status_flag.charAt(0).toUpperCase() +
-                    unit.status_flag.slice(1)
-                  : "Submitted"}
+              <p className="fw-4" style={{
+                color: unit?.status_flag === "rejected" ? "#dc3545" : 
+                       unit?.status_flag === "approved" ? "#28a745" : "inherit",
+                fontWeight: unit?.status_flag === "rejected" ? "bold" : "normal"
+              }}>
+                {unit?.status_flag === "rejected" 
+                  ? "Rejected"
+                  : unit?.status_flag
+                    ? unit.status_flag.charAt(0).toUpperCase() +
+                      unit.status_flag.slice(1)
+                    : "Submitted"}
+              </p>
+            </td>
+          )}
+
+          {role === "unit" && (
+            <td style={{ width: 200 }}>
+              <p className="fw-4" style={{ 
+                color: unit?.status_flag === "rejected" ? "#dc3545" : "inherit",
+                fontStyle: unit?.status_flag === "rejected" ? "italic" : "normal"
+              }}>
+                {unit?.status_flag === "rejected" 
+                  ? "Click to view reason" 
+                  : "-"}
               </p>
             </td>
           )}

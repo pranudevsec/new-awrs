@@ -121,32 +121,38 @@ const StepProgressBar: React.FC<StepProgressBarProps> = ({
 
   const currentStep = getCurrentStep();
 
+  const resolveRejectedRole = () => {
+    let role = unitDetail?.last_rejected_by_role?.toLowerCase();
+    if (role === "cw2_mo") role = "medical officer (mo)";
+    if (role === "cw2_ol") role = "operational leader (ol)";
+    return role;
+  };
+
+  const computeFlags = (label: string, index: number, rejectedRole: string | undefined) => {
+    const lowerIncludesRejected = rejectedRole
+      ? label.toLowerCase().includes(rejectedRole)
+      : false;
+    const isRejected = unitDetail?.status_flag === "rejected" && lowerIncludesRejected;
+    const isCompleted =
+      !isRejected && (index < currentStep || (label === "CW2" && unitDetail?.isfinalized === true));
+    const isCurrent = !isRejected && index === currentStep;
+    return { isRejected, isCompleted, isCurrent };
+  };
+
+  const getStepStatusClass = (isRejected: boolean, isCompleted: boolean, isCurrent: boolean) => {
+    if (isRejected) return "rejected";
+    if (isCompleted) return "completed";
+    if (isCurrent) return "current";
+    return "";
+  };
+
   return (
     <div className="step-progress-container d-flex align-items-center justify-content-center position-relative">
       {steps.map((step: any, index: number) => {
-        let rejectedRole = unitDetail?.last_rejected_by_role?.toLowerCase();
-        if (rejectedRole === "cw2_mo") rejectedRole = "medical officer (mo)";
-        if (rejectedRole === "cw2_ol") rejectedRole = "operational leader (ol)";
-
-        const isRejected =
-          unitDetail?.status_flag === "rejected" &&
-          rejectedRole &&
-          step.label.toLowerCase().includes(rejectedRole);
-
-        const isCompleted =
-          !isRejected &&
-          (index < currentStep ||
-            (step.label === "CW2" && unitDetail?.isfinalized === true));
-
-        const isCurrent = !isRejected && index === currentStep;
-
-        let stepStatusClass = "";
-        if (isRejected) stepStatusClass = "rejected";
-        else if (isCompleted) stepStatusClass = "completed";
-        else if (isCurrent) stepStatusClass = "current";
-
+        const rejectedRole = resolveRejectedRole();
+        const { isRejected, isCompleted, isCurrent } = computeFlags(step.label, index, rejectedRole);
+        const stepStatusClass = getStepStatusClass(isRejected, isCompleted, isCurrent);
         const stepCircleClass = `step-circle d-flex align-items-center justify-content-center fw-6 ${stepStatusClass}`;
-
         return (
           <div
             className="step-item position-relative text-center"
@@ -166,9 +172,7 @@ const StepProgressBar: React.FC<StepProgressBarProps> = ({
 
             <div className="step-label">
               <div>{step.label}</div>
-              <div
-                className={`small ${isRejected ? "text-danger" : "text-muted"}`}
-              >
+              <div className={`small ${isRejected ? "text-danger" : "text-muted"}`}>
                 {isRejected ? "Rejected" : getStepDate(step.label) ?? "Pending"}
               </div>
             </div>

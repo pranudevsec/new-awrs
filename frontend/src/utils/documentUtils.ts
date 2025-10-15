@@ -6,148 +6,85 @@ import { PDFDocument, radians, rgb, StandardFonts } from 'pdf-lib';
  * @param fileName - Name for the downloaded file
  * @param baseURL - Base URL for the API (optional, defaults to current origin)
  */
+// Small internal helpers to reduce nesting without changing behavior
+const resolveActualUrl = (documentUrl: any): string => {
+  if (typeof documentUrl === 'string') return documentUrl;
+  if (Array.isArray(documentUrl)) return documentUrl[0] || '';
+  if (documentUrl && typeof documentUrl === 'object') {
+    return documentUrl.url || documentUrl.path || documentUrl.file || '';
+  }
+  throw new Error(`Invalid document URL type: ${typeof documentUrl}`);
+};
+
+const normalizeBaseUrl = (baseURL?: string): string => {
+  let b = baseURL || window.location.origin;
+  if (b.includes(':3001')) b = b.replace(':3001', ':8385');
+  else if (b === window.location.origin && !b.includes(':8385')) b = b.replace(/:\d+/, ':8385');
+  return b.endsWith('/') ? b : `${b}/`;
+};
+
+const triggerDownload = (buffer: ArrayBuffer | Uint8Array, fileName: string, mime: string) => {
+  const blob = new Blob([buffer], { type: mime });
+  const url = window.URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = fileName;
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  window.URL.revokeObjectURL(url);
+};
+
 export const downloadDocumentWithWatermark = async (
   documentUrl: any,
   fileName: string,
   baseURL?: string
 ): Promise<void> => {
   try {
-    
-
-    let actualUrl: string;
-    
-    if (typeof documentUrl === 'string') {
-      actualUrl = documentUrl;
-    } else if (Array.isArray(documentUrl)) {
-
-      actualUrl = documentUrl[0] || '';
-    } else if (documentUrl && typeof documentUrl === 'object') {
-
-      actualUrl = documentUrl.url || documentUrl.path || documentUrl.file || '';
-    } else {
-      throw new Error(`Invalid document URL type: ${typeof documentUrl}`);
-    }
-    
-
+    const actualUrl = resolveActualUrl(documentUrl);
     if (!actualUrl || typeof actualUrl !== 'string' || actualUrl.trim() === '') {
       throw new Error(`Invalid document URL: ${actualUrl}`);
     }
-    
-    if (!fileName || typeof fileName !== 'string') {
-      throw new Error('Invalid file name');
-    }
-    
+    if (!fileName || typeof fileName !== 'string') throw new Error('Invalid file name');
 
-    let cleanUrl = actualUrl.trim();
-    
-
-    if (cleanUrl.startsWith('/')) {
-      cleanUrl = cleanUrl.substring(1);
-    }
-    
-
-    let defaultBaseURL = baseURL || window.location.origin;
-    
-
-    if (defaultBaseURL.includes(':3001')) {
-      defaultBaseURL = defaultBaseURL.replace(':3001', ':8385');
-    } else if (defaultBaseURL === window.location.origin && !defaultBaseURL.includes(':8385')) {
-
-      defaultBaseURL = defaultBaseURL.replace(/:\d+/, ':8385');
-    }
-    
-    const baseUrlWithSlash = defaultBaseURL.endsWith('/') ? defaultBaseURL : `${defaultBaseURL}/`;
-    const fullUrl = `${baseUrlWithSlash}${cleanUrl}`;
-    
+    const cleanUrl = actualUrl.trim().replace(/^\//, '');
+    const fullUrl = `${normalizeBaseUrl(baseURL)}${cleanUrl}`;
 
     const response = await fetch(fullUrl, {
       method: 'GET',
-      headers: {
-        'Accept': 'application/pdf,application/octet-stream,*/*',
-      },
+      headers: { Accept: 'application/pdf,application/octet-stream,*/*' },
     });
-    
     if (!response.ok) {
-      if (response.status === 404) {
-        throw new Error(`Document not found: ${fileName}. The file may have been deleted or moved.`);
-      }
+      if (response.status === 404) throw new Error(`Document not found: ${fileName}. The file may have been deleted or moved.`);
       throw new Error(`Failed to fetch document: ${response.status} ${response.statusText}`);
     }
-    
-    const arrayBuffer = await response.arrayBuffer();
-    
 
+    const arrayBuffer = await response.arrayBuffer();
     const fileExtension = fileName.split('.').pop() || 'pdf';
     const cleanUnitName = fileName.replace(/[^a-zA-Z0-9]/g, '_');
     const customFileName = `${cleanUnitName}_application.${fileExtension}`;
-    
 
     if (fileName.toLowerCase().endsWith('.pdf')) {
       try {
-
         const pdfBytes = new Uint8Array(arrayBuffer);
-        
-
         const watermarkedPdfBytes = await addWatermarkToPDF(pdfBytes);
-        
-
-        const blob = new Blob([watermarkedPdfBytes], { type: 'application/pdf' });
-        
-
-        const url = window.URL.createObjectURL(blob);
-        const link = document.createElement('a');
-        link.href = url;
-        link.download = customFileName;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        window.URL.revokeObjectURL(url);
-        
-      } catch (watermarkError) {        
-
-        const blob = new Blob([arrayBuffer], { type: 'application/pdf' });
-        const url = window.URL.createObjectURL(blob);
-        const link = document.createElement('a');
-        link.href = url;
-        link.download = customFileName;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        window.URL.revokeObjectURL(url);
+        triggerDownload(watermarkedPdfBytes, customFileName, 'application/pdf');
+      } catch {
+        triggerDownload(arrayBuffer, customFileName, 'application/pdf');
       }
-    } else {
-
-      try {
-        const currentDateTime = new Date().toLocaleString();
-        const userIP = window.location.hostname || "localhost";
-        const convertedPdfBytes = await convertToPDF(arrayBuffer, fileName, userIP, currentDateTime);
-        
-
-        const blob = new Blob([convertedPdfBytes], { type: 'application/pdf' });
-        const url = window.URL.createObjectURL(blob);
-        const link = document.createElement('a');
-        link.href = url;
-        link.download = customFileName.replace(/\.[^/.]+$/, '.pdf'); // Change extension to .pdf
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        window.URL.revokeObjectURL(url);
-        
-      } catch (conversionError) {        
-
-        const mimeType = response.headers.get('content-type') || 'application/octet-stream';
-        const blob = new Blob([arrayBuffer], { type: mimeType });
-        const url = window.URL.createObjectURL(blob);
-        const link = document.createElement('a');
-        link.href = url;
-        link.download = customFileName;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        window.URL.revokeObjectURL(url);
-              }
+      return;
     }
-  } catch (error) {      
+
+    try {
+      const currentDateTime = new Date().toLocaleString();
+      const userIP = window.location.hostname || 'localhost';
+      const convertedPdfBytes = await convertToPDF(arrayBuffer, fileName, userIP, currentDateTime);
+      triggerDownload(convertedPdfBytes, customFileName.replace(/\.[^/.]+$/, '.pdf'), 'application/pdf');
+    } catch {
+      const mimeType = response.headers.get('content-type') || 'application/octet-stream';
+      triggerDownload(arrayBuffer, customFileName, mimeType);
+    }
+  } catch (error) {
     throw error;
   }
 };

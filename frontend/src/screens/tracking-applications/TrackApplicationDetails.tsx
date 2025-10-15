@@ -195,6 +195,33 @@ const TrackApplicationDetails = () => {
     }
   };
 
+  // Helper to flatten uploads rendering to avoid deep inline function nesting
+  const renderUploadButtons = (uploadValue: string[] | string) => {
+    let uploads: string[] = [];
+    if (Array.isArray(uploadValue)) uploads = uploadValue;
+    else if (typeof uploadValue === 'string') uploads = uploadValue.split(',');
+
+    return uploads.map((filePath: string) => (
+      <button
+        key={filePath}
+        onClick={() => handleDocumentDownload(filePath, filePath.split('/').pop() || 'document')}
+        style={{
+          fontSize: 14,
+          wordBreak: 'break-word',
+          background: 'none',
+          border: 'none',
+          color: '#1d4ed8',
+          textDecoration: 'underline',
+          cursor: 'pointer',
+          padding: 0,
+          textAlign: 'left',
+        }}
+      >
+        {filePath.split('/').pop()}
+      </button>
+    ));
+  };
+
 
   const renderParameterRow = (param: any, display: any) => {
     const rows: JSX.Element[] = [];
@@ -216,33 +243,7 @@ const TrackApplicationDetails = () => {
         <td style={{ width: 200 }}>
           {param.upload && (
             <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
-              {(() => {
-                let uploads: string[] = [];
-                if (Array.isArray(param.upload)) {
-                  uploads = param.upload;
-                } else if (typeof param.upload === "string") {
-                  uploads = param.upload.split(",");
-                }
-                return uploads.map((filePath: string) => (
-                  <button
-                    key={filePath}
-                    onClick={() => handleDocumentDownload(filePath, filePath.split("/").pop() || "document")}
-                    style={{ 
-                      fontSize: 14, 
-                      wordBreak: "break-word",
-                      background: "none",
-                      border: "none",
-                      color: "#1d4ed8",
-                      textDecoration: "underline",
-                      cursor: "pointer",
-                      padding: 0,
-                      textAlign: "left"
-                    }}
-                  >
-                    {filePath.split("/").pop()}
-                  </button>
-                ));
-              })()}
+              {renderUploadButtons(param.upload)}
             </div>
           )}
         </td>

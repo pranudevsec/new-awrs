@@ -38,6 +38,17 @@ const ClarificationRoutes = require("./src/routes/ClarificationRoutes");
 const DashboardRoutes = require("./src/routes/DashboardRoutes");
 const MasterRoutes = require("./src/routes/MasterRoutes");
 
+// Add cache control middleware for API routes
+app.use("/api", (req, res, next) => {
+  // Set cache control headers to prevent caching for all API responses
+  res.set({
+    'Cache-Control': 'no-cache, no-store, must-revalidate',
+    'Pragma': 'no-cache',
+    'Expires': '0'
+  });
+  next();
+});
+
 app.use("/api/auth", AuthRoutes);
 app.use("/api/parameter", ParameterRoutes);
 app.use("/api/config", ConfigRoutes);
@@ -66,4 +77,5 @@ app.get("/", (req, res) => {
 
 const port =  process.env.PORT || 8386;
 app.listen(port, () => {
+  console.log(`Server is running on http://localhost:${port}`);
 });

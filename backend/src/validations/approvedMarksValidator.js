@@ -27,7 +27,14 @@ const validateApprovedMarksAgainstLimits = (param, approvedMarks) => {
     throw new Error(`Approved marks (${approved}) cannot exceed the effective maximum (${effectiveMax})`);
   }
 
-  return true;
+  // Return validation result with details instead of always true
+  return {
+    isValid: true,
+    approvedMarks: approved,
+    effectiveMax: effectiveMax,
+    originalMarks: original,
+    maxMarks: maxMarks
+  };
 };
 
 exports.validateApprovedMarksUpdate = [
@@ -36,31 +43,70 @@ exports.validateApprovedMarksUpdate = [
     .isArray()
     .withMessage("parameters must be an array")
     .custom((parameters) => {
-      if (!Array.isArray(parameters)) return true;
+      if (!Array.isArray(parameters)) {
+        return { isValid: true, message: "Parameters validation skipped - not an array" };
+      }
+      
+      const validationResults = [];
+      let hasErrors = false;
       
       parameters.forEach((param, index) => {
         if (param.approved_marks !== undefined) {
-
-          validateApprovedMarksAgainstLimits(param, param.approved_marks);
+          try {
+            const validationResult = validateApprovedMarksAgainstLimits(param, param.approved_marks);
+            param._validationResult = validationResult;
+            validationResults.push({
+              index,
+              paramId: param.id,
+              isValid: validationResult.isValid,
+              approvedMarks: validationResult.approvedMarks,
+              effectiveMax: validationResult.effectiveMax
+            });
+          } catch (error) {
+            hasErrors = true;
+            validationResults.push({
+              index,
+              paramId: param.id,
+              isValid: false,
+              error: error.message
+            });
+          }
         }
       });
       
-      return true;
+      if (hasErrors) {
+        const errorDetails = validationResults
+          .filter(result => !result.isValid)
+          .map(result => `Parameter ${result.paramId}: ${result.error}`)
+          .join('; ');
+        throw new Error(`Validation failed: ${errorDetails}`);
+      }
+      
+      return {
+        isValid: true,
+        validatedCount: validationResults.length,
+        results: validationResults,
+        message: `Successfully validated ${validationResults.length} parameters`
+      };
     }),
 
   body("approved_marks")
     .optional()
     .custom((value, { req }) => {
-
-      if (value !== undefined) {
-
-
-        const approved = Number(value);
-        if (isNaN(approved) || approved < 0) {
-          throw new Error('Approved marks must be a valid non-negative number');
-        }
+      if (value === undefined) {
+        return { isValid: true, message: "Approved marks validation skipped - value undefined" };
       }
-      return true;
+
+      const approved = Number(value);
+      if (isNaN(approved) || approved < 0) {
+        throw new Error('Approved marks must be a valid non-negative number');
+      }
+      
+      return {
+        isValid: true,
+        approvedMarks: approved,
+        message: `Successfully validated approved marks: ${approved}`
+      };
     }),
 
   handleValidationErrors({
@@ -83,7 +129,8 @@ exports.validateSingleApprovedMark = [
         throw new Error('Original parameter data is required for validation');
       }
       
-      return validateApprovedMarksAgainstLimits(originalParam, value);
+      const validationResult = validateApprovedMarksAgainstLimits(originalParam, value);
+      return validationResult.isValid;
     }),
 
   handleValidationErrors({

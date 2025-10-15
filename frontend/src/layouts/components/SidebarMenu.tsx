@@ -37,16 +37,15 @@ const SidebarMenu = ({ onToggleCollapse }: SidebarMenuProps) => {
 
   useEffect(() => {
     if (!userRole) return;
-    const fetchUnits = async (url: string) => {
-      await Axios.get(url);
-    };
+    const url = userRole.trim() === "unit"
+      ? "/api/applications/units?limit=1000"
+      : "/api/applications/subordinates?limit=1000";
     if (userRole.trim() === "unit") {
       dispatch(getClarifications({ awardType: "", search: "", page: 1, limit: 1000 }));
-      fetchUnits("/api/applications/units?limit=1000");
     } else {
       dispatch(getSubordinateClarifications({ awardType: "", search: "", page: 1, limit: 1000 }));
-      fetchUnits("/api/applications/subordinates?limit=1000");
     }
+    Axios.get(url); // fire-and-forget as before
   }, [dispatch, userRole]);
 
   const unitClarifications = useAppSelector((state) => state.clarification.unitClarifications);
@@ -80,45 +79,41 @@ const SidebarMenu = ({ onToggleCollapse }: SidebarMenuProps) => {
 
   let filteredStructure = filterSidebarStructure(userRole, alwaysVisible,cw2_type)
     .filter(item => !extraDashboardLabels.includes(item.label));
-
-  if (["brigade", "division", "corps", "command"].includes(userRole)) {
-    filteredStructure = filteredStructure.filter(item => item.label !== "Home");
-    filteredStructure.push(createSidebarItem("All Applications", SVGICON.sidebar.allApplications, "/all-applications"));
-    if (userRole === "command") {
-      filteredStructure.push(
-        createSidebarItem("Track Applications", SVGICON.sidebar.trackApplications, "/track-applications")
-      );
+  filteredStructure = (function applyRoleInjections(structure: any[]) {
+    let result = structure;
+    if (["brigade", "division", "corps", "command"].includes(userRole)) {
+      result = result.filter(item => item.label !== "Home");
+      result.push(createSidebarItem("All Applications", SVGICON.sidebar.allApplications, "/all-applications"));
+      if (userRole === "command") {
+        result.push(createSidebarItem("Track Applications", SVGICON.sidebar.trackApplications, "/track-applications"));
+      }
+      if (userRole !== "brigade") {
+        result.push(createSidebarItem("Withdraws", SVGICON.sidebar.withdraws, "/withdraw-quests"));
+      }
+      if (!isMember) {
+        result.push(
+          createSidebarItem("History", SVGICON.sidebar.history, "/history"),
+          createSidebarItem("Recommended Application", SVGICON.sidebar.profile, "/application/accepted")
+        );
+      }
     }
-    if (userRole !== "brigade") {
-      filteredStructure.push(createSidebarItem("Withdraws", SVGICON.sidebar.withdraws, "/withdraw-quests"));
+    if (userRole === "headquarter") {
+      result.push(createSidebarItem("All Applications", SVGICON.sidebar.allApplications, "/all-applications"));
+      result.push(createSidebarItem("Track Applications", SVGICON.sidebar.trackApplications, "/track-applications"));
+      result = result.filter(item => item.label !== "Profile Settings");
+      const dashboardItem = sidebarStructure.find(item => item.label === "Dashboard");
+      if (dashboardItem) {
+        result = [dashboardItem, ...result];
+      }
     }
-    if (!isMember) {
-      filteredStructure.push(
-        createSidebarItem("History", SVGICON.sidebar.history, "/history"),
-        createSidebarItem("Recommended Application", SVGICON.sidebar.profile, "/application/accepted")
-      );
+    if (userRole === "unit") {
+      result.push(createSidebarItem("Submitted Forms", SVGICON.sidebar.raisedClarification, "/submitted-forms/list"));
     }
-  }
-
-  if (userRole === "headquarter") {
-    filteredStructure.push(createSidebarItem("All Applications", SVGICON.sidebar.allApplications, "/all-applications"));
-    filteredStructure.push(
-      createSidebarItem("Track Applications", SVGICON.sidebar.trackApplications, "/track-applications")
-    );
-    filteredStructure = filteredStructure.filter(item => item.label !== "Profile Settings");
-    const dashboardItem = sidebarStructure.find(item => item.label === "Dashboard");
-    if (dashboardItem) {
-      filteredStructure = [dashboardItem, ...filteredStructure];
+    if (userRole === "cw2" && ["mo", "ol"].includes(cw2_type)) {
+      result.push(createSidebarItem("History", SVGICON.sidebar.history, "/history"));
     }
-  }
-
-  if (userRole === "unit") {
-    filteredStructure.push(createSidebarItem("Submitted Forms", SVGICON.sidebar.raisedClarification, "/submitted-forms/list"));
-  }
-
-  if (userRole === "cw2" && ["mo", "ol"].includes(cw2_type)) {
-    filteredStructure.push(createSidebarItem("History", SVGICON.sidebar.history, "/history"));
-  }
+    return result;
+  })(filteredStructure);
 
 
   const renderSidebarItemWithBadge = (item: any, badgeCount: number) => (

@@ -348,6 +348,60 @@ const ApplyCitation = () => {
     toast.success("File removed");
   };
 
+  const renderUploadedFileButtons = (paramId: number, files: string[] = []) => (
+    <div
+      className="mb-1"
+      style={{ display: "flex", flexDirection: "column", gap: "4px" }}
+    >
+      {files.map((fileUrl, idx) => (
+        <div
+          key={`${paramId}-${fileUrl}`}
+          style={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            gap: "0.5rem",
+            fontSize: 14,
+            wordBreak: "break-all",
+            background: "#f1f5f9",
+            padding: "4px 8px",
+            borderRadius: 4,
+          }}
+        >
+          <button
+            onClick={() => handleDocumentDownload(fileUrl, fileUrl.split("/").pop() || "document")}
+            style={{
+              flex: 1,
+              color: "#1d4ed8",
+              textDecoration: "underline",
+              background: "none",
+              border: "none",
+              cursor: "pointer",
+              padding: 0,
+              textAlign: "left",
+            }}
+          >
+            {fileUrl.split("/").pop()}
+          </button>
+          <button
+            type="button"
+            onClick={() => handleRemoveUploadedFile(paramId, idx)}
+            style={{
+              background: "transparent",
+              border: "none",
+              color: "#dc2626",
+              cursor: "pointer",
+              fontSize: 16,
+            }}
+            title="Remove file"
+          >
+            🗑️
+          </button>
+        </div>
+      ))}
+    </div>
+  );
+
 
   const handleDocumentDownload = async (documentUrl: any, fileName: string) => {
     try {
@@ -846,71 +900,9 @@ const ApplyCitation = () => {
                             >
                               {param.proof_reqd ? (
                                 <>
-                                  {uploadedFiles[param.param_id]?.length >
-                                    0 && (
-                                      <div
-                                        className="mb-1"
-                                        style={{
-                                          display: "flex",
-                                          flexDirection: "column",
-                                          gap: "4px",
-                                        }}
-                                      >
-                                        {uploadedFiles[param.param_id].map(
-                                          (fileUrl, idx) => (
-                                            <div
-                                              key={`${param.param_id}-${fileUrl}`}
-                                              style={{
-                                                display: "flex",
-                                                alignItems: "center",
-                                                justifyContent: "space-between",
-                                                gap: "0.5rem",
-                                                fontSize: 14,
-                                                wordBreak: "break-all",
-                                                background: "#f1f5f9",
-                                                padding: "4px 8px",
-                                                borderRadius: 4,
-                                              }}
-                                            >
-                                              <button
-                                                onClick={() => handleDocumentDownload(fileUrl, fileUrl.split("/").pop() || "document")}
-                                                style={{
-                                                  flex: 1,
-                                                  color: "#1d4ed8",
-                                                  textDecoration: "underline",
-                                                  background: "none",
-                                                  border: "none",
-                                                  cursor: "pointer",
-                                                  padding: 0,
-                                                  textAlign: "left"
-                                                }}
-                                              >
-                                                {fileUrl.split("/").pop()}
-                                              </button>
-                                              <button
-                                                type="button"
-                                                onClick={() =>
-                                                  handleRemoveUploadedFile(
-                                                    param.param_id,
-                                                    idx
-                                                  )
-                                                }
-                                                style={{
-                                                  background: "transparent",
-                                                  border: "none",
-                                                  color: "#dc2626",
-                                                  cursor: "pointer",
-                                                  fontSize: 16,
-                                                }}
-                                                title="Remove file"
-                                              >
-                                                🗑️
-                                              </button>
-                                            </div>
-                                          )
-                                        )}
-                                      </div>
-                                    )}
+                                  {uploadedFiles[param.param_id]?.length > 0 && (
+                                    renderUploadedFileButtons(param.param_id, uploadedFiles[param.param_id])
+                                  )}
                                   <input
                                     type="file"
                                     className="form-control"

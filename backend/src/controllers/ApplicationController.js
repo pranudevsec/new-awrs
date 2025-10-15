@@ -5,6 +5,13 @@ const SignatureLogService = require("../services/SignatureLogsService");
 
 exports.getAllApplicationsForUnit = async (req, res) => {
   try {
+    // Set cache control headers to prevent caching
+    res.set({
+      'Cache-Control': 'no-cache, no-store, must-revalidate',
+      'Pragma': 'no-cache',
+      'Expires': '0'
+    });
+    
     const result = await ApplicationService.getAllApplicationsForUnit(req.user, req.query);
     res.status(StatusCodes.OK).send(result);
   } catch (error) {
@@ -16,6 +23,13 @@ exports.getAllApplicationsForUnit = async (req, res) => {
 
 exports.getAllApplicationsForHQ = async (req, res) => {
   try {
+    // Set cache control headers to prevent caching
+    res.set({
+      'Cache-Control': 'no-cache, no-store, must-revalidate',
+      'Pragma': 'no-cache',
+      'Expires': '0'
+    });
+    
     const result = await ApplicationService.getAllApplicationsForHQ(req.user, req.query);
     res.status(StatusCodes.OK).send(result);
   } catch (error) {

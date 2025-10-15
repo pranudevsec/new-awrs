@@ -130,58 +130,37 @@ exports.createOrUpdateUnitForUser = async (userId, data, user) => {
       comd,
       memberUsername,
       memberPassword,
-      members, // <- new field
+      members,
     } = data;
 
-
+    // Early branch: create member user
     if (memberUsername && memberPassword) {
-      const memberResult = await createMemberUser(
-        client,
-        user,
-        memberUsername,
-        memberPassword
-      );
+      const memberResult = await createMemberUser(client, user, memberUsername, memberPassword);
       await client.query("COMMIT");
-      return ResponseHelper.success(
-        200,
-        "Member user created successfully",
-        memberResult
-      );
+      return ResponseHelper.success(200, "Member user created successfully", memberResult);
     }
-
 
     const getOrCreateId = async (table, column, value, idCol) => {
       if (!value) return null;
-      let res = await client.query(
+      const selectRes = await client.query(
         `SELECT ${idCol} FROM ${table} WHERE ${column} = $1 LIMIT 1`,
         [value]
       );
-      if (res.rows.length) return res.rows[0][idCol];
-      res = await client.query(
+      if (selectRes.rows.length) return selectRes.rows[0][idCol];
+      const insertRes = await client.query(
         `INSERT INTO ${table} (${column}) VALUES ($1) RETURNING ${idCol}`,
         [value]
       );
-      return res.rows[0][idCol];
+      return insertRes.rows[0][idCol];
     };
 
-    const brigade_id = await getOrCreateId(
-      "brigade_master",
-      "brigade_name",
-      bde,
-      "brigade_id"
-    );
-    const division_id = await getOrCreateId(
-      "division_master",
-      "division_name",
-      div,
-      "division_id"
-    );
-    const corps_id = await getOrCreateId(
-      "corps_master",
-      "corps_name",
-      corps,
-      "corps_id"
-    );
+    // Resolve FK ids
+    const [brigade_id, division_id, corps_id] = await Promise.all([
+      getOrCreateId("brigade_master", "brigade_name", bde, "brigade_id"),
+      getOrCreateId("division_master", "division_name", div, "division_id"),
+      getOrCreateId("corps_master", "corps_name", corps, "corps_id"),
+    ]);
+
     let command_id = null;
     if (comd) {
       const res = await client.query(
@@ -191,20 +170,16 @@ exports.createOrUpdateUnitForUser = async (userId, data, user) => {
       if (res.rows.length) command_id = res.rows[0].command_id;
     }
 
-
+    // Insert or update unit
     const currentUnitId = await getCurrentUnitId(client, userId);
-    let unitResult;
-
     const values = [
       name,
       adm_channel || "",
       tech_channel || "",
       unit_type || "",
-      matrix_unit && Array.isArray(matrix_unit)
-        ? JSON.stringify(matrix_unit)
-        : matrix_unit,
+      Array.isArray(matrix_unit) ? JSON.stringify(matrix_unit) : matrix_unit,
       location || "",
-      awards && Array.isArray(awards) ? JSON.stringify(awards) : "[]",
+      Array.isArray(awards) ? JSON.stringify(awards) : "[]",
       start_month || "",
       start_year || "",
       end_month || "",
@@ -215,8 +190,8 @@ exports.createOrUpdateUnitForUser = async (userId, data, user) => {
       command_id,
     ];
 
+    let unitResult;
     if (!currentUnitId) {
-
       const insertQuery = `
         INSERT INTO unit_tab 
           (name, adm_channel, tech_channel, unit_type, matrix_unit, location, awards,
@@ -227,14 +202,8 @@ exports.createOrUpdateUnitForUser = async (userId, data, user) => {
       `;
       const res = await client.query(insertQuery, values);
       unitResult = res.rows[0];
-
-
-      await client.query(
-        `UPDATE user_tab SET unit_id = $1 WHERE user_id = $2`,
-        [unitResult.unit_id, userId]
-      );
+      await client.query(`UPDATE user_tab SET unit_id = $1 WHERE user_id = $2`, [unitResult.unit_id, userId]);
     } else {
-
       const updateQuery = `
         UPDATE unit_tab
         SET 
@@ -256,60 +225,46 @@ exports.createOrUpdateUnitForUser = async (userId, data, user) => {
         WHERE unit_id = $16
         RETURNING *
       `;
-      values.push(currentUnitId);
-      const res = await client.query(updateQuery, values);
+      const res = await client.query(updateQuery, [...values, currentUnitId]);
       unitResult = res.rows[0];
     }
 
-
-    if (members && Array.isArray(members) && members.length > 0) {
-      
-
-      const validMembers = members.filter(m => 
-        m.name && m.name.trim() !== "" && 
-        m.rank && m.rank.trim() !== "" && 
-        m.ic_number && m.ic_number.trim() !== "" && 
+    // Handle members if provided
+    if (Array.isArray(members) && members.length > 0) {
+      const validMembers = members.filter((m) =>
+        m.name && m.name.trim() !== "" &&
+        m.rank && m.rank.trim() !== "" &&
+        m.ic_number && m.ic_number.trim() !== "" &&
         m.appointment && m.appointment.trim() !== ""
       );
-      
-      
 
       if (members.length > 0 && validMembers.length === 0) {
-        throw new Error(`All member data is incomplete. All fields (Name, Rank, IC Number, Appointment) are required and cannot be blank.`);
+        throw new Error(
+          `All member data is incomplete. All fields (Name, Rank, IC Number, Appointment) are required and cannot be blank.`
+        );
       }
-      
 
       if (validMembers.length === 0) {
-        return ResponseHelper.success(200, "Unit profile updated successfully", {
-          unit: unitResult,
-          members: []
-        });
+        return ResponseHelper.success(200, "Unit profile updated successfully", { unit: unitResult, members: [] });
       }
-      
+
       for (const m of validMembers) {
-
-        const hasRequiredFields = m.name && m.name.trim() !== "" && 
-                                 m.rank && m.rank.trim() !== "" && 
-                                 m.ic_number && m.ic_number.trim() !== "" && 
-                                 m.appointment && m.appointment.trim() !== "";
-        
-        if (!hasRequiredFields) {
-          throw new Error(`Member data is incomplete. All fields (Name, Rank, IC Number, Appointment) are required and cannot be blank.`);
+        if (!(m.name && m.rank && m.ic_number && m.appointment)) {
+          throw new Error(
+            `Member data is incomplete. All fields (Name, Rank, IC Number, Appointment) are required and cannot be blank.`
+          );
         }
-
-
         if (m.ic_number && !/^IC-\d{5}[A-Z]$/.test(m.ic_number)) {
-          throw new Error(`Invalid IC number format: ${m.ic_number}. Must be in format IC-XXXXX[A-Z] where XXXXX are 5 digits and last character is any alphabet.`);
+          throw new Error(
+            `Invalid IC number format: ${m.ic_number}. Must be in format IC-XXXXX[A-Z] where XXXXX are 5 digits and last character is any alphabet.`
+          );
         }
 
         if (m.id) {
-
           await client.query(
-            `
-        UPDATE unit_members
-        SET name=$1, rank=$2, ic_number=$3, appointment=$4, member_order=$5, updated_at=CURRENT_TIMESTAMP
-        WHERE member_id=$6 AND unit_id=$7 AND member_type=$8
-        `,
+            `UPDATE unit_members
+             SET name=$1, rank=$2, ic_number=$3, appointment=$4, member_order=$5, updated_at=CURRENT_TIMESTAMP
+             WHERE member_id=$6 AND unit_id=$7 AND member_type=$8`,
             [
               m.name.trim(),
               m.rank.trim(),
@@ -322,13 +277,10 @@ exports.createOrUpdateUnitForUser = async (userId, data, user) => {
             ]
           );
         } else {
-
           await client.query(
-            `
-        INSERT INTO unit_members
-          (unit_id, name, rank, ic_number, appointment, member_type, member_order)
-        VALUES ($1,$2,$3,$4,$5,$6,$7)
-        `,
+            `INSERT INTO unit_members
+              (unit_id, name, rank, ic_number, appointment, member_type, member_order)
+             VALUES ($1,$2,$3,$4,$5,$6,$7)`,
             [
               unitResult.unit_id,
               m.name.trim(),
@@ -343,20 +295,11 @@ exports.createOrUpdateUnitForUser = async (userId, data, user) => {
       }
     }
 
-
     await client.query("COMMIT");
-    return ResponseHelper.success(
-      200,
-      "Unit processed successfully",
-      unitResult
-    );
+    return ResponseHelper.success(200, "Unit processed successfully", unitResult);
   } catch (error) {
     await client.query("ROLLBACK");
-    return ResponseHelper.error(
-      500,
-      "Failed to create or update unit",
-      error.message
-    );
+    return ResponseHelper.error(500, "Failed to create or update unit", error.message);
   } finally {
     client.release();
   }

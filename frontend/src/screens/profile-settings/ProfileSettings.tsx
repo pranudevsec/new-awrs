@@ -500,6 +500,18 @@ const ProfileSettings = () => {
 
   const isDisabled = !!isMember;
 
+  // Helpers to avoid deep inline nesting in JSX handlers
+  const handleRemoveAward = (index: number) => {
+    setAwards((prev) => prev.filter((_, i) => i !== index));
+  };
+
+  const handleAddAward = () => {
+    setAwards((prev) => [
+      ...prev,
+      { award_type: "GOC-in-C", award_title: "", award_year: "" },
+    ]);
+  };
+
 
   if (firstLoad) return <Loader />;
 
@@ -870,11 +882,7 @@ const ProfileSettings = () => {
                         <button
                           type="button"
                           className="_btn danger btn-sm"
-                          onClick={() => {
-                            setAwards((prev) =>
-                              prev.filter((_, i) => i !== idx)
-                            );
-                          }}
+                          onClick={() => handleRemoveAward(idx)}
                         >
                           Remove
                         </button>
@@ -906,12 +914,7 @@ const ProfileSettings = () => {
                   border: "none",
                   padding: 0,
                 }}
-                onClick={() => {
-                  setAwards((prev) => [
-                    ...prev,
-                    { award_type: "GOC-in-C", award_title: "", award_year: "" },
-                  ]);
-                }}
+                onClick={handleAddAward}
               >
                 <span style={{ display: "inline-flex", alignItems: "center", gap: "0.5em" }}>
                   <FaPlus />

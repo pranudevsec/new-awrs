@@ -14,13 +14,9 @@ exports.createCitation = async (data, user) => {
     const unit = profile?.data?.unit;
     const isSpecialUnit = profile?.data?.user?.is_special_unit;
 
-    const requiredFields = isSpecialUnit
-      ? ["name", "comd"]
-      : ["name", "bde", "div", "corps", "comd"];
+    const requiredFields = isSpecialUnit ? ["name", "comd"] : ["name", "bde", "div", "corps", "comd"];
     const missingFields = requiredFields.filter((f) => !unit?.[f]);
-    if (missingFields.length > 0) {
-      throw new Error(`Incomplete unit profile. Update: ${missingFields.join(", ")}`);
-    }
+    if (missingFields.length > 0) throw new Error(`Incomplete unit profile. Update: ${missingFields.join(", ")}`);
 
     const getMasterId = async (table, nameField, value) => {
       if (!value) return null;
@@ -31,11 +27,13 @@ exports.createCitation = async (data, user) => {
       return res.rows.length ? res.rows[0][`${table}_id`] : null;
     };
 
-    const corps_id = await getMasterId("corps", "corps_name", citation_fds.corps);
-    const brigade_id = await getMasterId("brigade", "brigade_name", citation_fds.brigade);
-    const division_id = await getMasterId("division", "division_name", citation_fds.division);
-    const command_id = await getMasterId("command", "command_name", citation_fds.command);
-    const arms_service_id = await getMasterId("arms_service", "arms_service_name", citation_fds.arms_service);
+    const [corps_id, brigade_id, division_id, command_id, arms_service_id] = await Promise.all([
+      getMasterId("corps", "corps_name", citation_fds.corps),
+      getMasterId("brigade", "brigade_name", citation_fds.brigade),
+      getMasterId("division", "division_name", citation_fds.division),
+      getMasterId("command", "command_name", citation_fds.command),
+      getMasterId("arms_service", "arms_service_name", citation_fds.arms_service),
+    ]);
 
     const paramResult = await client.query(
       `SELECT param_id, per_unit_mark, max_marks
@@ -130,8 +128,9 @@ exports.createCitation = async (data, user) => {
 
     if (Array.isArray(citation_fds.parameters) && citation_fds.parameters.length > 0) {
       for (const param of citation_fds.parameters) {
-        if (!paramMap[param.id]) continue; 
-        const marks = Math.min(param.count * paramMap[param.id].per_unit_mark, paramMap[param.id].max_marks);
+        const master = paramMap[param.id];
+        if (!master) continue;
+        const marks = Math.min((param.count || 0) * master.per_unit_mark, master.max_marks);
         await client.query(
           `INSERT INTO fds_parameters (fds_id, param_id, count, marks, upload)
            VALUES ($1,$2,$3,$4,$5)

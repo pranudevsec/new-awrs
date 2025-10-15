@@ -82,23 +82,67 @@ const SidebarMobileMenu: FC<SidebarMobileMenuProps> = ({ show, handleClose }) =>
   // Fetch clarifications
   React.useEffect(() => {
     if (!userRole) return;
-    const fetchUnits = async (url: string) => {
-      const res = await Axios.get(url);
-      if (res.data && Array.isArray(res.data.data)) {
-        setSidebarClarificationUnits(res.data.data);
-      }
-    };
     if (userRole.trim() === "unit") {
       dispatch(getClarifications({ awardType: "", search: "", page: 1, limit: 1000 }));
-      fetchUnits("/api/applications/units?limit=1000");
     } else {
       dispatch(getSubordinateClarifications({ awardType: "", search: "", page: 1, limit: 1000 }));
-      fetchUnits("/api/applications/subordinates?limit=1000");
     }
+    fetchUnitsForRole(userRole);
   }, [dispatch, userRole]);
 
   // Filtering
   const alwaysVisible = getAlwaysVisible(userRole);
+
+  const fetchUnitsForRole = async (role: string) => {
+    const url = role.trim() === "unit"
+      ? "/api/applications/units?limit=1000"
+      : "/api/applications/subordinates?limit=1000";
+    const res = await Axios.get(url);
+    if (res.data && Array.isArray(res.data.data)) {
+      setSidebarClarificationUnits(res.data.data);
+    }
+  };
+
+  const enrichStructureForRole = (
+    structure: any[],
+    role: string,
+    isMemberFlag: boolean,
+    cw2Type: string
+  ) => {
+    let result = structure;
+    if (["brigade", "division", "corps", "command"].includes(role)) {
+      result = result.filter(item => item.label !== "Home");
+      result.push(createSidebarItem("All Applications", SVGICON.sidebar.allApplications, "/all-applications"));
+      if (role === "command") {
+        result.push(createSidebarItem("Track Applications", SVGICON.sidebar.trackApplications, "/track-applications"));
+      }
+      if (role !== "brigade") {
+        result.push(createSidebarItem("Withdraws", SVGICON.sidebar.withdraws, "/withdraw-quests"));
+      }
+      if (!isMemberFlag) {
+        result.push(createSidebarItem("Recommended Application", SVGICON.sidebar.profile, "/application/accepted"));
+      }
+    }
+
+    if (role === "headquarter") {
+      result.push(createSidebarItem("All Applications", SVGICON.sidebar.allApplications, "/all-applications"));
+      result.push(createSidebarItem("Track Applications", SVGICON.sidebar.trackApplications, "/track-applications"));
+      result = result.filter(item => item.label !== "Profile Settings");
+      const dashboardItem = sidebarStructure.find(item => item.label === "Dashboard");
+      if (dashboardItem) {
+        result = [dashboardItem, ...result];
+      }
+    }
+
+    if (role === "unit") {
+      result.push(createSidebarItem("Submitted Forms", SVGICON.sidebar.raisedClarification, "/submitted-forms/list"));
+    }
+
+    if (role === "cw2" && ["mo", "ol"].includes(cw2Type)) {
+      result.push(createSidebarItem("History", SVGICON.sidebar.history, "/history"));
+    }
+    return result;
+  };
 
   // Dashboard mapping
   const dashboardLabelsMap: Record<string, string> = {
@@ -116,37 +160,7 @@ const SidebarMobileMenu: FC<SidebarMobileMenuProps> = ({ show, handleClose }) =>
     .filter(item => !extraDashboardLabels.includes(item.label));
 
   // Role-based injections
-  if (["brigade", "division", "corps", "command"].includes(userRole)) {
-    filteredStructure = filteredStructure.filter(item => item.label !== "Home");
-    filteredStructure.push(createSidebarItem("All Applications", SVGICON.sidebar.allApplications, "/all-applications"));
-    if (userRole === "command") {
-      filteredStructure.push(createSidebarItem("Track Applications", SVGICON.sidebar.trackApplications, "/track-applications"));
-    }
-    if (userRole !== "brigade") {
-      filteredStructure.push(createSidebarItem("Withdraws", SVGICON.sidebar.withdraws, "/withdraw-quests"));
-    }
-    if (!isMember) {
-      filteredStructure.push(createSidebarItem("Recommended Application", SVGICON.sidebar.profile, "/application/accepted"));
-    }
-  }
-
-  if (userRole === "headquarter") {
-    filteredStructure.push(createSidebarItem("All Applications", SVGICON.sidebar.allApplications, "/all-applications"));
-    filteredStructure.push(createSidebarItem("Track Applications", SVGICON.sidebar.trackApplications, "/track-applications"));
-    filteredStructure = filteredStructure.filter(item => item.label !== "Profile Settings");
-    const dashboardItem = sidebarStructure.find(item => item.label === "Dashboard");
-    if (dashboardItem) {
-      filteredStructure = [dashboardItem, ...filteredStructure];
-    }
-  }
-
-  if (userRole === "unit") {
-    filteredStructure.push(createSidebarItem("Submitted Forms", SVGICON.sidebar.raisedClarification, "/submitted-forms/list"));
-  }
-
-  if (userRole === "cw2" && ["mo", "ol"].includes(cw2_type)) {
-    filteredStructure.push(createSidebarItem("History", SVGICON.sidebar.history, "/history"));
-  }
+  filteredStructure = enrichStructureForRole(filteredStructure, userRole, isMember, cw2_type);
 
   // ---- Render ----
   const renderSidebarItemWithBadge = (item: any, badgeCount: number) => (

@@ -201,22 +201,119 @@ exports.login = async (credentials) => {
     return ResponseHelper.error(500, MSG.INTERNAL_SERVER_ERROR, error.message);
   }
 };
+// Helper functions to reduce cognitive complexity in getProfile
+const fetchUserCore = async (id) => {
+  return db.query(
+    `
+    SELECT 
+      u.user_id, u.name AS user_name, u.username, u.pers_no, u.rank, u.cw2_type,
+      u.unit_id, u.is_special_unit, u.is_officer, u.is_member, u.is_member_added,
+      u.officer_id,
+      rm.role_name AS user_role
+    FROM User_tab u
+    LEFT JOIN role_master rm ON u.role_id = rm.role_id
+    WHERE u.user_id = $1
+    `,
+    [id]
+  );
+};
+
+const resolveEffectiveUnitId = async (user) => {
+  if (user.unit_id) return user.unit_id;
+  if (user.is_member && user.officer_id) {
+    const res = await db.query(`SELECT unit_id FROM User_tab WHERE user_id = $1`, [user.officer_id]);
+    if (res.rows.length > 0) return res.rows[0].unit_id;
+  }
+  return null;
+};
+
+const fetchUnitWithMembers = async (unitId) => {
+  const unitRes = await db.query(
+    `
+    SELECT 
+      u.unit_id, u.sos_no, u.name, u.adm_channel, u.tech_channel, 
+      b.brigade_name AS bde, d.division_name AS div, c.corps_name AS corps, cm.command_name AS comd,
+      u.unit_type, u.matrix_unit, u.location, u.awards,
+      u.start_month, u.start_year, u.end_month,u.brigade_id,u.command_id,u.division_id,u.corps_id, u.end_year
+    FROM Unit_tab u
+    LEFT JOIN brigade_master b ON u.brigade_id = b.brigade_id
+    LEFT JOIN division_master d ON u.division_id = d.division_id
+    LEFT JOIN corps_master c ON u.corps_id = c.corps_id
+    LEFT JOIN command_master cm ON u.command_id = cm.command_id
+    WHERE u.unit_id = $1
+    `,
+    [unitId]
+  );
+  if (unitRes.rows.length === 0) return null;
+  const unit = unitRes.rows[0];
+  const membersRes = await db.query(
+    `
+    SELECT member_id AS id, name, rank, ic_number, appointment, member_type, member_order
+    FROM Unit_Members
+    WHERE unit_id = $1
+    ORDER BY member_order ASC NULLS LAST, name ASC
+    `,
+    [unit.unit_id]
+  );
+  const members = membersRes.rows.map((m) => ({
+    id: m.id,
+    name: m.name || "",
+    rank: m.rank || "",
+    ic_number: m.ic_number || "",
+    appointment: m.appointment || "",
+    member_type: m.member_type || "",
+    member_order: m.member_order !== null ? m.member_order.toString() : "",
+  }));
+  return {
+    unit_id: unit.unit_id,
+    sos_no: unit.sos_no,
+    name: unit.name,
+    adm_channel: unit.adm_channel,
+    tech_channel: unit.tech_channel,
+    bde: unit.bde,
+    div: unit.div,
+    corps: unit.corps,
+    comd: unit.comd,
+    brigade_id: unit.brigade_id,
+    unit_type: unit.unit_type,
+    matrix_unit: unit.matrix_unit,
+    location: unit.location,
+    awards: unit.awards || [],
+    members,
+    start_month: unit.start_month,
+    start_year: unit.start_year,
+    end_month: unit.end_month,
+    end_year: unit.end_year,
+  };
+};
+
+const fetchMemberUsernameIfAny = async (user) => {
+  if (!user.is_member_added) return null;
+  const res = await db.query(`SELECT username FROM User_tab WHERE officer_id = $1 LIMIT 1`, [user.user_id]);
+  return res.rows.length > 0 ? res.rows[0].username : null;
+};
+
+const fetchMasterData = async (user) => {
+  const roleLc = user.user_role?.toLowerCase();
+  if (!['brigade', 'corps', 'division', 'command', 'headquarter'].includes(roleLc)) return null;
+  if (roleLc === 'headquarter') return { id: user.user_id, name: user.user_name, role: 'headquarter' };
+  const meta = {
+    command: { table: 'command_master', id: 'command_id', name: 'command_name' },
+    brigade: { table: 'brigade_master', id: 'brigade_id', name: 'brigade_name' },
+    corps: { table: 'corps_master', id: 'corps_id', name: 'corps_name' },
+    division: { table: 'division_master', id: 'division_id', name: 'division_name' },
+  }[roleLc];
+  const r = await db.query(
+    `SELECT ${meta.id} AS id, ${meta.name} AS name FROM ${meta.table} WHERE LOWER(TRIM(${meta.name})) = LOWER(TRIM($1)) OR ${meta.name} ILIKE '%' || $1 || '%'`,
+    [user.user_name]
+  );
+  if (r.rows.length === 0) return null;
+  return { id: r.rows[0].id, name: r.rows[0].name, role: roleLc };
+};
+
 exports.getProfile = async ({ user_id }) => {
   try {
-
-    const userResult = await db.query(
-      `
-      SELECT 
-        u.user_id, u.name AS user_name, u.username, u.pers_no, u.rank, u.cw2_type,
-        u.unit_id, u.is_special_unit, u.is_officer, u.is_member, u.is_member_added,
-        u.officer_id,
-        rm.role_name AS user_role
-      FROM User_tab u
-      LEFT JOIN role_master rm ON u.role_id = rm.role_id
-      WHERE u.user_id = $1
-      `,
-      [user_id]
-    );
+    const userResult = await fetchUserCore(user_id);
 
     if (userResult.rows.length === 0) {
       return ResponseHelper.error(404, "User not found");
@@ -225,220 +322,14 @@ exports.getProfile = async ({ user_id }) => {
     const user = userResult.rows[0];
 
     let unitData = null;
-
-
-    let effectiveUnitId = user.unit_id;
-
-    if (!effectiveUnitId && user.is_member && user.officer_id) {
-      const officerResult = await db.query(
-        `SELECT unit_id FROM User_tab WHERE user_id = $1`,
-        [user.officer_id]
-      );
-      if (officerResult.rows.length > 0) {
-        effectiveUnitId = officerResult.rows[0].unit_id;
-      }
-    }
-
-
+    const effectiveUnitId = await resolveEffectiveUnitId(user);
     if (effectiveUnitId) {
-      const unitResult = await db.query(
-        `
-        SELECT 
-          u.unit_id, u.sos_no, u.name, u.adm_channel, u.tech_channel, 
-          b.brigade_name AS bde, d.division_name AS div, c.corps_name AS corps, cm.command_name AS comd,
-          u.unit_type, u.matrix_unit, u.location, u.awards,
-          u.start_month, u.start_year, u.end_month,u.brigade_id,u.command_id,u.division_id,u.corps_id, u.end_year
-        FROM Unit_tab u
-        LEFT JOIN brigade_master b ON u.brigade_id = b.brigade_id
-        LEFT JOIN division_master d ON u.division_id = d.division_id
-        LEFT JOIN corps_master c ON u.corps_id = c.corps_id
-        LEFT JOIN command_master cm ON u.command_id = cm.command_id
-        WHERE u.unit_id = $1
-        `,
-        [effectiveUnitId]
-      );
-
-      if (unitResult.rows.length > 0) {
-        const unit = unitResult.rows[0];
-
-
-        const membersResult = await db.query(
-          `
-          SELECT member_id AS id, name, rank, ic_number, appointment, member_type, member_order
-          FROM Unit_Members
-          WHERE unit_id = $1
-          ORDER BY member_order ASC NULLS LAST, name ASC
-          `,
-          [unit.unit_id]
-        );
-
-        const members = membersResult.rows.map((m) => ({
-          id: m.id,
-          name: m.name || "",
-          rank: m.rank || "",
-          ic_number: m.ic_number || "",
-          appointment: m.appointment || "",
-          member_type: m.member_type || "",
-          member_order:
-            m.member_order !== null ? m.member_order.toString() : "",
-        }));
-
-        unitData = {
-          unit_id: unit.unit_id,
-          sos_no: unit.sos_no,
-          name: unit.name,
-          adm_channel: unit.adm_channel,
-          tech_channel: unit.tech_channel,
-          bde: unit.bde,
-          div: unit.div,
-          corps: unit.corps,
-          comd: unit.comd,
-          brigade_id: unit.brigade_id,
-          unit_type: unit.unit_type,
-          matrix_unit: unit.matrix_unit,
-          location: unit.location,
-          awards: unit.awards || [],
-          members,
-          start_month: unit.start_month,
-          start_year: unit.start_year,
-          end_month: unit.end_month,
-          end_year: unit.end_year,
-        };
-      }
+      unitData = await fetchUnitWithMembers(effectiveUnitId);
     }
 
+    const memberUsername = await fetchMemberUsernameIfAny(user);
 
-    let memberUsername = null;
-    if (user.is_member_added) {
-      const memberResult = await db.query(
-        `SELECT username FROM User_tab WHERE officer_id = $1 LIMIT 1`,
-        [user.user_id]
-      );
-      if (memberResult.rows.length > 0) {
-        memberUsername = memberResult.rows[0].username;
-      }
-    }
-
-
-    let masterData = null;
-    
-    if (['brigade', 'corps', 'division', 'command', 'headquarter'].includes(user.user_role?.toLowerCase())) {
-      try {
-        let masterQuery = '';
-        let masterParams = [];
-        
-
-        let searchUsername = user.username;
-        if (user.is_member) {
-
-          if (user.officer_id) {
-            const officerResult = await db.query(
-              `SELECT username FROM User_tab WHERE user_id = $1`,
-              [user.officer_id]
-            );
-            if (officerResult.rows.length > 0) {
-              searchUsername = officerResult.rows[0].username;
-            }
-          } else {
-
-            const officerResult = await db.query(
-              `SELECT username FROM User_tab WHERE name = $1 AND is_member = false LIMIT 1`,
-              [user.name]
-            );
-            if (officerResult.rows.length > 0) {
-              searchUsername = officerResult.rows[0].username;
-            }
-          }
-        }
-        
-
-        if (user.user_role?.toLowerCase() === 'command') {
-          
-          const commandResult = await db.query(
-            `SELECT command_id, command_name FROM command_master WHERE LOWER(TRIM(command_name)) = LOWER(TRIM($1)) OR command_name ILIKE '%' || $1 || '%'`,
-            [user.user_name]
-          );
-          
-          
-          if (commandResult.rows.length > 0) {
-            const command = commandResult.rows[0];
-            masterData = {
-              id: command.command_id,
-              name: command.command_name,
-              role: 'command'
-            };
-          } else {
-          }
-        }
-        
-        if (user.user_role?.toLowerCase() === 'brigade') {
-          
-          const brigadeResult = await db.query(
-            `SELECT brigade_id, brigade_name FROM brigade_master WHERE LOWER(TRIM(brigade_name)) = LOWER(TRIM($1)) OR brigade_name ILIKE '%' || $1 || '%'`,
-            [user.user_name]
-          );
-          
-          
-          if (brigadeResult.rows.length > 0) {
-            const brigade = brigadeResult.rows[0];
-            masterData = {
-              id: brigade.brigade_id,
-              name: brigade.brigade_name,
-              role: 'brigade'
-            };
-          } else {
-          }
-        } else if (user.user_role?.toLowerCase() === 'corps') {
-          
-          const corpsResult = await db.query(
-            `SELECT corps_id, corps_name FROM corps_master WHERE LOWER(TRIM(corps_name)) = LOWER(TRIM($1)) OR corps_name ILIKE '%' || $1 || '%'`,
-            [user.user_name]
-          );
-          
-          
-          if (corpsResult.rows.length > 0) {
-            const corps = corpsResult.rows[0];
-            masterData = {
-              id: corps.corps_id,
-              name: corps.corps_name,
-              role: 'corps'
-            };
-          } else {
-          }
-        } else if (user.user_role?.toLowerCase() === 'division') {
-          
-          const divisionResult = await db.query(
-            `SELECT division_id, division_name FROM division_master WHERE LOWER(TRIM(division_name)) = LOWER(TRIM($1)) OR division_name ILIKE '%' || $1 || '%'`,
-            [user.user_name]
-          );
-          
-          
-          if (divisionResult.rows.length > 0) {
-            const division = divisionResult.rows[0];
-            masterData = {
-              id: division.division_id,
-              name: division.division_name,
-              role: 'division'
-            };
-          } else {
-          }
-        } else if (user.user_role?.toLowerCase() === 'headquarter') {
-          
-
-
-          masterData = {
-            id: user.user_id,
-            name: user.user_name,
-            role: 'headquarter'
-          };
-        }
-
-      } catch (error) {
-        console.error('Error fetching master data:', error);
-
-      }
-    }
-
+    const masterData = await fetchMasterData(user);
 
     return ResponseHelper.success(200, "Successfully found.", {
       user: {

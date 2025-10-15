@@ -384,6 +384,30 @@ const CitationReviewPage = () => {
         displayMark = param.negative ? `-${Number(markValue).toFixed(2)}` : Number(markValue).toFixed(2);
       }
 
+      const renderFileButtons = (files: string[]) => (
+        <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
+          {files.map((fileUrl: string) => (
+            <button
+              key={fileUrl}
+              onClick={() => handleDocumentDownload(fileUrl, fileUrl.split("/").pop() || "document")}
+              style={{
+                fontSize: 14,
+                wordBreak: "break-all",
+                background: "none",
+                border: "none",
+                color: "#1d4ed8",
+                textDecoration: "underline",
+                cursor: "pointer",
+                padding: 0,
+                textAlign: "left",
+              }}
+            >
+              {fileUrl.split("/").pop()}
+            </button>
+          ))}
+        </div>
+      );
+
       rows.push(
         <tr key={param.param_id}>
           <td style={{ width: 300 }}>
@@ -398,29 +422,7 @@ const CitationReviewPage = () => {
           <td style={{ width: 200 }}>
             {param.proof_reqd ? (
               <>
-                {uploadedFiles[param.param_id]?.length > 0 && (
-                  <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
-                    {uploadedFiles[param.param_id].map((fileUrl: string) => (
-                      <button
-                        key={fileUrl}
-                        onClick={() => handleDocumentDownload(fileUrl, fileUrl.split("/").pop() || "document")}
-                        style={{ 
-                          fontSize: 14, 
-                          wordBreak: "break-all",
-                          background: "none",
-                          border: "none",
-                          color: "#1d4ed8",
-                          textDecoration: "underline",
-                          cursor: "pointer",
-                          padding: 0,
-                          textAlign: "left"
-                        }}
-                      >
-                        {fileUrl.split("/").pop()}
-                      </button>
-                    ))}
-                  </div>
-                )}
+                {uploadedFiles[param.param_id]?.length > 0 && renderFileButtons(uploadedFiles[param.param_id])}
                 <input
                   type="file"
                   className="form-control mt-1"

@@ -425,70 +425,49 @@ async function logClarificationAction(client, clarification_id) {
  */
 async function validateApprovedCountAndMarks(client, application_type, application_id, parameter_id, approved_count, approved_marks) {
   try {
-
     const table = application_type === "citation" ? "Citation_tab" : "Appre_tab";
     const jsonColumn = application_type === "citation" ? "citation_fds" : "appre_fds";
     const idField = application_type === "citation" ? "citation_id" : "appreciation_id";
-    
-    const appQuery = `SELECT ${jsonColumn} FROM ${table} WHERE ${idField} = $1`;
-    const appRes = await client.query(appQuery, [application_id]);
-    
-    if (appRes.rowCount === 0) {
-      return { isValid: false, message: "Application not found" };
-    }
-    
-    const fds = appRes.rows[0][jsonColumn];
-    if (!Array.isArray(fds?.parameters)) {
+
+    const fds = await (async () => {
+      const appQuery = `SELECT ${jsonColumn} FROM ${table} WHERE ${idField} = $1`;
+      const appRes = await client.query(appQuery, [application_id]);
+      if (appRes.rowCount === 0) return null;
+      return appRes.rows[0][jsonColumn];
+    })();
+    if (!fds || !Array.isArray(fds?.parameters)) {
       return { isValid: false, message: "Application parameters not found" };
     }
-    
 
-    const parameter = fds.parameters.find(param => param.id === parameter_id);
-    if (!parameter) {
-      return { isValid: false, message: "Parameter not found" };
-    }
-    
+    const parameter = fds.parameters.find((param) => param.id === parameter_id);
+    if (!parameter) return { isValid: false, message: "Parameter not found" };
 
     const approvedCountNum = Number(approved_count) || 0;
     const approvedMarksNum = Number(approved_marks) || 0;
     const originalCount = Number(parameter.count) || 0;
-    const originalMarks = Number(parameter.marks) || 0;
     const maxMarks = Number(parameter.max_marks) || 0;
     const perUnitMark = Number(parameter.per_unit_mark) || 0;
-    
 
-    if (approved_count !== undefined && (isNaN(approvedCountNum) || approvedCountNum < 0)) {
-      return { isValid: false, message: "Approved count must be a valid non-negative number" };
-    }
-    
+    const invalidCount = approved_count !== undefined && (isNaN(approvedCountNum) || approvedCountNum < 0);
+    if (invalidCount) return { isValid: false, message: "Approved count must be a valid non-negative number" };
 
-    if (approved_marks !== undefined && (isNaN(approvedMarksNum) || approvedMarksNum < 0)) {
-      return { isValid: false, message: "Approved marks must be a valid non-negative number" };
-    }
-    
+    const invalidMarks = approved_marks !== undefined && (isNaN(approvedMarksNum) || approvedMarksNum < 0);
+    if (invalidMarks) return { isValid: false, message: "Approved marks must be a valid non-negative number" };
 
     if (approved_count !== undefined && approved_marks !== undefined) {
-
       const calculatedMarks = Math.min(approvedCountNum * perUnitMark, maxMarks);
-      
-
-      if (Math.abs(approvedMarksNum - calculatedMarks) > 0.01) { // Allow small floating point differences
+      if (Math.abs(approvedMarksNum - calculatedMarks) > 0.01) {
         return { isValid: false, message: `Approved marks (${approvedMarksNum}) should be ${calculatedMarks} based on approved count (${approvedCountNum})` };
       }
     }
-    
 
     if (approved_count !== undefined && approvedCountNum > originalCount) {
       return { isValid: false, message: `Approved count (${approvedCountNum}) cannot exceed original count (${originalCount})` };
     }
-    
-
     if (approved_marks !== undefined && approvedMarksNum > maxMarks) {
       return { isValid: false, message: `Approved marks (${approvedMarksNum}) cannot exceed maximum marks (${maxMarks})` };
     }
-    
     return { isValid: true, message: "Approved marks are valid" };
-    
   } catch (error) {
     return { isValid: false, message: "Error validating approved marks" };
   }

@@ -1,5 +1,4 @@
 const dbService = require("../utils/postgres/dbService");
-const { approveApplicationMarks } = require("./ApplicationService");
 
 exports.attachFdsToApplications = async (applications) => {
   const client = await dbService.getClient();
@@ -183,6 +182,9 @@ exports.attachFdsToApplications = async (applications) => {
 
       return {
         ...app,
+        // Ensure status_flag and rejected_reason are preserved
+        status_flag: app.status_flag,
+        rejected_reason: app.rejected_reason,
         fds: {
           corps: corpsMap[fds.corps_id] || null,
           brigade: brigadeMap[fds.brigade_id] || null,
