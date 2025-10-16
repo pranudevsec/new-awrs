@@ -1,0 +1,133 @@
+[33mf3a96d1[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mrecover-last[m[33m)[m Recovered my lost work from stash
+[33m49b5167[m sonar cube code issue solved
+[33m55547f6[m[33m ([m[1;31morigin/main[m[33m, [m[1;31morigin/HEAD[m[33m, [m[1;32mmain[m[33m)[m [IMP] Update axios.tsx
+[33m6e43323[m [IMP] Update .env
+[33m0b550f8[m [IMP] Update .env
+[33m7421375[m [ADD] Fixed history issue and Added reason popups to all declines and Show rejected reason on unit details page
+[33meb9e180[m changes remove console and comments add validatiom
+[33m64cc4c0[m changes
+[33m464f4e4[m dashboard changes
+[33m6e1e6da[m Merge branch 'main' of https://github.com/thefuturelens/new_award_adminpanel
+[33m74bb3a9[m Revert "[ADD] Added comments table file query"
+[33m8607938[m CHANGES APPLICATION FILE SERVICE
+[33m051ac1c[m [ADD] Added comments table file query
+[33mf871f52[m [ADD] Fixed issues
+[33m7881427[m [ADD] Added division to cw2 flow database api normalized
+[33m870b269[m [FIX] Fixed citation query of fds
+[33mde9e493[m [ADD] Build error solved and new db tables query added
+[33m9cfe526[m [ADD] Added Tables of brigade approval flow normalized tables
+[33m932e789[m [ADD] Added supabase creds
+[33m73ae4b2[m [ADD] Unit apis fds database normalized
+[33mad7a549[m add new table parameter_citation
+[33mca6081a[m [ADD] Added profile,config,units,parameters api changes
+[33mdee63fe[m naman vhnges
+[33mb27c5c8[m c
+[33ma6b42b7[m changes  add water mark to documents
+[33m05fdb7c[m [ADD] Removed unused packages and consoles and Font links
+[33m45fdb73[m [ADD] Added dynamic cards conditions,rejected stats and data handled and removed unused packages and compressed images added
+[33meec24eb[m Merge pull request #12 from thefuturelens/naman-2
+[33m0eca900[m Initial commit on branch naman-2
+[33m143046e[m [ADD] Added vcoas field on tables query
+[33m867feee[m [ADD] Added vcoas things and make it progressbar and sidebar responsive
+[33ma254d55[m [ADD] Added new changes and removed console logs
+[33m22e8f56[m [ADD] removed captcha and make it rejected things in progressbar
+[33m8b197e4[m Merge pull request #11 from thefuturelens/army_changes
+[33me5b05e0[m changes
+[33mf574c56[m [ADD] Added profile settings marks from backend side
+[33m7bd3d54[m [ADD] Fixed password dialog issue in citations dialog
+[33m0f905f9[m [ADD] Solved build errors
+[33mca4d6b4[m [ADD] Added development handle signature
+[33ma326aba[m [ADD] Track applications screens
+[33m84eb851[m [ADD] Token Authentication and Profile settings members table changes
+[33me588ce0[m Merge pull request #10 from thefuturelens/army_changes
+[33mcc5822e[m changes
+[33m855d65a[m [ADD] Fixed build issues
+[33m41b1d76[m [ADD] Added CW2 demo dashboard design
+[33mbe9509b[m [IMP] Implemented validation for award and citation records, added year check for submissions, and updated add/edit parameters
+[33m4e4e52f[m [ADD] Removed Rank validation must not exceed 8 characters and Profile Settings from cw2
+[33m6386741[m [ADD] Restart the server
+[33me8172cf[m [FIX] Fixed cursor issue
+[33m951ada1[m [ADD] Implimented report generation on history and all applications
+[33m70536dc[m [IMP] Added approved marks doc and reason fields in division, implemented application details screen and fixed card design issue
+[33mf98c2ef[m [IMP] Added rank dropdown in registration, updated validation schema, restricted 'Special Unit' to appreciation-only, and added approved marks doc & reason fields in division
+[33m99e8eea[m Merge pull request #9 from thefuturelens/army_changes
+[33m1793db5[m [ADD] Army changes
+[33m32577a0[m [ADD] Fixed profile validations loaders added
+[33mc4cbf27[m [ADD] Added DB_SSL env
+[33m815024c[m [ADD] Added Members table
+[33mf308818[m [ADD] Added debouncing and typing limit on 200 and 500 inputs
+[33m002ae01[m added priority validation
+[33m8d43cf1[m Merge branch 'master' of https://github.com/thefuturelens/award_adminpanel into rk_changes
+[33mf0009c7[m postitve fixes
+[33mcd335f5[m [FIX] In members name input field focus issue solved
+[33m6bea355[m [ADD] Added upto two decimal only of everywhere
+[33m46f7bfe[m [FIX] Fixed design responsive issues
+[33mf5f0d02[m [ADD] Added navigation for headquarter in login page
+[33m503bede[m [ADD] Added Auto scrolling and descriptions
+[33m175d73c[m [ADD] Make it tooltip description dynamically
+[33m9879655[m [FIX] Fixed issue of OL approving phase crashing
+[33m6bb30f3[m [FIX] Fixed build errors
+[33m647f4b8[m [ADD] Changed DB creds
+[33m5851782[m Merge pull request #8 from thefuturelens/interns
+[33mf923bbc[m Update package.json
+[33m93d1e4f[m fix: fixed negative marks issue and fixed CW2 dashboard and filters of bde, div, corps to the cw2 applicationlist
+[33m1ddb864[m feat: Added a cloud database
+[33ma88311c[m feat: Added approved count and pdf report for recommended units
+[33mb3f99aa[m feat(): Positive marks added in review pages
+[33m9e2503d[m feat(): Positive Marks add in review pages
+[33mb2a6122[m fix(): Sidebar Collpase Added
+[33mcdfe6c9[m Merge branch 'interns' of https://github.com/thefuturelens/award_adminpanel into interns
+[33mb8e296e[m fix: Fixed some issues
+[33m9d9b062[m fix: Fixed sonarqube issues
+[33mf0de049[m Merge pull request #7 from thefuturelens/interns
+[33m2c5637b[m feat(): Added Home tabs on the sidebar with applications count on them
+[33md4aa4e8[m feat():Disclaimer Modal Added
+[33m65ba05d[m fix(): Fixed filter by command, rejected application list and headcount display
+[33m4d644b7[m fix(): draft fixed
+[33mb2caad5[m fix():draft feature fixed
+[33m7800c3d[m feat(): added dashboards at all levels
+[33m87fa1d5[m [FIX] Fixed build errors
+[33m665cfbe[m [ADD] Revert application service code
+[33m0ee50b1[m Merge pull request #6 from thefuturelens/interns
+[33m20c5666[m code with errors
+[33m09e6449[m resolved merge conflicts
+[33m4702417[m  All commits
+[33med73327[m [FIX] Fixed issue
+[33m76e6437[m [ADD] Convert larger functions into small parts
+[33m6e7f1f8[m [ADD] Fixed issues of sonar
+[33m791234a[m [FIX] Fixed conglig issue
+[33m7a4f1fd[m [ADD] Fixed issues in backend
+[33m545bb8a[m [FIX] Fixed low issues
+[33me63cbee[m [FIX] Fixed issues
+[33m31ba972[m [FIX] Fixed sonarqube medium issues
+[33mee59c88[m [FIX] Fixed sonarqube high and medium issues
+[33meb56b74[m feat(): CDR signature Added
+[33mea06171[m fix(): fixed Submittedforms page and signature for approval of applications
+[33m6ed3ff3[m changed command to cw2
+[33m5153a94[m added background image
+[33m8c7df2c[m totalMarks
+[33m1f84b33[m All data updates
+[33m7e7f3cb[m fix(): Added correct values in Profile data and decimal value for marks
+[33m70f18bb[m fix(): updated with masters branch
+[33m889c0e3[m feat() Chatbot Added
+[33m7ac16cf[m [FIX] Fixed design and navigation issues
+[33m4aedd74[m Merge branch 'interns' of https://github.com/thefuturelens/award_adminpanel into interns
+[33mf00386e[m fix(): fixed the parameter listing
+[33m353bf1b[m [FIX] build issues
+[33m5a0152b[m [ADD] Clarification with same name params,negative marks in apply and detail screen and Registered Member Username
+[33m1513f8b[m [FIX] Fixed table align and color issue
+[33m7817b62[m [ADD] Added env
+[33m37f6137[m [ADD] Added env
+[33m3860617[m [ADD] Added env
+[33mca46196[m [ADD] Implimented Register members flow
+[33m5f97636[m [ADD] Implemented register design and API
+[33mb1a4deb[m [ADD] Implemented member register design
+[33m967db20[m [ADD] Added stats counts on review card of mo ol and others
+[33m2663bea[m [ADD] Nagative marks and awards title issue fixed
+[33mc04cf70[m [FIX] Fixed design related changes
+[33me7a59bf[m [FIX] Fixed design layout and styling issues
+[33md487d4a[m [ADD] Added history and approval signature and dashboard stats flow
+[33m31d519b[m Merge pull request #4 from thefuturelens/interns
+[33m371b1ff[m Fix(): increased the limit in review pages of both citation and appreciation and fixed the parameter filter in Apply Citation page
+[33m1e1e9e1[m [ADD] Withdraw of rejected applications are fixed
+[33mfd746b9[m [IMP] Removed profile settings fr

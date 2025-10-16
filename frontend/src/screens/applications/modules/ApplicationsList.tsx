@@ -187,6 +187,28 @@ const ApplicationsList = () => {
     return priorityEntry?.priority ?? "-";
   };
 
+  // Helper extractions to lower cognitive complexity in render
+  const canShowApproveCheckbox = (unit: any) => (
+    role === "headquarter" &&
+    unit?.last_approved_by_role === "command" &&
+    unit?.status_flag === "approved" &&
+    unit?.is_mo_approved === true &&
+    unit?.is_ol_approved === true
+  );
+
+  const handleRowClick = (unit: any) => {
+    if (unit.status_flag === "draft") return;
+    if (location.pathname === "/submitted-forms/list") {
+      navigate(`/submitted-forms/list/${unit.id}?award_type=${unit.type}`);
+    } else {
+      navigate(`/applications/list/${unit.id}?award_type=${unit.type}`);
+    }
+  };
+
+  const getNetMarksValue = (unit: any) => (
+    unit.netMarks?.toFixed(2) ?? getTotalMarks(unit).toFixed(2)
+  );
+
   const handleDownloadPDF = () => {
     const doc = new jsPDF({ orientation: "landscape", unit: "pt", format: "a4" });
     
@@ -342,31 +364,10 @@ const ApplicationsList = () => {
   ) : (
     units.length > 0 &&
     units.map((unit: any) => {
-      const canShowCheckbox =
-        role === "headquarter" &&
-        unit?.last_approved_by_role === "command" &&
-        unit?.status_flag === "approved" &&
-        unit?.is_mo_approved === true &&
-        unit?.is_ol_approved === true;
-
-      const onRowClick = () => {
-        if (unit.status_flag === "draft") return;
-        if (location.pathname === "/submitted-forms/list") {
-          navigate(`/submitted-forms/list/${unit.id}?award_type=${unit.type}`);
-        } else {
-          navigate(`/applications/list/${unit.id}?award_type=${unit.type}`);
-        }
-      };
-
-      const renderNetMarks = () => {
-        const netMarks = unit.netMarks?.toFixed(2) ?? getTotalMarks(unit).toFixed(2);
-        return netMarks;
-      };
-
       return (
         <tr
           key={unit.id}
-          onClick={onRowClick}
+          onClick={() => handleRowClick(unit)}
           style={{ cursor: "pointer" }}
         >
          {role === "headquarter" && (
@@ -376,7 +377,7 @@ const ApplicationsList = () => {
   >
     {unit?.isfinalized ? (
       <span style={{ color: "green", fontWeight: 600 }}>Finalized</span>
-    ) : canShowCheckbox ? (
+    ) : canShowApproveCheckbox(unit) ? (
       <input
         type="checkbox"
         checked={selectedUnits.some((u) => u.id === unit.id)}
@@ -415,7 +416,7 @@ const ApplicationsList = () => {
           </td>
           <td style={{ width: 150 }}>
             <p className="fw-4">
-              {renderNetMarks()}
+              {getNetMarksValue(unit)}
             </p>
           </td>
           <td style={{ width: 150 }}>

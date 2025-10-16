@@ -575,6 +575,20 @@ const ApplyCitation = () => {
     }
   };
 
+  // Helpers to avoid deep inline function nesting in JSX
+  const getCountChangeHandler = (paramId: number) => (
+    e: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    handleCountChange(paramId, e.target.value);
+  };
+
+  const getUploadChangeHandler = (param: any) => (
+    e: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    const display = getParamDisplay(param);
+    handleFileChange(e, param.param_id, display.main);
+  };
+
   const handlePreviewClick = () => {
     const hasAtLeastOneCount = parameters.some(
       (param: any) => Number(counts[param.param_id] ?? 0) > 0
@@ -853,12 +867,7 @@ const ApplyCitation = () => {
                                 placeholder="Enter count"
                                 autoComplete="off"
                                 value={counts[param.param_id] ?? ""}
-                                onChange={(e) =>
-                                  handleCountChange(
-                                    param.param_id,
-                                    e.target.value
-                                  )
-                                }
+                                onChange={getCountChangeHandler(param.param_id)}
                                 inputMode="numeric"
                                 pattern="[0-9]*"
                               />
@@ -909,14 +918,7 @@ const ApplyCitation = () => {
                                     placeholder="not more than 5 MB"
                                     multiple
                                     accept=".pdf,.jpg,.jpeg,.png,application/pdf,image/jpeg,image/png"
-                                    onChange={(e) => {
-                                      const display = getParamDisplay(param);
-                                      handleFileChange(
-                                        e,
-                                        param.param_id,
-                                        display.main
-                                      );
-                                    }}
+                                    onChange={getUploadChangeHandler(param)}
                                   />
                                   <span style={{ fontSize: 12, color: "red" }}>
                                     *File not more than 5 MB. Only PDF, JPG, PNG

@@ -18,21 +18,13 @@ exports.createCitation = async (data, user) => {
     const missingFields = requiredFields.filter((f) => !unit?.[f]);
     if (missingFields.length > 0) throw new Error(`Incomplete unit profile. Update: ${missingFields.join(", ")}`);
 
-    const getMasterId = async (table, nameField, value) => {
-      if (!value) return null;
-      const res = await client.query(
-        `SELECT ${table}_id FROM ${table}_master WHERE ${nameField} = $1 AND is_active = true LIMIT 1`,
-        [value]
-      );
-      return res.rows.length ? res.rows[0][`${table}_id`] : null;
-    };
-
+    // Resolve master IDs
     const [corps_id, brigade_id, division_id, command_id, arms_service_id] = await Promise.all([
-      getMasterId("corps", "corps_name", citation_fds.corps),
-      getMasterId("brigade", "brigade_name", citation_fds.brigade),
-      getMasterId("division", "division_name", citation_fds.division),
-      getMasterId("command", "command_name", citation_fds.command),
-      getMasterId("arms_service", "arms_service_name", citation_fds.arms_service),
+      getMasterId(client, "corps", "corps_name", citation_fds.corps),
+      getMasterId(client, "brigade", "brigade_name", citation_fds.brigade),
+      getMasterId(client, "division", "division_name", citation_fds.division),
+      getMasterId(client, "command", "command_name", citation_fds.command),
+      getMasterId(client, "arms_service", "arms_service_name", citation_fds.arms_service),
     ]);
 
     const paramResult = await client.query(
@@ -45,100 +37,33 @@ exports.createCitation = async (data, user) => {
     const paramMap = {};
     paramResult.rows.forEach(p => { paramMap[p.param_id] = p; });
 
-    let isshortlisted = false,
-        last_approved_at = null,
-        last_approved_by_role = null,
-        is_mo_approved = false,
-        mo_approved_at = null,
-        is_ol_approved = false,
-        ol_approved_at = null;
+    const flags = buildInitialApprovalFlags({ isSpecialUnit, isDraft });
+    if (flags.overrideStatus) status_flag = flags.overrideStatus;
 
-    if (isSpecialUnit && !isDraft) {
-      isshortlisted = true;
-      last_approved_at = new Date().toISOString();
-      last_approved_by_role = "command";
-      status_flag = "approved";
-      is_mo_approved = true;
-      mo_approved_at = new Date().toISOString();
-      is_ol_approved = true;
-      ol_approved_at = new Date().toISOString();
-    }
-
-    const citationInsert = await client.query(
-      `INSERT INTO citation_tab (
-        unit_id, date_init, status_flag, isshortlisted,
-        last_approved_at, last_approved_by_role,
-        is_mo_approved, mo_approved_at, is_ol_approved, ol_approved_at
-      ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)
-      RETURNING citation_id`,
-      [
-        user.unit_id,
-        date_init,
-        status_flag,
-        isshortlisted,
-        last_approved_at,
-        last_approved_by_role,
-        is_mo_approved,
-        mo_approved_at,
-        is_ol_approved,
-        ol_approved_at,
-      ]
-    );
+    const citationInsert = await insertCitation(client, {
+      unit_id: user.unit_id,
+      date_init,
+      status_flag,
+      flags,
+    });
 
     const applicationId = citationInsert.rows[0].citation_id;
 
-    const fdsInsert = await client.query(
-      `INSERT INTO fds (
-        application_id, corps_id, brigade_id, command_id, division_id, location, last_date,
-        unit_type, award_type, matrix_unit, unit_remarks, arms_service_id,
-        cycle_period, comments
-      ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14)
-      RETURNING fds_id`,
-      [
-        applicationId,
-        corps_id,
-        brigade_id,
-        command_id,
-        division_id,
-        citation_fds.location,
-        citation_fds.last_date,
-        citation_fds.unit_type,
-        citation_fds.award_type,
-        citation_fds.matrix_unit,
-        citation_fds.unitRemarks,
-        arms_service_id,
-        citation_fds.cycle_period,
-        JSON.stringify(citation_fds.comments || []),
-      ]
-    );
+    const fdsInsert = await insertFds(client, applicationId, {
+      corps_id,
+      brigade_id,
+      command_id,
+      division_id,
+      citation_fds,
+      arms_service_id,
+    });
     
 
     const fdsId = fdsInsert.rows[0].fds_id;
 
-    if (Array.isArray(citation_fds.awards) && citation_fds.awards.length > 0) {
-      for (const award of citation_fds.awards) {
-        const awardId = award.award_id || uuidv4();
-        await client.query(
-          `INSERT INTO fds_awards (fds_id, award_id, award_type, award_year, award_title)
-           VALUES ($1,$2,$3,$4,$5)`,
-          [fdsId, awardId, award.award_type || null, award.award_year || null, award.award_title || null]
-        );
-      }
-    }
+    await insertAwards(client, fdsId, citation_fds.awards);
 
-    if (Array.isArray(citation_fds.parameters) && citation_fds.parameters.length > 0) {
-      for (const param of citation_fds.parameters) {
-        const master = paramMap[param.id];
-        if (!master) continue;
-        const marks = Math.min((param.count || 0) * master.per_unit_mark, master.max_marks);
-        await client.query(
-          `INSERT INTO fds_parameters (fds_id, param_id, count, marks, upload)
-           VALUES ($1,$2,$3,$4,$5)
-           ON CONFLICT (fds_id, param_id) DO NOTHING`,
-          [fdsId, param.id, param.count || 0, marks, JSON.stringify(param.upload || [])]
-        );
-      }
-    }
+    await insertParameters(client, fdsId, citation_fds.parameters, paramMap);
 
     await client.query(
       `UPDATE citation_tab SET fds_id = $1 WHERE citation_id = $2`,
@@ -157,6 +82,123 @@ exports.createCitation = async (data, user) => {
     client.release();
   }
 };
+
+// ----------------- Helpers to reduce complexity -----------------
+async function getMasterId(client, table, nameField, value) {
+  if (!value) return null;
+  const res = await client.query(
+    `SELECT ${table}_id FROM ${table}_master WHERE ${nameField} = $1 AND is_active = true LIMIT 1`,
+    [value]
+  );
+  return res.rows.length ? res.rows[0][`${table}_id`] : null;
+}
+
+function buildInitialApprovalFlags({ isSpecialUnit, isDraft }) {
+  let flags = {
+    isshortlisted: false,
+    last_approved_at: null,
+    last_approved_by_role: null,
+    is_mo_approved: false,
+    mo_approved_at: null,
+    is_ol_approved: false,
+    ol_approved_at: null,
+    overrideStatus: null,
+  };
+  if (isSpecialUnit && !isDraft) {
+    const now = new Date().toISOString();
+    flags = {
+      ...flags,
+      isshortlisted: true,
+      last_approved_at: now,
+      last_approved_by_role: "command",
+      is_mo_approved: true,
+      mo_approved_at: now,
+      is_ol_approved: true,
+      ol_approved_at: now,
+      overrideStatus: "approved",
+    };
+  }
+  return flags;
+}
+
+async function insertCitation(client, { unit_id, date_init, status_flag, flags }) {
+  const res = await client.query(
+    `INSERT INTO citation_tab (
+      unit_id, date_init, status_flag, isshortlisted,
+      last_approved_at, last_approved_by_role,
+      is_mo_approved, mo_approved_at, is_ol_approved, ol_approved_at
+    ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)
+    RETURNING citation_id`,
+    [
+      unit_id,
+      date_init,
+      status_flag,
+      flags.isshortlisted,
+      flags.last_approved_at,
+      flags.last_approved_by_role,
+      flags.is_mo_approved,
+      flags.mo_approved_at,
+      flags.is_ol_approved,
+      flags.ol_approved_at,
+    ]
+  );
+  return res;
+}
+
+async function insertFds(client, applicationId, { corps_id, brigade_id, command_id, division_id, citation_fds, arms_service_id }) {
+  const res = await client.query(
+    `INSERT INTO fds (
+      application_id, corps_id, brigade_id, command_id, division_id, location, last_date,
+      unit_type, award_type, matrix_unit, unit_remarks, arms_service_id,
+      cycle_period, comments
+    ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14)
+    RETURNING fds_id`,
+    [
+      applicationId,
+      corps_id,
+      brigade_id,
+      command_id,
+      division_id,
+      citation_fds.location,
+      citation_fds.last_date,
+      citation_fds.unit_type,
+      citation_fds.award_type,
+      citation_fds.matrix_unit,
+      citation_fds.unitRemarks,
+      arms_service_id,
+      citation_fds.cycle_period,
+      JSON.stringify(citation_fds.comments || []),
+    ]
+  );
+  return res;
+}
+
+async function insertAwards(client, fdsId, awards) {
+  if (!Array.isArray(awards) || awards.length === 0) return;
+  for (const award of awards) {
+    const awardId = award.award_id || uuidv4();
+    await client.query(
+      `INSERT INTO fds_awards (fds_id, award_id, award_type, award_year, award_title)
+       VALUES ($1,$2,$3,$4,$5)`,
+      [fdsId, awardId, award.award_type || null, award.award_year || null, award.award_title || null]
+    );
+  }
+}
+
+async function insertParameters(client, fdsId, parameters, paramMap) {
+  if (!Array.isArray(parameters) || parameters.length === 0) return;
+  for (const param of parameters) {
+    const master = paramMap[param.id];
+    if (!master) continue;
+    const marks = Math.min((param.count || 0) * master.per_unit_mark, master.max_marks);
+    await client.query(
+      `INSERT INTO fds_parameters (fds_id, param_id, count, marks, upload)
+       VALUES ($1,$2,$3,$4,$5)
+       ON CONFLICT (fds_id, param_id) DO NOTHING`,
+      [fdsId, param.id, param.count || 0, marks, JSON.stringify(param.upload || [])]
+    );
+  }
+}
 exports.getAllCitations = async () => {
   const client = await dbService.getClient();
   try {

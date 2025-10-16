@@ -1536,54 +1536,60 @@ const handleCw2Approval = async (client, config, user, id) => {
 
 // Helper function to compute next status and side effects
 const computeNextStatusAndSideEffects = async (client, config, user, id, status, statusLower, member, iscdr, fds) => {
-  let isMemberStatusUpdate = false;
   let updatedStatusLower = statusLower;
 
-  if (statusLower === "approved" && Array.isArray(fds?.parameters)) {
-    fds.parameters = fds.parameters.map((param) => {
-      if (param.clarification_id) {
-        const { clarification_id, ...rest } = param;
-        return {
-          ...rest,
-          last_clarification_handled_by: user.user_role,
-          last_clarification_status: "clarified",
-          last_clarification_id: clarification_id,
-        };
-      }
-      return param;
-    });
+  clearClarificationIfApproved(fds, statusLower, user);
+
+  const memberResult = await maybeHandleMemberUpdate(client, config, user, id, status, statusLower, member, iscdr, fds);
+  if (memberResult) {
+    updatedStatusLower = memberResult.updatedStatusLower;
   }
 
-  if (member && !iscdr) {
-    validateMemberIcNumber(member);
-    
-    const appData = await fetchApplicationWithFds(client, config, id);
-    await handleMemberDatabaseOperations(client, appData, member);
-    updateFdsAcceptedMembers(fds, member);
-
-    const profile = await AuthService.getProfile(user);
-    const unit = profile?.data?.unit;
-    if (unit?.members?.length && fds.accepted_members?.length) {
-      const acceptedMap = new Map(
-        fds.accepted_members.map((m) => [m.member_id, m])
-      );
-      const allSigned = unit.members.every((unitMember) => {
-        const accepted = acceptedMap.get(unitMember.id);
-        return accepted?.is_signature_added === true;
-      });
-      if (allSigned) {
-        if (user.user_role === "cw2") {
-          await handleCw2Approval(client, config, user, id);
-        } else {
-          if (status !== "rejected") updatedStatusLower = "shortlisted_approved";
-          isMemberStatusUpdate = true;
-        }
-      }
-    }
-  }
-
-  return { isMemberStatusUpdate, updatedStatusLower };
+  return { isMemberStatusUpdate: Boolean(memberResult?.isMemberStatusUpdate), updatedStatusLower };
 };
+
+function clearClarificationIfApproved(fds, statusLower, user) {
+  if (statusLower !== "approved" || !Array.isArray(fds?.parameters)) return;
+  fds.parameters = fds.parameters.map((param) => {
+    if (!param.clarification_id) return param;
+    const { clarification_id, ...rest } = param;
+    return {
+      ...rest,
+      last_clarification_handled_by: user.user_role,
+      last_clarification_status: "clarified",
+      last_clarification_id: clarification_id,
+    };
+  });
+}
+
+async function maybeHandleMemberUpdate(client, config, user, id, status, statusLower, member, iscdr, fds) {
+  if (!member || iscdr) return null;
+  validateMemberIcNumber(member);
+
+  const appData = await fetchApplicationWithFds(client, config, id);
+  await handleMemberDatabaseOperations(client, appData, member);
+  updateFdsAcceptedMembers(fds, member);
+
+  const profile = await AuthService.getProfile(user);
+  const unit = profile?.data?.unit;
+  if (!unit?.members?.length || !fds.accepted_members?.length) return { isMemberStatusUpdate: false, updatedStatusLower: statusLower };
+
+  const allSigned = haveAllUnitMembersSigned(unit.members, fds.accepted_members);
+  if (!allSigned) return { isMemberStatusUpdate: false, updatedStatusLower: statusLower };
+
+  if (user.user_role === "cw2") {
+    await handleCw2Approval(client, config, user, id);
+    return { isMemberStatusUpdate: true, updatedStatusLower: statusLower };
+  }
+
+  const next = status !== "rejected" ? "shortlisted_approved" : statusLower;
+  return { isMemberStatusUpdate: true, updatedStatusLower: next };
+}
+
+function haveAllUnitMembersSigned(unitMembers, acceptedMembers) {
+  const acceptedMap = new Map(acceptedMembers.map((m) => [m.member_id, m]));
+  return unitMembers.every((unitMember) => acceptedMap.get(unitMember.id)?.is_signature_added === true);
+}
 
 // Helper function to persist status and audit
 const persistStatusAndAudit = async (client, config, statusLower, user, id, reason) => {
@@ -1922,42 +1928,15 @@ exports.approveApplicationMarks = async (user, body) => {
       const isCw2 = user.user_role === "cw2";
       const userKey = isCw2 && user.cw2_type ? `${user.user_role}:${user.cw2_type}` : user.user_role;
 
-      const entryKey = (e) => (e.role === "cw2" && e.cw2_type ? `${e.role}:${e.cw2_type}` : e.role);
-      const existingIndex = priorityArr.findIndex((entry) => entryKey(entry) === userKey);
+      const idx = findPriorityIndex(priorityArr, userKey);
+      const entry = buildPriorityEntry(user, points, now);
 
-      const priorityEntry = {
-        role: user.user_role,
-        priority: points,
-        priorityAddedAt: now,
-        ...(isCw2 && user.cw2_type ? { cw2_type: user.cw2_type } : {}),
-      };
-
-      if (existingIndex !== -1) {
-        priorityArr[existingIndex] = priorityEntry;
-
-        const updateSql = `
-          UPDATE fds_application_priority
-          SET priority = $1, priority_added_at = $2, updated_at = NOW()
-          WHERE fds_id = $3 AND role = $4
-          ${isCw2 ? "AND cw2_type = $5" : ""}
-        `;
-        const updateParams = isCw2
-          ? [points, now, fds_id, user.user_role, user.cw2_type]
-          : [points, now, fds_id, user.user_role];
-        await client.query(updateSql, updateParams);
+      if (idx !== -1) {
+        priorityArr[idx] = entry;
+        await execPriorityUpdate(client, fds_id, user, points, now);
       } else {
-        priorityArr.push(priorityEntry);
-
-        const insertSql = `
-          INSERT INTO fds_application_priority
-            (fds_id, role, priority, priority_added_at, created_at, updated_at${isCw2 ? ", cw2_type" : ""})
-          VALUES
-            ($1, $2, $3, $4, NOW(), NOW()${isCw2 ? ", $5" : ""})
-        `;
-        const insertParams = isCw2
-          ? [fds_id, user.user_role, points, now, user.cw2_type]
-          : [fds_id, user.user_role, points, now];
-        await client.query(insertSql, insertParams);
+        priorityArr.push(entry);
+        await execPriorityInsert(client, fds_id, user, points, now);
       }
 
       return priorityArr;
@@ -2026,6 +2005,46 @@ exports.approveApplicationMarks = async (user, body) => {
     client.release();
   }
 };
+
+// --- Priority helpers extracted to reduce complexity ---
+function findPriorityIndex(priorityArr, userKey) {
+  const entryKey = (e) => (e.role === "cw2" && e.cw2_type ? `${e.role}:${e.cw2_type}` : e.role);
+  return priorityArr.findIndex((entry) => entryKey(entry) === userKey);
+}
+
+function buildPriorityEntry(user, points, now) {
+  const isCw2 = user.user_role === "cw2";
+  return {
+    role: user.user_role,
+    priority: points,
+    priorityAddedAt: now,
+    ...(isCw2 && user.cw2_type ? { cw2_type: user.cw2_type } : {}),
+  };
+}
+
+async function execPriorityUpdate(client, fds_id, user, points, now) {
+  const isCw2 = user.user_role === "cw2";
+  const sql = `
+    UPDATE fds_application_priority
+    SET priority = $1, priority_added_at = $2, updated_at = NOW()
+    WHERE fds_id = $3 AND role = $4
+    ${isCw2 ? "AND cw2_type = $5" : ""}
+  `;
+  const params = isCw2 ? [points, now, fds_id, user.user_role, user.cw2_type] : [points, now, fds_id, user.user_role];
+  await client.query(sql, params);
+}
+
+async function execPriorityInsert(client, fds_id, user, points, now) {
+  const isCw2 = user.user_role === "cw2";
+  const sql = `
+    INSERT INTO fds_application_priority
+      (fds_id, role, priority, priority_added_at, created_at, updated_at${isCw2 ? ", cw2_type" : ""})
+    VALUES
+      ($1, $2, $3, $4, NOW(), NOW()${isCw2 ? ", $5" : ""})
+  `;
+  const params = isCw2 ? [fds_id, user.user_role, points, now, user.cw2_type] : [fds_id, user.user_role, points, now];
+  await client.query(sql, params);
+}
 
 // Small helpers to keep addApplicationSignature simple
 const isValidSignatureType = (type) => ["citation", "appreciation"].includes(type);
@@ -2316,57 +2335,14 @@ exports.getApplicationsHistory = async (user, query) => {
     const { award_type, search, page = 1, limit = 10 } = query;
     const profile = await AuthService.getProfile(user);
     const unit = profile?.data?.unit;
+    const master = profile?.data?.master;
     const pageInt = parseInt(page);
     const limitInt = parseInt(limit);
     const offset = (pageInt - 1) * limitInt;
 
     if (user_role.toLowerCase() === "cw2") {
-      const approvalField =
-        user.cw2_type === "mo"
-          ? "is_mo_approved"
-          : user.cw2_type === "ol"
-            ? "is_ol_approved"
-            : null;
-      if (!approvalField) throw new Error("Invalid cw2_type for CW2 user.");
-
-      const [citationsRes, appreciationsRes] = await Promise.all([
-        client.query(
-          `SELECT citation_id AS id, 'citation' AS type, unit_id, date_init, status_flag FROM Citation_tab WHERE ${approvalField} = true ORDER BY date_init DESC LIMIT $1 OFFSET $2`,
-          [limitInt, offset]
-        ),
-        client.query(
-          `SELECT appreciation_id AS id, 'appreciation' AS type, unit_id, date_init, status_flag FROM Appre_tab WHERE ${approvalField} = true ORDER BY date_init DESC LIMIT $1 OFFSET $2`,
-          [limitInt, offset]
-        ),
-      ]);
-      let allApps = [...citationsRes.rows, ...appreciationsRes.rows];
-      allApps=await attachFdsToApplications(allApps)
-      if (award_type) {
-        allApps = allApps.filter(
-          (app) =>
-            app.fds?.award_type?.toLowerCase() === award_type.toLowerCase()
-        );
-      }
-      if (search) {
-        const normalize = (s) => s?.toLowerCase().replace(/[\s-]/g, "");
-        const searchNorm = normalize(search);
-        allApps = allApps.filter(
-          (app) =>
-            app.id.toString().toLowerCase().includes(searchNorm) ||
-            normalize(app.fds?.cycle_period || "").includes(searchNorm)
-        );
-      }
-      return ResponseHelper.success(
-        200,
-        "Fetched CW2 applications history",
-        allApps,
-        {
-          totalItems: allApps.length,
-          currentPage: pageInt,
-          itemsPerPage: limitInt,
-          totalPages: Math.ceil(allApps.length / limitInt),
-        }
-      );
+      const cw2Res = await getCw2ApplicationsHistory(client, user, { award_type, search, limitInt, offset });
+      return ResponseHelper.success(200, "Fetched CW2 applications history", cw2Res.data, cw2Res.meta);
     }
 
     const ROLE_HIERARCHY = [
@@ -2391,15 +2367,17 @@ const roleTableMap = {
 
 const { table, idField, nameField } = roleTableMap[user_role.toLowerCase()] || {};
 if (!table) throw new Error(`Invalid role: ${user_role}`);
-
-const masterRes = await client.query(
-  `SELECT ${idField} FROM ${table} WHERE ${nameField} = $1 LIMIT 1`,
-  [unit.name]
-);
-if (masterRes.rows.length === 0)
-  throw new Error(`No matching record found in ${table} for name: ${unit.name}`);
-
-const parentId = masterRes.rows[0][idField];
+// Prefer id from profile.master if available; fall back to name lookup
+let parentId = master?.[idField] || null;
+if (!parentId) {
+  const masterRes = await client.query(
+    `SELECT ${idField} FROM ${table} WHERE ${nameField} = $1 LIMIT 1`,
+    [unit.name]
+  );
+  if (masterRes.rows.length === 0)
+    throw new Error(`No matching record found in ${table} for name: ${unit.name}`);
+  parentId = masterRes.rows[0][idField];
+}
 
 const subUnitsRes = await client.query(
   `SELECT unit_id FROM Unit_tab WHERE ${idField} = $1`,
@@ -2415,17 +2393,14 @@ const subUnitsRes = await client.query(
       });
     }
 
-    const allowedRoles = ROLE_HIERARCHY.slice(currentIndex);
-    const lowerRoles = allowedRoles
-      .map((role, idx) =>
-        idx > 0 ? ROLE_HIERARCHY[currentIndex + idx - 1] : null
-      )
-      .filter(Boolean);
+    const allowedRoles = ROLE_HIERARCHY.slice(currentIndex); // current and above (senior)
+    // Roles below the current user in hierarchy (junior): e.g., for 'corps' => ['unit','brigade','division']
+    const lowerRoles = ROLE_HIERARCHY.slice(0, currentIndex);
 
     const baseFilters = `
       unit_id = ANY($1) AND (
         (status_flag = 'approved' AND last_approved_by_role = ANY($2)) OR
-        (status_flag = 'shortlisted_approved' AND last_approved_by_role = ANY($2)) OR
+        (status_flag = 'shortlisted_approved' AND last_approved_by_role = ANY($3)) OR
         (status_flag = 'rejected' AND last_rejected_by_role = ANY($3)) OR
         (status_flag = 'withdrawed' AND withdraw_requested_by = ANY($4))
       )
@@ -2481,6 +2456,23 @@ const subUnitsRes = await client.query(
     WHERE ${baseFilters.replace(/unit_id/g, "a.unit_id")}
   `;
 
+    // Debug: surface reasoning for missing records like id=60
+    if (user_role.toLowerCase() === 'corps') {
+      try {
+        const dbg = await client.query(`
+          SELECT citation_id AS id, 'citation' AS type, unit_id, status_flag, last_approved_by_role
+          FROM Citation_tab WHERE citation_id = 60
+          UNION ALL
+          SELECT appreciation_id AS id, 'appreciation' AS type, unit_id, status_flag, last_approved_by_role
+          FROM Appre_tab WHERE appreciation_id = 60
+        `);
+        console.log('DEBUG app#60 raw:', dbg.rows);
+        console.log('DEBUG filters:', { unitIds, allowedRoles, lowerRoles });
+      } catch (e) {
+        console.log('DEBUG app#60 probe failed:', e?.message);
+      }
+    }
+
     const [citations, appreciations] = await Promise.all([
       client.query(citationQuery, queryParams),
       client.query(appreQuery, queryParams),
@@ -2502,6 +2494,12 @@ const subUnitsRes = await client.query(
           app.id.toString().toLowerCase().includes(searchNorm) ||
           normalize(app.fds?.cycle_period || "").includes(searchNorm)
       );
+    }
+
+    // Debug: show whether id=60 is present post-filter
+    if (user_role.toLowerCase() === 'corps') {
+      const present60 = allApps.some((a) => Number(a.id) === 60);
+      console.log('DEBUG app#60 present after filters?', present60, { count: allApps.length });
     }
 
     allApps.sort((a, b) => new Date(b.date_init) - new Date(a.date_init));
@@ -2532,6 +2530,42 @@ const subUnitsRes = await client.query(
     client.release();
   }
 };
+
+// Helper to simplify getApplicationsHistory for CW2 role
+async function getCw2ApplicationsHistory(client, user, { award_type, search, limitInt, offset }) {
+  const approvalField = user.cw2_type === "mo" ? "is_mo_approved" : user.cw2_type === "ol" ? "is_ol_approved" : null;
+  if (!approvalField) throw new Error("Invalid cw2_type for CW2 user.");
+
+  const [citationsRes, appreciationsRes] = await Promise.all([
+    client.query(
+      `SELECT citation_id AS id, 'citation' AS type, unit_id, date_init, status_flag FROM Citation_tab WHERE ${approvalField} = true ORDER BY date_init DESC LIMIT $1 OFFSET $2`,
+      [limitInt, offset]
+    ),
+    client.query(
+      `SELECT appreciation_id AS id, 'appreciation' AS type, unit_id, date_init, status_flag FROM Appre_tab WHERE ${approvalField} = true ORDER BY date_init DESC LIMIT $1 OFFSET $2`,
+      [limitInt, offset]
+    ),
+  ]);
+  let allApps = [...citationsRes.rows, ...appreciationsRes.rows];
+  allApps = await attachFdsToApplications(allApps);
+
+  if (award_type) {
+    allApps = allApps.filter((app) => app.fds?.award_type?.toLowerCase() === award_type.toLowerCase());
+  }
+  if (search) {
+    const normalize = (s) => s?.toLowerCase().replace(/[\s-]/g, "");
+    const searchNorm = normalize(search);
+    allApps = allApps.filter((app) => app.id.toString().toLowerCase().includes(searchNorm) || normalize(app.fds?.cycle_period || "").includes(searchNorm));
+  }
+
+  const meta = {
+    totalItems: allApps.length,
+    currentPage: Math.ceil((offset + 1) / limitInt),
+    itemsPerPage: limitInt,
+    totalPages: Math.ceil(allApps.length / limitInt),
+  };
+  return { data: allApps, meta };
+}
 
 // Helpers for getAllApplications to reduce complexity
 const ensureProfileComplete = (unit, roleLc) => {
@@ -3353,6 +3387,8 @@ exports.getApplicationsSummary = async (user, query) => {
     }
 
     const { sql: whereSql, params } = buildSummaryWhere({ unitIds, award_type, command_type, corps_type, division_type, brigade_type });
+    let whereConditions = [whereSql];
+    let paramIndex = params.length;
     if (search) {
       paramIndex++;
       params.push(`%${search}%`);

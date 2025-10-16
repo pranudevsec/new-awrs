@@ -696,7 +696,7 @@ const ApplicationDetails = () => {
     }
   };
 
-  const debouncedHandlePriorityChange = useDebounce(handlePriorityChange, 1000);
+  // Priority is now applied only via the "Add Priority" button (no auto-save on type)
 
   const debouncedHandleSaveComment = useDebounce(handleSaveComment, 600);
 
@@ -2079,10 +2079,18 @@ const ApplicationDetails = () => {
 
                         setPriority(value);
 
+                        // Inline validation feedback
+                        if (value === "") {
+                          setPriorityError("");
+                          return;
+                        }
+
                         if (value && !isNaN(Number(value))) {
                           const numValue = Number(value);
                           if (numValue >= 1 && numValue <= 1000) {
-                            debouncedHandlePriorityChange(value);
+                            setPriorityError("");
+                          } else {
+                            setPriorityError("Priority must be between 1 and 1000");
                           }
                         }
                       }}
@@ -2090,6 +2098,30 @@ const ApplicationDetails = () => {
                     {priorityError && (
                       <p className="error-text">{priorityError}</p>
                     )}
+                    <div className="d-flex gap-2 mt-2">
+                      <button
+                        type="button"
+                        className="_btn primary"
+                        onClick={async () => {
+                          const value = priority?.toString() || "";
+                          const numValue = Number(value);
+                          if (!value || isNaN(numValue)) {
+                            setPriorityError("Please enter a valid number");
+                            return;
+                          }
+                          if (numValue < 1 || numValue > 1000) {
+                            setPriorityError("Priority must be between 1 and 1000");
+                            return;
+                          }
+                          try {
+                            await handlePriorityChange(value);
+                            window.location.reload();
+                          } catch (err) {}
+                        }}
+                      >
+                        Add Priority
+                      </button>
+                    </div>
                   </div>
                 )}
                 <form
