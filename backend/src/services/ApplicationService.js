@@ -2333,9 +2333,6 @@ exports.getApplicationsHistory = async (user, query) => {
   try {
     const { user_role } = user;
     const { award_type, search, page = 1, limit = 10 } = query;
-    const profile = await AuthService.getProfile(user);
-    const unit = profile?.data?.unit;
-    const master = profile?.data?.master;
     const pageInt = parseInt(page);
     const limitInt = parseInt(limit);
     const offset = (pageInt - 1) * limitInt;
@@ -2345,168 +2342,22 @@ exports.getApplicationsHistory = async (user, query) => {
       return ResponseHelper.success(200, "Fetched CW2 applications history", cw2Res.data, cw2Res.meta);
     }
 
-    const ROLE_HIERARCHY = [
-      "unit",
-      "brigade",
-      "division",
-      "corps",
-      "command",
-    ];
-    const currentRole = user_role.toLowerCase();
-    const currentIndex = ROLE_HIERARCHY.indexOf(currentRole);
-    let unitIds = [];
-    if (user_role.toLowerCase() === "unit") {
-      unitIds = [unit.unit_id];
-    } else {
-const roleTableMap = {
-  brigade: { table: "Brigade_Master", idField: "brigade_id", nameField: "brigade_name" },
-  division: { table: "Division_Master", idField: "division_id", nameField: "division_name" },
-  corps: { table: "Corps_Master", idField: "corps_id", nameField: "corps_name" },
-  command: { table: "Command_Master", idField: "command_id", nameField: "command_name" },
-};
-
-const { table, idField, nameField } = roleTableMap[user_role.toLowerCase()] || {};
-if (!table) throw new Error(`Invalid role: ${user_role}`);
-// Prefer id from profile.master if available; fall back to name lookup
-let parentId = master?.[idField] || null;
-if (!parentId) {
-  const masterRes = await client.query(
-    `SELECT ${idField} FROM ${table} WHERE ${nameField} = $1 LIMIT 1`,
-    [unit.name]
-  );
-  if (masterRes.rows.length === 0)
-    throw new Error(`No matching record found in ${table} for name: ${unit.name}`);
-  parentId = masterRes.rows[0][idField];
-}
-
-const subUnitsRes = await client.query(
-  `SELECT unit_id FROM Unit_tab WHERE ${idField} = $1`,
-  [parentId]
-);
-
- unitIds = subUnitsRes.rows.map((u) => u.unit_id);
-    }
-
+    const { unitIds, allowedRoles, lowerRoles } = await resolveHistoryScope(client, user);
     if (unitIds.length === 0) {
-      return ResponseHelper.success(200, "No applications found", [], {
-        totalItems: 0,
-      });
+      return ResponseHelper.success(200, "No applications found", [], { totalItems: 0 });
     }
 
-    const allowedRoles = ROLE_HIERARCHY.slice(currentIndex); // current and above (senior)
-    // Roles below the current user in hierarchy (junior): e.g., for 'corps' => ['unit','brigade','division']
-    const lowerRoles = ROLE_HIERARCHY.slice(0, currentIndex);
+    const filtersSql = buildHistoryBaseFilters();
+    const params = [unitIds, allowedRoles, lowerRoles, [user.user_role]];
+    const rows = await queryHistoryRows(client, filtersSql, params);
 
-    const baseFilters = `
-      unit_id = ANY($1) AND (
-        (status_flag = 'approved' AND last_approved_by_role = ANY($2)) OR
-        (status_flag = 'shortlisted_approved' AND last_approved_by_role = ANY($3)) OR
-        (status_flag = 'rejected' AND last_rejected_by_role = ANY($3)) OR
-        (status_flag = 'withdrawed' AND withdraw_requested_by = ANY($4))
-      )
-    `;
-    console.log('baseFilters--------',baseFilters)
-    const queryParams = [unitIds, allowedRoles, lowerRoles, [user.user_role]];
-    console.log('queryParams--------',queryParams)
-    const citationQuery = `
-    SELECT 
-      c.citation_id AS id,
-      'citation' AS type,
-      c.unit_id,
-      c.date_init,
-      c.status_flag,
-      c.is_mo_approved,
-      c.mo_approved_at,
-      c.is_ol_approved,
-      c.ol_approved_at,
-      c.last_approved_by_role,
-      c.last_approved_at
-    FROM Citation_tab c
-    LEFT JOIN (
-      SELECT 
-        unit_id,
-        sos_no,
-        name
-      FROM Unit_tab
-    ) u ON c.unit_id = u.unit_id
-    WHERE ${baseFilters.replace(/unit_id/g, "c.unit_id")}
-  `;
-  console.log('helloooo--------')
-    const appreQuery = `
-    SELECT 
-      a.appreciation_id AS id,
-      'appreciation' AS type,
-      a.unit_id,
-      a.date_init,
-      a.status_flag,
-      a.is_mo_approved,
-      a.mo_approved_at,
-      a.is_ol_approved,
-      a.ol_approved_at,
-      a.last_approved_by_role,
-      a.last_approved_at
-    FROM Appre_tab a
-    LEFT JOIN (
-      SELECT 
-        unit_id,
-        sos_no,
-        name
-      FROM Unit_tab
-    ) u ON a.unit_id = u.unit_id
-    WHERE ${baseFilters.replace(/unit_id/g, "a.unit_id")}
-  `;
-
-    // Debug: surface reasoning for missing records like id=60
-    if (user_role.toLowerCase() === 'corps') {
-      try {
-        const dbg = await client.query(`
-          SELECT citation_id AS id, 'citation' AS type, unit_id, status_flag, last_approved_by_role
-          FROM Citation_tab WHERE citation_id = 60
-          UNION ALL
-          SELECT appreciation_id AS id, 'appreciation' AS type, unit_id, status_flag, last_approved_by_role
-          FROM Appre_tab WHERE appreciation_id = 60
-        `);
-        console.log('DEBUG app#60 raw:', dbg.rows);
-        console.log('DEBUG filters:', { unitIds, allowedRoles, lowerRoles });
-      } catch (e) {
-        console.log('DEBUG app#60 probe failed:', e?.message);
-      }
-    }
-
-    const [citations, appreciations] = await Promise.all([
-      client.query(citationQuery, queryParams),
-      client.query(appreQuery, queryParams),
-    ]);
-
-    let allApps = [...citations.rows, ...appreciations.rows];
-    console.log(allApps)
-    allApps = await attachFdsToApplications(allApps);
-    if (award_type) {
-      allApps = allApps.filter(
-        (app) => app.fds?.award_type?.toLowerCase() === award_type.toLowerCase()
-      );
-    }
-    if (search) {
-      const normalize = (s) => s?.toLowerCase().replace(/[\s-]/g, "");
-      const searchNorm = normalize(search);
-      allApps = allApps.filter(
-        (app) =>
-          app.id.toString().toLowerCase().includes(searchNorm) ||
-          normalize(app.fds?.cycle_period || "").includes(searchNorm)
-      );
-    }
-
-    // Debug: show whether id=60 is present post-filter
-    if (user_role.toLowerCase() === 'corps') {
-      const present60 = allApps.some((a) => Number(a.id) === 60);
-      console.log('DEBUG app#60 present after filters?', present60, { count: allApps.length });
-    }
-
+    let allApps = await attachFdsToApplications(rows);
+    allApps = filterHistoryByAwardAndSearch(allApps, award_type, search);
     allApps.sort((a, b) => new Date(b.date_init) - new Date(a.date_init));
+
     const startIndex = (pageInt - 1) * limitInt;
     const endIndex = pageInt * limitInt;
     const paginatedData = allApps.slice(startIndex, endIndex);
-
     const pagination = {
       totalItems: allApps.length,
       totalPages: Math.ceil(allApps.length / limitInt),
@@ -2514,22 +2365,104 @@ const subUnitsRes = await client.query(
       itemsPerPage: limitInt,
     };
 
-    return ResponseHelper.success(
-      200,
-      "Fetched applications history",
-      paginatedData,
-      pagination
-    );
+    return ResponseHelper.success(200, "Fetched applications history", paginatedData, pagination);
   } catch (err) {
-    return ResponseHelper.error(
-      500,
-      "Failed to fetch applications history",
-      err.message
-    );
+    return ResponseHelper.error(500, "Failed to fetch applications history", err.message);
   } finally {
     client.release();
   }
 };
+
+// --- getApplicationsHistory helpers (extracted to reduce complexity) ---
+const ROLE_HIERARCHY_FOR_HISTORY = ["unit", "brigade", "division", "corps", "command"];
+
+async function resolveHistoryScope(client, user) {
+  const profile = await AuthService.getProfile(user);
+  const unit = profile?.data?.unit;
+  const master = profile?.data?.master;
+  const roleLc = (user.user_role || "").toLowerCase();
+
+  if (roleLc === "unit") {
+    return {
+      unitIds: [unit.unit_id],
+      allowedRoles: ROLE_HIERARCHY_FOR_HISTORY.slice(ROLE_HIERARCHY_FOR_HISTORY.indexOf(roleLc)),
+      lowerRoles: ROLE_HIERARCHY_FOR_HISTORY.slice(0, ROLE_HIERARCHY_FOR_HISTORY.indexOf(roleLc)),
+    };
+  }
+
+  const roleTableMap = {
+    brigade: { table: "Brigade_Master", idField: "brigade_id", nameField: "brigade_name" },
+    division: { table: "Division_Master", idField: "division_id", nameField: "division_name" },
+    corps: { table: "Corps_Master", idField: "corps_id", nameField: "corps_name" },
+    command: { table: "Command_Master", idField: "command_id", nameField: "command_name" },
+  };
+  const meta = roleTableMap[roleLc];
+  if (!meta) throw new Error(`Invalid role: ${user.user_role}`);
+
+  let parentId = master?.[meta.idField] || null;
+  if (!parentId) {
+    const res = await client.query(`SELECT ${meta.idField} FROM ${meta.table} WHERE ${meta.nameField} = $1 LIMIT 1`, [unit.name]);
+    if (res.rows.length === 0) throw new Error(`No matching record found in ${meta.table} for name: ${unit.name}`);
+    parentId = res.rows[0][meta.idField];
+  }
+  const subs = await client.query(`SELECT unit_id FROM Unit_tab WHERE ${meta.idField} = $1`, [parentId]);
+  const unitIds = subs.rows.map((r) => r.unit_id);
+
+  const idx = ROLE_HIERARCHY_FOR_HISTORY.indexOf(roleLc);
+  return {
+    unitIds,
+    allowedRoles: ROLE_HIERARCHY_FOR_HISTORY.slice(idx),
+    lowerRoles: ROLE_HIERARCHY_FOR_HISTORY.slice(0, idx),
+  };
+}
+
+function buildHistoryBaseFilters() {
+  return `
+    unit_id = ANY($1) AND (
+      (status_flag = 'approved' AND last_approved_by_role = ANY($2)) OR
+      (status_flag = 'shortlisted_approved' AND last_approved_by_role = ANY($3)) OR
+      (status_flag = 'rejected' AND last_rejected_by_role = ANY($3)) OR
+      (status_flag = 'withdrawed' AND withdraw_requested_by = ANY($4))
+    )
+  `;
+}
+
+async function queryHistoryRows(client, baseFilters, params) {
+  const citationQuery = `
+    SELECT c.citation_id AS id, 'citation' AS type, c.unit_id, c.date_init, c.status_flag,
+           c.is_mo_approved, c.mo_approved_at, c.is_ol_approved, c.ol_approved_at,
+           c.last_approved_by_role, c.last_approved_at
+    FROM Citation_tab c
+    LEFT JOIN (SELECT unit_id, sos_no, name FROM Unit_tab) u ON c.unit_id = u.unit_id
+    WHERE ${baseFilters.replace(/unit_id/g, 'c.unit_id')}
+  `;
+  const appreQuery = `
+    SELECT a.appreciation_id AS id, 'appreciation' AS type, a.unit_id, a.date_init, a.status_flag,
+           a.is_mo_approved, a.mo_approved_at, a.is_ol_approved, a.ol_approved_at,
+           a.last_approved_by_role, a.last_approved_at
+    FROM Appre_tab a
+    LEFT JOIN (SELECT unit_id, sos_no, name FROM Unit_tab) u ON a.unit_id = u.unit_id
+    WHERE ${baseFilters.replace(/unit_id/g, 'a.unit_id')}
+  `;
+  const [citations, appreciations] = await Promise.all([
+    client.query(citationQuery, params),
+    client.query(appreQuery, params),
+  ]);
+  return [...citations.rows, ...appreciations.rows];
+}
+
+function filterHistoryByAwardAndSearch(apps, awardType, search) {
+  let res = apps;
+  if (awardType) {
+    res = res.filter((app) => app.fds?.award_type?.toLowerCase() === awardType.toLowerCase());
+  }
+  if (search) {
+    const normalize = (s) => s?.toLowerCase().replace(/[\s-]/g, "");
+    const q = normalize(search);
+    res = res.filter((app) => app.id.toString().toLowerCase().includes(q) || normalize(app.fds?.cycle_period || "").includes(q));
+  }
+  return res;
+}
 
 // Helper to simplify getApplicationsHistory for CW2 role
 async function getCw2ApplicationsHistory(client, user, { award_type, search, limitInt, offset }) {
