@@ -211,7 +211,9 @@ const ApplicationsList = () => {
 
   const handleDownloadPDF = () => {
     const doc = new jsPDF({ orientation: "landscape", unit: "pt", format: "a4" });
-    
+
+    const userIP = window.location.hostname || "localhost";
+    const currentDateTime = new Date().toLocaleString();
 
     doc.setFontSize(16);
     doc.text("Applications List Report", 14, 22);
@@ -255,6 +257,18 @@ const ApplicationsList = () => {
       columnStyles: {
         6: { cellWidth: 60, halign: "right" }, // Total Marks column
         7: { cellWidth: 60, halign: "right" }, // Negative Marks column
+      },
+      didDrawPage: () => {
+        const pageWidth = doc.internal.pageSize.getWidth();
+        const pageHeight = doc.internal.pageSize.getHeight();
+        const centerX = pageWidth / 2;
+        const centerY = pageHeight / 2;
+
+        // Watermark: IP and Date at 45 degrees
+        doc.setFontSize(42);
+        doc.setTextColor(150);
+        doc.text(userIP, centerX, centerY - 20, { angle: 45, align: "center" });
+        doc.text(currentDateTime, centerX, centerY + 20, { angle: 45, align: "center" });
       },
     });
 

@@ -318,7 +318,13 @@ const ProfileSettings = () => {
     },
     enableReinitialize: true,
     validationSchema: Yup.object().shape({
-      start_month: Yup.string().test('date-range', 'Start date cannot be after end date', function(value) {
+      start_month: Yup.string()
+        .when([], {
+          is: () => role === 'unit',
+          then: (schema) => schema.required('Start month is required'),
+          otherwise: (schema) => schema,
+        })
+        .test('date-range', 'Start date cannot be after end date', function(value) {
         const { start_year, end_month, end_year } = this.parent;
         
         if (!value || !start_year || !end_month || !end_year) {
@@ -330,7 +336,13 @@ const ProfileSettings = () => {
         
         return startDate <= endDate;
       }),
-      start_year: Yup.string().test('date-range', 'Start date cannot be after end date', function(value) {
+      start_year: Yup.string()
+        .when([], {
+          is: () => role === 'unit',
+          then: (schema) => schema.required('Start year is required'),
+          otherwise: (schema) => schema,
+        })
+        .test('date-range', 'Start date cannot be after end date', function(value) {
         const { start_month, end_month, end_year } = this.parent;
         
         if (!value || !start_month || !end_month || !end_year) {
@@ -342,7 +354,13 @@ const ProfileSettings = () => {
         
         return startDate <= endDate;
       }),
-      end_month: Yup.string().test('date-range', 'End date cannot be before start date', function(value) {
+      end_month: Yup.string()
+        .when([], {
+          is: () => role === 'unit',
+          then: (schema) => schema.required('End month is required'),
+          otherwise: (schema) => schema,
+        })
+        .test('date-range', 'End date cannot be before start date', function(value) {
         const { start_month, start_year, end_year } = this.parent;
         
         if (!value || !start_month || !start_year || !end_year) {
@@ -354,7 +372,13 @@ const ProfileSettings = () => {
         
         return endDate >= startDate;
       }),
-      end_year: Yup.string().test('date-range', 'End date cannot be before start date', function(value) {
+      end_year: Yup.string()
+        .when([], {
+          is: () => role === 'unit',
+          then: (schema) => schema.required('End year is required'),
+          otherwise: (schema) => schema,
+        })
+        .test('date-range', 'End date cannot be before start date', function(value) {
         const { start_month, start_year, end_month } = this.parent;
         
         if (!value || !start_month || !start_year || !end_month) {
@@ -698,7 +722,7 @@ const ProfileSettings = () => {
                     }}
                     placeholder="Select Month"
                   />
-                  {formik.touched.start_month && formik.errors.start_month && (
+                  {(formik.submitCount > 0 || formik.touched.start_month) && formik.errors.start_month && (
                     <p className="error-text">{formik.errors.start_month}</p>
                   )}
                 </div>
@@ -725,7 +749,7 @@ const ProfileSettings = () => {
                     }}
                     placeholder="Select Year"
                   />
-                  {formik.touched.start_year && formik.errors.start_year && (
+                  {(formik.submitCount > 0 || formik.touched.start_year) && formik.errors.start_year && (
                     <p className="error-text">{formik.errors.start_year}</p>
                   )}
                 </div>
@@ -771,7 +795,7 @@ const ProfileSettings = () => {
                     }}
                     placeholder="Select Month"
                   />
-                  {formik.touched.end_month && formik.errors.end_month && (
+                  {(formik.submitCount > 0 || formik.touched.end_month) && formik.errors.end_month && (
                     <p className="error-text">{formik.errors.end_month}</p>
                   )}
                 </div>
@@ -798,7 +822,7 @@ const ProfileSettings = () => {
                     }}
                     placeholder="Select Year"
                   />
-                  {formik.touched.end_year && formik.errors.end_year && (
+                  {(formik.submitCount > 0 || formik.touched.end_year) && formik.errors.end_year && (
                     <p className="error-text">{formik.errors.end_year}</p>
                   )}
                 </div>
