@@ -21,7 +21,7 @@ const getConfig = (key: string, whitelist: string[]) => {
 };
 
 const reducer = combineReducers({
-    admin: persistReducer(getConfig('admin', ['admin']), authReducer),
+    admin: persistReducer(getConfig('admin', ['admin', 'profile']), authReducer),
     config: configReducer,
     parameter: parameterReducer,
     citation: citationReducer,

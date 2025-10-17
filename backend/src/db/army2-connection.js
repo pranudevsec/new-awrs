@@ -7,7 +7,12 @@ const army2Pool = new Pool({
   user: config.postgres.user,
   password: config.postgres.password,
   database: config.postgres.database, // Use army-2 database
-  ssl: config.postgres.ssl
+  ssl: config.postgres.ssl,
+  // Connection pool configuration
+  max: 20, // Maximum number of clients in the pool
+  idleTimeoutMillis: 30000, // Close idle clients after 30 seconds
+  connectionTimeoutMillis: 2000, // Return an error after 2 seconds if connection could not be established
+  allowExitOnIdle: true // Allow the pool to exit when all clients are idle
 });
 
 let isConnected = false;

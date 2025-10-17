@@ -15,6 +15,9 @@ interface PendingApplication {
   id: number;
   type: string;
   unit_id: number;
+  // Approval flags
+  is_mo_approved?: boolean;
+  is_ol_approved?: boolean;
   unit_details: {
     unit_id: number;
     name: string;
@@ -108,10 +111,7 @@ const PendingApplicationsList = () => {
     }
   };
 
-  const handleExport = () => {
-
-    toast.success("Export functionality will be implemented");
-  };
+  // no export on pending page per requirement
 
   return (
     <div className="applications-section">
@@ -120,19 +120,9 @@ const PendingApplicationsList = () => {
       />
 
       <div className="applications-header d-flex flex-wrap align-items-center justify-content-between gap-3 mb-4">
-        <div className="left-content d-flex flex-wrap align-items-center gap-3">
-          <FormSelect
-            name="awardType"
-            label="Award Type"
-            value={awardType || "All"}
-            onChange={(value: any) => setAwardType(value.value)}
-            options={[ ...awardTypeOptions]}
-            placeholder="Select Award Type"
-          />
-        </div>
-
-        <div className="right-content d-flex flex-wrap align-items-center gap-3">
-          <div className="search-box">
+        {/* LEFT: Search */}
+        <div className="left-content d-flex flex-wrap align-items-center gap-3 flex-grow-1">
+          <div className="search-box w-100" style={{ maxWidth: 480 }}>
             <input
               type="text"
               className="form-control"
@@ -141,10 +131,18 @@ const PendingApplicationsList = () => {
               onChange={(e) => setSearchTerm(e.target.value)}
             />
           </div>
+        </div>
 
-          <button className="_btn primary" onClick={handleExport}>
-            Export
-          </button>
+        {/* RIGHT: Filters */}
+        <div className="right-content d-flex flex-wrap align-items-center gap-3">
+          <FormSelect
+            name="awardType"
+            label="Award Type"
+            value={awardTypeOptions.find((opt) => opt.value === (awardType ?? 'All')) ?? awardTypeOptions[0]}
+            onChange={(option: any) => setAwardType(option?.value ?? null)}
+            options={[...awardTypeOptions]}
+            placeholder="Select Award Type"
+          />
         </div>
       </div>
 
@@ -158,6 +156,12 @@ const PendingApplicationsList = () => {
               <th style={{ width: 150, minWidth: 150, maxWidth: 150, color: "white" }}>Unit Name</th>
               {role === "headquarter" && (
                 <th style={{ width: 150, minWidth: 150, maxWidth: 150, color: "white" }}>Command</th>
+              )}
+              {role === "headquarter" && (
+                <>
+                  <th style={{ width: 100, minWidth: 100, maxWidth: 120, color: "white" }}>MO</th>
+                  <th style={{ width: 100, minWidth: 100, maxWidth: 120, color: "white" }}>OL</th>
+                </>
               )}
               <th style={{ width: 200, minWidth: 200, maxWidth: 200, color: "white" }}>
                 Submission Date
@@ -194,6 +198,16 @@ const PendingApplicationsList = () => {
                       <p className="fw-4">{application.fds.command}</p>
                     </td>
                   )}
+                {role === "headquarter" && (
+                  <>
+                    <td style={{ width: 100, minWidth: 100, maxWidth: 120 }}>
+                      <p className="fw-4">{application.is_mo_approved ? "True" : "False"}</p>
+                    </td>
+                    <td style={{ width: 100, minWidth: 100, maxWidth: 120 }}>
+                      <p className="fw-4">{application.is_ol_approved ? "True" : "False"}</p>
+                    </td>
+                  </>
+                )}
                   <td style={{ width: 200, minWidth: 200, maxWidth: 200 }}>
                     <p className="fw-4">
                       {new Date(application.date_init).toLocaleDateString()}

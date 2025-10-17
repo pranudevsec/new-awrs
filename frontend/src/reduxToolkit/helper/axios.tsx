@@ -9,11 +9,18 @@ const Axios = axios.create({
 Axios.interceptors.request.use(
   function (config) {
     const token = localStorage.getItem("persist:admin");
-    const parsedData = token ? JSON.parse(token) : null;
-    const userToken = JSON.parse(parsedData?.admin ?? "null")?.token ?? null;
-
-    if (userToken) {
-      config.headers.Authorization = `Bearer ${userToken}`;
+    if (token) {
+      try {
+        const parsedData = JSON.parse(token);
+        const adminData = parsedData?.admin ? JSON.parse(parsedData.admin) : null;
+        const userToken = adminData?.token;
+        
+        if (userToken) {
+          config.headers.Authorization = `Bearer ${userToken}`;
+        }
+      } catch (error) {
+        console.error("Error parsing token from localStorage:", error);
+      }
     }
     return config;
   },

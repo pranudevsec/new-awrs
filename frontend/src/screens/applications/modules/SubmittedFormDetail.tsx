@@ -1090,7 +1090,7 @@ const SubmittedFormDetail = () => {
                     </div>
                 </div>
             )}
-            {isHeadquarter && !unitDetail?.isfinalized && (
+            {isHeadquarter && !unitDetail?.isfinalized && unitDetail?.is_mo_approved === true && unitDetail?.is_ol_approved === true && (
                 <div className="mt-4">
                     <h5 className="mb-3">Send for Review</h5>
                     <div className="table-responsive">

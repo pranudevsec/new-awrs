@@ -46,63 +46,38 @@ const AllApplicationDetails = () => {
       (param) => (param.count ?? 0) > 0 || (param.marks ?? 0) > 0
     ).length;
 
+    // Sum of positive (non-negative) parameter marks, excluding rejected
     const marks = parameters.reduce((acc, param) => {
       const isRejected = param.clarification_details?.clarification_status === "rejected";
-      const isNegative = param.negative === true;
-      if (isRejected || isNegative) return acc;
-      return acc + (param.marks ?? 0);
-    }, 0);
-
-    const approvedMarks = parameters.reduce((acc, param) => {
-      const isRejected = param.clarification_details?.clarification_status === "rejected";
-      return acc + (isRejected ? 0 : Number(param.approved_marks ?? 0));
-    }, 0);
-
-    const negativeMarks = parameters.reduce((acc, param) => {
-      const isRejected = param.clarification_details?.clarification_status === "rejected";
-
-      if (isRejected) return acc;
-
-      const hasValidApproved =
-        param.approved_marks !== undefined &&
-        param.approved_marks !== null &&
-        param.approved_marks !== "" &&
-        !isNaN(Number(param.approved_marks));
-
-      const approved = hasValidApproved ? Number(param.approved_marks) : null;
-      const original = param.marks ?? 0;
-      const valueToCheck = approved ?? original;
-      return acc + (param.negative === true ? valueToCheck : 0);
-    }, 0);
-
-    const totalParameterMarks = parameters.reduce((acc, param) => {
-      const isRejected = param.clarification_details?.clarification_status === "rejected";
-
       if (isRejected) return acc;
       if (param.negative === true) return acc;
-
-      const hasValidApproved =
-        param.approved_marks !== undefined &&
-        param.approved_marks !== null &&
-        param.approved_marks !== "" &&
-        !isNaN(Number(param.approved_marks));
-
-      const approved = hasValidApproved ? Number(param.approved_marks) : null;
-      const original = param.marks ?? 0;
-
-      return acc + (approved ?? original);
+      return acc + (Number(param.marks ?? 0) || 0);
     }, 0);
 
-    let totalMarks = totalParameterMarks + Number(graceMarks ?? 0) - negativeMarks;
+    // Sum of approved marks where approved_marks > 0, excluding rejected
+    const approvedMarks = parameters.reduce((acc, param) => {
+      const isRejected = param.clarification_details?.clarification_status === "rejected";
+      if (isRejected) return acc;
+      const val = Number(param.approved_marks ?? 0) || 0;
+      return acc + (val > 0 ? val : 0);
+    }, 0);
+
+    // Negative marks come from negative parameters; prefer approved_marks if present (>0), else original
+    const negativeMarks = parameters.reduce((acc, param) => {
+      const isRejected = param.clarification_details?.clarification_status === "rejected";
+      if (isRejected) return acc;
+      if (param.negative === true) {
+        const a = Number(param.approved_marks ?? 0) || 0;
+        const o = Number(param.marks ?? 0) || 0;
+        return acc + (a > 0 ? a : o);
+      }
+      return acc;
+    }, 0);
+
+    // Total = parameter positive marks + approved (>0) - negative
+    let totalMarks = marks + approvedMarks - negativeMarks;
     if (totalMarks < 0) totalMarks = 0;
-    return {
-      totalParams,
-      filledParams,
-      marks,
-      approvedMarks,
-      negativeMarks,
-      totalMarks,
-    };
+    return { totalParams, filledParams, marks, approvedMarks, negativeMarks, totalMarks };
   };
 
   useEffect(() => {
@@ -110,6 +85,25 @@ const AllApplicationDetails = () => {
     const stats = calculateParameterStats(parameters);
     setParamStats(stats);
   }, [unitDetail, graceMarks]);
+
+  // Build role-wise marks view (brigade/division/corps/command)
+  const roleMarksList: Array<{ role: string; marks: number }> = (() => {
+    const list: Array<{ role: string; marks: number }> = [];
+    const arr = unitDetail?.fds?.applicationGraceMarks ?? [];
+    if (!Array.isArray(arr)) return list;
+    const order = ["brigade", "division", "corps", "command"];
+    const norm = arr
+      .map((g: any) => ({ role: String(g?.role ?? "").toLowerCase(), marks: Number(g?.marks ?? 0) || 0 }))
+      .filter((g: any) => g.role);
+    norm.sort((a, b) => order.indexOf(a.role) - order.indexOf(b.role));
+    return norm;
+  })();
+
+  const sumRoleMarks = roleMarksList.reduce((s, r) => s + (Number.isFinite(r.marks) ? r.marks : 0), 0);
+  const brigadeMarks = roleMarksList.find((r) => r.role === "brigade")?.marks ?? 0;
+  const adjustedTotal = isHeadquarter
+    ? Math.max(0, (paramStats.totalMarks - Number(graceMarks || 0)) + sumRoleMarks)
+    : paramStats.totalMarks;
 
   useEffect(() => {
     if (unitDetail?.fds?.parameters && profile) {
@@ -517,10 +511,61 @@ const AllApplicationDetails = () => {
             <div className="col-6 col-sm-2">
               <span className="fw-medium text-muted">Total Marks:</span>
               <div className="fw-bold text-success">
-                {paramStats.totalMarks}
+                {adjustedTotal}
               </div>
             </div>
           </div>
+
+          {isHeadquarter && roleMarksList.length > 0 && (
+            <div className="mt-3">
+              <div className="mb-2" style={{ borderLeft: "4px solid #28a745", paddingLeft: 12 }}>
+                <h5 className="mb-1" style={{ fontWeight: 700 }}>Marks by Roles</h5>
+                <div className="text-muted" style={{ fontSize: 13 }}>Includes Brigade, Division, Corps, Command</div>
+              </div>
+              <div className="table-responsive">
+                <table className="table-style-2 w-100">
+                  <thead>
+                    <tr style={{ backgroundColor: "#007bff" }}>
+                      <th style={{ width: 200, color: "white" }}>Role</th>
+                      <th style={{ width: 150, color: "white" }}>Marks</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {roleMarksList.map((rm, idx) => (
+                      <tr key={`${rm.role}-${idx}`} className="cursor-auto">
+                        <td style={{ width: 200 }}>
+                          <p className="fw-5 text-capitalize" style={rm.role === "brigade" ? { fontWeight: 700 } : undefined}>
+                            {rm.role}
+                          </p>
+                        </td>
+                        <td style={{ width: 150 }}>
+                          <p className="fw-5">{rm.marks}</p>
+                        </td>
+                      </tr>
+                    ))}
+                    <tr>
+                      <td style={{ width: 200 }}>
+                        <p className="fw-5">Total Role Marks</p>
+                      </td>
+                      <td style={{ width: 150 }}>
+                        <p className="fw-5">{sumRoleMarks}</p>
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+              <div className="row mt-2">
+                <div className="col-12 col-sm-4">
+                  <span className="fw-medium text-muted">Marks by Brigade:</span>
+                  <div className="fw-bold" style={{ borderLeft: "4px solid #28a745", paddingLeft: 8 }}>{brigadeMarks}</div>
+                </div>
+                <div className="col-12 col-sm-4">
+                  <span className="fw-medium text-muted">Total (Params + Role Marks - Negative):</span>
+                  <div className="fw-bold text-success">{adjustedTotal}</div>
+                </div>
+              </div>
+            </div>
+          )}
 
           {(isHeadquarter || isCommand) && (
             <StepProgressBar

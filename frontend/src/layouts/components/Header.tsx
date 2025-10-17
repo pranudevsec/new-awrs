@@ -25,8 +25,15 @@ const Header = () => {
     }
 
     useEffect(() => {
-        if (!profile) dispatch(getProfile());
-    }, [profile]);
+        if (!profile) {
+            // Add a small delay to prevent multiple simultaneous calls
+            const timeoutId = setTimeout(() => {
+                dispatch(getProfile());
+            }, 100);
+            
+            return () => clearTimeout(timeoutId);
+        }
+    }, [profile, dispatch]);
 
     useEffect(() => {
         const handleClickOutside = (event: MouseEvent) => {

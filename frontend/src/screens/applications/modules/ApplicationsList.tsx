@@ -228,12 +228,27 @@ const ApplicationsList = () => {
       "Type",
       "Total Marks",
       "Negative Marks",
+      "Marks by Role",
+      "Priority by Role",
       ...(role !== "brigade" && role !== "unit" ? ["Lower Role Priority"] : []),
       ...(role === "unit" ? ["Status"] : []),
     ];
 
 
-    const rows = units.map((unit: any) => [
+    const rows = units.map((unit: any) => {
+      const marksByRoleCompact = Array.isArray(unit?.fds?.applicationGraceMarks)
+        ? unit.fds.applicationGraceMarks
+            .map((e: any) => `${(e.role || "").toString().toUpperCase()}: ${e?.marks ?? 0}`)
+            .join(" | ")
+        : "-";
+
+      const priorityByRoleCompact = Array.isArray(unit?.fds?.applicationPriority)
+        ? unit.fds.applicationPriority
+            .map((p: any) => `${(p.role || "").toString().toUpperCase()}${p.cw2_type ? `(${String(p.cw2_type).toUpperCase()})` : ""}: ${p?.priority ?? "-"}`)
+            .join(" | ")
+        : "-";
+
+      return [
       `#${unit.id}`,
       `#${unit.unit_id}`,
       ...(role === "headquarter" ? [unit?.fds?.command ?? "-"] : []),
@@ -242,9 +257,12 @@ const ApplicationsList = () => {
       unit.type.charAt(0).toUpperCase() + unit.type.slice(1),
       unit.netMarks ?? getTotalMarks(unit),
       getTotalNegativeMarks(unit),
+      marksByRoleCompact,
+      priorityByRoleCompact,
       ...(role !== "brigade" && role !== "unit" ? [getLowerRolePriority(unit)] : []),
       ...(role === "unit" ? [unit?.status_flag ? unit.status_flag.charAt(0).toUpperCase() + unit.status_flag.slice(1) : "Submitted"] : []),
-    ]);
+    ];
+    });
 
 
     autoTable(doc, {
@@ -254,10 +272,7 @@ const ApplicationsList = () => {
       theme: "grid",
       headStyles: { fillColor: [41, 128, 185] },
       styles: { fontSize: 8, cellPadding: 4, overflow: "linebreak" },
-      columnStyles: {
-        6: { cellWidth: 60, halign: "right" }, // Total Marks column
-        7: { cellWidth: 60, halign: "right" }, // Negative Marks column
-      },
+      // keep default widths; table grows horizontally
       didDrawPage: () => {
         const pageWidth = doc.internal.pageSize.getWidth();
         const pageHeight = doc.internal.pageSize.getHeight();

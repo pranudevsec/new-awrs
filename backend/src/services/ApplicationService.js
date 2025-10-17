@@ -2989,8 +2989,9 @@ exports.listAllApplications = async (user, query = {}) => {
 
     const profile = await AuthService.getProfile(user);
     const unit = profile?.data?.unit;
+    const role = String(user_role || "").toLowerCase();
 
-    if (!unit) {
+    if (!unit && role !== "headquarter") {
       return ResponseHelper.error(400, "User profile not found");
     }
 
@@ -3047,10 +3048,16 @@ exports.listAllApplications = async (user, query = {}) => {
     }
 
 
-    const allApps = await loadApplications(
+    // load all matching apps from DB
+    let allApps = await loadApplications(
       whereClause,
       unitIds.length > 0 ? [unitIds] : []
     );
+
+    // apply search and award_type filters if provided
+    const { search, award_type } = query || {};
+    allApps = filterApplicationsBySearch(allApps, search, award_type);
+
     const { data, meta } = paginate(allApps, page, limit);
     return ResponseHelper.success(200, "All applications", data, meta);
   } catch (err) {
@@ -3071,8 +3078,9 @@ exports.listPendingApplications = async (user, query = {}) => {
 
     const profile = await AuthService.getProfile(user);
     const unit = profile?.data?.unit;
+    const role = String(user_role || "").toLowerCase();
 
-    if (!unit) {
+    if (!unit && role !== "headquarter") {
       return ResponseHelper.error(400, "User profile not found");
     }
 
@@ -3140,10 +3148,16 @@ exports.listPendingApplications = async (user, query = {}) => {
     }
 
 
-    const allApps = await loadApplications(
+    // load all matching apps from DB
+    let allApps = await loadApplications(
       whereClause,
       unitIds.length > 0 ? [unitIds] : []
     );
+
+    // apply search and award_type filters if provided
+    const { search, award_type } = query || {};
+    allApps = filterApplicationsBySearch(allApps, search, award_type);
+
     const { data, meta } = paginate(allApps, page, limit);
     return ResponseHelper.success(200, "Pending applications", data, meta);
   } catch (err) {
