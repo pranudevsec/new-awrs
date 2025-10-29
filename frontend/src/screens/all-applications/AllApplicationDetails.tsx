@@ -8,6 +8,7 @@ import { fetchApplicationUnitDetail } from "../../reduxToolkit/services/applicat
 import { baseURL } from "../../reduxToolkit/helper/axios";
 import { downloadDocumentWithWatermark } from "../../utils/documentUtils";
 import toast from "react-hot-toast";
+import { formatTableDate, formatDate } from "../../utils/dateUtils";
 
 const AllApplicationDetails = () => {
   const dispatch = useAppDispatch();
@@ -218,11 +219,11 @@ const AllApplicationDetails = () => {
     ));
   };
 
-  const renderParameterRow = (param: any, display: any) => {
+  const renderParameterRow = (param: any, display: any, index: number) => {
     const rows: JSX.Element[] = [];
 
     rows.push(
-      <tr key={display.main}>
+      <tr key={`param-${index}-${display.main}`}>
         <td style={{ width: 150 }}>
           <p className="fw-5 mb-0">{display.main}</p>
         </td>
@@ -286,7 +287,16 @@ const AllApplicationDetails = () => {
           >
             <div className="form-label fw-semibold">Cycle Period</div>
             <p className="fw-5 mb-0">
-              {unitDetail?.fds?.cycle_period ?? "--"}
+              {unitDetail?.fds?.cycle_period ? 
+                (() => {
+                  // If cycle_period is a string like "2025-01-01 to 2025-06-30", format it properly
+                  if (typeof unitDetail.fds.cycle_period === 'string' && unitDetail.fds.cycle_period.includes(' to ')) {
+                    const [startDate, endDate] = unitDetail.fds.cycle_period.split(' to ');
+                    return `${formatDate(startDate, { format: 'medium' })} to ${formatDate(endDate, { format: 'medium' })}`;
+                  }
+                  // If it's a single date or other format, format it directly
+                  return formatDate(unitDetail.fds.cycle_period, { format: 'medium' });
+                })() : "--"}
             </p>
           </div>
 
@@ -295,7 +305,7 @@ const AllApplicationDetails = () => {
             style={{ minWidth: "150px" }}
           >
             <div className="form-label fw-semibold">Last Date</div>
-            <p className="fw-5 mb-0">{unitDetail?.fds?.last_date ?? "--"}</p>
+            <p className="fw-5 mb-0">{formatTableDate(unitDetail?.fds?.last_date, true)}</p>
           </div>
 
           <div
@@ -422,7 +432,7 @@ const AllApplicationDetails = () => {
                   prevSubheader = display.subheader;
                   prevSubsubheader = display.subsubheader;
 
-                  rows.push(...renderParameterRow(param, display));
+                  rows.push(...renderParameterRow(param, display, index));
                 });
 
               return rows;

@@ -92,6 +92,9 @@ export const fetchApplicationHistory = createAsyncThunk<
     if (params?.award_type) {
       queryParams.append("award_type", params.award_type);
     }
+    if (params?.search) {
+      queryParams.append("search", params.search);
+    }
     if (params?.page) {
       queryParams.append("page", String(params.page));
     }

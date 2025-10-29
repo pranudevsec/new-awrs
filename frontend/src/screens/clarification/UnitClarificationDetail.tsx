@@ -5,8 +5,10 @@ import { fetchApplicationUnitDetail } from "../../reduxToolkit/services/applicat
 import { baseURL } from "../../reduxToolkit/helper/axios";
 import Breadcrumb from "../../components/ui/breadcrumb/Breadcrumb";
 import GiveClarificationModal from "../../modals/GiveClarificationModal";
+import ReviewCommentModal from "../../modals/ReviewCommentModal";
 import { downloadDocumentWithWatermark } from "../../utils/documentUtils";
 import toast from "react-hot-toast";
+import { formatDate, formatDateTime } from "../../utils/dateUtils";
 
 const UnitClarificationDetail = () => {
   const dispatch = useAppDispatch();
@@ -17,6 +19,9 @@ const UnitClarificationDetail = () => {
   const [clarificationShow, setClarificationShow] = useState(false);
   const [unitDetail, setUnitDetail] = useState<any>(null);
   const [clarificationId, setClarificationId] = useState<number>(0);
+  // Removed inline expand/collapse; using modal instead
+  const [showReviewModal, setShowReviewModal] = useState(false);
+  const [reviewCommentsData, setReviewCommentsData] = useState<any>(null);
   const [isRefreshData, setIsRefreshData] = useState(false);
 
   const award_type = searchParams.get("award_type") ?? "";
@@ -124,8 +129,8 @@ const UnitClarificationDetail = () => {
     );
   };
 
-  const renderParamRow = (param: any, display: any): JSX.Element => (
-    <tr key={display.main}>
+  const renderParamRow = (param: any, display: any, index: number): JSX.Element => (
+    <tr key={`param-${index}-${display.main}`}>
       <td style={{ width: 150 }}>
         <p className="fw-5">{display.main}</p>
       </td>
@@ -165,42 +170,55 @@ const UnitClarificationDetail = () => {
   )}
 </td>
       <td style={{ width: 200, wordWrap: "break-word", wordBreak: "break-word", overflowWrap: "break-word" }}>
-        <div 
-          className="position-relative"
-          title={param.clarification_details?.reviewer_comment ?? "—"}
-          style={{ cursor: "help" }}
-        >
-          <p 
-            className="fw-4" 
-            style={{ 
-              wordWrap: "break-word", 
-              wordBreak: "break-word", 
-              overflowWrap: "break-word", 
-              whiteSpace: "normal",
-              maxHeight: "60px",
-              overflow: "hidden",
-              textOverflow: "ellipsis",
-              display: "-webkit-box",
-              WebkitLineClamp: 3,
-              WebkitBoxOrient: "vertical"
-            }}
-          >
-            {param.clarification_details?.reviewer_comment ?? "—"}
-          </p>
-          {(param.clarification_details?.reviewer_comment && param.clarification_details.reviewer_comment.length > 100) && (
-            <small className="text-muted" style={{ fontSize: "10px" }}>
-              Hover to see full comment
-            </small>
-          )}
-        </div>
+        {(() => {
+          const comment = param.clarification_details?.reviewer_comment;
+          if (!comment) return <span>—</span>;
+          return (
+            <div>
+              <div
+                className="fw-4"
+                style={{
+                  wordWrap: "break-word",
+                  wordBreak: "break-word",
+                  overflowWrap: "break-word",
+                  whiteSpace: "normal",
+                  maxHeight: "60px",
+                  overflow: "hidden",
+                  textOverflow: "ellipsis",
+                  display: "-webkit-box",
+                  WebkitLineClamp: 3 as any,
+                  WebkitBoxOrient: "vertical" as any,
+                }}
+              >
+                {comment}
+              </div>
+              <div className="mt-2">
+                <button
+                  type="button"
+                  className="_btn outline"
+                  onClick={() => {
+                    setReviewCommentsData([
+                      {
+                        comment: comment,
+                        commented_by_role_type: "Reviewer",
+                        commented_by_role: "reviewer",
+                        commented_at: new Date().toISOString(),
+                        commented_by: 0,
+                      },
+                    ]);
+                    setShowReviewModal(true);
+                  }}
+                >
+                  Reviewers Comment
+                </button>
+              </div>
+            </div>
+          );
+        })()}
       </td>
       <td style={{ width: 200 }}>
   {param?.clarification_details?.clarification ? (
-    <div 
-      className="position-relative"
-      title={param.clarification_details.clarification}
-      style={{ cursor: "help" }}
-    >
+    <div>
       <div
         style={{ 
           maxHeight: "60px",
@@ -215,11 +233,26 @@ const UnitClarificationDetail = () => {
       >
         {param.clarification_details.clarification}
       </div>
-      {param.clarification_details.clarification.length > 50 && (
-        <small className="text-muted" style={{ fontSize: "10px" }}>
-          Hover to see full clarification
-        </small>
-      )}
+      <div className="mt-2">
+        <button
+          type="button"
+          className="_btn outline"
+          onClick={() => {
+            setReviewCommentsData([
+              {
+                comment: param.clarification_details.clarification,
+                commented_by_role_type: "Clarification",
+                commented_by_role: "clarification",
+                commented_at: new Date().toISOString(),
+                commented_by: 0,
+              },
+            ]);
+            setShowReviewModal(true);
+          }}
+        >
+          View Clarification
+        </button>
+      </div>
     </div>
   ) : param?.clarification_details?.clarification_id ? (
     <button
@@ -267,7 +300,7 @@ const UnitClarificationDetail = () => {
         prevSubsubheader = display.subsubheader;
       }
 
-      rows.push(renderParamRow(param, display));
+      rows.push(renderParamRow(param, display, index));
       return rows;
     });
   };
@@ -297,12 +330,23 @@ const UnitClarificationDetail = () => {
 
             <div className="text-center flex-grow-1 flex-sm-grow-0 flex-basis-100 flex-sm-basis-auto" style={{ minWidth: '150px' }}>
               <div className="form-label fw-semibold">Cycle Period</div>
-              <p className="fw-5 mb-0">{unitDetail?.fds?.cycle_period ?? "--"}</p>
+              <p className="fw-5 mb-0">
+                {unitDetail?.fds?.cycle_period ? (
+                  (() => {
+                    const cp = unitDetail.fds.cycle_period;
+                    if (typeof cp === 'string' && cp.includes(' to ')) {
+                      const [startDate, endDate] = cp.split(' to ');
+                      return `${formatDate(startDate, { format: 'medium' })} to ${formatDate(endDate, { format: 'medium' })}`;
+                    }
+                    return formatDate(cp, { format: 'medium' });
+                  })()
+                ) : "--"}
+              </p>
             </div>
 
             <div className="text-center flex-grow-1 flex-sm-grow-0 flex-basis-100 flex-sm-basis-auto" style={{ minWidth: '150px' }}>
               <div className="form-label fw-semibold">Last Date</div>
-              <p className="fw-5 mb-0">{unitDetail?.fds?.last_date ?? "--"}</p>
+              <p className="fw-5 mb-0">{formatDateTime(unitDetail?.fds?.last_date) ?? "--"}</p>
             </div>
 
             <div className="text-center flex-grow-1 flex-sm-grow-0 flex-basis-100 flex-sm-basis-auto" style={{ minWidth: '150px' }}>
@@ -355,6 +399,11 @@ const UnitClarificationDetail = () => {
         clarificationId={clarificationId}
         setIsRefreshData={setIsRefreshData}
         isRefreshData={isRefreshData}
+      />
+      <ReviewCommentModal
+        show={showReviewModal}
+        handleClose={() => setShowReviewModal(false)}
+        reviewCommentsData={reviewCommentsData}
       />
     </>
   );

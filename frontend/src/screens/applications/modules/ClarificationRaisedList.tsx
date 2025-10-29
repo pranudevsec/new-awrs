@@ -3,6 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { useAppDispatch, useAppSelector } from "../../../reduxToolkit/hooks";
 import { SVGICON } from "../../../constants/iconsList";
 import { fetchApplicationUnits, fetchSubordinates } from "../../../reduxToolkit/services/application/applicationService";
+import { getDateStatus, formatCompactDateTime } from "../../../utils/dateUtils";
 import Breadcrumb from "../../../components/ui/breadcrumb/Breadcrumb";
 import Loader from "../../../components/ui/loader/Loader";
 import EmptyTable from "../../../components/ui/empty-table/EmptyTable";
@@ -96,14 +97,19 @@ const ClarificationRaisedList = () => {
                     </td>
                     <td style={{ width: 200, minWidth: 200, maxWidth: 200 }}>
                       <p className="fw-4">
-                        {new Date(unit.date_init).toLocaleDateString()}
+                        {formatCompactDateTime(unit.date_init)}
                       </p>
                     </td>
                     <td style={{ width: 200, minWidth: 200, maxWidth: 200 }}>
                       <p className="fw-4">
-                        {unit.fds?.last_date
-                          ? new Date(unit.fds.last_date).toLocaleDateString()
-                          : "-"}
+                        {(() => {
+                          const deadlineStatus = getDateStatus(unit.fds?.last_date, true, true);
+                          return (
+                            <span className={deadlineStatus.className}>
+                              {deadlineStatus.text}
+                            </span>
+                          );
+                        })()}
                       </p>
                     </td>
                     <td style={{ width: 150, minWidth: 150, maxWidth: 150 }}>

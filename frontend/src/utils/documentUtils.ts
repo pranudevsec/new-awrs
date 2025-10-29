@@ -24,7 +24,17 @@ const normalizeBaseUrl = (baseURL?: string): string => {
 };
 
 const triggerDownload = (buffer: ArrayBuffer | Uint8Array, fileName: string, mime: string) => {
-  const blob = new Blob([buffer], { type: mime });
+  // Convert to proper type for Blob constructor
+  let blobData: BlobPart[];
+  if (buffer instanceof ArrayBuffer) {
+    blobData = [buffer];
+  } else {
+    // For Uint8Array, create a new ArrayBuffer to ensure compatibility
+    const arrayBuffer = buffer.buffer.slice(buffer.byteOffset, buffer.byteOffset + buffer.byteLength) as ArrayBuffer;
+    blobData = [arrayBuffer];
+  }
+  
+  const blob = new Blob(blobData, { type: mime });
   const url = window.URL.createObjectURL(blob);
   const link = document.createElement('a');
   link.href = url;
@@ -33,6 +43,21 @@ const triggerDownload = (buffer: ArrayBuffer | Uint8Array, fileName: string, mim
   link.click();
   document.body.removeChild(link);
   window.URL.revokeObjectURL(url);
+};
+
+// Resolve public IP with graceful fallback to hostname
+const getPublicIP = async (): Promise<string> => {
+  try {
+    const r = await fetch("https://api.ipify.org?format=json", { cache: "no-store" });
+    const j = await r.json();
+    if (j?.ip) return j.ip;
+  } catch {}
+  try {
+    const r2 = await fetch("https://ipinfo.io/json", { cache: "no-store" });
+    const j2 = await r2.json();
+    if (j2?.ip) return j2.ip;
+  } catch {}
+  return window.location.hostname || "localhost";
 };
 
 export const downloadDocumentWithWatermark = async (
@@ -76,8 +101,12 @@ export const downloadDocumentWithWatermark = async (
     }
 
     try {
-      const currentDateTime = new Date().toLocaleString();
-      const userIP = window.location.hostname || 'localhost';
+      const currentDateTime = new Date().toLocaleString('en-IN', {
+        timeZone: 'Asia/Kolkata',
+        year: 'numeric', month: '2-digit', day: '2-digit',
+        hour: '2-digit', minute: '2-digit', second: '2-digit'
+      });
+      const userIP = await getPublicIP();
       const convertedPdfBytes = await convertToPDF(arrayBuffer, fileName, userIP, currentDateTime);
       triggerDownload(convertedPdfBytes, customFileName.replace(/\.[^/.]+$/, '.pdf'), 'application/pdf');
     } catch {
@@ -95,8 +124,12 @@ export const downloadDocumentWithWatermark = async (
  * @returns Watermarked PDF as Uint8Array
  */
 const addWatermarkToPDF = async (pdfBytes: Uint8Array): Promise<Uint8Array> => {
-  const currentDateTime = new Date().toLocaleString();
-  const userIP = window.location.hostname || "localhost";
+  const currentDateTime = new Date().toLocaleString('en-IN', {
+    timeZone: 'Asia/Kolkata',
+    year: 'numeric', month: '2-digit', day: '2-digit',
+    hour: '2-digit', minute: '2-digit', second: '2-digit'
+  });
+  const userIP = await getPublicIP();
 
 
   const pdfDoc = await PDFDocument.load(pdfBytes);

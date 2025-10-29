@@ -12,6 +12,7 @@ import { awardTypeOptions, commandOptions } from "../../../data/options";
 import { SVGICON } from "../../../constants/iconsList";
 import { useAppDispatch, useAppSelector } from "../../../reduxToolkit/hooks";
 import { fetchApplicationsForHQ, fetchApplicationUnits, fetchSubordinates } from "../../../reduxToolkit/services/application/applicationService";
+import { formatCompactDateTime } from "../../../utils/dateUtils";
 
 const ApplicationsList = () => {
   const navigate = useNavigate();
@@ -107,6 +108,11 @@ const ApplicationsList = () => {
   }, [awardType, commandType, debouncedSearch, profile, page, limit]);
 
   const hierarchy = ["unit", "brigade", "division", "corps", "command"];
+
+  const humanizeRole = (role?: string) => {
+    if (!role || typeof role !== "string") return "";
+    return role.charAt(0).toUpperCase() + role.slice(1);
+  };
 
   const getTotalMarks = (unit: any): number => {
     const parameters = unit?.fds?.parameters ?? [];
@@ -310,16 +316,17 @@ const ApplicationsList = () => {
       <div className="filter-wrapper d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
       <div className="search-wrapper position-relative d-flex align-items-center gap-2">
         <div className="position-relative flex-grow-1">
-          <button className="border-0 bg-transparent position-absolute translate-middle-y top-50 start-0" style={{ zIndex: 10 }}>
+          <button className="border-0 bg-transparent position-absolute translate-middle-y top-50 start-8" style={{ zIndex: 10 }}>
             {SVGICON.app.search}
           </button>
           <input
             type="text"
-            placeholder="Search by ID, award type, command, brigade, division, corps, unit type, location..."
+            placeholder="Search by Application ID, Award Type, Command, Brigade, Division, Corps, Unit Type, Location..."
             className="form-control ps-5"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             style={{ paddingLeft: '2.5rem' }}
+            title="Search by Application ID, Award Type, Command, Brigade, Division, Corps, Unit Type, Location..."
           />
         </div>
       </div>
@@ -372,19 +379,24 @@ const ApplicationsList = () => {
           <th style={{ width: 150, minWidth: 150, maxWidth: 150, color: "white" }}>Command</th>
           {role !== "unit" && <th style={{ width: 150, minWidth: 150, maxWidth: 150, color: "white" }}>Arm / Service</th>}
           {role !== "unit" && <th style={{ width: 150, minWidth: 150, maxWidth: 150, color: "white" }}>Role / Deployment</th>}
-          <th style={{ width: 150, minWidth: 150, maxWidth: 150, color: "white" }}>Location</th>
+          <th style={{ width: 150, minWidth: 150, maxWidth: 150, color: "white" , textAlign: "center" }}>Location</th>
           {role === "unit" && (
             <th style={{ width: 150, minWidth: 150, maxWidth: 150, color: "white" }}>Status</th>
           )}
-         
-          <th style={{ width: 100, minWidth: 100, maxWidth: 100, color: "white" }}></th>
+          {role === "unit" && (
+            <th style={{ width: 200, minWidth: 180, maxWidth: 240, color: "white", textAlign: "center" }}>Reason</th>
+          )}
+          {role === "unit" && (
+            <th style={{ width: 150, minWidth: 150, maxWidth: 180, color: "white", textAlign: "center" }}>Rejected by</th>
+          )}
+          <th style={{ width: 100, minWidth: 100, maxWidth: 100, color: "white" }}>Action</th>
         </tr>
       </thead>
 
   <tbody>
   {loading ? (
     <tr>
-      <td colSpan={role === "headquarter" ? 11 : (role === "unit" ? 9 : 10)}>
+      <td colSpan={role === "headquarter" ? 11 : (role === "unit" ? 10 : 10)}>
         <div className="d-flex justify-content-center py-5">
           <Loader inline size={40} />
         </div>
@@ -433,9 +445,7 @@ const ApplicationsList = () => {
 
           <td style={{ width: 200 }}>
             <p className="fw-4">
-              {unit.date_init
-                ? new Date(unit.date_init).toLocaleDateString()
-                : "-"}
+              {formatCompactDateTime(unit.date_init)}
             </p>
           </td>
           <td style={{ width: 150 }}>
@@ -461,41 +471,48 @@ const ApplicationsList = () => {
               <p className="fw-4">{unit.fds.matrix_unit ?? "-"}</p>
             </td>
           )}
-          <td style={{ width: 150 }}>
+          <td style={{ width: 150, textAlign: "center" }}>
             <p className="fw-4">{unit.fds.location ?? "-"}</p>
           </td>
 
           {role === "unit" && (
-            <td style={{ width: 150 }}>
+            <td style={{ width: 100 }}>
               <p className="fw-4" style={{
-                color: unit?.status_flag === "rejected" ? "#dc3545" : 
-                       unit?.status_flag === "approved" ? "#28a745" : "inherit",
-                fontWeight: unit?.status_flag === "rejected" ? "bold" : "normal"
+                color: unit?.rejected_reason ? "#dc3545" : (unit?.status_flag === "approved" ? "#28a745" : "inherit"),
+                fontWeight: unit?.rejected_reason ? "bold" : "normal"
               }}>
-                {unit?.status_flag === "rejected" 
+                {unit?.rejected_reason
                   ? "Rejected"
                   : unit?.status_flag
-                    ? unit.status_flag.charAt(0).toUpperCase() +
-                      unit.status_flag.slice(1)
+                    ? unit.status_flag.charAt(0).toUpperCase() + unit.status_flag.slice(1)
                     : "Submitted"}
               </p>
             </td>
           )}
 
           {role === "unit" && (
-            <td style={{ width: 200 }}>
-              <p className="fw-4" style={{ 
-                color: unit?.status_flag === "rejected" ? "#dc3545" : "inherit",
-                fontStyle: unit?.status_flag === "rejected" ? "italic" : "normal"
-              }}>
-                {unit?.status_flag === "rejected" 
-                  ? "Click to view reason" 
-                  : "-"}
-              </p>
+            <td style={{ width: 200, textAlign: unit?.rejected_reason ? "left" : "center", paddingLeft: 0, paddingRight: 0 }}>
+              {unit?.rejected_reason ? (
+                <p className="fw-4 mb-0" style={{ color: "#dc3545", fontStyle: "italic" }}>
+                  {unit.rejected_reason}
+                </p>
+              ) : (
+                <span>-</span>
+              )}
             </td>
           )}
 
-          <td style={{ width: 100 }}>
+          {role === "unit" && (
+            <td style={{ width: 150, textAlign: "center" }}>
+              {unit?.rejected_reason && unit?.last_rejected_by_role ? (
+                <p className="fw-4 mb-0">{humanizeRole(unit.last_rejected_by_role)}</p>
+              ) : (
+                <span>-</span>
+              )}
+            </td>
+          )}
+
+          <td style={{ width: 100, paddingLeft: 28}}>
             {unit?.status_flag === "draft" ? (
               <Link
                 to={`/applications/${unit.type}?id=${unit?.id}`}

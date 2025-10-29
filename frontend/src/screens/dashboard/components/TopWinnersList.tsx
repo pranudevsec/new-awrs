@@ -1,5 +1,6 @@
 import { useNavigate } from "react-router-dom";
 import { useAppSelector } from "../../../reduxToolkit/hooks";
+import { formatCompactDateTime, getDateStatus } from "../../../utils/dateUtils";
 import Loader from "../../../components/ui/loader/Loader";
 import { useEffect } from "react";
 
@@ -181,14 +182,19 @@ const TopWinnersList = () => {
                   )}
                   <td style={{ width: 200, minWidth: 200, maxWidth: 200 }}>
                     <p className="fw-4">
-                      {new Date(unit.date_init).toLocaleDateString()}
+                      {formatCompactDateTime(unit.date_init)}
                     </p>
                   </td>
                   <td style={{ width: 200, minWidth: 200, maxWidth: 200 }}>
                     <p className="fw-4">
-                      {unit.fds?.last_date
-                        ? new Date(unit.fds.last_date).toLocaleDateString()
-                        : "-"}
+                      {(() => {
+                        const deadlineStatus = getDateStatus(unit.fds?.last_date, true, true);
+                        return (
+                          <span className={deadlineStatus.className}>
+                            {deadlineStatus.text}
+                          </span>
+                        );
+                      })()}
                     </p>
                   </td>
                   <td style={{ width: 150, minWidth: 150, maxWidth: 150 }}>

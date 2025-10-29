@@ -23,7 +23,7 @@ const ClarificationList = () => {
                     <button className="border-0 bg-transparent position-absolute translate-middle-y top-50">
                         {SVGICON.app.search}
                     </button>
-                    <input type="text" placeholder="search..." className="form-control" />
+                    <input type="text" placeholder="Search..." className="form-control" />
                 </div>
                 <FormSelect
                     name="awardType"

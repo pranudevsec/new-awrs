@@ -7,6 +7,7 @@ import Loader from "../../../components/ui/loader/Loader";
 import Pagination from "../../../components/ui/pagination/Pagination";
 import { useAppSelector } from "../../../reduxToolkit/hooks";
 import Axios from "../../../reduxToolkit/helper/axios";
+import { formatCompactDateTime } from "../../../utils/dateUtils";
 import { SVGICON } from "../../../constants/iconsList";  // Import the SVGICON
 
 interface FinalizedApprovedApplication {
@@ -147,7 +148,7 @@ const FinalizedApprovedApplicationsList = () => {
             )}
             <td style={{ width: 200 }}>
               <p className="fw-4">
-                {new Date(application.date_init).toLocaleDateString()}
+                {formatCompactDateTime(application.date_init)}
               </p>
             </td>
             <td style={{ width: 150 }}>

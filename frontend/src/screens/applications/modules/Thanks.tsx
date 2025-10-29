@@ -1,10 +1,11 @@
 import { Link, useLocation } from "react-router-dom";
 import { useAppSelector } from "../../../reduxToolkit/hooks";
+import { formatCompactDateTime } from "../../../utils/dateUtils";
 
 const Thanks = () => {
   const profile = useAppSelector((state) => state.admin.profile);
   const currentDate = new Date();
-  const formattedDate = currentDate.toLocaleDateString("en-GB");
+  const formattedDate = formatCompactDateTime(currentDate);
 
   const location = useLocation();
   const searchParams = new URLSearchParams(location.search);

@@ -3,6 +3,7 @@ import { awardTypeOptions } from "../../data/options";
 import { SVGICON } from "../../constants/iconsList";
 import { useAppDispatch, useAppSelector } from "../../reduxToolkit/hooks";
 import { fetchSubordinates, updateApplication } from "../../reduxToolkit/services/application/applicationService";
+import { formatCompactDateTime, getDateStatus } from "../../utils/dateUtils";
 import Breadcrumb from "../../components/ui/breadcrumb/Breadcrumb";
 import FormSelect from "../../components/form/FormSelect";
 import EmptyTable from "../../components/ui/empty-table/EmptyTable";
@@ -128,7 +129,7 @@ const Withdraw = () => {
           </button>
           <input
             type="text"
-            placeholder="search..."
+            placeholder="Search..."
             className="form-control"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
@@ -203,14 +204,19 @@ const Withdraw = () => {
                   )}
                   <td style={{ width: 200, minWidth: 200, maxWidth: 200 }}>
                     <p className="fw-4">
-                      {new Date(unit.date_init).toLocaleDateString()}
+                      {formatCompactDateTime(unit.date_init)}
                     </p>
                   </td>
                   <td style={{ width: 200, minWidth: 200, maxWidth: 200 }}>
                     <p className="fw-4">
-                      {unit.fds?.last_date
-                        ? new Date(unit.fds.last_date).toLocaleDateString()
-                        : "-"}
+                      {(() => {
+                        const deadlineStatus = getDateStatus(unit.fds?.last_date, true, true);
+                        return (
+                          <span className={deadlineStatus.className}>
+                            {deadlineStatus.text}
+                          </span>
+                        );
+                      })()}
                     </p>
                   </td>
                   <td style={{ width: 150, minWidth: 150, maxWidth: 150 }}>

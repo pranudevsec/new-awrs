@@ -10,6 +10,7 @@ import { awardTypeOptions } from "../../../data/options";
 import { SVGICON } from "../../../constants/iconsList";
 import { useAppSelector } from "../../../reduxToolkit/hooks";
 import Axios from "../../../reduxToolkit/helper/axios";
+import { formatCompactDateTime } from "../../../utils/dateUtils";
 
 interface AllApplication {
   id: number;
@@ -196,7 +197,7 @@ const AllApplicationsList = () => {
                   )}
                   <td style={{ width: 200, minWidth: 200, maxWidth: 200 }}>
                     <p className="fw-4">
-                      {new Date(application.date_init).toLocaleDateString()}
+                      {formatCompactDateTime(application.date_init)}
                     </p>
                   </td>
                   <td style={{ width: 150, minWidth: 150, maxWidth: 150 }}>

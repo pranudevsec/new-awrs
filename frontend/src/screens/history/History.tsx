@@ -10,6 +10,7 @@ import { awardTypeOptions } from "../../data/options";
 import { SVGICON } from "../../constants/iconsList";
 import { useAppDispatch, useAppSelector } from "../../reduxToolkit/hooks";
 import { fetchApplicationHistory, updateApplication, } from "../../reduxToolkit/services/application/applicationService";
+import { formatCompactDateTime, getDateStatus } from "../../utils/dateUtils";
 // Removed XLSX import - using PDF instead
 
 const getStatusColor = (status: string) => {
@@ -49,7 +50,7 @@ const History = () => {
   useEffect(() => {
     if (!profile?.user?.user_role) return;
 
-    const fetchData = () => {
+    const fetchData = async () => {
       const params = {
         ...(awardType && awardType !== "All" ? { award_type: awardType } : {}),
         search: debouncedSearch,
@@ -58,13 +59,17 @@ const History = () => {
       };
 
       try {
-        dispatch(fetchApplicationHistory(params)).unwrap();
+        await dispatch(fetchApplicationHistory(params)).unwrap();
       } catch (error: any) {
-        const errorMessage = error?.errors ?? error?.message ?? "An error occurred.";
+        const rawErrors = error?.errors ?? "";
+        const errorMessage = error?.message ?? rawErrors ?? "An error occurred.";
+        const needsProfile =
+          rawErrors === "Please complete your unit profile before proceeding." ||
+          (typeof rawErrors === "string" && rawErrors.includes("Cannot read properties of null"));
 
-        if (error?.errors === "Please complete your unit profile before proceeding.") {
+        if (needsProfile) {
           navigate("/profile-settings");
-          toast.error(errorMessage);
+          toast.error("Please complete your unit profile before proceeding.");
         } else {
           toast.error(errorMessage);
         }
@@ -228,7 +233,7 @@ const History = () => {
           </button>
           <input
             type="text"
-            placeholder="search..."
+            placeholder="Search by Application Id"
             className="form-control"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
@@ -293,17 +298,26 @@ const History = () => {
             ) : (
               units.length > 0 &&
               units.map((unit: any) => {
-                const submissionDate = new Date(unit.date_init).toLocaleDateString();
-                const deadline = unit.fds?.last_date
-                  ? new Date(unit.fds.last_date).toLocaleDateString()
-                  : "-";
+                const submissionDate = formatCompactDateTime(unit.date_init);
+                const deadlineStatus = getDateStatus(unit.fds?.last_date, true);
                 const typeLabel = unit?.type
                   ? unit.type.charAt(0).toUpperCase() + unit.type.slice(1)
                   : "-";
-                const statusLabel = unit?.status_flag
+                let statusLabel = unit?.status_flag
                   ? getStatusLabel(unit.status_flag)
                   : "-";
-                const statusColor = getStatusColor(unit?.status_flag);
+                let statusColor = getStatusColor(unit?.status_flag);
+
+                // Reflect withdraw workflow in Status column
+                if (unit?.is_withdraw_requested) {
+                  if (["pending", "in_review", "shortlisted_approved"].includes(unit.withdraw_status)) {
+                    statusLabel = "Withdraw Pending";
+                    statusColor = "orange";
+                  } else if (unit.withdraw_status === "approved") {
+                    statusLabel = "Withdrawn";
+                    statusColor = "red";
+                  }
+                }
 
                 let roleDisplay = "-";
                 if (unit?.status_flag === "rejected") {
@@ -361,7 +375,13 @@ const History = () => {
                       <td><p className="fw-4">{unit?.fds?.command}</p></td>
                     )}
                     <td><p className="fw-4">{submissionDate}</p></td>
-                    <td><p className="fw-4">{deadline}</p></td>
+                    <td>
+                      <p className="fw-4">
+                        <span className={deadlineStatus.className}>
+                          {deadlineStatus.text}
+                        </span>
+                      </p>
+                    </td>
                     <td><p className="fw-4">{typeLabel}</p></td>
                     <td>
                       <p className="fw-4" style={{ color: statusColor }}>

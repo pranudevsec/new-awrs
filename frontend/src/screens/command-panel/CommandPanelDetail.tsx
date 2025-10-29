@@ -212,7 +212,7 @@ const CommandPanelDetail = () => {
                   prevSubsubheader = display.subsubheader;
 
                   rows.push(
-                    <tr key={display.main}>
+                    <tr key={`param-${index}-${display.main}`}>
                       <td style={{ width: 150 }}>
                         <p className="fw-5">{display.main}</p>
                       </td>

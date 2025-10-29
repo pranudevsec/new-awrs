@@ -4,7 +4,6 @@ import react from "@vitejs/plugin-react-swc";
 export default defineConfig({
   // Use relative paths in production so images and chunks load correctly
   // when the app is served from a subfolder or opened from the file system
-  base: './',
   plugins: [react()],
   build: {
     target: "esnext",       

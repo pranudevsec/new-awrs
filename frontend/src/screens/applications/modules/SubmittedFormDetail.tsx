@@ -23,6 +23,7 @@ import { useDebounce } from "../../../hooks/useDebounce";
 import { updateCitation } from "../../../reduxToolkit/services/citation/citationService";
 import { updateAppreciation } from "../../../reduxToolkit/services/appreciation/appreciationService";
 import { downloadDocumentWithWatermark } from "../../../utils/documentUtils";
+import { getDateStatus, formatDate } from "../../../utils/dateUtils";
 
 function areAllClarificationsResolved(unitDetail: any): boolean {
     const parameters = unitDetail?.fds?.parameters;
@@ -336,7 +337,7 @@ const SubmittedFormDetail = () => {
         try {
             await downloadDocumentWithWatermark(documentUrl, fileName, baseURL);
             toast.success('Document downloaded with watermark');
-        } catch (error) {      
+        } catch (error) {
 
             if (error instanceof Error && error.message.includes('Document not found')) {
                 toast.error(`File not found: ${fileName}. The file may have been deleted or moved.`);
@@ -550,7 +551,7 @@ const SubmittedFormDetail = () => {
     };
 
 
-    const renderParameterRow = (param: any, display: any) => {
+    const renderParameterRow = (param: any, display: any, index: number) => {
         const rows: JSX.Element[] = [];
 
         const isRejected = param?.clarification_details?.clarification_status === "rejected";
@@ -574,7 +575,7 @@ const SubmittedFormDetail = () => {
         }
 
         rows.push(
-            <tr key={display.main}>
+            <tr key={`param-${index}-${display.main}`}>
                 <td style={{ width: 150 }}>
                     <p className="fw-5 mb-0">{display.main}</p>
                 </td>
@@ -695,7 +696,16 @@ const SubmittedFormDetail = () => {
                     >
                         <div className="form-label fw-semibold">Cycle Period</div>
                         <p className="fw-5 mb-0">
-                            {unitDetail?.fds?.cycle_period ?? "--"}
+                            {unitDetail?.fds?.cycle_period ? 
+                                (() => {
+                                    // If cycle_period is a string like "2025-01-01 to 2025-06-30", format it properly
+                                    if (typeof unitDetail.fds.cycle_period === 'string' && unitDetail.fds.cycle_period.includes(' to ')) {
+                                        const [startDate, endDate] = unitDetail.fds.cycle_period.split(' to ');
+                                        return `${formatDate(startDate, { format: 'medium' })} to ${formatDate(endDate, { format: 'medium' })}`;
+                                    }
+                                    // If it's a single date or other format, format it directly
+                                    return formatDate(unitDetail.fds.cycle_period, { format: 'medium' });
+                                })() : "--"}
                         </p>
                     </div>
 
@@ -704,7 +714,16 @@ const SubmittedFormDetail = () => {
                         style={{ minWidth: "150px" }}
                     >
                         <div className="form-label fw-semibold">Last Date</div>
-                        <p className="fw-5 mb-0">{unitDetail?.fds?.last_date ?? "--"}</p>
+                        <p className="fw-5 mb-0">
+                            {(() => {
+                                const dateStatus = getDateStatus(unitDetail?.fds?.last_date, true, true);
+                                return (
+                                    <span className={dateStatus.className}>
+                                        {dateStatus.text}
+                                    </span>
+                                );
+                            })()}
+                        </p>
                     </div>
 
                     <div
@@ -726,12 +745,12 @@ const SubmittedFormDetail = () => {
             </div>
             <div className="table-filter-area mb-4">
                 <div className="d-flex flex-wrap justify-content-between align-items-center gap-3">
-                {role === "unit" && unitDetail?.status_flag === "rejected" && unitDetail?.rejected_reason && (
-  <div className="text-danger fw-semibold text-center mt-3">
-    Your application has been rejected for the following reason:{" "}
-    <span className="fw-bold">{unitDetail?.rejected_reason}</span>
-  </div>
-)}
+                    {role === "unit" && unitDetail?.status_flag === "rejected" && unitDetail?.rejected_reason && (
+                        <div className="text-center mt-3">
+                            <span className="text-danger fw-semibold">Your application has been rejected for the following reason:</span>{" "}
+                            <span className="text-dark fw-5">{unitDetail?.rejected_reason}</span>
+                        </div>
+                    )}
 
                 </div>
             </div>
@@ -857,7 +876,7 @@ const SubmittedFormDetail = () => {
                                     prevSubheader = display.subheader;
                                     prevSubsubheader = display.subsubheader;
 
-                                    rows.push(...renderParameterRow(param, display));
+                                    rows.push(...renderParameterRow(param, display, index));
                                 });
 
                             return rows;
@@ -1209,14 +1228,14 @@ const SubmittedFormDetail = () => {
                                         value={priority}
                                         onChange={(e) => {
                                             const value = e.target.value;
-                                            
+
 
                                             if (value && !/^\d+$/.test(value)) {
                                                 return;
                                             }
-                                            
+
                                             setPriority(value);
-                                            
+
 
                                             if (value && !isNaN(Number(value))) {
                                                 const numValue = Number(value);

@@ -363,8 +363,38 @@ const AcceptedApplicationsList = () => {
 
 
 
-  const handleExportPDF = () => {
+  const handleExportPDF = async () => {
   const doc = new jsPDF();
+
+  // Get current date/time and IP for watermarking
+  const now = new Date();
+  const dateTime = now.toLocaleString('en-IN', {
+    timeZone: 'Asia/Kolkata',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit'
+  });
+
+  // Get IP address - try external services first, fallback to hostname
+  const getPublicIP = async (): Promise<string> => {
+    try {
+      const r = await fetch("https://api.ipify.org?format=json", { cache: "no-store" });
+      const j = await r.json();
+      if (j?.ip) return j.ip;
+    } catch {}
+    try {
+      const r2 = await fetch("https://ipinfo.io/json", { cache: "no-store" });
+      const j2 = await r2.json();
+      if (j2?.ip) return j2.ip;
+    } catch {}
+
+    return window.location?.hostname || "Unknown IP";
+  };
+
+  const ipAddress = await getPublicIP();
 
   const docHeader = `COAS Unit Citation and COAS Certificate of Appreciation Board of Officers Report`;
   const level = profile?.user?.user_role?.toUpperCase() ?? "";
@@ -446,6 +476,28 @@ const AcceptedApplicationsList = () => {
     styles: { fontSize: 6 }
   });
 
+  // Add watermark to each page (center diagonal + footer)
+  const pageCount = (doc as any).internal.getNumberOfPages();
+  for (let i = 1; i <= pageCount; i++) {
+    doc.setPage(i);
+    // compute width/height cross version
+    const pageSize: any = (doc as any).internal.pageSize;
+    const pageWidth = typeof pageSize.getWidth === 'function' ? pageSize.getWidth() : pageSize.width;
+    const pageHeight = typeof pageSize.getHeight === 'function' ? pageSize.getHeight() : pageSize.height;
+
+    // diagonal center watermark
+    doc.setFontSize(36);
+    doc.setTextColor(180, 180, 180);
+    // Added extra vertical spacing between IP and date
+    doc.text(`${ipAddress}`, pageWidth / 2, pageHeight / 2 - 35, { angle: 45, align: 'center' } as any);
+    doc.text(`${dateTime}`, pageWidth / 2, pageHeight / 2 + 35, { angle: 45, align: 'center' } as any);
+
+    // footer line watermark
+    doc.setFontSize(8);
+    doc.setTextColor(150, 150, 150);
+    doc.text(`Generated on: ${dateTime} | IP: ${ipAddress}`, 14, pageHeight - 10);
+  }
+
   doc.save("accepted-applications.pdf");
 };
 
@@ -473,7 +525,7 @@ const AcceptedApplicationsList = () => {
           </button>
           <input
             type="text"
-            placeholder="search..."
+            placeholder="Search..."
             className="form-control"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}

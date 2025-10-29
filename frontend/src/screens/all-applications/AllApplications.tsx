@@ -18,6 +18,7 @@ import {
 import { SVGICON } from "../../constants/iconsList";
 import { useAppDispatch, useAppSelector } from "../../reduxToolkit/hooks";
 import { fetchAllApplications } from "../../reduxToolkit/services/application/applicationService";
+import { formatCompactDateTime, getDateStatus } from "../../utils/dateUtils";
 
 const History = () => {
   const dispatch = useAppDispatch();
@@ -68,15 +69,16 @@ const History = () => {
       try {
         await dispatch(fetchAllApplications(params)).unwrap();
       } catch (error: any) {
-        const errorMessage =
-          error?.errors ?? error?.message ?? "An error occurred.";
+        const rawErrors = error?.errors ?? "";
+        const errorMessage = error?.message ?? rawErrors ?? "An error occurred.";
 
-        if (
-          error?.errors ===
-          "Please complete your unit profile before proceeding."
-        ) {
+        const needsProfile =
+          rawErrors === "Please complete your unit profile before proceeding." ||
+          (typeof rawErrors === "string" && rawErrors.includes("Cannot read properties of null"));
+
+        if (needsProfile) {
           navigate("/profile-settings");
-          toast.error(errorMessage);
+          toast.error("Please complete your unit profile before proceeding.");
         } else {
           toast.error(errorMessage);
         }
@@ -266,10 +268,10 @@ const handleExportPDF = async () => {
     <div className="clarification-section">
       <div className="d-flex flex-sm-row flex-column align-items-sm-center justify-content-between mb-4">
         <Breadcrumb
-          title="All Application"
+          title="All Applications"
           paths={[
             { label: "Home", href: "/applications" },
-            { label: "All Application", href: "/all-applications" },
+            { label: "All Applications", href: "/all-applications" },
           ]}
         />
         <div className="d-flex gap-2">
@@ -296,11 +298,12 @@ const handleExportPDF = async () => {
           </button>
           <input
             type="text"
-            placeholder="Search by ID, award type, command, brigade, division, corps, unit type, location..."
+            placeholder="Search by Application ID, award type, command, brigade, division, corps, unit type, location..."
             className="form-control"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-          />
+            title="Search by Application ID, award type, command, brigade, division, corps, unit type, location..."
+          />  
         </div>
         <div className="d-flex gap-2">
           <div className="d-flex gap-2">
@@ -569,14 +572,19 @@ const handleExportPDF = async () => {
                     </td>
                     <td style={{ width: 200, minWidth: 200, maxWidth: 200 }}>
                       <p className="fw-4">
-                        {new Date(unit.date_init).toLocaleDateString()}
+                        {formatCompactDateTime(unit.date_init)}
                       </p>
                     </td>
                     <td style={{ width: 200, minWidth: 200, maxWidth: 200 }}>
                       <p className="fw-4">
-                        {unit.fds?.last_date
-                          ? new Date(unit.fds.last_date).toLocaleDateString()
-                          : "-"}
+                        {(() => {
+                          const deadlineStatus = getDateStatus(unit.fds?.last_date, true);
+                          return (
+                            <span className={deadlineStatus.className}>
+                              {deadlineStatus.text}
+                            </span>
+                          );
+                        })()}
                       </p>
                     </td>
                   </tr>

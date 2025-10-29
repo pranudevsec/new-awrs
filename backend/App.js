@@ -5,6 +5,7 @@ const cookieParser = require("cookie-parser");
 const morgan = require("morgan");
 const helmet = require("helmet");
 const path = require("path");
+const rateLimit = require("express-rate-limit");
 const dbMiddleware = require("./src/middlewares/dbMiddleware");
 const config = require("./src/config/config");
 
@@ -14,6 +15,15 @@ app.use(cors());
   
 app.use(morgan("combined"));
 app.use(helmet());
+
+// Basic rate limiting for all API routes
+const apiLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 1000, // limit each IP
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+app.use("/api", apiLimiter);
 
 app.use(bodyParser.json({ limit: "50mb" }));
 app.use(bodyParser.urlencoded({ limit: "50mb", extended: true }));
@@ -61,12 +71,12 @@ app.use("/api/dashboard", DashboardRoutes);
 app.use("/api/master", MasterRoutes);
 
 process.on("uncaughtException", (err) => {
-  console.log(err)
+  // console.log(err)
   process.exit(1);
 });
 
 process.on("unhandledRejection", (reason, promise) => {
-  console.log(reason)
+  // console.log(reason)
 
   process.exit(1);
 });

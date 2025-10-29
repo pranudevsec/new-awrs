@@ -24,6 +24,7 @@ exports.getAllApplicationsForUnit = async (user, query) => {
         date_init,
         fds_id,
         status_flag,
+        last_rejected_by_role,
         rejected_reason
       FROM Citation_tab
       WHERE unit_id = $1
@@ -40,6 +41,7 @@ exports.getAllApplicationsForUnit = async (user, query) => {
        fds_id,
         date_init,
         status_flag,
+        last_rejected_by_role,
         rejected_reason
       FROM Appre_tab
       WHERE unit_id = $1
@@ -65,51 +67,57 @@ exports.getAllApplicationsForUnit = async (user, query) => {
     }
     if (search) {
       const searchLower = normalize(search);
-      allApps = allApps.filter((app) => {
-        const idMatch = app.id.toString().toLowerCase().includes(searchLower);
-        const cycleMatch = normalize(app.fds?.cycle_period || "").includes(
-          searchLower
-        );
-        
+      const isNumericSearch = /^\d+$/.test(searchLower);
 
-        const awardTypeMatch = normalize(app.fds?.award_type || "").includes(
-          searchLower
-        );
-        const commandMatch = normalize(app.fds?.command || "").includes(
-          searchLower
-        );
-        const brigadeMatch = normalize(app.fds?.brigade || "").includes(
-          searchLower
-        );
-        const divisionMatch = normalize(app.fds?.division || "").includes(
-          searchLower
-        );
-        const corpsMatch = normalize(app.fds?.corps || "").includes(
-          searchLower
-        );
-        const unitTypeMatch = normalize(app.fds?.unit_type || "").includes(
-          searchLower
-        );
-        const matrixUnitMatch = normalize(app.fds?.matrix_unit || "").includes(
-          searchLower
-        );
-        const locationMatch = normalize(app.fds?.location || "").includes(
-          searchLower
-        );
+      if (isNumericSearch) {
+        const searchId = Number(searchLower);
+        allApps = allApps.filter((app) => app.id === searchId);
+      } else {
+        allApps = allApps.filter((app) => {
+          const idMatch = app.id.toString().toLowerCase().includes(searchLower);
+          const cycleMatch = normalize(app.fds?.cycle_period || "").includes(
+            searchLower
+          );
 
-        return (
-          idMatch ||
-          cycleMatch ||
-          awardTypeMatch ||
-          commandMatch ||
-          brigadeMatch ||
-          divisionMatch ||
-          corpsMatch ||
-          unitTypeMatch ||
-          matrixUnitMatch ||
-          locationMatch
-        );
-      });
+          const awardTypeMatch = normalize(app.fds?.award_type || "").includes(
+            searchLower
+          );
+          const commandMatch = normalize(app.fds?.command || "").includes(
+            searchLower
+          );
+          const brigadeMatch = normalize(app.fds?.brigade || "").includes(
+            searchLower
+          );
+          const divisionMatch = normalize(app.fds?.division || "").includes(
+            searchLower
+          );
+          const corpsMatch = normalize(app.fds?.corps || "").includes(
+            searchLower
+          );
+          const unitTypeMatch = normalize(app.fds?.unit_type || "").includes(
+            searchLower
+          );
+          const matrixUnitMatch = normalize(app.fds?.matrix_unit || "").includes(
+            searchLower
+          );
+          const locationMatch = normalize(app.fds?.location || "").includes(
+            searchLower
+          );
+
+          return (
+            idMatch ||
+            cycleMatch ||
+            awardTypeMatch ||
+            commandMatch ||
+            brigadeMatch ||
+            divisionMatch ||
+            corpsMatch ||
+            unitTypeMatch ||
+            matrixUnitMatch ||
+            locationMatch
+          );
+        });
+      }
     }
     
     // Gather clarification IDs from all parameters
@@ -755,22 +763,27 @@ const filterApplicationsBySearch = (allApps, search, award_type) => {
 
   if (search) {
     const searchLower = normalize(search);
-    allApps = allApps.filter((app) => {
-      const searchFields = [
-        app.id.toString().toLowerCase(),
-        normalize(app.fds?.cycle_period || ""),
-        normalize(app.fds?.award_type || ""),
-        normalize(app.fds?.command || ""),
-        normalize(app.fds?.brigade || ""),
-        normalize(app.fds?.division || ""),
-        normalize(app.fds?.corps || ""),
-        normalize(app.fds?.unit_type || ""),
-        normalize(app.fds?.matrix_unit || ""),
-        normalize(app.fds?.location || "")
-      ];
-      
-      return searchFields.some(field => field.includes(searchLower));
-    });
+    const isNumericSearch = /^\d+$/.test(searchLower);
+    if (isNumericSearch) {
+      const searchId = Number(searchLower);
+      allApps = allApps.filter((app) => app.id === searchId);
+    } else {
+      allApps = allApps.filter((app) => {
+        const searchFields = [
+          app.id.toString().toLowerCase(),
+          normalize(app.fds?.cycle_period || ""),
+          normalize(app.fds?.award_type || ""),
+          normalize(app.fds?.command || ""),
+          normalize(app.fds?.brigade || ""),
+          normalize(app.fds?.division || ""),
+          normalize(app.fds?.corps || ""),
+          normalize(app.fds?.unit_type || ""),
+          normalize(app.fds?.matrix_unit || ""),
+          normalize(app.fds?.location || "")
+        ];
+        return searchFields.some(field => field.includes(searchLower));
+      });
+    }
   }
 
   return allApps;
@@ -2431,7 +2444,7 @@ async function queryHistoryRows(client, baseFilters, params) {
   const citationQuery = `
     SELECT c.citation_id AS id, 'citation' AS type, c.unit_id, c.date_init, c.status_flag,
            c.is_mo_approved, c.mo_approved_at, c.is_ol_approved, c.ol_approved_at,
-           c.last_approved_by_role, c.last_approved_at
+           c.last_approved_by_role, c.last_approved_at, c.last_rejected_by_role
     FROM Citation_tab c
     LEFT JOIN (SELECT unit_id, sos_no, name FROM Unit_tab) u ON c.unit_id = u.unit_id
     WHERE ${baseFilters.replace(/unit_id/g, 'c.unit_id')}
@@ -2439,7 +2452,7 @@ async function queryHistoryRows(client, baseFilters, params) {
   const appreQuery = `
     SELECT a.appreciation_id AS id, 'appreciation' AS type, a.unit_id, a.date_init, a.status_flag,
            a.is_mo_approved, a.mo_approved_at, a.is_ol_approved, a.ol_approved_at,
-           a.last_approved_by_role, a.last_approved_at
+           a.last_approved_by_role, a.last_approved_at, a.last_rejected_by_role
     FROM Appre_tab a
     LEFT JOIN (SELECT unit_id, sos_no, name FROM Unit_tab) u ON a.unit_id = u.unit_id
     WHERE ${baseFilters.replace(/unit_id/g, 'a.unit_id')}
@@ -2459,7 +2472,13 @@ function filterHistoryByAwardAndSearch(apps, awardType, search) {
   if (search) {
     const normalize = (s) => s?.toLowerCase().replace(/[\s-]/g, "");
     const q = normalize(search);
-    res = res.filter((app) => app.id.toString().toLowerCase().includes(q) || normalize(app.fds?.cycle_period || "").includes(q));
+    const isNumeric = /^\d+$/.test(q);
+    if (isNumeric) {
+      const searchId = Number(q);
+      res = res.filter((app) => app.id === searchId);
+    } else {
+      res = res.filter((app) => app.id.toString().toLowerCase().includes(q) || normalize(app.fds?.cycle_period || "").includes(q));
+    }
   }
   return res;
 }
@@ -2558,18 +2577,24 @@ const applyFilters = (apps, filters) => {
   if (brigade_type) res = res.filter((a) => a.fds?.brigade?.toLowerCase() === brigade_type.toLowerCase());
   if (search) {
     const q = normalize(search);
-    res = res.filter((a) =>
-      a.id.toString().toLowerCase().includes(q) ||
-      normalize(a.fds?.cycle_period || "").includes(q) ||
-      normalize(a.fds?.award_type || "").includes(q) ||
-      normalize(a.fds?.brigade || "").includes(q) ||
-      normalize(a.fds?.division || "").includes(q) ||
-      normalize(a.fds?.corps || "").includes(q) ||
-      normalize(a.fds?.command || "").includes(q) ||
-      normalize(a.fds?.unit_type || "").includes(q) ||
-      normalize(a.fds?.matrix_unit || "").includes(q) ||
-      normalize(a.fds?.location || "").includes(q)
-    );
+    const isNumeric = /^\d+$/.test(q);
+    if (isNumeric) {
+      const idNum = Number(q);
+      res = res.filter((a) => a.id === idNum);
+    } else {
+      res = res.filter((a) =>
+        a.id.toString().toLowerCase().includes(q) ||
+        normalize(a.fds?.cycle_period || "").includes(q) ||
+        normalize(a.fds?.award_type || "").includes(q) ||
+        normalize(a.fds?.brigade || "").includes(q) ||
+        normalize(a.fds?.division || "").includes(q) ||
+        normalize(a.fds?.corps || "").includes(q) ||
+        normalize(a.fds?.command || "").includes(q) ||
+        normalize(a.fds?.unit_type || "").includes(q) ||
+        normalize(a.fds?.matrix_unit || "").includes(q) ||
+        normalize(a.fds?.location || "").includes(q)
+      );
+    }
   }
   return res;
 };

@@ -23,6 +23,15 @@ export default tseslint.config(
         'warn',
         { allowConstantExport: true },
       ],
+      // Hardening rules
+      eqeqeq: ['error', 'always'],
+      'no-var': 'error',
+      'prefer-const': 'warn',
+      'no-implied-eval': 'error',
+      'no-new-func': 'error',
+      'no-alert': 'error',
+      '@typescript-eslint/no-floating-promises': 'error',
+      '@typescript-eslint/require-await': 'error',
     },
   },
 )

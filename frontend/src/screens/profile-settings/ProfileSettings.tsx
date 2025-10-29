@@ -1163,7 +1163,7 @@ const ProfileSettings = () => {
                 }}
               >
                 {officers.map((officer, index) => (
-                  <div key={officer.id} className="mb-4">
+                  <div key={officer.id ?? `${officer.icNumber}-${index}` } className="mb-4">
                     <div className="d-flex flex-sm-row flex-column align-items-sm-center justify-content-between mb-3">
                       <Breadcrumb title={`Member Officer ${index + 1}`} />
                     </div>

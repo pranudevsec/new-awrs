@@ -68,7 +68,7 @@ const ParametersList = () => {
                         </button>
                         <input
                             type="text"
-                            placeholder="search..."
+                            placeholder="Search..."
                             className="form-control"
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}

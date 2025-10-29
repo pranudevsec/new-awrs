@@ -24,7 +24,7 @@ const Applications = () => {
   const [destination, setDestination] = useState<string | null>(null);
   useEffect(() => {
     if (!profile) return;
-  
+
     const fetchData = async () => {
       try {
 
@@ -39,11 +39,11 @@ const Applications = () => {
             limit: 5000,
           })
         ).unwrap();
-  
+
         if (citationRes.success && citationRes.data?.length > 0) {
           setCitationParams([...citationRes.data].reverse());
         }
-  
+
 
         const appreciationRes = await dispatch(
           fetchParameters({
@@ -56,14 +56,14 @@ const Applications = () => {
             limit: 5000,
           })
         ).unwrap();
-  
+
         if (appreciationRes.success && appreciationRes.data?.length > 0) {
           setAppreciationParams([...appreciationRes.data].reverse());
         }
       } catch (error) {
       }
     };
-  
+
     fetchData();
   }, [profile, dispatch]);
 
@@ -81,6 +81,18 @@ const Applications = () => {
     setShowModal(false);
   };
 
+  // Calculate total height based on number of cards
+  const calculateTotalHeight = () => {
+    let cardCount = 0;
+    if (!profile?.user?.is_special_unit && citationParams.length > 0) cardCount++;
+    if (appreciationParams.length > 0) cardCount++;
+    if (isSpecialUnit && appreciationParams.length > 0) cardCount++;
+    
+    const cardHeight = 220;
+    const gap = 16; // 1rem = 16px for mb-4
+    return cardCount * cardHeight + (cardCount - 1) * gap;
+  };
+
   return (
     <div className="application-section">
       <div className="d-flex flex-sm-row flex-column align-items-sm-center justify-content-between mb-4">
@@ -89,21 +101,21 @@ const Applications = () => {
       <div className="row row-gap-3">
         {isUnitRole && (
           <div
-            className="d-flex flex-md-row flex-column justify-content-center align-items-center gap-3"
+            className="d-flex flex-md-row flex-column justify-content-start align-items-start gap-5"
             style={{ marginTop: "1rem" }}
           >
-                 {citationParams.length === 0 && appreciationParams.length === 0 && (
-  <h6 className="text-muted text-center mt-3">
-    No forms are available for the selected settings at this time.
-  </h6>
-)}
+            {citationParams.length === 0 && appreciationParams.length === 0 && (
+              <h6 className="text-muted text-center mt-3">
+                No forms are available for the selected settings at this time.
+              </h6>
+            )}
 
             {/* Cards column */}
             <div
-              className="d-flex flex-column align-items-center justify-content-center h-100"
-              style={{ minWidth: 350 }}
+              className="d-flex flex-column align-items-stretch justify-content-start"
+              style={{ minWidth: 350, paddingLeft: 16 }}
             >
-              {!profile?.user?.is_special_unit &&  citationParams.length > 0 &&(
+              {!profile?.user?.is_special_unit && citationParams.length > 0 && (
                 <div className="mb-4 w-100">
                   <div
                     role="button"
@@ -115,12 +127,12 @@ const Applications = () => {
                         handleCardClick("/applications/citation");
                       }
                     }}
-                    className="h-100 d-block w-100"
+                    className="d-block w-100"
                     style={{ cursor: "pointer" }}
                   >
                     <div
-                      className="card border-0 h-100 d-flex align-items-center justify-content-center shadow-sm hover-shadow position-relative w-100"
-                      style={{ minHeight: 120 }}
+                      className="card border-0 d-flex align-items-center justify-content-center shadow-sm hover-shadow position-relative w-100"
+                      style={{ height: 220 }}
                     >
                       <div className="card-icon mb-2">
                         <img src="/media/icons/medal.png" alt="Medal" width={80} />
@@ -138,7 +150,7 @@ const Applications = () => {
               )}
 
               {/* Appreciation Card */}
-              { appreciationParams.length > 0 &&  <div className="w-100 mb-4">
+              {appreciationParams.length > 0 && <div className="w-100 mb-4">
                 <div
                   role="button"
                   tabIndex={0}
@@ -149,12 +161,12 @@ const Applications = () => {
                       handleCardClick("/applications/appreciation");
                     }
                   }}
-                  className="h-100 d-block w-100"
+                  className="d-block w-100"
                   style={{ cursor: "pointer" }}
                 >
                   <div
-                    className="card border-0 h-100 d-flex align-items-center justify-content-center shadow-sm hover-shadow position-relative w-100"
-                    style={{ minHeight: 120 }}
+                    className="card border-0 d-flex align-items-center justify-content-center shadow-sm hover-shadow position-relative w-100"
+                    style={{ height: 220 }}
                   >
                     <div className="card-icon mb-2">
                       <img src="/media/icons/thumb.png" alt="Thumb" width={80} />
@@ -180,15 +192,15 @@ const Applications = () => {
                     onKeyDown={(e) => {
                       if (e.key === "Enter" || e.key === " ") {
                         e.preventDefault();
-                        handleCardClick("/applications/appreciation"); 
+                        handleCardClick("/applications/appreciation");
                       }
                     }}
-                    className="h-100 d-block w-100"
+                    className="d-block w-100"
                     style={{ cursor: "pointer" }}
                   >
                     <div
-                      className="card border-0 h-100 d-flex align-items-center justify-content-center shadow-sm hover-shadow position-relative w-100"
-                      style={{ minHeight: 120 }}
+                      className="card border-0 d-flex align-items-center justify-content-center shadow-sm hover-shadow position-relative w-100"
+                      style={{ height: 220 }}
                     >
                       <div className="card-icon mb-2">
                         <img src="/media/icons/thumb.png" alt="Thumb" width={80} />
@@ -206,28 +218,27 @@ const Applications = () => {
               )}
             </div>
 
-            {/* Space between columns */}
-            <div style={{ width: 70 }}></div>
-
             {/* Requirements column */}
             <div
-              className="d-flex align-items-center justify-content-center h-100"
+              className="d-flex align-items-stretch justify-content-center"
               style={{
                 minWidth: 100,
                 transition: "box-shadow 0.3s ease, transform 0.3s ease",
-                border: "px solid var(--gray-200) !important",
                 borderRadius: "20px",
               }}
             >
               <div
-                className="border-0 p-4 bg-light shadow-sm w-100 h-100 d-flex flex-column justify-content-center align-items-center h-100"
-                style={{ borderRadius: 15 }}
+                className="border-0 p-4 bg-light shadow-sm w-100 d-flex flex-column justify-content-center align-items-center"
+                style={{ 
+                  borderRadius: 15,
+                  height: calculateTotalHeight()
+                }}
               >
-               <h6 className="fw-bold mb-3 text-primary text-center">
-  {isSpecialUnit == false
-    ? "Requirements for Citation & Appreciation"
-    : "Requirements for Appreciation"}
-</h6>
+                <h6 className="fw-bold mb-3 text-primary text-center">
+                  {isSpecialUnit == false
+                    ? "Requirements for Citation & Appreciation"
+                    : "Requirements for Appreciation"}
+                </h6>
 
                 <ul
                   className="mb-0"

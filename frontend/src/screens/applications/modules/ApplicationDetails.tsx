@@ -1248,9 +1248,34 @@ const ApplicationDetails = () => {
     return rows;
   };
 
-  const addWatermarkToJsPDF = (doc: any) => {
-    const currentDateTime = new Date().toLocaleString();
-    const userIP = window.location.hostname || "localhost";
+  const addWatermarkToJsPDF = async (doc: any) => {
+    const currentDateTime = new Date().toLocaleString('en-IN', {
+      timeZone: 'Asia/Kolkata',
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit'
+    });
+    
+    // Get IP address - try external services first, fallback to hostname
+    const getPublicIP = async (): Promise<string> => {
+      try {
+        const r = await fetch("https://api.ipify.org?format=json", { cache: "no-store" });
+        const j = await r.json();
+        if (j?.ip) return j.ip;
+      } catch {}
+      try {
+        const r2 = await fetch("https://ipinfo.io/json", { cache: "no-store" });
+        const j2 = await r2.json();
+        if (j2?.ip) return j2.ip;
+      } catch {}
+
+      return window.location?.hostname || "Unknown IP";
+    };
+
+    const userIP = await getPublicIP();
 
     doc.setFontSize(40);
     doc.setTextColor(0, 0, 0); // Black color
@@ -1288,7 +1313,7 @@ const ApplicationDetails = () => {
     }
   };
 
-  const handleDownloadPDF = () => {
+  const handleDownloadPDF = async () => {
     const parameters = unitDetail?.fds?.parameters ?? [];
 
     const stats = calculateParameterStats(parameters);
@@ -1373,7 +1398,7 @@ const ApplicationDetails = () => {
       headStyles: { fillColor: [0, 123, 255] },
     });
 
-    addWatermarkToJsPDF(doc);
+    await addWatermarkToJsPDF(doc);
 
     doc.save(`Application_${unitDetail?.id ?? ""}_Details.pdf`);
   };

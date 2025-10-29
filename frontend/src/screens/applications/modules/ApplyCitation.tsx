@@ -704,7 +704,7 @@ const ApplyCitation = () => {
           <div
             ref={scrollContainerRef}
             style={{
-              height: "60vh",
+              height: "100vh",
               overflowY: "auto",
               paddingRight: "1rem",
               scrollbarWidth: "none",

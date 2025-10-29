@@ -7,6 +7,7 @@ import { useAppDispatch, useAppSelector } from "../../reduxToolkit/hooks";
 import { fetchApplicationUnitDetail } from "../../reduxToolkit/services/application/applicationService";
 import { baseURL } from "../../reduxToolkit/helper/axios";
 import { downloadDocumentWithWatermark } from "../../utils/documentUtils";
+import { formatDateTime, formatDate } from "../../utils/dateUtils";
 import toast from "react-hot-toast";
 
 const TrackApplicationDetails = () => {
@@ -223,11 +224,11 @@ const TrackApplicationDetails = () => {
   };
 
 
-  const renderParameterRow = (param: any, display: any) => {
+  const renderParameterRow = (param: any, display: any, index: number) => {
     const rows: JSX.Element[] = [];
 
     rows.push(
-      <tr key={display.main}>
+      <tr key={`param-${index}-${display.main}`}>
         <td style={{ width: 150 }}>
           <p className="fw-5 mb-0">{display.main}</p>
         </td>
@@ -291,7 +292,16 @@ const TrackApplicationDetails = () => {
           >
             <div className="form-label fw-semibold">Cycle Period</div>
             <p className="fw-5 mb-0">
-              {unitDetail?.fds?.cycle_period ?? "--"}
+              {unitDetail?.fds?.cycle_period ? 
+                (() => {
+                  // If cycle_period is a string like "2025-01-01 to 2025-06-30", format it properly
+                  if (typeof unitDetail.fds.cycle_period === 'string' && unitDetail.fds.cycle_period.includes(' to ')) {
+                    const [startDate, endDate] = unitDetail.fds.cycle_period.split(' to ');
+                    return `${formatDate(startDate, { format: 'medium' })} to ${formatDate(endDate, { format: 'medium' })}`;
+                  }
+                  // If it's a single date or other format, format it directly
+                  return formatDate(unitDetail.fds.cycle_period, { format: 'medium' });
+                })() : "--"}
             </p>
           </div>
 
@@ -300,7 +310,9 @@ const TrackApplicationDetails = () => {
             style={{ minWidth: "150px" }}
           >
             <div className="form-label fw-semibold">Last Date</div>
-            <p className="fw-5 mb-0">{unitDetail?.fds?.last_date ?? "--"}</p>
+            <p className="fw-5 mb-0">
+              {formatDateTime(unitDetail?.fds?.last_date) ?? "--"}
+            </p>
           </div>
 
           <div
@@ -427,7 +439,7 @@ const TrackApplicationDetails = () => {
                   prevSubheader = display.subheader;
                   prevSubsubheader = display.subsubheader;
 
-                  rows.push(...renderParameterRow(param, display));
+                  rows.push(...renderParameterRow(param, display, index));
                 });
 
               return rows;

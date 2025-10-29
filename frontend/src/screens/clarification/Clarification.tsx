@@ -3,6 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { SVGICON } from "../../constants/iconsList";
 import { useAppDispatch, useAppSelector } from "../../reduxToolkit/hooks";
 import { getClarifications, getSubordinateClarifications } from "../../reduxToolkit/services/clarification/clarificationService";
+import { formatCompactDateTime, getDateStatus } from "../../utils/dateUtils";
 import type { Parameter } from "../../reduxToolkit/services/parameter/parameterInterface";
 import Breadcrumb from "../../components/ui/breadcrumb/Breadcrumb";
 import Loader from "../../components/ui/loader/Loader";
@@ -75,8 +76,15 @@ const Clarification = () => {
                 <tr key={app.id} onClick={() => navigate(`/clarification/unit/${app.id}?award_type=${app.type}`)} style={{ cursor: 'pointer' }}>
                   <td style={{ width: 150 }}><p className="fw-4">#{app.id}</p></td>
                   <td style={{ width: 150 }}><p className="fw-4">#{app.unit_id}</p></td>
-                  <td style={{ width: 200 }}><p className="fw-4">{new Date(app.date_init).toLocaleDateString()}</p></td>
-                  <td style={{ width: 200 }}><p className="fw-4">{new Date(app.fds.last_date).toLocaleDateString()}</p></td>
+                  <td style={{ width: 200 }}><p className="fw-4">{formatCompactDateTime(app.date_init)}</p></td>
+                  <td style={{ width: 200 }}><p className="fw-4">{(() => {
+                    const deadlineStatus = getDateStatus(app.fds.last_date, true, true);
+                    return (
+                      <span className={deadlineStatus.className}>
+                        {deadlineStatus.text}
+                      </span>
+                    );
+                  })()}</p></td>
                   <td style={{ width: 150 }}><p className="fw-4">  {app.type.charAt(0).toUpperCase() + app.type.slice(1)}</p></td>
                   <td style={{ width: 200 }}>
                     <div
