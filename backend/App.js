@@ -74,38 +74,54 @@ app.use("/api/clarification", ClarificationRoutes);
 app.use("/api/dashboard", DashboardRoutes);
 app.use("/api/master", MasterRoutes);
 
-// Simple endpoint to return the client IP address as seen by the server
-app.get("/api/client-ip", (req, res) => {
-  // Prefer x-forwarded-for when present
+// Helpers to reduce complexity in the IP endpoint
+function extractForwardedIp(req) {
   const xff = req.headers["x-forwarded-for"]; // may be a comma-separated list
-  const forwardedIp = Array.isArray(xff) ? xff[0] : (xff || "").toString().split(",")[0].trim();
-  const ip = forwardedIp || req.ip || req.connection?.remoteAddress || req.socket?.remoteAddress || "";
-  // Normalize IPv6 localhost/IPv4-mapped addresses
-  let normalized = (ip || "").replace("::ffff:", "");
+  const raw = Array.isArray(xff) ? xff[0] : (xff || "").toString();
+  return raw.split(",")[0].trim();
+}
 
-  // If request appears to be from localhost, attempt to resolve LAN IPv4
-  const isLocal = normalized === "::1" || normalized === "127.0.0.1" || normalized === "";
-  if (isLocal) {
-    const nets = os.networkInterfaces();
-    let lan = "";
-    for (const name of Object.keys(nets)) {
-      const addrs = nets[name] || [];
-      for (const addr of addrs) {
-        if (addr.family === "IPv4" && !addr.internal) {
-          // Prefer private ranges
-          if (/^(10\.|192\.168\.|172\.(1[6-9]|2\d|3[0-1])\.)/.test(addr.address)) {
-            lan = addr.address;
-            break;
-          }
-          if (!lan) lan = addr.address; // fallback to first external IPv4
+function normalizeIp(ip) {
+  return (ip || "").replace("::ffff:", "");
+}
+
+function isLocalIp(ip) {
+  return ip === "::1" || ip === "127.0.0.1" || ip === "";
+}
+
+function findLanIPv4() {
+  const nets = os.networkInterfaces();
+  for (const addrs of Object.values(nets)) {
+    for (const addr of (addrs || [])) {
+      if (addr.family === "IPv4" && !addr.internal) {
+        if (/^(10\.|192\.168\.|172\.(1[6-9]|2\d|3[0-1])\.)/.test(addr.address)) {
+          return addr.address; // prefer private ranges
         }
       }
-      if (lan) break;
     }
-    if (lan) normalized = lan;
   }
+  for (const addrs of Object.values(nets)) {
+    for (const addr of (addrs || [])) {
+      if (addr.family === "IPv4" && !addr.internal) return addr.address;
+    }
+  }
+  return "";
+}
+
+function getClientIp(req) {
+  const forwarded = extractForwardedIp(req);
+  const base = forwarded || req.ip || req.connection?.remoteAddress || req.socket?.remoteAddress || "";
+  const normalized = normalizeIp(base);
+  if (!isLocalIp(normalized)) return normalized;
+  const lan = findLanIPv4();
+  return lan || normalized;
+}
+
+// Simple endpoint to return the client IP address as seen by the server
+app.get("/api/client-ip", (req, res) => {
+  const ip = getClientIp(req);
   res.set({ 'Cache-Control': 'no-cache, no-store, must-revalidate', 'Pragma': 'no-cache', 'Expires': '0' });
-  res.json({ ip: normalized });
+  res.json({ ip });
 });
 
 process.on("uncaughtException", (err) => {

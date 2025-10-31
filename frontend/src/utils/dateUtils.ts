@@ -8,6 +8,27 @@
  * @param options - Formatting options
  * @returns Formatted date string or fallback text
  */
+function toDateOrNull(input: string | Date): Date | null {
+  const d = typeof input === 'string' ? new Date(input) : input;
+  return isNaN(d.getTime()) ? null : d;
+}
+
+function getRelativeLabel(diffInDays: number): string | null {
+  if (diffInDays === 0) return 'Today';
+  if (diffInDays === 1) return 'Yesterday';
+  if (diffInDays === -1) return 'Tomorrow';
+  if (diffInDays > 1 && diffInDays <= 7) return `${diffInDays} days ago`;
+  if (diffInDays < -1 && diffInDays >= -7) return `In ${Math.abs(diffInDays)} days`;
+  return null;
+}
+
+function getFormatOptions(fmt: 'short' | 'medium' | 'long'): Intl.DateTimeFormatOptions {
+  const base: Intl.DateTimeFormatOptions = { timeZone: 'Asia/Kolkata' };
+  if (fmt === 'short') return { ...base, day: '2-digit', month: '2-digit', year: '2-digit' };
+  if (fmt === 'long') return { ...base, weekday: 'long', day: '2-digit', month: 'long', year: 'numeric' };
+  return { ...base, day: '2-digit', month: 'short', year: 'numeric' }; // medium
+}
+
 export const formatDate = (
   date: string | Date | null | undefined,
   options: {
@@ -20,52 +41,20 @@ export const formatDate = (
   if (!date) return fallback;
 
   try {
-    const dateObj = typeof date === 'string' ? new Date(date) : date;
-    
-    // Check if date is valid
-    if (isNaN(dateObj.getTime())) {
-      return fallback;
-    }
+    const dateObj = toDateOrNull(typeof date === 'string' ? date : (date as Date));
+    if (!dateObj) return fallback;
 
     const now = new Date();
     const diffInMs = now.getTime() - dateObj.getTime();
     const diffInDays = Math.floor(diffInMs / (1000 * 60 * 60 * 24));
 
-    // Relative format for recent dates
     if (format === 'relative') {
-      if (diffInDays === 0) return 'Today';
-      if (diffInDays === 1) return 'Yesterday';
-      if (diffInDays === -1) return 'Tomorrow';
-      if (diffInDays > 1 && diffInDays <= 7) return `${diffInDays} days ago`;
-      if (diffInDays < -1 && diffInDays >= -7) return `In ${Math.abs(diffInDays)} days`;
+      const label = getRelativeLabel(diffInDays);
+      if (label) return label;
+      // fallthrough to standard format if outside recent window
     }
 
-    // Standard formats
-    const formatOptions: Intl.DateTimeFormatOptions = {
-      timeZone: 'Asia/Kolkata', // Indian timezone
-    };
-
-    switch (format) {
-      case 'short':
-        formatOptions.day = '2-digit';
-        formatOptions.month = '2-digit';
-        formatOptions.year = '2-digit';
-        break;
-      case 'medium':
-        formatOptions.day = '2-digit';
-        formatOptions.month = 'short';
-        formatOptions.year = 'numeric';
-        break;
-      case 'long':
-        formatOptions.weekday = 'long';
-        formatOptions.day = '2-digit';
-        formatOptions.month = 'long';
-        formatOptions.year = 'numeric';
-        break;
-    }
-
-    // Intentionally not including time in this formatter for current views
-
+    const formatOptions = getFormatOptions(format === 'relative' ? 'medium' : format);
     return new Intl.DateTimeFormat('en-IN', formatOptions).format(dateObj);
   } catch (error) {
     console.warn('Date formatting error:', error);

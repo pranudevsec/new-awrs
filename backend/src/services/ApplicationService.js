@@ -582,13 +582,9 @@ exports.getSingleApplicationForUnit = async (
     const fds = application.fds;
 
     if (Array.isArray(fds.parameters)) {
-      for (let i = 0; i < fds.parameters.length; i++) {
-        const param = fds.parameters[i];
-        const clarificationId =
-          param.clarification_id || param.last_clarification_id;
-        param.clarification_details = await fetchClarificationDetails(
-          clarificationId
-        );
+      for (const param of fds.parameters) {
+        const clarificationId = param.clarification_id || param.last_clarification_id;
+        param.clarification_details = await fetchClarificationDetails(clarificationId);
         if (shouldCleanClarification(param, userRoleIndex)) {
           delete param.clarification_id;
           delete param.last_clarification_id;
@@ -900,15 +896,7 @@ const addMarksToApplications = async (client, allApps) => {
     }));
   }
 
-  const parameterMasterRes = await client.query(
-    `SELECT name, negative FROM Parameter_Master WHERE LOWER(TRIM(name)) = ANY($1)`,
-    [allParameterNames]
-  );
-  
-  const negativeParamMap = parameterMasterRes.rows.reduce((acc, row) => {
-    acc[row.name.trim().toLowerCase()] = row.negative;
-    return acc;
-  }, {});
+  // Note: negative flags are resolved downstream where needed; no extra query here
   
   return allApps.map((app) => {
     const parameters = app.fds?.parameters || [];
@@ -971,7 +959,7 @@ exports.getApplicationsOfSubordinates = async (user, query) => {
   const client = await dbService.getClient();
   try {
     const { user_role } = user;
-    const { page = 1, limit = 10, isShortlisted, isGetNotClarifications, isGetWithdrawRequests } = query;
+    const { page = 1, limit = 10, isShortlisted, isGetNotClarifications } = query;
 
     // Validate user profile and role
     const profile = await AuthService.getProfile(user);
@@ -1441,7 +1429,6 @@ const validateMemberIcNumber = (member) => {
 
 // Helper function to handle member database operations
 const handleMemberDatabaseOperations = async (client, appData, member) => {
-  const now = new Date();
   const existingRes = await client.query(
     `SELECT * FROM fds_accepted_members WHERE fds_id = $1 AND member_id = $2`,
     [appData.fds_id, member.member_id]
@@ -2010,7 +1997,7 @@ exports.approveApplicationMarks = async (user, body) => {
       fds.applicationPriority,
       applicationPriorityPoints
     );
-    let remarks = updateRemarks(remark);
+    updateRemarks(remark);
     return ResponseHelper.success(200, "Marks approved successfully");
   } catch (error) {
     return ResponseHelper.error(500, "Failed to approve marks", error.message);
@@ -2112,8 +2099,7 @@ exports.addApplicationSignature = async (user, body) => {
       return ResponseHelper.error(400, "Missing required member fields");
     }
 
-    const tableName = type === "citation" ? "Citation_tab" : "Appre_tab";
-    const idColumn = type === "citation" ? "citation_id" : "appreciation_id";
+    // tableName and idColumn not needed in this flow
 
     let fds = await fetchFdsForSignature(client, application_id, type);
     if (!fds || typeof fds !== "object") fds = {};
@@ -2210,7 +2196,6 @@ exports.addApplicationComment = async (user, body) => {
     let appData = res.rows[0];
     appData = await attachSingleFdsToApplication(appData);
 
-    const fds = appData.fds;
     const fdsId = appData?.fds_id;
 
     if (!fdsId) {
