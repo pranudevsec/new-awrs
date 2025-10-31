@@ -89,23 +89,30 @@ function isLocalIp(ip) {
   return ip === "::1" || ip === "127.0.0.1" || ip === "";
 }
 
-function findLanIPv4() {
-  const nets = os.networkInterfaces();
+function isIPv4External(addr) {
+  return addr && addr.family === "IPv4" && !addr.internal;
+}
+
+function isPrivateIPv4(address) {
+  return /^(10\.|192\.168\.|172\.(1[6-9]|2\d|3[0-1])\.)/.test(address);
+}
+
+function firstIPv4(nets, predicate) {
   for (const addrs of Object.values(nets)) {
     for (const addr of (addrs || [])) {
-      if (addr.family === "IPv4" && !addr.internal) {
-        if (/^(10\.|192\.168\.|172\.(1[6-9]|2\d|3[0-1])\.)/.test(addr.address)) {
-          return addr.address; // prefer private ranges
-        }
+      if (isIPv4External(addr) && predicate(addr.address)) {
+        return addr.address;
       }
     }
   }
-  for (const addrs of Object.values(nets)) {
-    for (const addr of (addrs || [])) {
-      if (addr.family === "IPv4" && !addr.internal) return addr.address;
-    }
-  }
   return "";
+}
+
+function findLanIPv4() {
+  const nets = os.networkInterfaces();
+  const preferred = firstIPv4(nets, isPrivateIPv4);
+  if (preferred) return preferred;
+  return firstIPv4(nets, () => true);
 }
 
 function getClientIp(req) {
