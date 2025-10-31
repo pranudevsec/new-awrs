@@ -1,30 +1,43 @@
-import { useEffect, useState, type FormEvent } from "react";
-import { useNavigate } from "react-router-dom";
-import { useFormik } from "formik";
-import { unwrapResult } from "@reduxjs/toolkit";
-import toast from "react-hot-toast";
-import * as Yup from "yup";
-import { FaPlus } from "react-icons/fa";
-import FormSelect from "../../components/form/FormSelect";
-import Breadcrumb from "../../components/ui/breadcrumb/Breadcrumb";
-import Loader from "../../components/ui/loader/Loader";
-import FormInput from "../../components/form/FormInput";
-import ICNumberInput from "../../components/form/ICNumberInput";
-import type { UpdateUnitProfileRequest } from "../../reduxToolkit/services/auth/authInterface";
-import { useAppSelector, useAppDispatch } from "../../reduxToolkit/hooks";
-import { getProfile, reqToUpdateUnitProfile } from "../../reduxToolkit/services/auth/authService";
-import { hierarchicalStructure, unitTypeOptions, matrixUnitOptions, rank } from "../../data/options";
-import { useMasterData } from "../../hooks/useMasterData";
+import React, { useEffect, useState, useCallback, type FormEvent } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { useFormik } from 'formik';
+import { unwrapResult } from '@reduxjs/toolkit';
+import toast from 'react-hot-toast';
+import { FaPlus } from 'react-icons/fa';
+import * as Yup from 'yup';
+
+import FormSelect from '../../components/form/FormSelect';
+import Breadcrumb from '../../components/ui/breadcrumb/Breadcrumb';
+import Loader from '../../components/ui/loader/Loader';
+import FormInput from '../../components/form/FormInput';
+import ICNumberInput from '../../components/form/ICNumberInput';
+
+import type { UpdateUnitProfileRequest } from '../../reduxToolkit/services/auth/authInterface';
+import { useAppSelector, useAppDispatch } from '../../reduxToolkit/hooks';
+import {
+  getProfile,
+  reqToUpdateUnitProfile,
+} from '../../reduxToolkit/services/auth/authService';
+import {
+  hierarchicalStructure,
+  unitTypeOptions,
+  matrixUnitOptions,
+  rank,
+} from '../../data/options';
+import { useMasterData } from '../../hooks/useMasterData';
+
+type OptionType = { value: string; label: string };
 
 interface Officer {
+  officerKey: string;
   id?: string;
   serialNumber: string;
   icNumber: string;
   rank: string;
   name: string;
   appointment: string;
-
 }
+
 interface Award {
   award_id?: string;
   award_type: string;
@@ -32,16 +45,33 @@ interface Award {
   award_year: string;
 }
 
+interface FormValues {
+  unit: string;
+  brigade: string;
+  division: string;
+  corps: string;
+  command: string;
+  adm_channel: string;
+  tech_channel: string;
+  unit_type: string;
+  matrix_unit: string | string[];
+  location: string;
+  start_month: string;
+  start_year: string;
+  end_month: string;
+  end_year: string;
+}
+
 const hierarchyMap: Record<string, string[]> = {};
 hierarchicalStructure.forEach(([command, corps, division, brigade, unit]) => {
   hierarchyMap[command] = [corps, division, brigade, unit];
 });
 
-const ProfileSettings = () => {
+const ProfileSettings: React.FC = () => {
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
-  const { profile } = useAppSelector((state) => state.admin);
-  
+
+  const { profile } = useAppSelector((state: any) => state.admin);
 
   const {
     brigadeOptions,
@@ -51,165 +81,133 @@ const ProfileSettings = () => {
     armsServiceOptions,
     roleOptions,
     deploymentOptions,
-    unitOptions
+    unitOptions,
   } = useMasterData();
 
   const isMember = profile?.user?.is_member ?? false;
-  const role = profile?.user?.user_role?.toLowerCase() ?? "";
-  const cw2_type = profile?.user?.cw2_type?.toLowerCase() ?? "";
+  const role = (profile?.user?.user_role?.toLowerCase() ?? '') as string;
+  const cw2_type = (profile?.user?.cw2_type?.toLowerCase() ?? '') as string;
+  const is_member_added = profile?.user?.is_member_added ?? false;
 
   const currentYear = new Date().getFullYear();
   const yearOptions = Array.from({ length: 79 }, (_, i) => `${currentYear - i}`);
 
-
   const [firstLoad, setFirstLoad] = useState(true);
-  const [awards, setAwards] = useState<Award[]>(profile?.unit?.awards ?? []);
-  const [presidingOfficer, setPresidingOfficer] = useState<Officer>({
+  const [awards, setAwards] = useState<Award[]>([]);
+  const [presidingOfficer, setPresidingOfficer] = useState<Omit<Officer, 'officerKey'>>({
     id: undefined,
-    serialNumber: "",
-    icNumber: "",
-    rank: "",
-    name: "",
-    appointment: "",
-
+    serialNumber: '',
+    icNumber: '',
+    rank: '',
+    name: '',
+    appointment: '',
   });
-  const [officers, setOfficers] = useState<Officer[]>([{
-    id: undefined,
-    serialNumber: "",
-    icNumber: "",
-    rank: "",
-    name: "",
-    appointment: "",
-
-  }]);
+  const [officers, setOfficers] = useState<Officer[]>([]);
   const [isDeclarationChecked, setIsDeclarationChecked] = useState(false);
-  const [errors, setErrors] = useState<any>([]);
-
-  const handleCheckboxChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setIsDeclarationChecked(e.target.checked);
-  };
+  const [awardErrors, setAwardErrors] = useState<
+    Array<{ award_type: string; award_title: string; award_year: string }>
+  >([]);
 
   useEffect(() => {
-    if (profile?.unit?.awards && Array.isArray(profile.unit.awards)) {
-      const processedAwards = profile.unit.awards.map((award) => ({
-        award_id: award.award_id ?? undefined,
-        award_type: award.award_type ?? "GOC-in-C",
-        award_title: award.award_title ?? "",
-        award_year: award.award_year ?? "",
-      }));
-      setAwards(processedAwards);
-    } else {
-      setAwards([]);
+    if (!profile?.unit) return;
+
+    const loadedAwards: Award[] =
+      profile.unit.awards?.map((a: any) => ({
+        award_id: a.award_id ?? undefined,
+        award_type: a.award_type ?? 'GOC-in-C',
+        award_title: a.award_title ?? '',
+        award_year: a.award_year ?? '',
+      })) ?? [];
+    setAwards(loadedAwards);
+
+    const presiding = profile.unit.members?.find(
+      (m: any) => m.member_type === 'presiding_officer',
+    );
+    if (presiding) {
+      setPresidingOfficer({
+        id: presiding.id ?? undefined,
+        serialNumber: presiding.member_order ?? '',
+        icNumber: presiding.ic_number ?? '',
+        rank: presiding.rank ?? '',
+        name: presiding.name ?? '',
+        appointment: presiding.appointment ?? '',
+      });
     }
-  }, [profile?.unit?.awards]);
 
-  useEffect(() => {
-    if (profile?.unit?.members && Array.isArray(profile.unit.members)) {
-      const presiding = profile.unit.members.find(
-        (member) => member.member_type === "presiding_officer"
-      );
+    const other = profile.unit.members
+      ?.filter((m: any) => m.member_type !== 'presiding_officer')
+      .map((m: any) => ({
+        officerKey: m.id ?? crypto.randomUUID(),
+        id: m.id ?? undefined,
+        serialNumber: m.member_order ?? '',
+        icNumber: m.ic_number ?? '',
+        rank: m.rank ?? '',
+        name: m.name ?? '',
+        appointment: m.appointment ?? '',
+      })) ?? [];
 
-      if (presiding) {
-        setPresidingOfficer({
-          id: presiding.id ?? undefined,
-          serialNumber: presiding.member_order ?? "",
-          icNumber: presiding.ic_number ?? "",
-          rank: presiding.rank ?? "",
-          name: presiding.name ?? "",
-          appointment: presiding.appointment ?? "",
+    setOfficers(
+      other.length > 0
+        ? other
+        : [
+            {
+              officerKey: crypto.randomUUID(),
+              serialNumber: '',
+              icNumber: '',
+              rank: '',
+              name: '',
+              appointment: '',
+            },
+          ],
+    );
 
-        });
-      }
-
-      const otherOfficers = profile.unit.members
-        .filter((member) => member.member_type !== "presiding_officer")
-        .map((member) => ({
-          id: member.id ?? undefined,
-          serialNumber: member.member_order ?? "",
-          icNumber: member.ic_number ?? "",
-          rank: member.rank ?? "",
-          name: member.name ?? "",
-          appointment: member.appointment ?? "",
-
-        }));
-
-      if (otherOfficers.length > 0) {
-        setOfficers(otherOfficers);
-      } else {
-        setOfficers([{
-          id: undefined,
-          serialNumber: "",
-          icNumber: "",
-          rank: "",
-          name: "",
-          appointment: "",
-
-        }]);
-      }
-    }
-  }, [profile?.unit?.members]);
-
-  useEffect(() => {
-    if (profile) setFirstLoad(false);
+    setFirstLoad(false);
   }, [profile]);
 
-  const getVisibleFields = (
-    role: string,
-    isSpecialUnit?: boolean
-  ): string[] => {
-    if (isSpecialUnit) {
-      switch (role) {
-        case "unit":
-          return [
-            "command",
-            "location",
-            "matrix_unit",
-            "unit_type",
-            "unit",
-          ].reverse();
-        case "brigade":
-        case "division":
-        case "corps":
-        case "command":
-          return ["unit"].reverse();
+  const getVisibleFields = (r: string, isSpecial?: boolean): (keyof FormValues)[] => {
+    if (isSpecial) {
+      switch (r) {
+        case 'unit':
+          return ['command', 'location', 'matrix_unit', 'unit_type', 'unit'].reverse() as any;
+        case 'brigade':
+        case 'division':
+        case 'corps':
+        case 'command':
+          return ['unit'].reverse() as any;
         default:
           return [];
       }
     }
 
-    switch (role) {
-      case "unit":
+    switch (r) {
+      case 'unit':
         return [
-          "brigade",
-          "division",
-          "corps",
-          "command",
-          "location",
-          "matrix_unit",
-          "unit_type",
-          "unit",
-        ]
-          .slice()
-          .reverse();
-      case "brigade":
-        return ["unit", "division", "corps", "command"].slice().reverse();
-      case "division":
-        return ["unit", "corps", "command"].slice().reverse();
-      case "corps":
-        return ["unit", "command"].slice().reverse();
-      case "command":
-        return ["unit"].slice().reverse();
+          'brigade',
+          'division',
+          'corps',
+          'command',
+          'location',
+          'matrix_unit',
+          'unit_type',
+          'unit',
+        ].reverse() as any;
+      case 'brigade':
+        return ['unit', 'division', 'corps', 'command'].reverse() as any;
+      case 'division':
+        return ['unit', 'corps', 'command'].reverse() as any;
+      case 'corps':
+        return ['unit', 'command'].reverse() as any;
+      case 'command':
+        return ['unit'].reverse() as any;
       default:
         return [];
     }
   };
 
-  const visibleFields = getVisibleFields(
-    profile?.user?.user_role ?? "",
-    profile?.user?.is_special_unit
-  );
+  const visibleFields = getVisibleFields(role, profile?.user?.is_special_unit);
 
-  const optionsMap: Record<string, any> = {
+  type OptionsMap = Record<string, OptionType[]>;
+  const optionsMap: OptionsMap = {
     unit: unitOptions,
     brigade: brigadeOptions,
     division: divisionOptions,
@@ -222,291 +220,252 @@ const ProfileSettings = () => {
     matrix_unit: matrixUnitOptions,
   };
 
-  const getPlaceholder = (role: string, field: string) => {
-    const capRole = role.charAt(0).toUpperCase() + role.slice(1);
-    const capField = field.charAt(0).toUpperCase() + field.slice(1);
-
-    if (field === "unit") {
-      return `Select ${capRole}`;
-    } else {
-      return `Select ${capField}`;
-    }
+  const getPlaceholder = (r: string, f: string) => {
+    const cap = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
+    return f === 'unit' ? `Select ${cap(r)}` : `Select ${cap(f)}`;
   };
 
-  const handleChange = (index: number, field: keyof Officer, value: string) => {
-    const updated = [...officers];
-    updated[index][field] = value;
-    setOfficers(updated);
-  };
+  const handleOfficerChange = useCallback(
+    (officerKey: string, field: keyof Omit<Officer, 'officerKey'>, value: string) => {
+      setOfficers(prev =>
+        prev.map(o =>
+          o.officerKey === officerKey ? { ...o, [field]: value } : o,
+        ),
+      );
+    },
+    [],
+  );
 
-  const handleAdd = (e: FormEvent<HTMLButtonElement>) => {
+  const handleAddOfficer = useCallback((e: FormEvent<HTMLButtonElement>) => {
     e.preventDefault();
-    setOfficers((prev) => [
+    setOfficers(prev => [
       ...prev,
       {
-        serialNumber: "",
-        icNumber: "",
-        rank: "",
-        name: "",
-        appointment: "",
-
+        officerKey: crypto.randomUUID(),
+        serialNumber: '',
+        icNumber: '',
+        rank: '',
+        name: '',
+        appointment: '',
       },
     ]);
-  };
+  }, []);
 
-  const validateAwards = () => {
-    let hasError = false;
-    const newErrors = awards.map(() => ({
-      award_type: "",
-      award_title: "",
-      award_year: ""
+  const handleRemoveOfficer = useCallback((officerKey: string) => {
+    setOfficers(prev => prev.filter(o => o.officerKey !== officerKey));
+  }, []);
+
+  const validateAwards = useCallback(() => {
+    const errors: typeof awardErrors = awards.map(() => ({
+      award_type: '',
+      award_title: '',
+      award_year: '',
     }));
+    let hasError = false;
 
-    awards.forEach((award, idx) => {
-      if (!award.award_type) {
-        newErrors[idx].award_type = "Award type is required.";
+    awards.forEach((a, i) => {
+      if (!a.award_type) {
+        errors[i].award_type = 'Award type is required.';
+        hasError = true;
+      }
+      if (!a.award_title) {
+        errors[i].award_title = 'Award title is required.';
+        hasError = true;
+      }
+      if (!a.award_year) {
+        errors[i].award_year = 'Award year is required.';
         hasError = true;
       }
 
-      if (!award.award_title) {
-        newErrors[idx].award_title = "Award title is required.";
+      const isDuplicate = awards.some(
+        (b, j) =>
+          j !== i &&
+          b.award_year === a.award_year &&
+          b.award_title === a.award_title,
+      );
+      if (isDuplicate) {
+        errors[i].award_year = `Year ${a.award_year} already used for "${a.award_title}".`;
         hasError = true;
-      }
-
-      if (!award.award_year) {
-        newErrors[idx].award_year = "Award year is required.";
-        hasError = true;
-      }
-
-
-      if (award.award_title && award.award_year) {
-        const isDuplicate = awards.some(
-          (a, i) =>
-            i !== idx &&
-            a.award_year === award.award_year &&
-            a.award_title === award.award_title
-        );
-
-        if (isDuplicate) {
-          newErrors[idx].award_year = `Year ${award.award_year} is already selected for award "${award.award_title}".`;
-          hasError = true;
-        }
       }
     });
 
-    setErrors(newErrors);
+    setAwardErrors(errors);
     return !hasError;
-  };
+  }, [awards]);
 
+  const handleAddAward = useCallback(() => {
+    setAwards(prev => [
+      ...prev,
+      { award_type: 'GOC-in-C', award_title: '', award_year: '' },
+    ]);
+  }, []);
 
-  const formik: any = useFormik({
+  const handleRemoveAward = useCallback((idx: number) => {
+    setAwards(prev => prev.filter((_, i) => i !== idx));
+  }, []);
+
+  const formik = useFormik<FormValues>({
     initialValues: {
-      unit: profile?.unit?.name ?? "",
-      brigade: profile?.unit?.bde ?? "",
-      division: profile?.unit?.div ?? "",
-      corps: profile?.unit?.corps ?? "",
-      command: profile?.unit?.comd ?? "",
-      adm_channel: profile?.unit?.adm_channel ?? "",
-      tech_channel: profile?.unit?.tech_channel ?? "",
-      unit_type: profile?.unit?.unit_type ?? "",
-      matrix_unit: profile?.unit?.matrix_unit ?? "",
-      location: profile?.unit?.location ?? "",
-      start_month: profile?.unit?.start_month ?? "",
-      start_year: profile?.unit?.start_year ?? "",
-      end_month: profile?.unit?.end_month ?? "",
-      end_year: profile?.unit?.end_year ?? "",
+      unit: profile?.unit?.name ?? '',
+      brigade: profile?.unit?.bde ?? '',
+      division: profile?.unit?.div ?? '',
+      corps: profile?.unit?.corps ?? '',
+      command: profile?.unit?.comd ?? '',
+      adm_channel: profile?.unit?.adm_channel ?? '',
+      tech_channel: profile?.unit?.tech_channel ?? '',
+      unit_type: profile?.unit?.unit_type ?? '',
+      matrix_unit: profile?.unit?.matrix_unit ?? '',
+      location: profile?.unit?.location ?? '',
+      start_month: profile?.unit?.start_month ?? '',
+      start_year: profile?.unit?.start_year ?? '',
+      end_month: profile?.unit?.end_month ?? '',
+      end_year: profile?.unit?.end_year ?? '',
     },
     enableReinitialize: true,
     validationSchema: Yup.object().shape({
       start_month: Yup.string()
         .when([], {
           is: () => role === 'unit',
-          then: (schema) => schema.required('Start month is required'),
-          otherwise: (schema) => schema,
+          then: schema => schema.required('Start month is required'),
         })
-        .test('date-range', 'Start date cannot be after end date', function(value) {
-        const { start_year, end_month, end_year } = this.parent;
-        
-        if (!value || !start_year || !end_month || !end_year) {
-          return true; // Allow empty fields
-        }
-        
-        const startDate = new Date(parseInt(start_year), parseInt(value) - 1);
-        const endDate = new Date(parseInt(end_year), parseInt(end_month) - 1);
-        
-        return startDate <= endDate;
-      }),
+        .test('date-range', 'Start date cannot be after end date', function (value) {
+          const { start_year, end_month, end_year } = this.parent;
+          if (!value || !start_year || !end_month || !end_year) return true;
+          const start = new Date(parseInt(start_year), parseInt(value) - 1);
+          const end = new Date(parseInt(end_year), parseInt(end_month) - 1);
+          return start <= end;
+        }),
       start_year: Yup.string()
         .when([], {
           is: () => role === 'unit',
-          then: (schema) => schema.required('Start year is required'),
-          otherwise: (schema) => schema,
+          then: schema => schema.required('Start year is required'),
         })
-        .test('date-range', 'Start date cannot be after end date', function(value) {
-        const { start_month, end_month, end_year } = this.parent;
-        
-        if (!value || !start_month || !end_month || !end_year) {
-          return true; // Allow empty fields
-        }
-        
-        const startDate = new Date(parseInt(value), parseInt(start_month) - 1);
-        const endDate = new Date(parseInt(end_year), parseInt(end_month) - 1);
-        
-        return startDate <= endDate;
-      }),
+        .test('date-range', 'Start date cannot be after end date', function (value) {
+          const { start_month, end_month, end_year } = this.parent;
+          if (!value || !start_month || !end_month || !end_year) return true;
+          const start = new Date(parseInt(value), parseInt(start_month) - 1);
+          const end = new Date(parseInt(end_year), parseInt(end_month) - 1);
+          return start <= end;
+        }),
       end_month: Yup.string()
         .when([], {
           is: () => role === 'unit',
-          then: (schema) => schema.required('End month is required'),
-          otherwise: (schema) => schema,
+          then: schema => schema.required('End month is required'),
         })
-        .test('date-range', 'End date cannot be before start date', function(value) {
-        const { start_month, start_year, end_year } = this.parent;
-        
-        if (!value || !start_month || !start_year || !end_year) {
-          return true; // Allow empty fields
-        }
-        
-        const startDate = new Date(parseInt(start_year), parseInt(start_month) - 1);
-        const endDate = new Date(parseInt(end_year), parseInt(value) - 1);
-        
-        return endDate >= startDate;
-      }),
+        .test('date-range', 'End date cannot be before start date', function (value) {
+          const { start_month, start_year, end_year } = this.parent;
+          if (!value || !start_month || !start_year || !end_year) return true;
+          const start = new Date(parseInt(start_year), parseInt(start_month) - 1);
+          const end = new Date(parseInt(end_year), parseInt(value) - 1);
+          return end >= start;
+        }),
       end_year: Yup.string()
         .when([], {
           is: () => role === 'unit',
-          then: (schema) => schema.required('End year is required'),
-          otherwise: (schema) => schema,
+          then: schema => schema.required('End year is required'),
         })
-        .test('date-range', 'End date cannot be before start date', function(value) {
-        const { start_month, start_year, end_month } = this.parent;
-        
-        if (!value || !start_month || !start_year || !end_month) {
-          return true; // Allow empty fields
-        }
-        
-        const startDate = new Date(parseInt(start_year), parseInt(start_month) - 1);
-        const endDate = new Date(parseInt(value), parseInt(end_month) - 1);
-        
-        return endDate >= startDate;
-      })
+        .test('date-range', 'End date cannot be before start date', function (value) {
+          const { start_month, start_year, end_month } = this.parent;
+          if (!value || !start_month || !start_year || !end_month) return true;
+          const start = new Date(parseInt(start_year), parseInt(start_month) - 1);
+          const end = new Date(parseInt(value), parseInt(end_month) - 1);
+          return end >= start;
+        }),
     }),
-    onSubmit: async (values: any, { resetForm }) => {
+    onSubmit: async (values) => {
+      if (!isDeclarationChecked) {
+        toast.error('Please agree to the declaration before submitting.');
+        return;
+      }
+
+      const payload: any = {};
+      const fieldMap: Record<keyof FormValues, string> = {
+        unit: 'name',
+        brigade: 'bde',
+        division: 'div',
+        corps: 'corps',
+        command: 'comd',
+        adm_channel: 'adm_channel',
+        tech_channel: 'tech_channel',
+        unit_type: 'unit_type',
+        matrix_unit: 'matrix_unit',
+        location: 'location',
+        start_month: 'start_month',
+        start_year: 'start_year',
+        end_month: 'end_month',
+        end_year: 'end_year',
+      };
+
+      visibleFields.forEach(f => {
+        payload[fieldMap[f]] = values[f] ?? null;
+      });
+
+      const matrixUnit = Array.isArray(values.matrix_unit)
+        ? values.matrix_unit.join(',')
+        : values.matrix_unit ?? '';
+      payload.matrix_unit = matrixUnit;
+
+      payload.awards = awards;
+
+      if (role === 'unit') {
+        payload.start_month = values.start_month;
+        payload.start_year = values.start_year;
+        payload.end_month = values.end_month;
+        payload.end_year = values.end_year;
+      }
+
       try {
-        if (!isDeclarationChecked) {
-          toast.error("Please agree to the declaration before submitting.");
-          return;
-        }
-        const role = profile?.user?.user_role ?? "";
-        const visibleFields = getVisibleFields(role);
-
-        const fieldMap: Record<string, string> = {
-          unit: "name",
-          brigade: "bde",
-          division: "div",
-          corps: "corps",
-          command: "comd",
-        };
-
-        const payload: any = {};
-        let matrixUnit = "";
-        Object.entries(fieldMap).forEach(([formField, backendField]) => {
-          if (visibleFields.includes(formField)) {
-            payload[backendField] = values[formField];
-          } else {
-            payload[backendField] = null;
-          }
-        });
-
-        if (Array.isArray(values.matrix_unit)) {
-          matrixUnit = values.matrix_unit.join(",");
-        } else if (typeof values.matrix_unit === "string" && values.matrix_unit.length > 0) {
-          matrixUnit = values.matrix_unit;
-        }
-
-        payload["adm_channel"] = values.adm_channel;
-        payload["tech_channel"] = values.tech_channel;
-        payload["unit_type"] = values.unit_type;
-        payload["matrix_unit"] = matrixUnit;
-        payload["location"] = values.location;
-        payload["awards"] = awards;
-        
-
-        if (role === "unit") {
-          payload["start_month"] = values.start_month;
-          payload["start_year"] = values.start_year;
-          payload["end_month"] = values.end_month;
-          payload["end_year"] = values.end_year;
-        }
-
         const resultAction = await dispatch(reqToUpdateUnitProfile(payload));
         const result = unwrapResult(resultAction);
-
         if (result.success) {
-          resetForm();
           await dispatch(getProfile());
-          if ((role || "").toLowerCase() === "unit") {
-            navigate("/");
-          }
+          if (role === 'unit') navigate('/');
         }
       } catch (err) {
+        toast.error('Failed to update profile.');
       }
     },
   });
 
-  const memberFormik: any = useFormik({
+  const memberFormik = useFormik({
     initialValues: {
-      memberUsername: "",
-      memberPassword: ""
+      memberUsername: '',
+      memberPassword: '',
     },
     enableReinitialize: true,
     validationSchema: Yup.object({
       memberUsername: Yup.string()
-        .min(3, "Username must be at least 3 characters")
-        .required("Username is required"),
+        .min(3, 'Username must be at least 3 characters')
+        .required('Username is required'),
       memberPassword: Yup.string()
-        .min(6, "Password must be at least 6 characters")
-        .required("Password is required"),
+        .min(6, 'Password must be at least 6 characters')
+        .required('Password is required'),
     }),
-    onSubmit: async (values: any, { resetForm }) => {
-      const resultAction = await dispatch(reqToUpdateUnitProfile(values));
-      const result = unwrapResult(resultAction);
-      if (result.success) {
-        resetForm();
-        await dispatch(getProfile());
+    onSubmit: async (values, { resetForm }) => {
+      try {
+        const resultAction = await dispatch(reqToUpdateUnitProfile(values));
+        const result = unwrapResult(resultAction);
+        if (result.success) {
+          resetForm();
+          await dispatch(getProfile());
+        }
+      } catch (err) {
+        toast.error('Failed to register member.');
       }
-    }
-  })
+    },
+  });
 
-  const handlePresidingChange = (field: keyof Officer, value: string) => {
-    setPresidingOfficer((prev) => ({
-      ...prev,
-      [field]: value,
-    }));
-  };
-
-  // const validateDateRange = (startMonth: string, startYear: string, endMonth: string, endYear: string) => {
-  //   if (!startMonth || !startYear || !endMonth || !endYear) return true;
-    
-  //   const startDate = new Date(parseInt(startYear), parseInt(startMonth) - 1);
-  //   const endDate = new Date(parseInt(endYear), parseInt(endMonth) - 1);
-    
-  //   return startDate <= endDate;
-  // };
-
-  const handleDateFieldChange = (field: string, value: string) => {
-    formik.setFieldValue(field, value);
-    
-
-    setTimeout(() => {
-      formik.validateForm();
-    }, 0);
-  };
+  const handlePresidingChange = useCallback(
+    (field: keyof typeof presidingOfficer, value: string) => {
+      setPresidingOfficer(prev => ({ ...prev, [field]: value }));
+    },
+    [],
+  );
 
   const buildUnitPayload = (
-    members?: UpdateUnitProfileRequest["members"]
+    members?: UpdateUnitProfileRequest['members'],
   ): UpdateUnitProfileRequest => ({
-    name: profile?.unit?.name ?? "",
+    name: profile?.unit?.name ?? '',
     adm_channel: profile?.unit?.adm_channel ?? null,
     tech_channel: profile?.unit?.tech_channel ?? null,
     bde: profile?.unit?.bde ?? null,
@@ -515,27 +474,14 @@ const ProfileSettings = () => {
     comd: profile?.unit?.comd ?? null,
     unit_type: profile?.unit?.unit_type ?? null,
     matrix_unit:
-      typeof profile?.unit?.matrix_unit === "string"
-        ? profile.unit.matrix_unit.split(",").map((val: any) => val.trim())
+      typeof profile?.unit?.matrix_unit === 'string'
+        ? profile.unit.matrix_unit.split(',').map((v: string) => v.trim())
         : [],
     location: profile?.unit?.location ?? null,
     members,
   });
 
   const isDisabled = !!isMember;
-
-  // Helpers to avoid deep inline nesting in JSX handlers
-  const handleRemoveAward = (index: number) => {
-    setAwards((prev) => prev.filter((_, i) => i !== index));
-  };
-
-  const handleAddAward = () => {
-    setAwards((prev) => [
-      ...prev,
-      { award_type: "GOC-in-C", award_title: "", award_year: "" },
-    ]);
-  };
-
 
   if (firstLoad) return <Loader />;
 
@@ -545,139 +491,88 @@ const ProfileSettings = () => {
         <Breadcrumb title="Profile Settings" />
       </div>
 
-      {/* Profile Settings */}
       <form
         onSubmit={(e) => {
           e.preventDefault();
-          const awardsValid = validateAwards();
-          if (!awardsValid) return;
+          if (!validateAwards()) return;
           formik.handleSubmit();
         }}
-        className="mb-5">
+        className="mb-5"
+      >
         <div className="row">
           {visibleFields.map((field) => {
-            const optionsForField =
-              field === "unit"
-                ? {
-                  unit: unitOptions,
-                  brigade: brigadeOptions,
-                  division: divisionOptions,
-                  corps: corpsOptions,
-                  command: commandOptions,
-                }[profile?.user?.user_role ?? "unit"] ?? []
-                : optionsMap[field] ?? [];
+            const options = field === 'unit' ? unitOptions : optionsMap[field] ?? [];
 
-            const getDynamicLabel = (
-              userRole: string,
-              field: string
-            ): string => {
-              const roleMap: Record<string, string> = {
-                unit: "Unit",
-                brigade: "Brigade",
-                division: "Division",
-                corps: "Corps",
-                command: "Command",
-              };
-
-              if (field === "unit") {
-                const roleLabel = roleMap[userRole] || "Unit";
-                return `${roleLabel} Name`;
-              }
-
-              if (field === "unit_type") {
-                return "Arm / Service";
-              }
-
-              if (field === "matrix_unit") {
-                return "Role / Deployment";
-              }
-
+            const getLabel = () => {
+              if (field === 'unit') return `${role.charAt(0).toUpperCase() + role.slice(1)} Name`;
+              if (field === 'unit_type') return 'Arm / Service';
+              if (field === 'matrix_unit') return 'Role / Deployment';
               return field
-                .split("_")
-                .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
-                .join(" ");
+                .split('_')
+                .map(w => w.charAt(0).toUpperCase() + w.slice(1))
+                .join(' ');
             };
 
-            if (!optionsForField.length) {
-              return (
-                <div className="col-sm-6 mb-3" key={field}>
-                  <label htmlFor={field} className="form-label mb-1">
-                    {getDynamicLabel(profile?.user?.user_role ?? "", field)}
-                  </label>
-                  <input
-                    id={field}
-                    name={field}
-                    type="text"
-                    className={`form-control ${formik.touched[field] && formik.errors[field]
-                      ? "is-invalid"
-                      : ""
-                      }`}
-                    value={formik.values[field]}
-                    onChange={formik.handleChange}
-                    onBlur={formik.handleBlur}
-                    placeholder={`Enter ${getDynamicLabel(
-                      profile?.user?.user_role ?? "",
-                      field
-                    )}`}
-                    disabled={isDisabled}
-                  />
-                  {formik.touched[field] && formik.errors[field] && (
-                    <p className="error-text">
-                      {formik.errors[field]}
-                    </p>
-                  )}
-                </div>
-              );
-            }
-
-            return (
+            return options.length > 0 ? (
               <div className="col-sm-6 mb-3" key={field}>
                 <FormSelect
-                  isMulti={field === "matrix_unit"}
-                  label={getDynamicLabel(profile?.user?.user_role ?? "", field)}
+                  isMulti={field === 'matrix_unit'}
+                  label={getLabel()}
                   name={field}
-                  options={optionsForField}
+                  options={options}
                   value={
-                    field === "matrix_unit"
-                      ? optionsForField.filter((opt: any) =>
-                        formik.values[field]?.includes(opt.value)
-                      )
-                      : optionsForField.find(
-                        (opt: any) => opt.value === formik.values[field]
-                      ) ?? null
+                    field === 'matrix_unit'
+                      ? Array.isArray(formik.values[field])
+                        ? options.filter(o =>
+                            (formik.values[field] as string[]).includes(o.value),
+                          )
+                        : []
+                      : options.find(o => o.value === formik.values[field]) ?? null
                   }
-                  onChange={(selectedOption: any) => {
-                    const selectedValue =
-                      field === "matrix_unit"
-                        ? selectedOption.map((opt: any) => opt.value)
-                        : selectedOption?.value ?? "";
+                  onChange={(selected: OptionType | OptionType[] | null) => {
+                    const val =
+                      field === 'matrix_unit'
+                        ? Array.isArray(selected)
+                          ? selected.map(o => o.value)
+                          : []
+                        : (selected as OptionType)?.value ?? '';
 
-                    if (
-                      field === "command" &&
-                      selectedValue &&
-                      hierarchyMap[selectedValue]
-                    ) {
-                      const [corps, division, brigade] =
-                        hierarchyMap[selectedValue];
-                      formik.setFieldValue("corps", corps);
-                      formik.setFieldValue("division", division);
-                      formik.setFieldValue("brigade", brigade);
+                    if (field === 'command' && typeof val === 'string' && hierarchyMap[val]) {
+                      const [c, d, b] = hierarchyMap[val];
+                      formik.setFieldValue('corps', c);
+                      formik.setFieldValue('division', d);
+                      formik.setFieldValue('brigade', b);
                     }
-
-                    formik.setFieldValue(field, selectedValue);
+                    formik.setFieldValue(field, val);
                   }}
-                  placeholder={getPlaceholder(
-                    profile?.user?.user_role ?? "",
-                    field
-                  )}
-                  errors={formik.errors[field]}
-                  touched={formik.touched[field]}
+                  placeholder={getPlaceholder(role, field)}
+                  errors={formik.errors[field] as string | undefined}
+                  touched={formik.touched[field] as boolean | undefined}
                   isDisabled={isDisabled}
                 />
               </div>
+            ) : (
+              <div className="col-sm-6 mb-3" key={field}>
+                <label className="form-label mb-1">{getLabel()}</label>
+                <input
+                  type="text"
+                  className={`form-control ${
+                    formik.touched[field] && formik.errors[field] ? 'is-invalid' : ''
+                  }`}
+                  value={formik.values[field]}
+                  onChange={formik.handleChange}
+                  onBlur={formik.handleBlur}
+                  placeholder={`Enter ${getLabel()}`}
+                  disabled={isDisabled}
+                />
+                {formik.touched[field] && formik.errors[field] && (
+                  <p className="error-text">{formik.errors[field] as string}</p>
+                )}
+              </div>
             );
           })}
-          {role=='unit' && (
+
+          {role === 'unit' && (
             <div className="col-12 mb-3">
               <div className="mb-2">
                 <label className="form-label fw-semibold">Period Covered</label>
@@ -688,38 +583,38 @@ const ProfileSettings = () => {
                     label="Start Month"
                     name="start_month"
                     options={[
-                      { value: "01", label: "January" },
-                      { value: "02", label: "February" },
-                      { value: "03", label: "March" },
-                      { value: "04", label: "April" },
-                      { value: "05", label: "May" },
-                      { value: "06", label: "June" },
-                      { value: "07", label: "July" },
-                      { value: "08", label: "August" },
-                      { value: "09", label: "September" },
-                      { value: "10", label: "October" },
-                      { value: "11", label: "November" },
-                      { value: "12", label: "December" },
+                      { value: '01', label: 'January' },
+                      { value: '02', label: 'February' },
+                      { value: '03', label: 'March' },
+                      { value: '04', label: 'April' },
+                      { value: '05', label: 'May' },
+                      { value: '06', label: 'June' },
+                      { value: '07', label: 'July' },
+                      { value: '08', label: 'August' },
+                      { value: '09', label: 'September' },
+                      { value: '10', label: 'October' },
+                      { value: '11', label: 'November' },
+                      { value: '12', label: 'December' },
                     ]}
                     value={
                       [
-                        { value: "01", label: "January" },
-                        { value: "02", label: "February" },
-                        { value: "03", label: "March" },
-                        { value: "04", label: "April" },
-                        { value: "05", label: "May" },
-                        { value: "06", label: "June" },
-                        { value: "07", label: "July" },
-                        { value: "08", label: "August" },
-                        { value: "09", label: "September" },
-                        { value: "10", label: "October" },
-                        { value: "11", label: "November" },
-                        { value: "12", label: "December" },
-                      ].find((opt) => opt.value === formik.values.start_month) ?? null
+                        { value: '01', label: 'January' },
+                        { value: '02', label: 'February' },
+                        { value: '03', label: 'March' },
+                        { value: '04', label: 'April' },
+                        { value: '05', label: 'May' },
+                        { value: '06', label: 'June' },
+                        { value: '07', label: 'July' },
+                        { value: '08', label: 'August' },
+                        { value: '09', label: 'September' },
+                        { value: '10', label: 'October' },
+                        { value: '11', label: 'November' },
+                        { value: '12', label: 'December' },
+                      ].find(opt => opt.value === formik.values.start_month) ?? null
                     }
-                    onChange={(selectedOption) => {
-                      handleDateFieldChange("start_month", selectedOption?.value ?? "");
-                    }}
+                    onChange={(opt) =>
+                      formik.setFieldValue('start_month', opt?.value ?? '')
+                    }
                     placeholder="Select Month"
                   />
                   {(formik.submitCount > 0 || formik.touched.start_month) && formik.errors.start_month && (
@@ -742,11 +637,11 @@ const ProfileSettings = () => {
                         { value: String(currentYear - 1), label: String(currentYear - 1) },
                         { value: String(currentYear - 2), label: String(currentYear - 2) },
                         { value: String(currentYear - 3), label: String(currentYear - 3) },
-                      ].find((opt) => opt.value === formik.values.start_year) ?? null
+                      ].find(opt => opt.value === formik.values.start_year) ?? null
                     }
-                    onChange={(selectedOption) => {
-                      handleDateFieldChange("start_year", selectedOption?.value ?? "");
-                    }}
+                    onChange={(opt) =>
+                      formik.setFieldValue('start_year', opt?.value ?? '')
+                    }
                     placeholder="Select Year"
                   />
                   {(formik.submitCount > 0 || formik.touched.start_year) && formik.errors.start_year && (
@@ -761,38 +656,38 @@ const ProfileSettings = () => {
                     label="End Month"
                     name="end_month"
                     options={[
-                      { value: "01", label: "January" },
-                      { value: "02", label: "February" },
-                      { value: "03", label: "March" },
-                      { value: "04", label: "April" },
-                      { value: "05", label: "May" },
-                      { value: "06", label: "June" },
-                      { value: "07", label: "July" },
-                      { value: "08", label: "August" },
-                      { value: "09", label: "September" },
-                      { value: "10", label: "October" },
-                      { value: "11", label: "November" },
-                      { value: "12", label: "December" },
+                      { value: '01', label: 'January' },
+                      { value: '02', label: 'February' },
+                      { value: '03', label: 'March' },
+                      { value: '04', label: 'April' },
+                      { value: '05', label: 'May' },
+                      { value: '06', label: 'June' },
+                      { value: '07', label: 'July' },
+                      { value: '08', label: 'August' },
+                      { value: '09', label: 'September' },
+                      { value: '10', label: 'October' },
+                      { value: '11', label: 'November' },
+                      { value: '12', label: 'December' },
                     ]}
                     value={
                       [
-                        { value: "01", label: "January" },
-                        { value: "02", label: "February" },
-                        { value: "03", label: "March" },
-                        { value: "04", label: "April" },
-                        { value: "05", label: "May" },
-                        { value: "06", label: "June" },
-                        { value: "07", label: "July" },
-                        { value: "08", label: "August" },
-                        { value: "09", label: "September" },
-                        { value: "10", label: "October" },
-                        { value: "11", label: "November" },
-                        { value: "12", label: "December" },
-                      ].find((opt) => opt.value === formik.values.end_month) ?? null
+                        { value: '01', label: 'January' },
+                        { value: '02', label: 'February' },
+                        { value: '03', label: 'March' },
+                        { value: '04', label: 'April' },
+                        { value: '05', label: 'May' },
+                        { value: '06', label: 'June' },
+                        { value: '07', label: 'July' },
+                        { value: '08', label: 'August' },
+                        { value: '09', label: 'September' },
+                        { value: '10', label: 'October' },
+                        { value: '11', label: 'November' },
+                        { value: '12', label: 'December' },
+                      ].find(opt => opt.value === formik.values.end_month) ?? null
                     }
-                    onChange={(selectedOption) => {
-                      handleDateFieldChange("end_month", selectedOption?.value ?? "");
-                    }}
+                    onChange={(opt) =>
+                      formik.setFieldValue('end_month', opt?.value ?? '')
+                    }
                     placeholder="Select Month"
                   />
                   {(formik.submitCount > 0 || formik.touched.end_month) && formik.errors.end_month && (
@@ -815,11 +710,11 @@ const ProfileSettings = () => {
                         { value: String(currentYear - 1), label: String(currentYear - 1) },
                         { value: String(currentYear - 2), label: String(currentYear - 2) },
                         { value: String(currentYear - 3), label: String(currentYear - 3) },
-                      ].find((opt) => opt.value === formik.values.end_year) ?? null
+                      ].find(opt => opt.value === formik.values.end_year) ?? null
                     }
-                    onChange={(selectedOption) => {
-                      handleDateFieldChange("end_year", selectedOption?.value ?? "");
-                    }}
+                    onChange={(opt) =>
+                      formik.setFieldValue('end_year', opt?.value ?? '')
+                    }
                     placeholder="Select Year"
                   />
                   {(formik.submitCount > 0 || formik.touched.end_year) && formik.errors.end_year && (
@@ -829,26 +724,24 @@ const ProfileSettings = () => {
               </div>
             </div>
           )}
-          {role === "unit" && (
+
+          {role === 'unit' && (
             <div className="col-12 mb-3">
               <span className="form-label fw-6">Awards Received</span>
               <table className="table table-bordered">
-                <tbody style={{ backgroundColor: "#007bff" }}>
+                <tbody style={{ backgroundColor: '#007bff' }}>
                   {awards.map((award, idx) => (
-                    <tr key={award.award_id ?? idx} >
-                      <td style={{ color: "white" }}>
+                    <tr key={award.award_id ?? idx}>
+                      <td style={{ color: 'white' }}>
                         <select
-                          className={`form-select ${errors[idx]?.award_type ? "invalid" : ""}`}
+                          className={`form-select ${awardErrors[idx]?.award_type ? 'is-invalid' : ''}`}
                           value={award.award_type}
                           onChange={(e) => {
-                            const updated = [...awards];
-                            updated[idx].award_type = e.target.value as
-                              | "GOC-in-C"
-                              | "COAS"
-                              | "CDS"
-                              | "VCOAS"
-                              | "CINCAN";
-                            setAwards(updated);
+                            setAwards(prev => {
+                              const copy = [...prev];
+                              copy[idx].award_type = e.target.value as any;
+                              return copy;
+                            });
                           }}
                         >
                           <option value="CDS">CDS</option>
@@ -857,52 +750,54 @@ const ProfileSettings = () => {
                           <option value="VCOAS">VCOAS</option>
                           <option value="CINCAN">CINCAN</option>
                         </select>
-                        {errors[idx]?.award_type && (
-                          <p className="error-text">{errors[idx].award_type}</p>
+                        {awardErrors[idx]?.award_type && (
+                          <p className="error-text">{awardErrors[idx].award_type}</p>
                         )}
                       </td>
-                      <td style={{ color: "white" }}>
+                      <td style={{ color: 'white' }}>
                         <select
-                          className={`form-select ${errors[idx]?.award_title ? "invalid" : ""}`}
+                          className={`form-select ${awardErrors[idx]?.award_title ? 'is-invalid' : ''}`}
                           value={award.award_title}
                           onChange={(e) => {
-                            const updated = [...awards];
-                            updated[idx].award_title = e.target.value as
-                              | "citation"
-                              | "appreciation";
-                            setAwards(updated);
+                            setAwards(prev => {
+                              const copy = [...prev];
+                              copy[idx].award_title = e.target.value;
+                              return copy;
+                            });
                           }}
                         >
                           <option value="">Select Award Title</option>
                           <option value="citation">Citation</option>
                           <option value="appreciation">Appreciation</option>
                         </select>
-                        {errors[idx]?.award_title && (
-                          <p className="error-text">{errors[idx].award_title}</p>
+                        {awardErrors[idx]?.award_title && (
+                          <p className="error-text">{awardErrors[idx].award_title}</p>
                         )}
                       </td>
-                      <td style={{ color: "white" }}>
+                      <td style={{ color: 'white' }}>
                         <select
-                          className={`form-select ${errors[idx]?.award_year ? "invalid" : ""}`}
+                          className={`form-select ${awardErrors[idx]?.award_year ? 'is-invalid' : ''}`}
                           value={award.award_year}
                           onChange={(e) => {
-                            const updated = [...awards];
-                            updated[idx].award_year = e.target.value;
-                            setAwards(updated);
+                            setAwards(prev => {
+                              const copy = [...prev];
+                              copy[idx].award_year = e.target.value;
+                              return copy;
+                            });
                           }}
                         >
                           <option value="">Select Year</option>
-                          {yearOptions.map((year) => (
+                          {yearOptions.map(year => (
                             <option key={year} value={year}>
                               {year}
                             </option>
                           ))}
                         </select>
-                        {errors[idx]?.award_year && (
-                          <p className="error-text">{errors[idx].award_year}</p>
+                        {awardErrors[idx]?.award_year && (
+                          <p className="error-text">{awardErrors[idx].award_year}</p>
                         )}
                       </td>
-                      <td style={{ color: "white" }}>
+                      <td style={{ color: 'white' }}>
                         <button
                           type="button"
                           className="_btn danger btn-sm"
@@ -925,28 +820,27 @@ const ProfileSettings = () => {
               <button
                 type="button"
                 style={{
-                  background: "#9c9c9cff",
-                  color: "#fff",
-                  borderRadius: "20px",
-                  width: "40px",
-                  height: "40px",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  fontSize: "1.3rem",
-                  boxShadow: "0 2px 8px rgba(59,130,246,0.15)",
-                  border: "none",
+                  background: '#9c9c9cff',
+                  color: '#fff',
+                  borderRadius: '20px',
+                  width: '40px',
+                  height: '40px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  fontSize: '1.3rem',
+                  boxShadow: '0 2px 8px rgba(59,130,246,0.15)',
+                  border: 'none',
                   padding: 0,
                 }}
                 onClick={handleAddAward}
               >
-                <span style={{ display: "inline-flex", alignItems: "center", gap: "0.5em" }}>
-                  <FaPlus />
-                </span>
+                <FaPlus />
               </button>
             </div>
           )}
-          {!isMember && !["mo", "ol"].includes(cw2_type) && (
+
+          {!isMember && !['mo', 'ol'].includes(cw2_type) && (
             <div className="col-12 mt-3">
               <div className="form-check">
                 <input
@@ -954,118 +848,216 @@ const ProfileSettings = () => {
                   className="form-check-input"
                   id="declarationCheckbox"
                   checked={isDeclarationChecked}
-                  onChange={handleCheckboxChange}
+                  onChange={(e) => setIsDeclarationChecked(e.target.checked)}
                 />
                 <label className="form-check-label" htmlFor="declarationCheckbox">
-                  I agree and declare that the information of Hierarchy/Channel of reporting filled by me is accurate and up-to-date.
+                  I agree and declare that the information of Hierarchy/Channel of
+                  reporting filled by me is accurate and up-to-date.
                 </label>
               </div>
             </div>
           )}
-          {!isDisabled && role !== "cw2" && (
+
+          {!isDisabled && role !== 'cw2' && (
             <div className="col-12 mt-2">
-              <div className="d-flex align-items-center">
-                <button
-                  type="submit"
-                  className="_btn _btn-lg primary"
-                  disabled={formik.isSubmitting}
-                >
-                  {formik.isSubmitting ? (
-                    <>
-                      <span className="spinner-border spinner-border-sm me-2" aria-hidden="true"></span>
-                      {' '}Submitting...
-                    </>
-                  ) : (
-                    "Submit"
-                  )}
-                </button>
-              </div>
+              <button
+                type="submit"
+                className="_btn _btn-lg primary"
+                disabled={formik.isSubmitting}
+              >
+                {formik.isSubmitting ? (
+                  <>
+                    <span className="spinner-border spinner-border-sm me-2" />
+                    Submitting...
+                  </>
+                ) : (
+                  'Submit'
+                )}
+              </button>
             </div>
           )}
         </div>
       </form>
 
-      {!["unit", "headquarter"].includes(role) && (
+      {/* Presiding Officer & Member Officers (Edit Mode) */}
+      {!['unit', 'headquarter'].includes(role) && !isMember && (
         <>
-          {!isMember && (
-            <>
-              {/* Presiding Officer */}
-              <div className="d-flex flex-sm-row flex-column align-items-sm-center justify-content-between mb-4">
-                <Breadcrumb title="Presiding Officer" />
+          <div className="d-flex flex-sm-row flex-column align-items-sm-center justify-content-between mb-4">
+            <Breadcrumb title="Presiding Officer" />
+          </div>
+
+          <form
+            className="mb-5"
+            onSubmit={async (e) => {
+              e.preventDefault();
+
+              if (
+                !presidingOfficer.icNumber ||
+                !presidingOfficer.rank ||
+                !presidingOfficer.name ||
+                !presidingOfficer.appointment
+              ) {
+                toast.error('Please fill all required fields for Presiding Officer.');
+                return;
+              }
+
+              if (!/^IC-\d{5}[A-Z]$/.test(presidingOfficer.icNumber)) {
+                toast.error('Invalid IC number format. Must be IC-XXXXX[A-Z]');
+                return;
+              }
+
+              const payload = buildUnitPayload([
+                {
+                  ...(presidingOfficer.id ? { id: presidingOfficer.id } : {}),
+                  member_type: 'presiding_officer',
+                  member_order: '',
+                  ic_number: presidingOfficer.icNumber,
+                  rank: presidingOfficer.rank,
+                  name: presidingOfficer.name,
+                  appointment: presidingOfficer.appointment,
+                },
+              ]);
+
+              try {
+                const resultAction = await dispatch(reqToUpdateUnitProfile(payload));
+                const result = unwrapResult(resultAction);
+                if (result.success) {
+                  await dispatch(getProfile());
+                }
+              } catch (error) {
+                toast.error('Failed to update Presiding Officer.');
+              }
+            }}
+          >
+            <div className="row">
+              <div className="col-sm-6 mb-3">
+                <ICNumberInput
+                  label="IC Number"
+                  name="presidingIc"
+                  value={presidingOfficer.icNumber}
+                  onChange={(v) => handlePresidingChange('icNumber', v)}
+                />
               </div>
-              <form
-                className="mb-5"
-                onSubmit={async (e) => {
-                  e.preventDefault();
+              <div className="col-sm-6 mb-3">
+                <FormSelect
+                  label="Rank"
+                  name="presidingRank"
+                  options={rank}
+                  value={rank.find(o => o.value === presidingOfficer.rank) ?? null}
+                  onChange={(opt) => handlePresidingChange('rank', opt?.value ?? '')}
+                  placeholder="Select Rank"
+                />
+              </div>
+              <div className="col-sm-6 mb-3">
+                <FormInput
+                  label="Name"
+                  name="presidingName"
+                  value={presidingOfficer.name}
+                  onChange={(e) => handlePresidingChange('name', e.target.value)}
+                />
+              </div>
+              <div className="col-sm-6 mb-3">
+                <FormInput
+                  label="Appointment"
+                  name="presidingAppointment"
+                  value={presidingOfficer.appointment}
+                  onChange={(e) => handlePresidingChange('appointment', e.target.value)}
+                />
+              </div>
+              <div className="col-12 mt-2">
+                <button type="submit" className="_btn _btn-lg primary">
+                  {presidingOfficer.id ? 'Update' : 'Add'} Presiding Officer
+                </button>
+              </div>
+            </div>
+          </form>
 
-                  if (
-                    !presidingOfficer.icNumber ||
-                    !presidingOfficer.rank ||
-                    !presidingOfficer.name ||
-                    !presidingOfficer.appointment
-                  ) {
-                    toast.error(
-                      "Please fill all required fields (IC Number, Rank, Name, and Appointment) for Presiding Officer."
-                    );
-                    return;
-                  }
+          <form
+            className="mb-5"
+            onSubmit={async (e) => {
+              e.preventDefault();
 
+              if (officers.length === 0) {
+                toast.error('Please add at least one Member Officer.');
+                return;
+              }
 
-                  if (presidingOfficer.icNumber && !/^IC-\d{5}[A-Z]$/.test(presidingOfficer.icNumber)) {
-                    toast.error("Invalid IC number format. Must be in format IC-XXXXX[A-Z] where XXXXX are 5 digits and last character is any alphabet.");
-                    return;
-                  }
+              const missing = officers.some(
+                o =>
+                  !o.icNumber ||
+                  !o.rank ||
+                  !o.name ||
+                  !o.appointment,
+              );
+              if (missing) {
+                toast.error('All Member Officer fields are required.');
+                return;
+              }
 
-                  const presidingPayload = [
-                    {
-                      ...(presidingOfficer.id
-                        ? { id: presidingOfficer.id }
-                        : {}),
-                      member_type: "presiding_officer",
-                      member_order: "",
-                      ic_number: presidingOfficer.icNumber,
-                      rank: presidingOfficer.rank,
-                      name: presidingOfficer.name,
-                      appointment: presidingOfficer.appointment,
+              const invalidIC = officers.some(
+                o => !/^IC-\d{5}[A-Z]$/.test(o.icNumber),
+              );
+              if (invalidIC) {
+                toast.error('Invalid IC number format.');
+                return;
+              }
 
-                    },
-                  ];
+              const payload = buildUnitPayload(
+                officers.map((o, i) => ({
+                  ...(o.id ? { id: o.id } : {}),
+                  member_type: 'member_officer',
+                  member_order: String(i + 1),
+                  ic_number: o.icNumber,
+                  rank: o.rank,
+                  name: o.name,
+                  appointment: o.appointment,
+                })),
+              );
 
-                  try {
-                    const payload = buildUnitPayload(presidingPayload);
-                    const resultAction = await dispatch(
-                      reqToUpdateUnitProfile(payload)
-                    );
-                    const result = unwrapResult(resultAction);
-
-                    if (result.success) {
-                      await dispatch(getProfile());
-                    }
-                  } catch (error) {
-                    toast.error("Failed to add Presiding Officer.");
-                  }
-                }}
-              >
+              try {
+                const resultAction = await dispatch(reqToUpdateUnitProfile(payload));
+                const result = unwrapResult(resultAction);
+                if (result.success) {
+                  await dispatch(getProfile());
+                }
+              } catch (error) {
+                toast.error('Failed to update Member Officers.');
+              }
+            }}
+          >
+            {officers.map((officer, index) => (
+              <div key={officer.officerKey} className="mb-4">
+                <div className="d-flex justify-content-between align-items-center mb-3">
+                  <Breadcrumb title={`Member Officer ${index + 1}`} />
+                  {!officer.id && index > 0 && (
+                    <button
+                      type="button"
+                      className="_btn danger btn-sm"
+                      onClick={() => handleRemoveOfficer(officer.officerKey)}
+                    >
+                      Remove
+                    </button>
+                  )}
+                </div>
                 <div className="row">
                   <div className="col-sm-6 mb-3">
                     <ICNumberInput
                       label="IC Number"
-                      name="icNumber"
-                      placeholder="Enter 5 digits and alphabet (e.g., 87878K)"
-                      value={presidingOfficer.icNumber}
-                      onChange={(value) =>
-                        handlePresidingChange("icNumber", value)
+                      name={`officerIc-${index}`}
+                      value={officer.icNumber}
+                      onChange={(v) =>
+                        handleOfficerChange(officer.officerKey, 'icNumber', v)
                       }
                     />
                   </div>
                   <div className="col-sm-6 mb-3">
                     <FormSelect
                       label="Rank"
-                      name="rank"
+                      name={`officerRank-${index}`}
                       options={rank}
-                      value={rank.find((opt: any) => opt.value === presidingOfficer.rank) ?? null}
-                      onChange={(selected: any) =>
-                        handlePresidingChange("rank", selected?.value ?? "")
+                      value={rank.find(o => o.value === officer.rank) ?? null}
+                      onChange={(opt) =>
+                        handleOfficerChange(officer.officerKey, 'rank', opt?.value ?? '')
                       }
                       placeholder="Select Rank"
                     />
@@ -1073,204 +1065,83 @@ const ProfileSettings = () => {
                   <div className="col-sm-6 mb-3">
                     <FormInput
                       label="Name"
-                      name="name"
-                      placeholder="Enter Name"
-                      value={presidingOfficer.name}
+                      name={`officerName-${index}`}
+                      value={officer.name}
                       onChange={(e) =>
-                        handlePresidingChange("name", e.target.value)
+                        handleOfficerChange(officer.officerKey, 'name', e.target.value)
                       }
                     />
                   </div>
                   <div className="col-sm-6 mb-3">
                     <FormInput
                       label="Appointment"
-                      name="appointment"
-                      placeholder="Enter Appointment"
-                      value={presidingOfficer.appointment}
+                      name={`officerAppointment-${index}`}
+                      value={officer.appointment}
                       onChange={(e) =>
-                        handlePresidingChange("appointment", e.target.value)
+                        handleOfficerChange(officer.officerKey, 'appointment', e.target.value)
                       }
                     />
                   </div>
-                  <div className="col-12 mt-2">
-                    <button type="submit" className="_btn _btn-lg primary">
-                      Add Presiding Officer
-                    </button>
-                  </div>
                 </div>
-              </form>
+              </div>
+            ))}
 
-
-              {/* Officers */}
-              <form
-                className="mb-5"
-                onSubmit={async (e) => {
-                  e.preventDefault();
-
-                  if (officers.length === 0) {
-                    toast.error("Please add at least one Member Officer.");
-                    return;
-                  }
-
-
-                  const invalidOfficers = officers.filter(officer => 
-                    !officer.icNumber || officer.icNumber.trim() === "" ||
-                    !officer.rank || officer.rank.trim() === "" ||
-                    !officer.name || officer.name.trim() === "" ||
-                    !officer.appointment || officer.appointment.trim() === ""
-                  );
-
-                  if (invalidOfficers.length > 0) {
-                    toast.error("All Member Officers must have complete information (IC Number, Rank, Name, and Appointment). Please fill all required fields.");
-                    return;
-                  }
-
-
-                  const invalidICNumbers = officers.filter(officer => 
-                    officer.icNumber && !/^IC-\d{5}[A-Z]$/.test(officer.icNumber)
-                  );
-
-                  if (invalidICNumbers.length > 0) {
-                    toast.error("Invalid IC number format. Must be in format IC-XXXXX[A-Z] where XXXXX are 5 digits and last character is any alphabet.");
-                    return;
-                  }
-
-                  const officersPayload: UpdateUnitProfileRequest["members"] =
-                    officers.map((officer, index) => ({
-                      ...(officer.id ? { id: officer.id } : {}),
-                      member_type: "member_officer",
-                      member_order: String(index + 1),
-                      ic_number: officer.icNumber,
-                      rank: officer.rank,
-                      name: officer.name,
-                      appointment: officer.appointment,
-
-                    }));
-
-                  try {
-                    const payload = buildUnitPayload(officersPayload);
-                    const resultAction = await dispatch(
-                      reqToUpdateUnitProfile(payload)
-                    );
-                    const result = unwrapResult(resultAction);
-
-                    if (result.success) {
-                      await dispatch(getProfile());
-                    }
-                  } catch (error) {
-                    toast.error("Failed to add Member Officers.");
-                  }
-                }}
+            <div className="d-flex gap-2">
+              <button type="submit" className="_btn _btn-lg primary">
+                {officers.some(o => o.id) ? 'Update' : 'Add'} Member Officers
+              </button>
+              <button
+                type="button"
+                className="_btn _btn-lg success"
+                onClick={handleAddOfficer}
               >
-                {officers.map((officer, index) => (
-                  <div key={officer.id ?? `${officer.icNumber}-${index}` } className="mb-4">
-                    <div className="d-flex flex-sm-row flex-column align-items-sm-center justify-content-between mb-3">
-                      <Breadcrumb title={`Member Officer ${index + 1}`} />
-                    </div>
-                    <div className="row">
-                      <div className="col-sm-6 mb-3">
-                        <ICNumberInput
-                          label="IC Number"
-                          name={`icNumber-${index}`}
-                          placeholder="Enter 5 digits and alphabet (e.g., 87878K)"
-                          value={officer.icNumber}
-                          onChange={(value) =>
-                            handleChange(index, "icNumber", value)
-                          }
-                        />
-                      </div>
-                      <div className="col-sm-6 mb-3">
-                        <FormSelect
-                          label="Rank"
-                          name={`rank-${index}`}
-                          options={rank}
-                          value={rank.find((opt: any) => opt.value === officer.rank) ?? null}
-                          onChange={(selected: any) =>
-                            handleChange(index, "rank", selected?.value ?? "")
-                          }
-                          placeholder="Select Rank"
-                        />
-                      </div>
-                      <div className="col-sm-6 mb-3">
-                        <FormInput
-                          label="Name"
-                          name={`name-${index}`}
-                          placeholder="Enter Name"
-                          value={officer.name}
-                          onChange={(e) =>
-                            handleChange(index, "name", e.target.value)
-                          }
-                        />
-                      </div>
-                      <div className="col-sm-6 mb-3">
-                        <FormInput
-                          label="Appointment"
-                          name={`appointment-${index}`}
-                          placeholder="Enter Appointment"
-                          value={officer.appointment}
-                          onChange={(e) =>
-                            handleChange(index, "appointment", e.target.value)
-                          }
-                        />
-                      </div>
-                    </div>
-                  </div>
-                ))}
-
-                <div className="d-flex align-items-center gap-2">
-                  <button type="submit" className="_btn _btn-lg primary">
-                    Add Member Officers
-                  </button>
-                  <button
-                    type="button"
-                    className="_btn _btn-lg success"
-                    onClick={handleAdd}
-                  >
-                    Add
-                  </button>
-                </div>
-              </form>
-
-              {officers.length > 0 && (
-                <div className="my-4">
-                  <div className="d-flex flex-sm-row flex-column align-items-sm-center justify-content-between mb-3">
-                    <Breadcrumb title="Member Officers List" />
-                  </div>
-                  <div className="table-responsive mt-4">
-                    <table className="table-style-1 w-100">
-                      <thead style={{ backgroundColor: "#007bff" }}>
-                        <tr>
-                          <th style={{ color: "white" }}>#</th>
-                          <th style={{ color: "white" }}>Rank</th>
-                          <th style={{ color: "white" }}>Name</th>
-                          <th style={{ color: "white" }}>Appointment</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {officers.map((officer, index) => (
-                          <tr key={officer.id ?? index}>
-                            <td>{index + 1}</td>
-                            <td>{officer.rank}</td>
-                            <td>{officer.name}</td>
-                            <td>{officer.appointment}</td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                </div>
-              )}
-            </>
-          )}
+                Add New
+              </button>
+            </div>
+          </form>
         </>
       )}
 
-      {["brigade", "division", "corps", "command"].includes(role) && (
-        <>
+      {/* READ-ONLY: Member Officers List + Staff Register + Member Username */}
+      {profile?.unit?.members?.length > 0 && !(['brigade','division','corps','command'].includes(role) && isMember) && (
+        <div className="my-4">
+          <div className="d-flex flex-sm-row flex-column align-items-sm-center justify-content-between mb-3">
+            <Breadcrumb title="Member Officers List" />
+          </div>
+          <div className="table-responsive mt-4">
+            <table className="table-style-1 w-100">
+              <thead style={{ backgroundColor: '#007bff' }}>
+                <tr>
+                  <th style={{ color: 'white' }}>#</th>
+                  <th style={{ color: 'white' }}>RANK</th>
+                  <th style={{ color: 'white' }}>NAME</th>
+                  <th style={{ color: 'white' }}>APPOINTMENT</th>
+                </tr>
+              </thead>
+              <tbody>
+                {profile.unit.members
+                  .filter((m: any) => m.member_type !== 'presiding_officer')
+                  .sort((a: any, b: any) => (a.member_order ?? 0) - (b.member_order ?? 0))
+                  .map((m: any, i: number) => (
+                    <tr key={m.id ?? i}>
+                      <td>{i + 1}</td>
+                      <td>{m.rank ?? '-'}</td>
+                      <td>{m.name ?? '-'}</td>
+                      <td>{m.appointment ?? '-'}</td>
+                    </tr>
+                  ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
 
-          {profile?.user?.is_member_added ? (
+      {/* Staff Officer Register + Registered Member Username */}
+      {['brigade', 'division', 'corps', 'command'].includes(role) && (
+        <>
+          {is_member_added ? (
             <>
-              <div className="d-flex flex-sm-row flex-column align-items-sm-center justify-content-between mb-4">
+              <div className="d-flex flex-sm-row flex-column align-items-sm-center justify-content-between ">
                 <Breadcrumb title="Staff Officer Register" />
               </div>
               <div className="mb-5">
@@ -1287,7 +1158,7 @@ const ProfileSettings = () => {
               </div>
             </>
           ) : (
-            !profile?.user?.is_member && (
+            !isMember && (
               <form className="mb-5" onSubmit={memberFormik.handleSubmit}>
                 <div className="row">
                   <div className="col-sm-6 mb-3">

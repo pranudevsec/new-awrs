@@ -169,7 +169,7 @@ const Withdraw = () => {
                 Dead Line
               </th>
               <th style={{ width: 150, minWidth: 150, maxWidth: 150, color: "white" }}>Type</th>
-              <th style={{ width: 100, minWidth: 100, maxWidth: 100, color: "white" }}>
+              <th style={{ width: 120, minWidth: 120, maxWidth: 120, color: "white" }}>
                 Withdraw Actions
               </th>
             </tr>
@@ -210,7 +210,7 @@ const Withdraw = () => {
                   <td style={{ width: 200, minWidth: 200, maxWidth: 200 }}>
                     <p className="fw-4">
                       {(() => {
-                        const deadlineStatus = getDateStatus(unit.fds?.last_date, true, true);
+                        const deadlineStatus = getDateStatus(unit.fds?.last_date, true);
                         return (
                           <span className={deadlineStatus.className}>
                             {deadlineStatus.text}

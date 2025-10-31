@@ -8,6 +8,7 @@ import Loader from "../../components/ui/loader/Loader";
 import Pagination from "../../components/ui/pagination/Pagination";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
+import { baseURL } from "../../reduxToolkit/helper/axios";
 import {
   awardTypeOptions,
   brigadeOptions,
@@ -102,16 +103,12 @@ const History = () => {
 
 const getPublicIP = async (): Promise<string> => {
   try {
-    const r = await fetch("https://api.ipify.org?format=json", { cache: "no-store" });
-    const j = await r.json();
-    if (j?.ip) return j.ip;
+    const r0 = await fetch(`${baseURL}/api/client-ip`, { cache: "no-store" });
+    if (r0.ok) {
+      const j0 = await r0.json();
+      if (j0?.ip) return j0.ip;
+    }
   } catch {}
-  try {
-    const r2 = await fetch("https://ipinfo.io/json", { cache: "no-store" });
-    const j2 = await r2.json();
-    if (j2?.ip) return j2.ip;
-  } catch {}
-
   return window.location?.hostname || "Unknown IP";
 };
 
@@ -313,7 +310,7 @@ const handleExportPDF = async () => {
               value={
                 awardTypeOptions.find((opt) => opt.value === awardType) ?? null
               }
-              placeholder="Select Award Type"
+              placeholder="Select Type"
               onChange={(option) => setAwardType(option?.value ?? null)}
             />
           </div>

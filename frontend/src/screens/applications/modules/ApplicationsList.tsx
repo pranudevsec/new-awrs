@@ -13,6 +13,7 @@ import { SVGICON } from "../../../constants/iconsList";
 import { useAppDispatch, useAppSelector } from "../../../reduxToolkit/hooks";
 import { fetchApplicationsForHQ, fetchApplicationUnits, fetchSubordinates } from "../../../reduxToolkit/services/application/applicationService";
 import { formatCompactDateTime } from "../../../utils/dateUtils";
+import { baseURL } from "../../../reduxToolkit/helper/axios";
 
 const ApplicationsList = () => {
   const navigate = useNavigate();
@@ -215,10 +216,24 @@ const ApplicationsList = () => {
     unit.netMarks?.toFixed(2) ?? getTotalMarks(unit).toFixed(2)
   );
 
-  const handleDownloadPDF = () => {
+  const handleDownloadPDF = async () => {
     const doc = new jsPDF({ orientation: "landscape", unit: "pt", format: "a4" });
 
-    const userIP = window.location.hostname || "localhost";
+    // Resolve local/LAN IP from backend when possible (fallback to public IP, then hostname)
+    const getPublicIP = async (): Promise<string> => {
+      // 1) Try backend endpoint that echoes client IP as seen by server (LAN IP in many dev setups)
+      try {
+        const r0 = await fetch(`${baseURL}/api/client-ip`, { cache: "no-store" });
+        if (r0.ok) {
+          const j0 = await r0.json();
+          if (j0?.ip) return j0.ip;
+        }
+      } catch {}
+
+      return window.location?.hostname || "Unknown IP";
+    };
+
+    const userIP = await getPublicIP();
     const currentDateTime = new Date().toLocaleString();
 
     doc.setFontSize(16);
@@ -369,14 +384,14 @@ const ApplicationsList = () => {
           </th>
           <th style={{ width: 150, minWidth: 150, maxWidth: 150, color: "white" }}>Unit ID</th>
           {role === "headquarter" && (
-            <th style={{ width: 150, minWidth: 150, maxWidth: 150, color: "white" }}>Command</th>
+            <th style={{ width: 220, minWidth: 200, maxWidth: 260, color: "white" }}>Command</th>
           )}
           <th style={{ width: 200, minWidth: 200, maxWidth: 200, color: "white" }}>
             Submission Date
           </th>
           <th style={{ width: 150, minWidth: 150, maxWidth: 150, color: "white" }}>Type</th>
           <th style={{ width: 150, minWidth: 150, maxWidth: 150, color: "white" }}>Total Marks</th>
-          <th style={{ width: 150, minWidth: 150, maxWidth: 150, color: "white" }}>Command</th>
+          <th style={{ width: 220, minWidth: 200, maxWidth: 260, color: "white" }}>Command</th>
           {role !== "unit" && <th style={{ width: 150, minWidth: 150, maxWidth: 150, color: "white" }}>Arm / Service</th>}
           {role !== "unit" && <th style={{ width: 150, minWidth: 150, maxWidth: 150, color: "white" }}>Role / Deployment</th>}
           <th style={{ width: 150, minWidth: 150, maxWidth: 150, color: "white" , textAlign: "center" }}>Location</th>
@@ -438,7 +453,7 @@ const ApplicationsList = () => {
           </td>
 
           {role === "headquarter" && (
-            <td style={{ width: 150 }}>
+            <td style={{ width: 220 }}>
               <p className="fw-4">{unit?.fds?.command}</p>
             </td>
           )}
@@ -458,7 +473,7 @@ const ApplicationsList = () => {
               {getNetMarksValue(unit)}
             </p>
           </td>
-          <td style={{ width: 150 }}>
+          <td style={{ width: 220 }}>
             <p className="fw-4">{unit.fds.command ?? "-"}</p>
           </td>
           {role !== "unit" && (

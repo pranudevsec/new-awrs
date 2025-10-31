@@ -112,7 +112,7 @@ const RejectedApplicationsList = () => {
             value={awardType || "All"}
             onChange={(value) => setAwardType(value === "All" ? null : value)}
             options={[{ label: "All", value: "All" }, ...awardTypeOptions]}
-            placeholder="Select Award Type"
+            placeholder="Select Type"
           />
         </div>
 

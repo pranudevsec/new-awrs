@@ -162,7 +162,7 @@ const Dashboard = () => {
             onChange={(selectedOption) =>
               setAwardTypeFilter(selectedOption?.value ?? "All")
             }
-            placeholder="Select Award Type"
+            placeholder="Select Type"
           />
         </div>
       </div>

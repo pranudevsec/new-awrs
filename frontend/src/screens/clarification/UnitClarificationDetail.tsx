@@ -40,7 +40,7 @@ const UnitClarificationDetail = () => {
   }, [award_type, numericAppId, isRefreshData]);
 
   const getParamDisplay = (param: any) => {
-    if (param.name != "no") {
+  if (param.name !== "no") {
       return {
         main: param.name,
         header: param.category ?? null,
@@ -95,7 +95,7 @@ const UnitClarificationDetail = () => {
 
     const styles = {
       header: {
-        colSpan: 6,
+        colSpan: 7,
         style: {
           fontWeight: 600,
           color: "#555",
@@ -104,7 +104,7 @@ const UnitClarificationDetail = () => {
         },
       },
       subheader: {
-        colSpan: 6,
+        colSpan: 7,
         style: {
           color: "#1976d2",
           fontSize: 13,
@@ -112,7 +112,7 @@ const UnitClarificationDetail = () => {
         },
       },
       subsubheader: {
-        colSpan: 6,
+        colSpan: 7,
         style: {
           color: "#666",
           fontSize: 12,
@@ -175,7 +175,7 @@ const UnitClarificationDetail = () => {
           if (!comment) return <span>—</span>;
           return (
             <div>
-              <div
+              {/* <div
                 className="fw-4"
                 style={{
                   wordWrap: "break-word",
@@ -191,7 +191,7 @@ const UnitClarificationDetail = () => {
                 }}
               >
                 {comment}
-              </div>
+              </div> */}
               <div className="mt-2">
                 <button
                   type="button"
@@ -219,7 +219,7 @@ const UnitClarificationDetail = () => {
       <td style={{ width: 200 }}>
   {param?.clarification_details?.clarification ? (
     <div>
-      <div
+      {/* <div
         style={{ 
           maxHeight: "60px",
           overflow: "hidden",
@@ -232,7 +232,7 @@ const UnitClarificationDetail = () => {
         }}
       >
         {param.clarification_details.clarification}
-      </div>
+      </div> */}
       <div className="mt-2">
         <button
           type="button"

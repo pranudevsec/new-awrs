@@ -218,9 +218,77 @@ exports.getCitationById = async (id) => {
       "SELECT * FROM Citation_tab WHERE citation_id = $1",
       [id]
     );
-    return result.rows[0]
-      ? ResponseHelper.success(200, "Citation found", result.rows[0])
-      : ResponseHelper.error(404, "Citation not found");
+    if (!result.rows[0]) {
+      return ResponseHelper.error(404, "Citation not found");
+    }
+
+    const row = result.rows[0];
+
+    // If normalized (fds stored in separate tables), enrich payload to match frontend expectation
+    if (row.fds_id) {
+      const fdsRes = await client.query(
+        `SELECT f.*, 
+                c.command_name as command,
+                d.division_name as division,
+                b.brigade_name as brigade,
+                cr.corps_name as corps,
+                a.arms_service_name as arms_service
+         FROM fds f
+         LEFT JOIN command_master c ON c.command_id = f.command_id
+         LEFT JOIN division_master d ON d.division_id = f.division_id
+         LEFT JOIN brigade_master b ON b.brigade_id = f.brigade_id
+         LEFT JOIN corps_master cr ON cr.corps_id = f.corps_id
+         LEFT JOIN arms_service_master a ON a.arms_service_id = f.arms_service_id
+         WHERE f.fds_id = $1`,
+        [row.fds_id]
+      );
+
+      const fds = fdsRes.rows[0] || {};
+
+      const paramRes = await client.query(
+        `SELECT fp.param_id as id, pm.name, fp.count, fp.marks, fp.upload, pm.category, pm.subcategory, pm.subsubcategory
+         FROM fds_parameters fp
+         JOIN parameter_master pm ON pm.param_id = fp.param_id
+         WHERE fp.fds_id = $1
+         ORDER BY fp.param_id`,
+        [row.fds_id]
+      );
+
+      const parameters = paramRes.rows.map((p) => ({
+        id: p.id,
+        name: p.name,
+        count: Number(p.count) || 0,
+        marks: Number(p.marks) || 0,
+        upload: Array.isArray(p.upload) ? p.upload : (p.upload ? JSON.parse(p.upload) : []),
+        category: p.category,
+        subcategory: p.subcategory,
+        subsubcategory: p.subsubcategory,
+      }));
+
+      const citation_fds = {
+        award_type: fds.award_type || "citation",
+        cycle_period: fds.cycle_period || "",
+        last_date: fds.last_date,
+        location: fds.location,
+        matrix_unit: fds.matrix_unit,
+        unitRemarks: fds.unit_remarks,
+        command: fds.command,
+        division: fds.division,
+        brigade: fds.brigade,
+        corps: fds.corps,
+        arms_service: fds.arms_service,
+        awards: [],
+        parameters,
+      };
+
+      return ResponseHelper.success(200, "Citation found", {
+        ...row,
+        citation_fds,
+      });
+    }
+
+    // Else legacy inline JSON column (citation_fds) already present
+    return ResponseHelper.success(200, "Citation found", row);
   } finally {
     client.release();
   }

@@ -11,6 +11,7 @@ import { SVGICON } from "../../../constants/iconsList";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import { FaDownload } from "react-icons/fa";
+import { baseURL } from "../../../reduxToolkit/helper/axios";
 import { useAppDispatch, useAppSelector } from "../../../reduxToolkit/hooks";
 import {
   approveApplications,
@@ -378,18 +379,16 @@ const AcceptedApplicationsList = () => {
     second: '2-digit'
   });
 
-  // Get IP address - try external services first, fallback to hostname
+  // Get IP address - prefer backend LAN endpoint, then public, then hostname
   const getPublicIP = async (): Promise<string> => {
     try {
-      const r = await fetch("https://api.ipify.org?format=json", { cache: "no-store" });
-      const j = await r.json();
-      if (j?.ip) return j.ip;
+      const r0 = await fetch(`${baseURL}/api/client-ip`, { cache: "no-store" });
+      if (r0.ok) {
+        const j0 = await r0.json();
+        if (j0?.ip) return j0.ip;
+      }
     } catch {}
-    try {
-      const r2 = await fetch("https://ipinfo.io/json", { cache: "no-store" });
-      const j2 = await r2.json();
-      if (j2?.ip) return j2.ip;
-    } catch {}
+    
 
     return window.location?.hostname || "Unknown IP";
   };
@@ -503,7 +502,7 @@ const AcceptedApplicationsList = () => {
 
 
   return (
-    <div className="clarification-section" style={{ maxWidth: "80vw" }}>
+    <div className="clarification-section" style={{ maxWidth: "100vw" }}>
       <div className="d-flex flex-sm-row flex-column align-items-sm-center justify-content-between mb-4">
         <Breadcrumb
           title="Recommended Applications"
@@ -901,7 +900,7 @@ const AcceptedApplicationsList = () => {
                           className="_btn success"
                           onClick={async () => {
                             const priorityExists = unit?.fds?.applicationPriority?.some(
-                              (p: any) => p.role === role && p.priority != null
+                              (p: any) => p.role === role && p.priority !== null
                             );
 
                             if (!priorityExists) {
@@ -911,7 +910,7 @@ const AcceptedApplicationsList = () => {
 
                             try {
                               const graceMarksExist = unit?.fds?.applicationGraceMarks?.some(
-                                (m: any) => m.role === role && m.marks != null
+                                (m: any) => m.role === role && m.marks !== null
                               );
 
                               if (!graceMarksExist) {

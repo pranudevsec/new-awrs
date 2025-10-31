@@ -128,7 +128,7 @@ const ApprovedApplicationsList = () => {
             value={awardType || "All"}
             onChange={(value: any) => setAwardType(value.value)}
             options={[ ...awardTypeOptions]}
-            placeholder="Select Award Type"
+            placeholder="Select Type"
           />
         </div>
 

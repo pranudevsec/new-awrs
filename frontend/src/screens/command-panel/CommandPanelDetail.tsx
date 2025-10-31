@@ -59,7 +59,7 @@ const CommandPanelDetail = () => {
   }, [unitDetail]);
 
   const getParamDisplay = (param: any) => {
-    if (param.name != "no") {
+    if (param.name !== "no") {
       return {
         main: param.name,
         header: param.category ?? null,

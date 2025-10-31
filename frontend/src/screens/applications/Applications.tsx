@@ -235,7 +235,7 @@ const Applications = () => {
                 }}
               >
                 <h6 className="fw-bold mb-3 text-primary text-center">
-                  {isSpecialUnit == false
+                  {isSpecialUnit === false
                     ? "Requirements for Citation & Appreciation"
                     : "Requirements for Appreciation"}
                 </h6>

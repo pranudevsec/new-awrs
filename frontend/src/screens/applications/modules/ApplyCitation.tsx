@@ -442,7 +442,7 @@ const ApplyCitation = () => {
               negative: param.negative,
             };
           })
-          .filter((param) => param.count > 0 || param.marks != 0);
+          .filter((param) => param.count > 0 || param.marks !== 0);
 
         const payload = {
           date_init: new Date().toISOString().split("T")[0],

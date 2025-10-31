@@ -107,6 +107,7 @@ const UploadedFileList = ({
 const ApplyAppreciation = () => {
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
+  const { profile } = useAppSelector((state) => state.admin);
 
   const initializedRef = useRef(false);
   const isDraftRef = useRef(false);
@@ -453,8 +454,12 @@ const ApplyAppreciation = () => {
             cycle_period: values.cyclePeriod,
             last_date: values.lastDate,
             command: values.command,
+            arms_service: profile?.unit?.unit_type ?? "",
+            matrix_unit: profile?.unit?.matrix_unit ?? "",
+            location: profile?.unit?.location ?? "",
             parameters: formattedParameters,
             unitRemarks: unitRemarks,
+            awards: profile?.unit?.awards,
           },
           isDraft: isDraftRef.current,
         };
@@ -608,7 +613,7 @@ const ApplyAppreciation = () => {
   };
 
   const getParamDisplay = (param: any) => {
-    if (param.name != "no") {
+    if (param.name !== "no") {
       return {
         main: param.name,
         header: param.subcategory ?? null,

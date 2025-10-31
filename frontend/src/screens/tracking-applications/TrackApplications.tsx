@@ -13,6 +13,7 @@ import { fetchAllApplications } from "../../reduxToolkit/services/application/ap
 import { formatCompactDateTime, getDateStatus } from "../../utils/dateUtils";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
+import { baseURL } from "../../reduxToolkit/helper/axios";
 
 
 const TrackApplications = () => {
@@ -72,8 +73,22 @@ const TrackApplications = () => {
     fetchData();
   }, [awardType, commandType, corpsType, divisionType, brigadeType, debouncedSearch, profile, page, limit]);
 
-  const handleExportPDF = () => {
+  const handleExportPDF = async () => {
     const doc = new jsPDF({ orientation: "landscape", unit: "pt", format: "a4" });
+
+    // Resolve client IP (prefer backend LAN endpoint)
+    const getPublicIP = async (): Promise<string> => {
+      try {
+        const r0 = await fetch(`${baseURL}/api/client-ip`, { cache: "no-store" });
+        if (r0.ok) {
+          const j0 = await r0.json();
+          if (j0?.ip) return j0.ip;
+        }
+      } catch {}
+      return window.location?.hostname || "Unknown IP";
+    };
+    const userIP = await getPublicIP();
+    const currentDateTime = new Date().toLocaleString();
 
 
     const headers = [
@@ -143,6 +158,15 @@ const TrackApplications = () => {
         8: { cellWidth: 60, halign: "right" }, // Total Marks column
       },
     });
+    // Watermark
+    const pageWidth = (doc as any).internal.pageSize.getWidth();
+    const pageHeight = (doc as any).internal.pageSize.getHeight();
+    const centerX = pageWidth / 2;
+    const centerY = pageHeight / 2;
+    doc.setFontSize(42);
+    doc.setTextColor(150);
+    doc.text(userIP, centerX, centerY - 20, { angle: 45, align: "center" } as any);
+    doc.text(currentDateTime, centerX, centerY + 20, { angle: 45, align: "center" } as any);
 
     doc.save("applications.pdf");
   };
@@ -311,7 +335,7 @@ const TrackApplications = () => {
               name="awardType"
               options={awardTypeOptions}
               value={awardTypeOptions.find((opt) => opt.value === awardType) ?? null}
-              placeholder="Select Award Type"
+              placeholder="Select Type"
               onChange={(option) => setAwardType(option?.value ?? null)}
             />
           </div>
@@ -358,30 +382,30 @@ const TrackApplications = () => {
 
       <div className="table-responsive">
         <table className="table-style-2 w-100">
-          <thead>
+        <thead style={{ backgroundColor: "#007bff" }}>
             <tr>
-              <th style={{ width: 150, minWidth: 150, maxWidth: 150 }}>
+              <th style={{ width: 150, minWidth: 150, maxWidth: 150, color: "white" }}>
                 Application Id
               </th>
-              <th style={{ width: 150, minWidth: 150, maxWidth: 150 }}>
+              <th style={{ width: 150, minWidth: 150, maxWidth: 150, color: "white" }}>
                 Unit ID
               </th>
               {role === "headquarter" && (
-                <th style={{ width: 150, minWidth: 150, maxWidth: 150 }}>
+                <th style={{ width: 150, minWidth: 150, maxWidth: 150, color: "white" }}>
                   Command
                 </th>
               )}
-              <th style={{ width: 200, minWidth: 200, maxWidth: 200 }}>
+              <th style={{ width: 200, minWidth: 200, maxWidth: 200, color: "white" }}>
                 Submission Date
               </th>
-              <th style={{ width: 200, minWidth: 200, maxWidth: 200 }}>
+              <th style={{ width: 200, minWidth: 200, maxWidth: 200, color: "white" }}>
                 Dead Line
               </th>
-              <th style={{ width: 150, minWidth: 150, maxWidth: 150 }}>Type</th>
-              <th style={{ width: 150, minWidth: 150, maxWidth: 150 }}>
+              <th style={{ width: 150, minWidth: 150, maxWidth: 150, color: "white" }}>Type</th>
+              <th style={{ width: 150, minWidth: 150, maxWidth: 150, color: "white" }}>
                 Status
               </th>
-              <th style={{ width: 150, minWidth: 150, maxWidth: 150 }}>
+              <th style={{ width: 150, minWidth: 150, maxWidth: 150, color: "white" }}>
                 Current Stage
               </th>
             </tr>

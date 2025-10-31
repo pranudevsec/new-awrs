@@ -424,7 +424,7 @@ const SubmittedFormDetail = () => {
     }, [unitDetail?.fds?.comments, role]);
 
     const getParamDisplay = (param: any) => {
-        if (param.name != "no") {
+        if (param.name !== "no") {
             return {
                 main: param.name,
                 header: param.category ?? null,
@@ -716,7 +716,7 @@ const SubmittedFormDetail = () => {
                         <div className="form-label fw-semibold">Last Date</div>
                         <p className="fw-5 mb-0">
                             {(() => {
-                                const dateStatus = getDateStatus(unitDetail?.fds?.last_date, true, true);
+                                const dateStatus = getDateStatus(unitDetail?.fds?.last_date, true);
                                 return (
                                     <span className={dateStatus.className}>
                                         {dateStatus.text}

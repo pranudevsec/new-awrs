@@ -419,9 +419,11 @@ const ApplicationDetails = () => {
       ? Math.abs(finalApprovedMarks)
       : finalApprovedMarks;
 
+    if (!unitDetail?.id) return; // ensure valid application id
+
     const body = {
       type: unitDetail?.type ?? "citation",
-      application_id: unitDetail?.id ?? 0,
+      application_id: unitDetail.id,
       parameters: [
         {
           id: paramId,
@@ -475,8 +477,6 @@ const ApplicationDetails = () => {
       await handleSave(paramId, approvedCount);
 
       toast.success("Marks approved successfully");
-
-      window.location.reload();
     } catch (error) {
       toast.error("Failed to approve marks");
     }
@@ -618,15 +618,17 @@ const ApplicationDetails = () => {
   };
 
   useEffect(() => {
-    if (remarksError || unitRemarks.length === 0) return;
+    const trimmed = (unitRemarks || "").trim();
+    if (remarksError || trimmed.length === 0) return;
+    if (!unitDetail?.id) return;
 
     if (debounceRef.current) clearTimeout(debounceRef.current);
 
     debounceRef.current = setTimeout(async () => {
       const body = {
         type: unitDetail?.type ?? "citation",
-        application_id: unitDetail?.id ?? 0,
-        remark: unitRemarks,
+        application_id: unitDetail.id,
+        remark: trimmed,
         parameters: [],
       };
 
@@ -634,7 +636,7 @@ const ApplicationDetails = () => {
         await dispatch(approveMarks(body)).unwrap();
       } catch (err) {}
     }, 500);
-  }, [unitRemarks]);
+  }, [unitRemarks, unitDetail?.id]);
 
   const currentRoleIndex = hierarchy.indexOf(role?.toLowerCase());
   const lowerRoles = hierarchy.slice(0, currentRoleIndex);
@@ -652,9 +654,10 @@ const ApplicationDetails = () => {
   const handleSaveComment = (paramId: string, comment: string) => {
     if (!comment) return;
 
+    if (!unitDetail?.id) return;
     const body: any = {
       type: unitDetail?.type ?? "citation",
-      application_id: unitDetail?.id ?? 0,
+      application_id: unitDetail.id,
     };
 
     if (paramId === "__application__") {
@@ -681,9 +684,10 @@ const ApplicationDetails = () => {
       return;
     }
 
+    if (!unitDetail?.id) return;
     const body = {
       type: unitDetail?.type ?? "citation",
-      application_id: unitDetail?.id ?? 0,
+      application_id: unitDetail.id,
       applicationPriorityPoints: priorityPoints,
       parameters: [],
     };
@@ -721,7 +725,7 @@ const ApplicationDetails = () => {
   }, [unitDetail?.fds?.comments, role]);
 
   const getParamDisplay = (param: any) => {
-    if (param.name != "no") {
+    if (param.name !== "no") {
       return {
         main: param.name,
         header: param.category ?? null,
@@ -794,7 +798,6 @@ const ApplicationDetails = () => {
       const { member, decision } = pendingDecision;
 
       try {
-        console.log(rejectionReason)
         await handleAddsignature(member, decision,rejectionReason);
       } catch (error) {}
     } else {
@@ -832,7 +835,7 @@ const ApplicationDetails = () => {
   const renderHeaderRow = (header: string, index: number) => (
     <tr key={`header-${header}-${index}`}>
       <td
-        colSpan={9}
+        colSpan={11}
         style={{
           fontWeight: 600,
           color: "#555",
@@ -1056,34 +1059,33 @@ const ApplicationDetails = () => {
               />
             </td>
             <td style={{ width: 200 }}>
-              <div
-                style={{ display: "flex", alignItems: "center", gap: "8px" }}
-              >
-                <input
-                  type="text"
-                  className="form-control"
-                  placeholder="Enter approved marks"
-                  autoComplete="off"
-                  value={approvedMarksValue || ""}
-                  disabled={isRejected}
-                  readOnly
-                  style={{ flex: 1 }}
-                />
-                <button
-                  type="button"
-                  className="btn btn-sm btn-primary"
-                  onClick={() => handleApproveMarks(param.id)}
-                  disabled={isRejected || !approvedCountValue}
-                  style={{
-                    fontSize: "12px",
-                    padding: "4px 8px",
-                    whiteSpace: "nowrap",
-                  }}
-                >
-                  Approve Marks
-                </button>
-              </div>
-            </td>
+  {/*  NEW LAYOUT – input on top, button below  */}
+  <div style={{ display: "flex", flexDirection: "column", gap: "8px", marginTop: "2.7rem" }}>
+    <input
+      type="text"
+      className="form-control"
+      placeholder="Auto-calculated"
+      autoComplete="off"
+      value={approvedMarksValue || ""}
+      disabled={isRejected}
+      readOnly
+    />
+    <button
+      type="button"
+      className="btn btn-sm btn-primary"
+      onClick={() => handleApproveMarks(param.id)}
+      disabled={isRejected || !approvedCountValue}
+      style={{
+        fontSize: "12px",
+        padding: "8px 12px",
+        whiteSpace: "nowrap",
+        width: "100%",               // make the button fill the cell
+      }}
+    >
+      Approve Marks
+    </button>
+  </div>
+</td>
             <td style={{ width: 200 }}>
               {(approvedMarksDocumentsState[param.id] || []).length > 0 && (
                 <div
@@ -1259,19 +1261,15 @@ const ApplicationDetails = () => {
       second: '2-digit'
     });
     
-    // Get IP address - try external services first, fallback to hostname
+    // Get IP address - prefer backend LAN IP endpoint, then public, then hostname
     const getPublicIP = async (): Promise<string> => {
       try {
-        const r = await fetch("https://api.ipify.org?format=json", { cache: "no-store" });
-        const j = await r.json();
-        if (j?.ip) return j.ip;
+        const r0 = await fetch(`${baseURL}/api/client-ip`, { cache: "no-store" });
+        if (r0.ok) {
+          const j0 = await r0.json();
+          if (j0?.ip) return j0.ip;
+        }
       } catch {}
-      try {
-        const r2 = await fetch("https://ipinfo.io/json", { cache: "no-store" });
-        const j2 = await r2.json();
-        if (j2?.ip) return j2.ip;
-      } catch {}
-
       return window.location?.hostname || "Unknown IP";
     };
 
@@ -1594,7 +1592,7 @@ const ApplicationDetails = () => {
                       rows.push(
                         <tr key={`subheader-${display.subheader}-${index}`}>
                           <td
-                            colSpan={8}
+                            colSpan={11}
                             style={{
                               color: display.header ? "#1976d2" : "#888",
                               fontSize: 13,
@@ -1613,7 +1611,7 @@ const ApplicationDetails = () => {
                           key={`subsubheader-${display.subsubheader}-${index}`}
                         >
                           <td
-                            colSpan={6}
+                            colSpan={11}
                             style={{
                               color: "#666",
                               fontSize: 12,

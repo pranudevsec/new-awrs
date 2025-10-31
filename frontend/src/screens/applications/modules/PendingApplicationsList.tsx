@@ -142,7 +142,7 @@ const PendingApplicationsList = () => {
             value={awardTypeOptions.find((opt) => opt.value === (awardType ?? 'All')) ?? awardTypeOptions[0]}
             onChange={(option: any) => setAwardType(option?.value ?? null)}
             options={[...awardTypeOptions]}
-            placeholder="Select Award Type"
+            placeholder="Select Type"
           />
         </div>
       </div>

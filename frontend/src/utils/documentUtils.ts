@@ -45,18 +45,19 @@ const triggerDownload = (buffer: ArrayBuffer | Uint8Array, fileName: string, mim
   window.URL.revokeObjectURL(url);
 };
 
-// Resolve public IP with graceful fallback to hostname
-const getPublicIP = async (): Promise<string> => {
+// Resolve client IP via backend when available, with graceful fallbacks
+const getClientIP = async (baseURL?: string): Promise<string> => {
+  // Prefer backend echo which can return LAN IPv4 in dev/local
   try {
-    const r = await fetch("https://api.ipify.org?format=json", { cache: "no-store" });
-    const j = await r.json();
-    if (j?.ip) return j.ip;
+    const apiBase = normalizeBaseUrl(baseURL);
+    const r0 = await fetch(`${apiBase}api/client-ip`, { cache: 'no-store' });
+    if (r0.ok) {
+      const j0 = await r0.json();
+      if (j0?.ip) return j0.ip;
+    }
   } catch {}
-  try {
-    const r2 = await fetch("https://ipinfo.io/json", { cache: "no-store" });
-    const j2 = await r2.json();
-    if (j2?.ip) return j2.ip;
-  } catch {}
+
+  
   return window.location.hostname || "localhost";
 };
 
@@ -92,7 +93,7 @@ export const downloadDocumentWithWatermark = async (
     if (fileName.toLowerCase().endsWith('.pdf')) {
       try {
         const pdfBytes = new Uint8Array(arrayBuffer);
-        const watermarkedPdfBytes = await addWatermarkToPDF(pdfBytes);
+        const watermarkedPdfBytes = await addWatermarkToPDF(pdfBytes, baseURL);
         triggerDownload(watermarkedPdfBytes, customFileName, 'application/pdf');
       } catch {
         triggerDownload(arrayBuffer, customFileName, 'application/pdf');
@@ -106,7 +107,7 @@ export const downloadDocumentWithWatermark = async (
         year: 'numeric', month: '2-digit', day: '2-digit',
         hour: '2-digit', minute: '2-digit', second: '2-digit'
       });
-      const userIP = await getPublicIP();
+      const userIP = await getClientIP(baseURL);
       const convertedPdfBytes = await convertToPDF(arrayBuffer, fileName, userIP, currentDateTime);
       triggerDownload(convertedPdfBytes, customFileName.replace(/\.[^/.]+$/, '.pdf'), 'application/pdf');
     } catch {
@@ -123,13 +124,13 @@ export const downloadDocumentWithWatermark = async (
  * @param pdfBytes - PDF file as Uint8Array
  * @returns Watermarked PDF as Uint8Array
  */
-const addWatermarkToPDF = async (pdfBytes: Uint8Array): Promise<Uint8Array> => {
+const addWatermarkToPDF = async (pdfBytes: Uint8Array, baseURL?: string): Promise<Uint8Array> => {
   const currentDateTime = new Date().toLocaleString('en-IN', {
     timeZone: 'Asia/Kolkata',
     year: 'numeric', month: '2-digit', day: '2-digit',
     hour: '2-digit', minute: '2-digit', second: '2-digit'
   });
-  const userIP = await getPublicIP();
+  const userIP = await getClientIP(baseURL);
 
 
   const pdfDoc = await PDFDocument.load(pdfBytes);
